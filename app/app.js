@@ -56,6 +56,23 @@
   /* Tapping the content sliver closes the menu (her nav
      ruling, 15 Oct 2026 — the Muse-app shape). */
   $("sbShield").addEventListener("click", function () { sbOpen = false; applySidebar(); });
+  /* The name re-offer card's own buttons (the ruling's
+     bubble): Save lands the name on the profile; a blank
+     Save closes the bubble quietly (HQ sail ruling
+     22:52 — the offer is spent the moment it shows, and
+     a missing name blocks nothing, not even this); the
+     X simply closes it too. */
+  $("reofferSave").addEventListener("click", function () {
+    var v = $("reofferName").value.trim().slice(0, 60);
+    if (v) {
+      state.profile = state.profile || {};
+      state.profile.name = v;
+      save();
+      renderAll();
+    }
+    $("nameReoffer").hidden = true;
+  });
+  $("reofferX").addEventListener("click", function () { $("nameReoffer").hidden = true; });
 
   function areaById(id) { return D.AREAS.filter(function (a) { return a.id === id; })[0]; }
   function iconFor(areaId) { return { peptides: "#i-pep", meals: "#i-meal", gym: "#i-gym", calendar: "#i-cal" }[areaId] || "#i-star"; }
@@ -1252,6 +1269,7 @@
     save(); renderSettings(); renderCheckin();
     toast(state.settings.wallyOff ? companionName() + " is resting." : companionName() + " is back.");
   });
+  $("tourReplayBtn").addEventListener("click", replayTour);
   $("guideNameSave").addEventListener("click", function () {
     state.settings = state.settings || {};
     state.settings.companionName = $("guideNameInput").value.trim();
@@ -1372,6 +1390,7 @@
      into a real account (sign-up starts fresh after leaving). */
   var PARK_KEY = "fit-app-v1-parked", DEMO_MARK = "fit-app-demo";
   var demoMode = false, demoPending = false, demoPendingHash = null, reviewerOpen = false;
+  var doorStep = 1, doorEmail = "";
   function parkDeviceState() {
     try { if (!localStorage.getItem(PARK_KEY)) localStorage.setItem(PARK_KEY, JSON.stringify(state)); } catch (e) {}
   }
@@ -1427,60 +1446,89 @@
       return;
     }
     if (!authUser) {
-      /* SCREEN 1 IS THE DOOR ONLY (door-first
-         ruling, 15 Oct 2026): the app's mark, Google,
-         email + password with ONE button. No name field
-         (the name is screen 2, right after the door), no
-         plan pick, no long text. The demo stays as its
-         own quiet entry below. The password reset is not
-         standing furniture: it appears with a failed try,
-         where it is needed. */
-      box.innerHTML = '<div class="doorMark"><img class="doorLogo" src="icon.svg" alt=""><span>Fit Hard</span></div>' +
-        '<div class="row"><button class="pillBtn" id="accGoogleBtn">Continue with Google</button></div>' +
-        '<div class="grid2"><label>Email<input id="accEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>' +
-        '<label>Password<input id="accPass" type="password" autocomplete="current-password" placeholder="Your password"></label></div>' +
-        '<div class="row"><button class="primaryBtn" id="accContinueBtn">Continue with email</button></div>' +
-        '<div class="row hidden" id="accResetRow"><span class="hint">Forgot your password?</span>' +
-        '<button class="miniBtn" id="accForgotBtn">Reset it</button></div>' +
+      /* THE DOOR PAGE (mockup of record v4, 15 Oct
+         2026): the account step holds ONLY the sign-up,
+         big and in the middle. Big mark, the Google and
+         Apple doors as ICON-ONLY buttons, an "or with
+         email" divider, ONE email field, and a big round
+         next arrow. The password lives on step 2,
+         reached by the arrow: the email shown with
+         Change, the password, ONE button, and the reset
+         line. No name field and no plan pick on either
+         step (the guide's tour asks the name inside the
+         app). The demo stays as its own quiet entry
+         below, in its sealed Spark shape. */
+      var GOOGLE_G = '<svg width="22" height="22" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34.3 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34.3 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.6l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>';
+      var APPLE_G = '<svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 12.54c-.03-2.89 2.36-4.27 2.47-4.34-1.35-1.97-3.44-2.24-4.18-2.27-1.78-.18-3.47 1.05-4.37 1.05-.9 0-2.29-1.02-3.77-1-1.94.03-3.72 1.13-4.72 2.86-2.01 3.49-.51 8.66 1.45 11.5.96 1.39 2.1 2.94 3.6 2.88 1.45-.06 2-.93 3.74-.93s2.24.93 3.77.9c1.56-.02 2.55-1.41 3.5-2.8 1.1-1.62 1.56-3.18 1.58-3.26-.03-.02-3.04-1.17-3.07-4.59zM14.16 4.06c.8-.97 1.34-2.32 1.19-3.66-1.15.05-2.55.77-3.38 1.74-.74.86-1.39 2.23-1.22 3.55 1.29.1 2.6-.65 3.41-1.63z"/></svg>';
+      var ARROW = '<svg width="27" height="27" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      if (doorStep === 2) {
+        box.innerHTML = '<div class="doorPage"><div class="doorCol">' +
+          '<div class="doorBigMark"><img src="icon.svg" alt=""></div>' +
+          '<div class="doorEmailRow"><span>' + esc(doorEmail) + '</span><button class="miniBtn" id="accChangeBtn">Change</button></div>' +
+          '<label>Password<input id="accPass" type="password" autocomplete="current-password" placeholder="Your password"></label>' +
+          '<div class="row"><button class="primaryBtn" id="accContinueBtn">Continue</button></div>' +
+          '<p class="hint">This one button does both. It signs you in, or makes your account if you are new.</p>' +
+          '<div class="row"><span class="hint">Forgot your password?</span>' +
+          '<button class="miniBtn" id="accForgotBtn">Reset it</button></div>' +
+          '</div></div>';
+        $("accChangeBtn").addEventListener("click", function () { doorStep = 1; renderAccount(); });
+        $("accContinueBtn").addEventListener("click", function () {
+          var pw = $("accPass").value;
+          if (!pw) { toast("Type your password too."); return; }
+          /* One button, both roads: sign in; a credential
+             refusal may simply mean "new here", so offer
+             the pair to account creation. An existing
+             email answers already-in-use, and the user
+             hears the same one honest line as a wrong
+             password (Security's PW delta holds). */
+          window.FitAuth.signInWithEmail(doorEmail, pw).catch(function (e) {
+            var c = (e && e.code) || "";
+            if (c === "auth/invalid-credential" || c === "auth/wrong-password" || c === "auth/user-not-found") {
+              window.FitAuth.signUpWithEmail(doorEmail, pw).then(function () { toast("Account made. Welcome in."); })
+                .catch(function (e2) {
+                  if (((e2 && e2.code) || "") === "auth/email-already-in-use") toast("That email and password do not match. Check them and try again.");
+                  else toast(authErrWords(e2, "sign-up"));
+                });
+            } else { toast(authErrWords(e, "sign-in")); }
+          });
+        });
+        $("accPass").addEventListener("keydown", function (ev) { if (ev.key === "Enter") $("accContinueBtn").click(); });
+        $("accForgotBtn").addEventListener("click", function () {
+          window.FitAuth.resetPassword(doorEmail).then(function () { toast("Password reset sent. Check your email."); })
+            .catch(function () { toast("That reset could not be sent. Check the email and your connection."); });
+        });
+        var pwEl = $("accPass"); if (pwEl) setTimeout(function () { pwEl.focus(); }, 60);
+        return;
+      }
+      box.innerHTML = '<div class="doorPage"><div class="doorCol">' +
+        '<div class="doorBigMark"><img src="icon.svg" alt=""></div>' +
+        '<div class="doorBigName">Fit Hard</div>' +
+        '<div class="doorBigSub">Sign in or make your account</div>' +
+        '<div class="doorIcons"><button class="doorIconBtn" id="accGoogleBtn" aria-label="Continue with Google">' + GOOGLE_G + '</button>' +
+        '<button class="doorIconBtn" id="accAppleBtn" aria-label="Continue with Apple">' + APPLE_G + '</button></div>' +
+        '<div class="doorOr">or with email</div>' +
+        '<input id="accEmail" type="email" autocomplete="email" aria-label="Email" placeholder="you@example.com">' +
+        '<button class="doorNext" id="accNextBtn" aria-label="Next">' + ARROW + '</button>' +
+        '</div>' +
         '<p class="hint">Just looking? The demo is filled with made-up examples, so you can try everything.</p>' +
-        '<div class="row"><button class="pillBtn" id="accDemoBtn">Explore the demo</button>' +
+        '<div class="row doorDemoRow"><button class="pillBtn" id="accDemoBtn">Explore the demo</button>' +
         '<button class="pillBtn" id="accReviewerBtn">Reviewer access</button></div>' +
         (reviewerOpen ? '<div class="grid2"><label>Access code<input id="accCode" type="text" autocomplete="off" placeholder="From the review notes"></label></div>' +
-          '<div class="row"><button class="pillBtn" id="accCodeBtn">Enter with code</button></div>' : "");
-      function accPair() {
-        var em = $("accEmail").value.trim(), pw = $("accPass").value;
-        if (!em) { toast("Type your email first."); return null; }
-        if (!pw) { toast("Type your password too."); return null; }
-        return [em, pw];
-      }
-      function showReset() { var r = $("accResetRow"); if (r) r.classList.remove("hidden"); }
-      $("accContinueBtn").addEventListener("click", function () {
-        var p = accPair(); if (!p) return;
-        /* One button, both roads: sign in; a credential
-           refusal may simply mean "new here", so offer the
-           pair to account creation. An existing email
-           answers already-in-use, and the user hears the
-           same one honest line as a wrong password. */
-        window.FitAuth.signInWithEmail(p[0], p[1]).catch(function (e) {
-          var c = (e && e.code) || "";
-          if (c === "auth/invalid-credential" || c === "auth/wrong-password" || c === "auth/user-not-found") {
-            window.FitAuth.signUpWithEmail(p[0], p[1]).then(function () { toast("Account made. Welcome in."); })
-              .catch(function (e2) {
-                showReset();
-                if (((e2 && e2.code) || "") === "auth/email-already-in-use") toast("That email and password do not match. Check them and try again.");
-                else toast(authErrWords(e2, "sign-up"));
-              });
-          } else { showReset(); toast(authErrWords(e, "sign-in")); }
-        });
-      });
-      $("accForgotBtn").addEventListener("click", function () {
+          '<div class="row"><button class="pillBtn" id="accCodeBtn">Enter with code</button></div>' : "") + '</div>';
+      var emEl = $("accEmail"); if (emEl && doorEmail) emEl.value = doorEmail;
+      function doorNext() {
         var em = $("accEmail").value.trim();
-        if (!em) { toast("Type your email first, then tap Reset it."); return; }
-        window.FitAuth.resetPassword(em).then(function () { toast("Password reset sent. Check your email."); })
-          .catch(function () { toast("That reset could not be sent. Check the email and your connection."); });
-      });
+        if (!em) { toast("Type your email first."); return; }
+        if (em.indexOf("@") < 1 || em.indexOf(".", em.indexOf("@")) < 0) { toast("That email does not look right. Check it and try again."); return; }
+        doorEmail = em; doorStep = 2; renderAccount();
+      }
+      $("accNextBtn").addEventListener("click", doorNext);
+      $("accEmail").addEventListener("keydown", function (ev) { if (ev.key === "Enter") doorNext(); });
       $("accGoogleBtn").addEventListener("click", function () {
         window.FitAuth.signInWithGoogle().catch(function () { toast("Google sign-in did not finish. The email sign-in is right here too."); });
+      });
+      $("accAppleBtn").addEventListener("click", function () {
+        window.FitAuth.signInWithApple().catch(function () { toast("Apple sign-in did not finish. The other doors are right here too."); });
       });
       $("accDemoBtn").addEventListener("click", function () { enterDemo(null); });
       $("accReviewerBtn").addEventListener("click", function () { reviewerOpen = true; renderAccount(); });
@@ -1617,23 +1665,183 @@
     state.profile.name = adopt;
     saveLocal();
   }
-  /* SCREEN 2 + THE FLOW THAT FOLLOWS (door-first ruling):
-     after the door, a joining user with no name yet is
-     asked ONE question, "What's your name?"; then the
-     setup flow follows if they have not done it. A name
-     from the provider (Google/Apple) lands in
-     adoptSignInName first, so those users are not asked
-     twice. The name never blocks the door itself, and an
-     empty answer simply moves on. Once per session. */
+  /* THE GUIDE'S TOUR (mockup of record v4, 15 Oct
+     2026): joining lands the user inside the whole app,
+     and the guide runs ONE tour on the first visit. A
+     pop-up in the middle of the screen; an X or "Skip
+     tour" closes it at any stop and nothing nags after.
+     Stop 1 asks the name inside the pop-up (a provider
+     name lands first, so those users are greeted, not
+     asked). Next walks the tour to the menu, then to
+     the day, then a last stop with Done. The tour is
+     remembered in the account settings (tourSeen), so
+     the AUTO-run happens once. A replay door in
+     Settings ("See the tour again", HQ fleet ruling
+     16 Oct 2026 — every app's tour replays from
+     Settings, Pace's shape) re-runs it on demand:
+     tourSeen never blocks a manual replay; a replay
+     NEVER re-arms the name re-offer; on replay the
+     name step pre-fills the saved name, and a blank
+     Next on replay never erases it (Law B — a replay
+     deletes nothing). If the guide is resting (the user's
+     own setting), there is no tour. The setup flow
+     follows the tour, if it has not been done. */
+  var tourStep = 0;
+  var tourReplay = false;
+  var tourAskedName = false;
+  var tourRanThisSession = false;
+  var reofferShownThisSession = false;
   function joinFollowUp() {
     if (joinPopped || demoMode || !authUser) return;
     joinPopped = true;
-    if (state.profile && state.profile.name) {
-      if (!state.profile.setupDone) openSetup();
-      return;
+    if (!guideOn() || (state.settings && state.settings.tourSeen)) { afterTour(); return; }
+    showView("today");
+    tourRanThisSession = true;
+    tourStep = 1;
+    renderTour();
+  }
+  function afterTour() {
+    maybeNameReoffer();
+    if (authUser && state.profile && !state.profile.setupDone) openSetup();
+  }
+  /* THE NAME RE-OFFER (HQ ruling 15 Oct 2026): if the
+     tour's name step was closed or skipped UNANSWERED,
+     the guide re-offers it ONCE on the NEXT visit (one
+     small quiet bubble on Today, never in the same
+     session), then never again. After that the name
+     lives in Settings and setup; the greeting stays
+     generic and a missing name blocks nothing. */
+  function maybeNameReoffer() {
+    if (demoMode || !authUser || !guideOn()) return;
+    if (tourRanThisSession || reofferShownThisSession) return;
+    if (!state.profile || state.profile.name) return;
+    if (!state.settings || state.settings.nameReoffer !== "pending") return;
+    state.settings.nameReoffer = "done";
+    reofferShownThisSession = true;
+    save();
+    var card = $("nameReoffer");
+    if (!card) return;
+    $("reofferLine").textContent = companionName() + " here. What should I call you?";
+    card.hidden = false;
+  }
+  function tourDots() {
+    return [1, 2, 3, 4].map(function (i) { return i === tourStep ? "●" : "○"; }).join(" ");
+  }
+  function renderTour() {
+    var root = $("tourRoot"), card = $("tourCard"), dim = $("tourDim");
+    if (!root || !card) return;
+    root.classList.remove("hidden");
+    var guide = esc(companionName());
+    var name = state.profile && state.profile.name;
+    var x = '<button class="tourX" id="tourX" aria-label="Close the tour">✕</button>';
+    var skip = '<button class="tourSkip" id="tourSkip">Skip tour</button>';
+    var face = '<img class="tourFace" src="assets/wally-welcome.webp" alt="">';
+    if (tourStep === 1) {
+      if (!name) tourAskedName = true;
+      dim.classList.remove("hidden");
+      card.className = "tourCard tourCenter";
+      /* On a REPLAY the name step shows the field
+         pre-filled with the saved name (HQ ruling);
+         a first run with a name greets instead. */
+      var showField = !name || tourReplay;
+      card.innerHTML = x + face +
+        '<p class="tourLine">Hey! I\'m ' + guide + '. Welcome in!' + ((name && !tourReplay) ? "" : " What's your name?") + '</p>' +
+        (showField ? '<input id="tourName" type="text" autocomplete="name" placeholder="Your name" value="' + (tourReplay && name ? esc(name) : "") + '">' : "") +
+        '<div class="tourRow">' + skip + '<button class="primaryBtn tourNext" id="tourNext">Next →</button></div>' +
+        '<div class="tourDots">' + tourDots() + '</div>';
+      var inp = $("tourName"); if (inp) setTimeout(function () { inp.focus(); }, 60);
+    } else if (tourStep === 2) {
+      dim.classList.add("hidden");
+      sbOpen = true; applySidebar();
+      card.className = "tourCard tourMenu";
+      card.innerHTML = x +
+        '<p class="tourLine">This is your menu. Everything lives here, tucked away until you want it.</p>' +
+        '<div class="tourRow">' + skip + '<button class="primaryBtn tourNext" id="tourNext">Next →</button></div>' +
+        '<div class="tourDots">' + tourDots() + '</div>';
+    } else if (tourStep === 3) {
+      dim.classList.add("hidden");
+      sbOpen = false; applySidebar();
+      card.className = "tourCard tourBottom";
+      card.innerHTML = x +
+        '<p class="tourLine">This is your day. Peptides, meals, gym and calendar, each in its own colour.</p>' +
+        '<div class="tourRow">' + skip + '<button class="primaryBtn tourNext" id="tourNext">Next →</button></div>' +
+        '<div class="tourDots">' + tourDots() + '</div>';
+    } else {
+      dim.classList.remove("hidden");
+      card.className = "tourCard tourCenter";
+      card.innerHTML = x + face +
+        '<p class="tourLine">That\'s the tour. Your app is yours now.</p>' +
+        '<div class="tourRow"><span></span><button class="primaryBtn tourNext" id="tourDone">Done ✓</button></div>' +
+        '<div class="tourDots">' + tourDots() + '</div>';
     }
-    $("nameModal").classList.remove("hidden");
-    var inp = $("nmName"); if (inp) { inp.value = ""; setTimeout(function () { inp.focus(); }, 60); }
+    var nx = $("tourNext"); if (nx) nx.addEventListener("click", tourAdvance);
+    var dn = $("tourDone"); if (dn) dn.addEventListener("click", endTour);
+    var sk = $("tourSkip"); if (sk) sk.addEventListener("click", endTour);
+    var xx = $("tourX"); if (xx) xx.addEventListener("click", endTour);
+  }
+  function tourAdvance() {
+    if (tourStep === 1) {
+      var inp = $("tourName");
+      if (inp) {
+        /* THE SAIL (HQ ruling 22:52, QA's harmonisation
+           catch): a blank Next moves on like any other
+           stop. Her law is that a missing name blocks
+           NOTHING — not even the walk — and the re-offer
+           is the designed other half of the pass-by. A
+           typed name still saves here; Skip and the X
+           stay live exits. (This supersedes the same-
+           evening J3 friendly stop, which applied the
+           name-SCREEN text to the tour.) */
+        var v = inp.value.trim().slice(0, 60);
+        state.profile = state.profile || {};
+        /* A typed name saves (on a replay, an edited
+           name updates). A blank writes NOTHING — on
+           replay it can never erase a saved name. */
+        if (v && (tourReplay || !state.profile.name)) { state.profile.name = v; save(); renderAll(); }
+      }
+    }
+    tourStep += 1;
+    renderTour();
+  }
+  function endTour() {
+    if (tourStep === 1) {
+      var inp = $("tourName");
+      if (inp) {
+        var v = inp.value.trim().slice(0, 60);
+        state.profile = state.profile || {};
+        if (v && (tourReplay || !state.profile.name)) { state.profile.name = v; renderAll(); }
+      }
+    }
+    var wasReplay = tourReplay;
+    tourStep = 0;
+    tourReplay = false;
+    sbOpen = false; applySidebar();
+    var root = $("tourRoot"); if (root) root.classList.add("hidden");
+    state.settings = state.settings || {};
+    state.settings.tourSeen = true;
+    /* Name step left unanswered: the guide owes ONE
+       quiet re-offer on the next visit (HQ ruling).
+       A REPLAY never arms it (HQ replay ruling): the
+       re-ask is spent by its own rule, replay or not. */
+    if (!wasReplay && tourAskedName && !(state.profile && state.profile.name) && state.settings.nameReoffer !== "done") {
+      state.settings.nameReoffer = "pending";
+    }
+    save();
+    afterTour();
+  }
+  /* THE REPLAY DOOR (HQ fleet ruling, 16 Oct 2026):
+     Settings re-runs the tour on demand. tourSeen is
+     not consulted here — it gates only the auto-run.
+     The demo is its own tour; a resting guide is woken
+     first, never overridden. */
+  function replayTour() {
+    if (demoMode) { toast("The demo is its own tour. Yours runs when you sign in."); return; }
+    if (!guideOn()) { toast(companionName() + " is resting. Bring the guide back first, then the tour can run."); return; }
+    showView("today");
+    tourReplay = true;
+    tourRanThisSession = true;
+    tourStep = 1;
+    renderTour();
   }
   /* THE UPGRADE MOMENT (house popup, adapted; HQ order
      21:39): it opens ONLY when a free user reaches for
@@ -1682,6 +1890,7 @@
       else {
         var wasDemo = demoMode;
         authUser = null;
+        doorStep = 1; doorEmail = "";
         if (wasDemo) { restoreParkedState(); renderAll(); toast("Demo closed. Your own app is just as you left it."); }
         else renderAccount();
       }
@@ -1694,13 +1903,8 @@
     closeProMoment(); showView("settings");
     var box = $("accountBox"); if (box) box.scrollIntoView();
   });
-  $("nmDone").addEventListener("click", function () {
-    var v = $("nmName").value.trim().slice(0, 60);
-    state.profile = state.profile || {};
-    if (v && !state.profile.name) state.profile.name = v;
-    save(); $("nameModal").classList.add("hidden"); renderAll();
-    if (!state.profile.setupDone) openSetup();
-  });
+  /* The tour wires its own buttons on each render
+     (renderTour); there are no standing tour handlers. */
   $("redoSetupBtn").addEventListener("click", function () { openSetup(); });
   $("guideBtn").addEventListener("click", function () { openSetup(); });
   $("emptySetupBtn").addEventListener("click", function () { openSetup(); });

@@ -66,6 +66,18 @@
         <div id="wallySpot"></div>
       </div>
 
+      <div class="card reofferCard" id="nameReoffer" hidden>
+        <img class="reofferFace" src="assets/wally-welcome.webp" alt="">
+        <div class="reofferBody">
+          <p class="reofferLine" id="reofferLine"></p>
+          <input id="reofferName" type="text" autocomplete="name" placeholder="Your name">
+          <div class="reofferRow">
+            <button class="primaryBtn" id="reofferSave">Save</button>
+            <button class="reofferXBtn" id="reofferX" aria-label="Close">✕</button>
+          </div>
+        </div>
+      </div>
+
       <div class="card" id="budgetCard" hidden>
         <h2><svg class="ic icInline"><use href="#i-meal"/></svg> Food today</h2>
         <p class="big" id="budgetLine"></p>
@@ -124,6 +136,7 @@
         <p class="hint" id="guideStatus"></p>
         <div id="guideRestSpot"></div>
         <div class="row"><button class="pillBtn" id="guideToggleBtn">Wally rests for a while</button></div>
+        <div class="row"><button class="pillBtn" id="tourReplayBtn">See the tour again</button></div>
         <label>His name<input id="guideNameInput" type="text" placeholder="Wally" autocomplete="off"></label>
         <div class="row"><button class="pillBtn" id="guideNameSave">Save his name</button></div>
         <p class="hint">His blanket colour</p>
@@ -191,13 +204,9 @@
   </div>
 </div>
 
-<div id="nameModal" class="modal hidden">
-  <div class="modalCard">
-    <h2>What's your name?</h2>
-    <p class="hint">So the app can greet you by it. You can change it in Settings.</p>
-    <label>Your name<input id="nmName" type="text" autocomplete="name" placeholder="First name"></label>
-    <div class="row"><button id="nmDone" class="primaryBtn">Continue</button></div>
-  </div>
+<div id="tourRoot" class="hidden">
+  <div id="tourDim" class="tourDim hidden"></div>
+  <div id="tourCard"></div>
 </div>
 
 <div id="proModal" class="modal hidden">

@@ -221,6 +221,41 @@ textarea{resize:vertical}
 /* The door step's mark (door-first ruling, 15 Oct 2026):
    the app's own icon + wordmark, nothing else above the
    three choices. */
-.doorMark{display:flex;align-items:center;gap:10px;margin:2px 0 12px}
-.doorMark .doorLogo{width:34px;height:34px;border-radius:9px}
-.doorMark span{font-family:"Zilla Slab",serif;font-weight:700;font-size:1.45rem;color:var(--ink)}
+.doorPage{text-align:center;padding:8px 0 2px}
+.doorCol{max-width:340px;margin:0 auto}
+.doorBigMark{width:78px;height:78px;border-radius:22px;background:var(--line);display:flex;align-items:center;justify-content:center;margin:4px auto 0}
+.doorBigMark img{width:44px;height:44px}
+.doorBigName{font-family:"Zilla Slab",serif;font-weight:700;font-size:28px;color:var(--ink);margin-top:14px}
+.doorBigSub{color:var(--mut);font-size:15px;margin-top:5px}
+.doorIcons{display:flex;gap:12px;margin:26px 0 0}
+.doorIconBtn{flex:1;height:62px;border-radius:16px;background:var(--surface);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink);padding:0}
+.doorOr{display:flex;align-items:center;gap:12px;color:var(--mut);font-size:13px;margin:20px 0 14px}
+.doorOr:before,.doorOr:after{content:"";flex:1;height:1px;background:var(--line)}
+.doorCol input{text-align:left}
+.doorNext{width:62px;height:62px;border-radius:50%;background:var(--sage);border:0;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;margin:18px auto 4px}
+.doorDemoRow{justify-content:center}
+.doorEmailRow{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 12px;background:var(--surface);font-weight:700;text-align:left}
+.tourDim{position:fixed;inset:0;background:rgba(20,12,4,.28);z-index:54}
+.tourCard{position:fixed;z-index:56;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:0 16px 40px rgba(62,47,38,.30);padding:16px;text-align:center;width:296px;max-width:calc(100vw - 32px)}
+.tourCenter{left:50%;top:50%;transform:translate(-50%,-50%)}
+.tourMenu{left:12px;bottom:12px;text-align:left}
+.tourBottom{left:50%;transform:translateX(-50%);bottom:12px;text-align:left}
+.tourFace{width:62px;height:62px;border-radius:50%;object-fit:cover;background:var(--cream);margin:-38px auto 6px;display:block;border:3px solid var(--surface);box-shadow:0 6px 14px rgba(62,47,38,.18)}
+.tourMenu .tourFace,.tourBottom .tourFace{display:none}
+.tourLine{font-weight:700;line-height:1.4;margin:2px 0 4px}
+/* The one quiet name re-offer (HQ ruling 15 Oct 2026):
+   small, on Today, shown once on a later visit only. */
+.reofferCard{display:flex;gap:12px;align-items:flex-start}
+.reofferCard[hidden]{display:none}
+.reofferFace{width:44px;height:44px;border-radius:50%;object-fit:cover;background:var(--tint)}
+.reofferBody{flex:1}
+.reofferLine{font-weight:700;margin:2px 0 8px}
+.reofferRow{display:flex;align-items:center;gap:10px;margin-top:10px}
+.reofferXBtn{margin-left:auto;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:15px;cursor:pointer;flex:none}
+.tourCard input{margin-top:11px;text-align:left}
+.tourRow{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:10px}
+.tourSkip{background:none;border:0;color:var(--mut);font:inherit;font-size:14px;cursor:pointer;padding:6px 2px}
+.tourNext{border-radius:999px}
+.tourDots{font-size:11px;color:var(--mut);letter-spacing:3px;margin-top:9px}
+.tourX{position:absolute;top:9px;right:12px;background:none;border:0;color:var(--mut);font-size:15px;font-weight:700;cursor:pointer;padding:2px 4px}
+.doorPage .row .primaryBtn{flex:1}

@@ -2,7 +2,7 @@
    activate purges every non-current cache, fetch is scoped to the
    current cache, so returning users never run old code forever. */
 "use strict";
-var CACHE = "fitapp-v27";
+var CACHE = "fitapp-v29";
 var FILES = ["./", "index.html", "styles.css", "data.js", "logic.js", "app.js",
   "meals-data.js", "meals-nutrition.js", "meals-logic.js", "exercises-data.js", "anim-data.js", "anim.js", "wally.js", "accounts-config.js", "auth.js", "demo-seed.js",
   "icon.svg", "icons/icon-192.png", "icons/icon-512.png", "manifest.webmanifest", "privacy.html",
