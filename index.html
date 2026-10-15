@@ -1,231 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Fit Hard</title>
-<meta name="theme-color" content="#FAEED6">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="icon" href="icons/icon-192.png" type="image/png" sizes="192x192">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="stylesheet" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fit Hard: training that is kind, not loud</title>
+<meta name="description" content="Fit Hard plans your meals, gym sessions and days around how you actually feel. No judgement. Your first month is free, with no card.">
+<meta property="og:title" content="Fit Hard">
+<meta property="og:description" content="Training that is kind, not loud. Meals, gym and your day, shaped around how you feel. First month free, no card.">
+<meta property="og:image" content="og.png">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<style>
+  @font-face { font-family: "Zilla Slab"; src: url("fonts/ZillaSlab-600.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+  @font-face { font-family: "Zilla Slab"; src: url("fonts/ZillaSlab-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+  @font-face { font-family: "Karla"; src: url("fonts/Karla-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: "Karla"; src: url("fonts/Karla-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+  :root { --ink:#3E2F26; --cream:#FAEED6; --surface:#FFFDF7; --blush:#FDF6E9; --line:#E4D3B8; --mut:#6E5D4B; --sage:#52695A; --sage-deep:#3F5546; --mist:#A9BFA5; --tint:#DCE7D8; --taupe:#AC9278; }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: "Karla", sans-serif; background: var(--cream); color: var(--ink); font-size: 18px; line-height: 1.55; }
+  h1, h2, h3 { font-family: "Zilla Slab", serif; line-height: 1.15; margin: 0 0 12px; }
+  h1 { font-size: 44px; font-weight: 700; }
+  h2 { font-size: 30px; font-weight: 700; }
+  h3 { font-size: 21px; font-weight: 600; }
+  p { margin: 0 0 14px; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 20px; }
+  header.top { display: flex; align-items: center; gap: 10px; padding: 14px 0; }
+  header.top img { width: 34px; height: 34px; }
+  header.top .brand { font-family: "Zilla Slab", serif; font-weight: 700; font-size: 22px; }
+  header.top a.cta { margin-left: auto; }
+  .btn { display: inline-block; background: var(--sage); color: #fff; font-weight: 700; font-size: 18px; padding: 14px 26px; border-radius: 999px; text-decoration: none; border: 0; cursor: pointer; min-height: 48px; }
+  .btn:hover { background: var(--sage-deep); }
+  .btn.small { padding: 10px 20px; font-size: 16px; min-height: 44px; }
+  .free { font-weight: 700; color: var(--sage-deep); }
+  .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 28px; align-items: center; padding: 30px 0 44px; }
+  .hero .shot { justify-self: center; }
+  .shot img { width: 270px; max-width: 78vw; border-radius: 28px; border: 1px solid var(--line); box-shadow: 0 14px 34px rgba(62,47,38,.18); display: block; }
+  .shots { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+  .shots .shot img { width: 220px; }
+  section { padding: 40px 0; }
+  .band { background: var(--blush); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 18px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+  .card .ic { width: 30px; height: 30px; color: var(--sage); margin-bottom: 8px; }
+  .ic { fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+  .steps { counter-reset: step; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 18px; }
+  .step { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 18px; }
+  .step .n { font-family: "Zilla Slab", serif; font-weight: 700; font-size: 26px; color: var(--sage); }
+  .wally { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+  .wally img { width: 150px; height: auto; }
+  .bubble { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 18px; font-family: "Zilla Slab", serif; font-size: 21px; max-width: 420px; }
+  .getapp { background: var(--tint); border: 1px solid var(--mist); border-radius: 20px; padding: 24px; }
+  .dl-device { font-weight: 700; margin: 16px 0 0; }
+  .getapp li { margin-bottom: 6px; }
+  .faq { max-width: 760px; }
+  .faq h3 { margin-top: 22px; }
+  .price { font-family: "Zilla Slab", serif; font-size: 24px; font-weight: 700; }
+  footer { padding: 30px 0 90px; color: var(--mut); font-size: 15px; }
+  footer a { color: var(--sage-deep); }
+  .sticky { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); padding: 10px 16px; display: none; text-align: center; z-index: 5; }
+  @media (max-width: 760px) {
+    h1 { font-size: 34px; }
+    .hero { grid-template-columns: 1fr; padding-top: 14px; }
+    .sticky { display: block; }
+  }
+  [hidden] { display: none !important; }
+</style>
 </head>
 <body>
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="i-menu" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3.5"/><line x1="9.5" y1="4.5" x2="9.5" y2="19.5"/></symbol>
-  <symbol id="i-home" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></symbol>
-  <symbol id="i-pep" viewBox="0 0 24 24"><path d="M12 3c3.5 4.2 6 7.6 6 10.5a6 6 0 1 1-12 0C6 10.6 8.5 7.2 12 3z"/><path d="M9.5 13.5a2.6 2.6 0 0 0 2.5 2.7"/></symbol>
-  <symbol id="i-meal" viewBox="0 0 24 24"><path d="M4 17.5h16"/><path d="M12 8a8 8 0 0 1 8 8H4a8 8 0 0 1 8-8z"/><path d="M12 8V6.5"/><circle cx="12" cy="5" r="1.1"/></symbol>
-  <symbol id="i-gym" viewBox="0 0 24 24"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></symbol>
-  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="3.5"/><line x1="3.5" y1="10" x2="20.5" y2="10"/><line x1="8" y1="3" x2="8" y2="6.5"/><line x1="16" y1="3" x2="16" y2="6.5"/><path d="M8.5 15.5l2.5 2.5 4.5-5"/></symbol>
-  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20c-5.5-3.6-8.2-6.8-8.2-10.3 0-2.7 1.9-4.7 4.3-4.7 1.6 0 3.1.8 3.9 2 .8-1.2 2.3-2 3.9-2 2.4 0 4.3 2 4.3 4.7C20.2 13.2 17.5 16.4 12 20z"/></symbol>
-  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
-  <symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h1.2l1.6-2.4A1.5 1.5 0 0 1 9.5 3.8h5a1.5 1.5 0 0 1 1.2.8L17.3 7h1.2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.6" r="3.4"/></symbol>
-  <symbol id="i-list" viewBox="0 0 24 24"><path d="M3.6 7.4l1.5 1.5 2.5-2.7"/><line x1="10" y1="7.4" x2="19.5" y2="7.4"/><path d="M3.6 12.7l1.5 1.5 2.5-2.7"/><line x1="10" y1="12.7" x2="19.5" y2="12.7"/><circle cx="5.4" cy="17.7" r="1.1"/><line x1="10" y1="17.7" x2="19.5" y2="17.7"/></symbol>
-  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3M6 6l2.1 2.1M15.9 15.9L18 18M18 6l-2.1 2.1M8.1 15.9L6 18"/></symbol>
-  <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 4l2.3 4.9 5.3.7-3.9 3.7 1 5.3-4.7-2.6-4.7 2.6 1-5.3L4.4 9.6l5.3-.7z"/></symbol>
-  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
-</svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-meal" viewBox="0 0 24 24"><path d="M4 17.5h16"/><path d="M12 8a8 8 0 0 1 8 8H4a8 8 0 0 1 8-8z"/><path d="M12 8V6.5"/><circle cx="12" cy="5" r="1.1"/></symbol>
+<symbol id="i-gym" viewBox="0 0 24 24"><path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/></symbol>
+<symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="3.5"/><line x1="3.5" y1="10" x2="20.5" y2="10"/><line x1="8" y1="3" x2="8" y2="6.5"/><line x1="16" y1="3" x2="16" y2="6.5"/><path d="M8.5 15.5l2.5 2.5 4.5-5"/></symbol>
+<symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20c-5.5-3.6-8.2-6.8-8.2-10.3 0-2.7 1.9-4.7 4.3-4.7 1.6 0 3.1.8 3.9 2 .8-1.2 2.3-2 3.9-2 2.4 0 4.3 2 4.3 4.7C20.2 13.2 17.5 16.4 12 20z"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+<symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h1.2l1.6-2.4A1.5 1.5 0 0 1 9.5 3.8h5a1.5 1.5 0 0 1 1.2.8L17.3 7h1.2A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="12.6" r="3.4"/></symbol>
+<symbol id="i-star" viewBox="0 0 24 24"><path d="M12 4l2.3 4.9 5.3.7-3.9 3.7 1 5.3-4.7-2.6-4.7 2.6 1-5.3L4.4 9.6l5.3-.7z"/></symbol>
+</defs></svg>
 
-<header id="topStrip">
-  <button id="sidebarToggle" class="stripToggle" aria-label="Hide or show the side menu" aria-pressed="true"><svg class="ic"><use href="#i-menu"/></svg></button>
-  <img class="stripLogo" src="icon.svg" alt="">
-  <span class="stripName">Fit Hard</span>
-  <span class="stripHi" id="stripHi"></span>
-</header>
+<div class="wrap">
+  <header class="top">
+    <img src="icon.svg" alt="">
+    <span class="brand">Fit Hard</span>
+    <a class="btn small cta" href="./app/">Open the app</a>
+  </header>
 
-<div id="demoBanner" class="hidden">You are exploring the demo. Everything here is made up, and your own app is untouched.</div>
-
-<div id="app">
-  <aside id="sidebar" aria-label="Main menu">
-    <nav id="mainNav">
-      <button class="navBtn active" data-view="today"><span class="navIcon icInk"><svg class="ic"><use href="#i-home"/></svg></span><span>Today</span></button>
-      <div id="areaGroups"></div>
-      <div class="sideLabel" id="laterLabel" hidden>Saved for later</div>
-      <div id="laterGroups"></div>
-    </nav>
-    <div class="sideFoot">
-      <button class="navBtn" id="guideBtn"><span class="navIcon icAmber"><svg class="ic"><use href="#i-star"/></svg></span><span>Setup guide</span></button>
-      <button class="navBtn" data-view="settings"><span class="navIcon icInk"><svg class="ic"><use href="#i-gear"/></svg></span><span>Settings</span></button>
+  <div class="hero">
+    <div>
+      <h1>Training that is kind, not loud.</h1>
+      <p>Fit Hard plans your meals, gym sessions and days around how you actually feel. No judgement, no shouting. A friend who is not a coach.</p>
+      <p><a class="btn" href="./app/">Open Fit Hard</a></p>
+      <p class="free">Free · No card · Your first month is the full app</p>
     </div>
-  </aside>
-
-  <main id="main">
-    <section id="view-today" class="view active">
-      <header class="topBar"><div>
-        <h1 id="todayTitle">Today</h1>
-        <p class="sub" id="todaySub">Your day, in one calm place.</p>
-      </div></header>
-
-      <div class="card" id="checkinCard">
-        <h2><svg class="ic icInline"><use href="#i-heart"/></svg> How are you feeling today?</h2>
-        <p class="hint">One tap shapes your day. Bad days get a softer plan, on purpose.</p>
-        <div class="checkinRow" id="checkinRow"></div>
-        <p class="hint" id="checkinHint"></p>
-        <div id="wallySpot"></div>
-      </div>
-
-      <div class="card" id="budgetCard" hidden>
-        <h2><svg class="ic icInline"><use href="#i-meal"/></svg> Food today</h2>
-        <p class="big" id="budgetLine"></p>
-        <p class="hint" id="budgetNote"></p>
-      </div>
-
-      <div class="areaCards" id="todayAreas"></div>
-
-      <div class="card emptyCard" id="todayEmpty" hidden>
-        <div id="emptyWally"></div>
-        <svg class="ic icBig"><use href="#i-star"/></svg>
-        <p>Nothing here yet. That is a fine place to start.</p>
-        <button class="primaryBtn" id="emptySetupBtn">Set up my app</button>
-      </div>
-    </section>
-
-    <section id="view-area" class="view">
-      <header class="topBar"><div>
-        <h1 id="areaTitle">Area</h1>
-        <p class="sub" id="areaSub"></p>
-      </div></header>
-      <div class="card emptyCard" id="areaEmpty">
-        <svg class="ic icBig" id="areaEmptyIcon"><use href="#i-star"/></svg>
-        <p id="areaEmptyLine">Nothing here yet.</p>
-        <button class="primaryBtn" id="areaEmptyBtn">Start</button>
-      </div>
-      <div id="areaBody"></div>
-    </section>
-
-    <section id="view-settings" class="view">
-      <header class="topBar"><div><h1>Settings</h1><p class="sub">Your app, your way. Change anything, any time.</p></div></header>
-      <div class="card">
-        <h2>About you</h2>
-        <div id="profileSummary" class="hint">No setup yet.</div>
-        <div class="row"><button class="pillBtn" id="redoSetupBtn">Redo my setup</button></div>
-      </div>
-      <div class="card">
-        <h2>Appearance</h2>
-        <p class="hint">Pick the room your app lives in. Words stay easy to read on every choice.</p>
-        <div class="apprRow" id="apprRow">
-          <button class="apprBtn" data-appr="brand"><span class="apprSwatch" style="background:#FAEED6"></span>Calm board look</button>
-          <button class="apprBtn" data-appr="white"><span class="apprSwatch" style="background:#FFFFFF"></span>White</button>
-          <button class="apprBtn" data-appr="black"><span class="apprSwatch" style="background:#17120E"></span>Black</button>
-          <button class="apprBtn" data-appr="image"><span class="apprSwatch" style="background:#A9BFA5"></span>My photo</button>
-        </div>
-        <div class="row hidden" id="apprPhotoRow">
-          <button class="pillBtn" id="apprPickBtn" onclick="document.getElementById('apprFile').click()">Choose a photo</button>
-          <button class="pillBtn hidden" id="apprRemoveBtn">Remove my photo</button>
-          <input type="file" id="apprFile" accept="image/*" class="hidden">
-        </div>
-        <p class="hint" id="apprNote"></p>
-      </div>
-      <div class="card">
-        <h2>Your account</h2>
-        <div id="accountBox"><p class="hint">One moment, opening your account door.</p></div>
-        <p class="hint" id="guideStatus"></p>
-        <div id="guideRestSpot"></div>
-        <div class="row"><button class="pillBtn" id="guideToggleBtn">Wally rests for a while</button></div>
-        <label>His name<input id="guideNameInput" type="text" placeholder="Wally" autocomplete="off"></label>
-        <div class="row"><button class="pillBtn" id="guideNameSave">Save his name</button></div>
-        <p class="hint">His blanket colour</p>
-        <div class="row" id="blanketRow">
-          <button class="blanketBtn" data-blanket="sage"><span class="apprSwatch" style="background:#52695A"></span>Sage</button>
-          <button class="blanketBtn" data-blanket="mist"><span class="apprSwatch" style="background:#A9BFA5"></span>Mist</button>
-          <button class="blanketBtn" data-blanket="tint"><span class="apprSwatch" style="background:#DCE7D8"></span>Tint</button>
-          <button class="blanketBtn" data-blanket="taupe"><span class="apprSwatch" style="background:#AC9278"></span>Taupe</button>
-        </div>
-        <p class="hint">Your trainer figure, the one who shows each move in the gym</p>
-        <div class="row" id="skinRow">
-          <button class="skinBtn" data-skin="girl">Girl</button>
-          <button class="skinBtn" data-skin="boy">Boy</button>
-          <button class="skinBtn" data-skin="nb">Non-binary</button>
-        </div>
-        <p class="hint">Moving pictures in the gym</p>
-        <div class="row"><button class="pillBtn" id="calmPicsBtn">Still frames instead</button></div>
-      </div>
-      <div class="card">
-        <h2>Health tracking note</h2>
-        <p class="hint" id="disclaimerStatus">You have not opened the peptide area yet.</p>
-      </div>
-      <div class="card">
-        <h2>Your data</h2>
-        <div class="row"><button class="pillBtn" id="exportBtn">Download my data</button></div>
-        <p class="hint">Everything you add stays yours. The app never deletes it.</p>
-        <p class="hint" id="saveNote"></p>
-        <div class="row"><a href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></div>
-      </div>
-    </section>
-  </main>
-</div>
-
-<button id="sbShield" aria-label="Close the side menu"></button>
-
-<div id="setupModal" class="modal hidden">
-  <div class="modalCard">
-    <div id="wallySetup"></div>
-    <h2 id="setupTitle">Welcome. Let us set up your app.</h2>
-    <p class="hint">Answer what you can. Skip anything you like. You can change it all later in Settings.</p>
-    <h3>About you</h3>
-    <div class="grid2">
-      <label>Your name<input id="suName" type="text" placeholder="First name" autocomplete="off"></label>
-      <label>Goal<select id="suGoal"></select></label>
-      <label>What you weigh, in kg<input id="suWeight" type="number" min="1" step="any" placeholder="82"></label>
-      <label>How tall you are, in cm<input id="suHeight" type="number" min="1" step="any" placeholder="168"></label>
-    </div>
-    <p class="hint">For a calorie estimate, the usual formula also uses age. Optional, and it stays on your device.</p>
-    <div class="grid2">
-      <label>Age (optional)<input id="suAge" type="number" min="1" max="120" placeholder="34"></label>
-      <label>Formula (optional)<select id="suSex"><option value="">Skip</option><option value="female">Female</option><option value="male">Male</option></select></label>
-      <label>A normal week is<select id="suActivity"><option value="low">Mostly sitting</option><option value="some" selected>Up and about</option><option value="lots">Very active</option></select></label>
-      <label>Pace<select id="suDeficit"><option value="gentle" selected>Gentle</option><option value="steady">Steady</option><option value="none">Just track, no target</option></select></label>
-    </div>
-    <h3>Your guide</h3>
-    <label>Give your companion a name, if you like<input id="suCompanion" type="text" placeholder="Wally" autocomplete="off"></label>
-    <p class="hint">He walks with you, never judges, and thinks rest days are good days.</p>
-    <h3>Food you like</h3>
-    <div id="suCuisines" class="chipRow"></div>
-    <label>Allergies or foods to avoid, split with commas<input id="suAllergies" type="text" placeholder="peanut, shellfish"></label>
-    <h3>What do you need?</h3>
-    <p class="hint">Pick what helps. Anything you skip waits quietly in the side menu, under Saved for later.</p>
-    <div id="suNeeds" class="chipRow"></div>
-    <div class="row"><button id="suDone" class="primaryBtn">Start my app</button><button id="suSkip" class="pillBtn">Not now</button></div>
+    <div class="shot"><img src="shots/today.webp" alt="The Fit Hard home screen, with the morning check in and the day laid out calmly" width="540" height="1200"></div>
   </div>
 </div>
 
-<div id="nameModal" class="modal hidden">
-  <div class="modalCard">
-    <h2>What's your name?</h2>
-    <p class="hint">So the app can greet you by it. You can change it in Settings.</p>
-    <label>Your name<input id="nmName" type="text" autocomplete="name" placeholder="First name"></label>
-    <div class="row"><button id="nmDone" class="primaryBtn">Continue</button></div>
+<section class="band">
+  <div class="wrap">
+    <h2>Get the app</h2>
+    <div class="getapp">
+      <p>Fit Hard is free. It is not in the Apple or Google stores yet. Until then, the real app opens right here, on this device, with the button below. Phone or computer, it just works.</p>
+      <p><a class="btn" href="./app/">Open the app</a></p>
+      <p class="dl-device" id="dl-device">Works on phone, tablet and computer.</p>
+    </div>
   </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Most fitness apps shout. This one does not.</h2>
+    <p>They count what you missed and show it back to you. Fit Hard never does. Missed days are just days. Treats are just treats. The plan bends around your life, not the other way around.</p>
+    <div class="wally">
+      <img src="assets/wally-welcome.webp" alt="Wally the wombat, the Fit Hard guide" width="300" height="300">
+      <div class="bubble">You showed up. Noted.<br><span style="font-family:Karla,sans-serif;font-size:16px">Wally the wombat walks with you, in the app and never in your face.</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <h2>Three small steps</h2>
+    <div class="steps">
+      <div class="step"><div class="n">1</div><h3>Set up once</h3><p>Your weight, height, food likes, allergies, and what you need. Anything you skip stays tucked away in the side menu.</p></div>
+      <div class="step"><div class="n">2</div><h3>Check in each morning</h3><p>One tap: Bad, Ok or Great. That one answer shapes the whole day.</p></div>
+      <div class="step"><div class="n">3</div><h3>Follow your day</h3><p>Meals, gym and tasks, each in its own colour, all changeable at any time.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>What is inside</h2>
+    <div class="cards">
+      <div class="card"><svg class="ic"><use href="#i-meal"/></svg><h3>Meals</h3><p>Recipes with calorie estimates, a plan for the week, and ideas from a photo of your fridge. Your own recipes are welcome: typed, spoken, or snapped as a picture. Calorie numbers are estimates, shown as about.</p></div>
+      <div class="card"><svg class="ic"><use href="#i-gym"/></svg><h3>Gym</h3><p>Clear moving pictures show each exercise, with a built in timer and rep counting, so you never leave the app. Snap a photo of a machine and get a routine for it.</p></div>
+      <div class="card"><svg class="ic"><use href="#i-cal"/></svg><h3>Calendar</h3><p>Habits and to dos in your own messy words, or spoken out loud. The app sorts them into days. Undone things simply wait. Nothing shames you.</p></div>
+      <div class="card"><svg class="ic"><use href="#i-heart"/></svg><h3>Bad day plan</h3><p>Say it is a Bad day and the plan goes softer: lighter sessions, gentler meals, room for a treat. Great days can stretch a little further, only if you want.</p></div>
+    </div>
+    <div class="shots" style="margin-top:26px">
+      <div class="shot"><img src="shots/meals.webp" alt="A week of meals planned in Fit Hard" width="540" height="1200" loading="lazy"></div>
+      <div class="shot"><img src="shots/gym.webp" alt="A gym session in Fit Hard, with the exercise picture and timer" width="540" height="1200" loading="lazy"></div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <h2>Honest pricing</h2>
+    <p class="price">Your first month is free.</p>
+    <p>No card is asked for. After the first month, the free plan keeps your logging, your rest timer, your library and your history. Pro is A$7.99 a month, or A$59.99 a year, and it opens when Fit Hard reaches the stores. Pro adds unlimited routines and plans, your progress from day one, your own custom exercises, and body measurements over time.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap faq">
+    <h2>Questions</h2>
+    <h3>Is Fit Hard free?</h3>
+    <p>Yes. Your first month is the full app, free, with no card. After that, a free plan keeps the everyday tools, and Pro is there if you want more.</p>
+    <h3>Do I need a gym?</h3>
+    <p>No. You tell the app what you have, at home or at a gym, and your routines are built from that.</p>
+    <h3>What happens on a bad day?</h3>
+    <p>You check in as Bad, Ok or Great each morning. On a Bad day the plan goes softer: lighter sessions and more room. Nothing is taken away to punish you.</p>
+    <h3>Does it judge treats?</h3>
+    <p>Never. Treats are part of life. Fit Hard keeps them outside your meal plan and never blames you for them.</p>
+    <h3>Is Fit Hard medical advice?</h3>
+    <p>No. Fit Hard is a tracker and a planner. It is not a doctor and gives no medical advice. Calorie numbers are estimates, not exact counts.</p>
+    <h3>Where do I get it?</h3>
+    <p>Right here on the web. Tap Get the app above and add it to your home screen. Store versions come later, and this page will say so when they land.</p>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap" style="text-align:center">
+    <h2>Start kind. Start today.</h2>
+    <p><a class="btn" href="./app/">Open Fit Hard</a></p>
+    <p class="free">Free · No card</p>
+  </div>
+</section>
+
+<div class="wrap">
+  <footer>
+    <p>Fit Hard. The name shouts. The app stays kind.</p>
+    <p><a href="privacy.html">Privacy Policy</a></p>
+  </footer>
 </div>
 
-<div id="proModal" class="modal hidden">
-  <div class="modalCard">
-    <div id="proWally"></div>
-    <h2>Fit Hard Pro</h2>
-    <p>Unlimited routines and training plans. Your progress from day one, not just the last three months. Your own custom exercises, and body measurements over time. The plate calculator does the maths for you.</p>
-    <p class="hint">A$7.99 a month, or A$59.99 a year. Your first month is free.</p>
-    <div class="row"><button id="proGo" class="primaryBtn">See Pro plans</button><button id="proNotNow" class="pillBtn">Not now</button></div>
-  </div>
-</div>
+<div class="sticky"><a class="btn small" href="./app/">Open Fit Hard · Free</a></div>
 
-<div id="recipeModal" class="modal hidden"><div class="modalCard" id="recipeModalCard"></div></div>
-
-<div id="wallyFloat" class="hidden"></div>
-<div id="toast" class="toast hidden"></div>
-<script src="data.js"></script>
-<script src="logic.js"></script>
-<script src="meals-data.js"></script>
-<script src="meals-nutrition.js"></script>
-<script src="meals-logic.js"></script>
-<script src="exercises-data.js"></script>
-<script src="anim-data.js"></script>
-<script src="anim.js"></script>
-<script src="wally.js"></script>
-<script src="accounts-config.js"></script>
-<script src="demo-seed.js"></script>
-<script src="app.js"></script>
-<script type="module" src="auth.js"></script>
+<script>
+  (function () {
+    var el = document.getElementById('dl-device'); if (!el) return;
+    var ua = navigator.userAgent || '';
+    if (/iPhone|iPad|iPod/i.test(ua)) { el.textContent = 'You are on an iPhone or iPad. Tap Open the app above: it works right away. To keep it on your home screen, tap Share, then Add to Home Screen. The App Store version is on its way.'; }
+    else if (/Android/i.test(ua)) { el.textContent = 'You are on an Android phone. Tap Open the app above: it works right away. To keep it on your home screen, tap the menu (three dots), then Add to Home screen. The Google Play version is on its way.'; }
+  })();
+</script>
 </body>
 </html>
