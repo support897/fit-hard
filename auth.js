@@ -1,0 +1,273 @@
+/* Fit App — accounts door (Phase 6).
+   NOT LOADED by index.html in the dormant build. This module is
+   loaded only after HQ wires this app's own Firebase project and
+   pastes the config into accounts-config.js (see
+   ACCOUNTS-PHASE-PLAN.md). It uses the Firebase JS SDK as ES
+   modules, per the Skills Scout ruling for this desk: no build
+   step, no bundler, dormant-gated.
+   The door set, as ruled 15 Oct 2026 (programme-wide,
+   superseding the 14 Oct §5 shape by her direct word):
+   email + a password the user chooses (Firebase Auth),
+   beside Google + Apple. The passwordless email link door
+   is retired. Apple parks until the Apple Developer
+   credential wall clears, like the other apps.
+   Data shape (Security desk flag F1, ruled 14 Oct 2026):
+   sliced storage WITH a size watch. The root document
+   users/{uid} holds only the small slices (profile,
+   disclaimer) plus updatedAt. Every other top-level slice
+   of the state lives in its own document at
+   users/{uid}/slices/{slice}, so no single document can
+   reach Firestore's 1 MiB document ceiling while history
+   grows; FitLogic.oversizedSlices watches every slice's
+   size on save and reports any slice nearing the ceiling.
+   Rules live in firestore.rules (owner-only at both levels).
+   Merging cloud and device copies is Fit logic
+   (FitLogic.mergeStates), which never drops user data. */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getAuth, onAuthStateChanged, signOut, deleteUser,
+  createUserWithEmailAndPassword, signInWithEmailAndPassword,
+  sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential,
+  signInAnonymously,
+  GoogleAuthProvider, OAuthProvider, signInWithPopup,
+  reauthenticateWithPopup
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {
+  getFirestore, doc, getDoc, getDocs, collection, setDoc, deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+let app = null, auth = null, db = null;
+
+function initDoor(config) {
+  if (!config) return false;
+  if (!app) {
+    app = initializeApp(config);
+    auth = getAuth(app);
+    db = getFirestore(app);
+  }
+  return true;
+}
+
+function watchUser(callback) {
+  if (!auth) return function () {};
+  return onAuthStateChanged(auth, callback);
+}
+
+/* Door 1: email + a password the user chooses (the
+   ruling, 15 Oct 2026). Firebase holds the password; the
+   app never stores it. A reset email covers the forgotten
+   case, so nobody is locked out by a lost password. */
+async function signUpWithEmail(email, password) {
+  return createUserWithEmailAndPassword(auth, email, password);
+}
+
+async function signInWithEmail(email, password) {
+  return signInWithEmailAndPassword(auth, email, password);
+}
+
+async function resetPassword(email) {
+  return sendPasswordResetEmail(auth, email);
+}
+
+/* §5 door 2: Google. §5 door 3: Apple (parked on the Apple
+   Developer credential wall; the call is here so P2 only
+   wires the button when the door is live). */
+async function signInWithGoogle() {
+  return signInWithPopup(auth, new GoogleAuthProvider());
+}
+
+async function signInWithApple() {
+  return signInWithPopup(auth, new OAuthProvider("apple.com"));
+}
+
+async function signOutUser() {
+  return signOut(auth);
+}
+
+/* Small slices stay in the root document; everything else is
+   one document per slice under users/{uid}/slices (F1). */
+const ROOT_KEYS = ["profile", "disclaimer"];
+
+async function loadCloudState(uid) {
+  const root = await getDoc(doc(db, "users", uid));
+  if (!root.exists()) return null;
+  const state = Object.assign({}, root.data().state || {});
+  if (typeof root.data().unlockHash === "string" && root.data().unlockHash) state.demoUnlock = root.data().unlockHash;
+  const slices = await getDocs(collection(db, "users", uid, "slices"));
+  slices.forEach(function (s) { if (s.id !== "demoUnlock") state[s.id] = s.data().value; });
+  return state;
+}
+
+/* Saves every slice, then reports the size watch: the names
+   of any slices over FitLogic's warn line (700000 bytes,
+   well under the 1 MiB ceiling). P2 surfaces a kind Settings
+   line when the list is not empty; saves never block on it. */
+async function saveCloudState(uid, state) {
+  const rootState = {};
+  const sliceData = [];
+  Object.keys(state).forEach(function (k) {
+    if (k === "demoUnlock") return; /* rides in the root doc, never a slice */
+    if (ROOT_KEYS.indexOf(k) >= 0) rootState[k] = state[k];
+    else sliceData.push([k, state[k]]); /* DATA only — no calls yet */
+  });
+  const rootDocData = { state: rootState, updatedAt: new Date().toISOString() };
+  /* P4 demo unlock: only a real hash is written. Writing the
+     key at all when it is empty would trip the rules gate
+     (presence is the signal), so it is simply absent. */
+  if (typeof state.demoUnlock === "string" && state.demoUnlock) rootDocData.unlockHash = state.demoUnlock;
+  /* ROOT FIRST — invoked AND awaited — and only then are the
+     slice writes INVOKED (QA Phase 6 P4 F1, proven live
+     14 Oct 2026, twice): the rules gate reads the root doc
+     with get() on every slice write, so a first save whose
+     slices are judged before the root exists loses every
+     slice. setDoc SENDS ON INVOCATION, not on await — an
+     earlier version of this fix moved the awaits and left
+     the calls inside the build loop above, and the wire
+     order never changed. The slice setDoc calls therefore
+     live BELOW this line, constructed from sliceData only
+     after the root has landed. */
+  await setDoc(doc(db, "users", uid), rootDocData);
+  await Promise.all(sliceData.map(function (pair) {
+    return setDoc(doc(db, "users", uid, "slices", pair[0]), { value: pair[1] });
+  }));
+  let warnings = [];
+  if (typeof window !== "undefined" && window.FitLogic && window.FitLogic.oversizedSlices) {
+    warnings = window.FitLogic.oversizedSlices(state);
+  }
+  return { warnings: warnings };
+}
+
+/* Account deletion (the user's own right, in-app). Order is
+   Security desk flag F3, as HQ ruled: re-auth-then-delete, so
+   a stale session can never half-delete (data gone, auth
+   user alive). Re-auth means: a session signed in within
+   the last 5 minutes is fresh enough; Google and Apple
+   users re-auth in their provider popup; email + password
+   users get a typed "fit/reauth-password" error unless the
+   app passes the password the user just typed to confirm,
+   which re-auths with the credential. Only with a fresh
+   session: delete the cloud documents, then the auth user.
+   The app wipes the device copy ONLY after this resolves;
+   if any step throws, nothing on the device is touched and
+   the whole delete is safe to retry (cloud deletes are
+   idempotent). */
+function sessionIsFresh(user) {
+  const t = new Date(user.metadata.lastSignInTime).getTime();
+  return isFinite(t) && (Date.now() - t) < 5 * 60 * 1000;
+}
+
+async function deleteAccount(uid, password) {
+  const user = auth.currentUser;
+  if (!user || user.uid !== uid) throw new Error("not signed in as this account");
+  if (!sessionIsFresh(user)) {
+    const pid = user.providerData.length ? user.providerData[0].providerId : "";
+    if (pid === "google.com") await reauthenticateWithPopup(user, new GoogleAuthProvider());
+    else if (pid === "apple.com") await reauthenticateWithPopup(user, new OAuthProvider("apple.com"));
+    else if (pid === "password") {
+      if (!password) {
+        const err = new Error("password needed to confirm deleting");
+        err.code = "fit/reauth-password";
+        throw err;
+      }
+      await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
+    }
+  }
+  const slices = await getDocs(collection(db, "users", uid, "slices"));
+  const deletes = [];
+  slices.forEach(function (s) { deletes.push(deleteDoc(s.ref)); });
+  deletes.push(deleteDoc(doc(db, "users", uid)));
+  await Promise.all(deletes);
+  await deleteUser(user);
+}
+
+/* Demo entry (P4, SPARK SHAPE): an anonymous-auth session.
+   The app seeds it client-side from the invented fixture;
+   there is no shared demo account and no server. Anonymous
+   sessions are created ONLY through this door. */
+/* Two-hat plan sync (pattern v2 §0; spec TWO-HAT-INSTANCE
+   -SPEC.md). The comp lives OUTSIDE the user record, in a
+   console-written _comp/{uid} doc no client can read or
+   write. The tier slice in the user's own space is the
+   only entitlement the app reads, and the rules accept a
+   "pro" value there only while the comp record exists —
+   so this function ASKS for pro once, when no tier slice
+   exists yet: if the record is there, the write lands;
+   if not, the denial lands the honest "free" instead.
+   Called only after the account's root doc exists (the
+   caller runs it after a cloud load or a completed first
+   save — the CS order), never for demo sessions. */
+async function syncPlan(uid, isAnonymous) {
+  if (isAnonymous) return null;
+  const ref = doc(db, "users", uid, "slices", "tier");
+  let current = null;
+  try {
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      const v = snap.data().value || {};
+      current = v.plan === "pro" ? "pro" : "free";
+    }
+  } catch (e) { return null; }
+  /* The ask happens EVERY sync, not only when the slice is
+     missing — this is the revocation half (Security TW-3R).
+     A comp granted after a "free" slice exists must take
+     effect, and a comp revoked behind a "pro" slice must
+     resolve back to free on the next sign-in: the pro
+     write is re-attempted, and only the live _comp record
+     lets it land. On denial a stale "pro" is reset to
+     "free" here; a slice that was already "free" needs no
+     write; a missing slice gets its honest "free". */
+  try {
+    await setDoc(ref, { value: { plan: "pro" } });
+    resolvedPlan = "pro";
+    return "pro";
+  } catch (e) {
+    if (current === "free") { resolvedPlan = "free"; return "free"; }
+    try { await setDoc(ref, { value: { plan: "free" } }); resolvedPlan = "free"; return "free"; }
+    catch (e2) { return current === "pro" ? "pro" : null; }
+  }
+}
+/* Display mirror ONLY (pattern ruling, Personal Brand,
+   14 Oct 2026): the tier slice may show the plan, it never
+   grants it. A plan-shaped field smuggled anywhere else
+   (a profile field, say) is inert — TW-3's fence — because
+   nothing ever reads it. Features must call entitlement(),
+   never this. */
+function planOf(state) {
+  return state && state.tier && state.tier.plan === "pro" ? "pro" : "free";
+}
+/* ENTITLEMENT — resolves from the server-side record, at
+   read time, through the sync ask: syncPlan's pro write is
+   accepted only while _comp/{uid} exists, so its outcome
+   IS the resolution. Until a sync has resolved this
+   session, entitlement is "free" — fail-closed, so a stale
+   mirror left behind by a removed comp grants nothing. */
+let resolvedPlan = null;
+function entitlement() {
+  return resolvedPlan === "pro" ? "pro" : "free";
+}
+
+/* The demo door may be reached before the account door is
+   wired on some paths; make sure the door exists first.
+   (Restored 15 Oct: the call stood in enterDemoSession
+   with no definition behind it.) */
+function ensureDoor() {
+  if (!app && window.FIT_ACCOUNT_CONFIG) initDoor(window.FIT_ACCOUNT_CONFIG);
+}
+
+async function enterDemoSession() {
+  ensureDoor();
+  const cred = await signInAnonymously(auth);
+  return cred.user;
+}
+
+window.FitAuth = {
+  initDoor, watchUser, signUpWithEmail, signInWithEmail, resetPassword,
+  signInWithGoogle, signInWithApple, enterDemoSession,
+  signOutUser, loadCloudState, saveCloudState, deleteAccount,
+  syncPlan, planOf, entitlement
+};
+/* app.js (a classic script) always runs before this module;
+   the ready event is how it learns the door exists. If the
+   module cannot load (no connection), no event fires and the
+   app shows its honest on-device account state. */
+try { window.dispatchEvent(new Event("fit-auth-ready")); } catch (e) {}

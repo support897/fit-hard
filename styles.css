@@ -1,0 +1,226 @@
+/* Fit Hard design system — Burrow board v2 (locked 14 Oct 2026):
+   Burrow Cream ground, Burrow Ink, ONE lead (Burrow Sage) with its
+   Mist + Tint, Wally Taupe fenced to Wally. Zilla Slab display +
+   Karla body, self-hosted. Law E appearance themes ride the same
+   tokens: brand (default) / white / black / image.
+   Sidebar Law: hidden by default, open reflows beside content. */
+@font-face{font-family:"Zilla Slab";src:url("fonts/ZillaSlab-700.woff2") format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Zilla Slab";src:url("fonts/ZillaSlab-600.woff2") format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Karla";src:url("fonts/Karla-400.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Karla";src:url("fonts/Karla-700.woff2") format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Karla";src:url("fonts/Karla-400-italic.woff2") format("woff2");font-weight:400;font-style:italic;font-display:swap}
+:root{
+  --ink:#3E2F26; --cream:#FAEED6; --surface:#FFFDF7; --blush:#FDF6E9; --line:#E4D3B8;
+  --mut:#6E5D4B; --mut2:#5D4C3A;
+  --sage:#52695A; --sage-mist:#A9BFA5; --sage-tint:#DCE7D8; --taupe:#AC9278; --on-accent:#FFFFFF;
+  --meals:#52695A; --gym:#52695A; --pep:#52695A; --cal:#52695A; --amber:#C08552;
+}
+body[data-appearance="white"]{
+  --cream:#FFFFFF; --surface:#FFFFFF; --blush:#F7F1E3; --line:#E6D9BE;
+}
+body[data-appearance="black"]{
+  --ink:#F6EDDD; --cream:#17120E; --surface:#251D16; --blush:#2C231B; --line:#4A3A2A;
+  --mut:#CBB99E; --mut2:#D8C8AC;
+  --sage:#A9BFA5; --sage-mist:#7D947F; --sage-tint:#2E3A2A; --taupe:#C4A887; --on-accent:#221A12;
+  --meals:#A9BFA5; --gym:#A9BFA5; --pep:#A9BFA5; --cal:#A9BFA5; --amber:#D9A05F;
+}
+body[data-appearance="image"]{
+  /* Contrast fix (App Checker sweep, 15 Oct 2026, fix a):
+     muted text over the .90 veil on a dark photo patch
+     measured 4.38, under the AA floor. In image mode the
+     muted role takes the darker token value, 5.70 measured;
+     the veil and the photo look are untouched. */
+  --mut:#5D4C3A;
+  background-image:linear-gradient(rgba(250,238,214,.90),rgba(250,238,214,.90)),var(--bgimg,none);
+  background-size:cover;background-position:center;background-attachment:fixed;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:Karla,-apple-system,"Segoe UI",sans-serif;background-color:var(--cream);color:var(--ink)}
+h1,h2,h3,.big,.stripName,.dayCard h3,.habitRow h3,.recipeCard h3,.sessionBig,.repCount,.timerBig{font-family:"Zilla Slab",Georgia,serif}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+.icInline{width:20px;height:20px;vertical-align:-4px}
+.icBig{width:44px;height:44px;color:var(--sage)}
+#topStrip{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;background:var(--cream);border-bottom:1px solid var(--line);padding:8px 14px}
+.stripToggle{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:5px 7px;cursor:pointer;color:var(--ink)}
+.stripLogo{width:28px;height:28px;border-radius:7px}
+.stripName{font-weight:700;font-size:19px}
+.stripHi{margin-left:auto;font-weight:600;color:var(--mut);font-size:14px}
+#app{display:flex;align-items:flex-start}
+#sidebar{width:272px;flex:0 0 272px;background:var(--blush);border-right:1px solid var(--line);padding:16px 12px;position:sticky;top:49px;height:calc(100vh - 49px);overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+body.sbHidden #sidebar{display:none}
+#main{flex:1;min-width:0;max-width:920px;margin:0 auto;padding:18px 16px 48px;width:100%}
+body:not(.sbHidden) #main{max-width:none}
+.navBtn{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-radius:12px;padding:9px 10px;font:inherit;font-weight:600;color:var(--ink);cursor:pointer;text-align:left}
+.navBtn:hover{background:var(--surface)}
+.navBtn.active{background:var(--surface);box-shadow:0 1px 4px rgba(62,47,38,.10)}
+.navIcon{display:inline-flex;padding:6px;border-radius:10px;color:var(--on-accent);background:var(--sage)}
+.icInk{background:var(--sage)}.icAmber{background:var(--amber)}
+.ic-meals{background:var(--meals)}.ic-gym{background:var(--gym)}.ic-peptides{background:var(--pep)}.ic-calendar{background:var(--cal)}
+.areaHead{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-radius:12px;padding:9px 10px;font:inherit;font-weight:700;color:var(--ink);cursor:pointer;text-align:left}
+.areaHead .chev{margin-left:auto;color:var(--mut);transition:transform .15s}
+.areaGroup.open .areaHead .chev{transform:rotate(90deg)}
+.subMenu{display:none;padding:2px 0 6px 46px}
+.areaGroup.open .subMenu{display:block}
+.subBtn{display:block;width:100%;background:none;border:0;border-radius:9px;padding:7px 10px;font:inherit;font-weight:600;font-size:14px;color:var(--mut2);cursor:pointer;text-align:left}
+.subBtn:hover,.subBtn.active{background:var(--surface);color:var(--ink)}
+.sideLabel{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);padding:14px 10px 4px}
+.sideFoot{margin-top:auto;border-top:1px solid var(--line);padding-top:8px}
+.view{display:none}.view.active{display:block}
+.topBar h1{margin:2px 0 4px;font-size:29px}
+.sub{margin:0;color:var(--mut);font-weight:600}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;margin:16px 0;box-shadow:0 1px 5px rgba(62,47,38,.05)}
+.card h2{margin:0 0 8px;font-size:20px}
+.card h3{margin:16px 0 6px}
+.hint{color:var(--mut);font-weight:600;font-size:14px;margin:6px 0}
+.big{font-size:23px;font-weight:700;margin:4px 0}
+.checkinRow{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.checkinBtn{flex:1;min-width:110px;border:2px solid var(--line);background:var(--blush);border-radius:14px;padding:12px;font:inherit;font-weight:700;cursor:pointer;color:var(--ink)}
+.checkinBtn[data-level="rough"]{border-color:#D9B98F}.checkinBtn[data-level="steady"]{border-color:var(--sage-mist)}.checkinBtn[data-level="good"]{border-color:#8FAE94}
+.checkinBtn.active{background:var(--surface);box-shadow:0 2px 8px rgba(62,47,38,.12);outline:2px solid currentColor}
+.areaCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:16px 0}
+.areaCard{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;cursor:pointer;text-align:left;font:inherit;color:var(--ink);box-shadow:0 1px 5px rgba(62,47,38,.05)}
+.areaCard h3{margin:8px 0 4px;font-size:17px}
+.areaCard p{margin:0;color:var(--mut);font-weight:600;font-size:14px}
+.areaCard .dot{display:inline-flex;padding:8px;border-radius:12px;color:var(--on-accent)}
+.emptyCard{text-align:center;padding:28px 18px}
+.emptyCard p{font-weight:700}
+.primaryBtn{background:var(--sage);color:var(--on-accent);border:0;border-radius:12px;padding:11px 18px;font:inherit;font-weight:700;cursor:pointer}
+.pillBtn{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:9px 16px;font:inherit;font-weight:700;cursor:pointer;color:var(--ink)}
+.pillBtn:disabled{opacity:.55;cursor:default}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+label{display:block;font-weight:700;font-size:14px;margin:8px 0}
+input,select,textarea{display:block;width:100%;margin-top:5px;border:1px solid var(--line);border-radius:11px;padding:10px;font:inherit;font-weight:600;background:var(--surface);color:var(--ink)}
+.chipRow{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.chip{border:2px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font:inherit;font-weight:700;cursor:pointer;color:var(--mut2)}
+.chip.on{border-color:var(--sage);background:var(--sage-tint);color:var(--ink)}
+.modal{position:fixed;inset:0;background:rgba(62,47,38,.45);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:18px;z-index:50}
+.modal.hidden{display:none}
+.modalCard{background:var(--surface);border-radius:20px;padding:22px;max-width:640px;width:100%;margin:auto}
+.modalCard h2{margin-top:0}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:var(--cream);border-radius:999px;padding:10px 18px;font-weight:700;z-index:60}
+.toast.hidden{display:none}
+.hidden{display:none!important}
+a{color:var(--sage);font-weight:700}
+/* --- Meals --- */
+.dayCard{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:14px 16px;margin:12px 0;box-shadow:0 1px 5px rgba(62,47,38,.05)}
+.dayCard h3{margin:0 0 8px;font-size:17px}
+.mealRow{display:flex;align-items:center;gap:10px;width:100%;background:var(--blush);border:1px solid var(--line);border-radius:12px;padding:9px 12px;margin:6px 0;font:inherit;font-weight:600;color:var(--ink);cursor:pointer;text-align:left}
+.mealRow:hover{background:var(--sage-tint)}
+.mealRow .mName{flex:1}
+.mealDot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.kcalChip{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:2px 9px;font-size:13px;font-weight:700;white-space:nowrap}
+.dayTotal{font-weight:700;font-size:14px;color:var(--mut2);margin-top:6px}
+.recipeGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:10px}
+.recipeCard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;cursor:pointer;text-align:left;font:inherit;box-shadow:0 1px 4px rgba(62,47,38,.05)}
+.recipeCard h3{margin:0 0 4px;font-size:16px}
+.recipeCard p{margin:2px 0;color:var(--mut);font-weight:600;font-size:13px}
+.recipeCard img{width:100%;height:110px;object-fit:cover;border-radius:10px;margin-bottom:8px}
+textarea{resize:vertical}
+.photoImg{max-width:100%;border-radius:14px;margin:10px 0}
+.treatRow{display:flex;gap:10px;align-items:center;background:var(--blush);border:1px solid var(--line);border-radius:12px;padding:9px 12px;margin:6px 0;font-weight:600}
+.treatRow .tName{flex:1}
+.miniBtn{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 11px;font:inherit;font-weight:700;font-size:13px;cursor:pointer;color:var(--ink)}
+.listRow{display:flex;gap:10px;align-items:center;padding:7px 2px;border-bottom:1px solid var(--line);font-weight:600}
+.listRow .grow{flex:1}
+.haveIt{color:var(--sage);font-weight:700;font-size:13px}
+.modalCard .ingList{margin:6px 0;padding-left:20px;font-weight:600}
+.modalCard .stepList{margin:6px 0;padding-left:20px;font-weight:600}
+.swapBox{background:var(--sage-tint);border-radius:12px;padding:10px 12px;font-weight:600;margin:10px 0}
+/* --- Calendar, habits, to-dos --- */
+.calHead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.calHead h3{margin:0;flex:1;font-size:19px}
+.calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.calDow{font-size:12px;font-weight:700;color:var(--mut);text-align:center;padding:2px 0}
+.calCell{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:74px;padding:6px;cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
+.calCell.dim{opacity:.42}
+.calCell.today{outline:2px solid var(--sage)}
+.calCell.sel{outline:2px solid var(--ink)}
+.calCell .dNum{font-weight:700;font-size:13px}
+.calCell .dots{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px}
+.calCell .evDot{width:8px;height:8px;border-radius:50%}
+.calCell .evTxt{font-size:11px;font-weight:700;color:var(--mut2);line-height:1.25}
+.habitRow{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin:10px 0;box-shadow:0 1px 4px rgba(62,47,38,.05)}
+.habitRow h3{margin:0 0 2px;font-size:16px}
+.weekDots{display:flex;gap:6px;margin-top:8px}
+.wDot{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);background:var(--surface);font:inherit;font-size:11px;font-weight:700;cursor:pointer;color:var(--mut);padding:0}
+.wDot.done{background:var(--sage);border-color:var(--sage);color:var(--on-accent)}
+.wDot.today{outline:2px solid var(--amber)}
+.todoRow{display:flex;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 12px;margin:6px 0;font-weight:600}
+.todoRow .tTitle{flex:1}
+.todoRow.done .tTitle{color:var(--mut);text-decoration:line-through}
+.todoCheck{width:26px;height:26px;border-radius:50%;border:2px solid var(--line);background:var(--surface);cursor:pointer;flex:0 0 auto;padding:0;font:inherit;color:var(--on-accent)}
+.todoCheck.done{background:var(--sage);border-color:var(--sage)}
+/* --- Gym --- */
+.exRow{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:7px 0}
+.exTile{width:52px;height:52px;border-radius:14px;background:var(--sage);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.exTile svg{width:30px;height:30px;stroke:var(--on-accent)}
+.exRow .eName{font-weight:700;flex:1}
+.exRow .eMeta{color:var(--mut);font-weight:600;font-size:13px}
+.machineGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px}
+.sessionBig{font-size:27px;font-weight:700;margin:4px 0}
+.repCount{font-size:56px;font-weight:700;text-align:center;margin:8px 0}
+.timerBig{font-size:44px;font-weight:700;text-align:center;margin:6px 0}
+.setPips{display:flex;gap:6px;margin:8px 0}
+.pip{width:26px;height:10px;border-radius:99px;background:var(--line)}
+.pip.done{background:var(--sage)}
+.dayChips{display:flex;gap:6px;flex-wrap:wrap}
+/* --- Wally, your guide --- */
+.wallyWrap{display:flex;gap:10px;align-items:flex-end;margin-top:10px}
+.wallyImg{border-radius:14px;background:#fff;display:block}
+.wallyBubble{background:var(--surface);border:2px solid var(--ink);border-radius:14px;padding:8px 12px;font-weight:700;font-size:14px;max-width:230px}
+#wallyFloat{position:fixed;right:14px;bottom:14px;z-index:60;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 28px rgba(62,47,38,.18);padding:10px 12px;max-width:320px}
+#wallyFloat .wallyWrap{margin-top:0}
+.wallyX{margin-left:auto}
+/* --- Appearance (Law E) --- */
+.apprRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.apprBtn{border:2px solid var(--line);background:var(--surface);border-radius:12px;padding:9px 14px;font:inherit;font-weight:700;cursor:pointer;color:var(--ink)}
+.apprBtn.on{border-color:var(--sage);outline:2px solid var(--sage)}
+.apprSwatch{display:inline-block;width:14px;height:14px;border-radius:50%;border:1px solid var(--line);vertical-align:-2px;margin-right:7px}
+.blanketBtn{border:2px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 13px;font:inherit;font-weight:700;cursor:pointer;color:var(--ink)}
+.blanketBtn.on{border-color:var(--sage);outline:2px solid var(--sage)}
+#guideRestSpot .wallyWrap{margin-top:2px}
+/* The sliver shield (nav ruling, 15 Oct 2026): on a
+   phone the open menu takes most of the screen and the page
+   shrinks to a thin sliver at the edge; tapping the sliver
+   closes the menu and the page comes back whole. The shield
+   is that sliver's tap surface; it exists only while the
+   menu is open on a phone width. */
+#sbShield{display:none}
+@media (max-width:700px){
+  body:not(.sbHidden) #sidebar{width:calc(100vw - 44px);flex-basis:calc(100vw - 44px)}
+  body:not(.sbHidden) #sbShield{display:block;position:fixed;top:49px;right:0;bottom:0;width:44px;z-index:60;background:rgba(62,47,38,.07);border:0;border-left:1px solid var(--line);cursor:pointer;padding:0}
+  .grid2{grid-template-columns:1fr}
+  .topBar h1{font-size:24px}
+}
+
+/* Demo banner (P4): a slim, kind label while a demo session
+   is open — demo sessions are labelled in-app by the ruling. */
+#demoBanner{background:var(--sage-tint);color:var(--ink);text-align:center;font-weight:600;
+  padding:8px 14px;font-size:14px}
+#demoBanner.hidden{display:none}
+
+/* Exercise animations: the card carries its OWN cream ground
+   on every Law E background (QA pin 10) — fixed board colours
+   here on purpose, not theme tokens. */
+.skinBtn{border:2px solid var(--line);background:var(--surface);border-radius:12px;padding:8px 13px;font:inherit;font-weight:700;cursor:pointer;color:var(--ink)}
+.skinBtn.on{border-color:var(--sage);outline:2px solid var(--sage)}
+.animCard{background:#FAEED6;color:#3E2F26;border:2px solid #3E2F26;border-radius:16px;padding:10px;margin:12px 0}
+.animStage svg{width:100%;height:auto;display:block}
+.animGuide{display:flex;gap:10px;align-items:flex-start;margin-top:8px}
+.animWally{width:54px;height:54px;object-fit:contain;flex:none}
+.animBubble{background:#FFFDF6;border:2px solid #52695A;border-radius:14px;padding:8px 10px;font-size:15px;line-height:1.35;flex:1;color:#3E2F26}
+.animRestBtn{display:block;margin-top:6px;background:none;border:none;color:#52695A;font:inherit;font-size:13px;text-decoration:underline;cursor:pointer;padding:0}
+.animStills{display:flex;gap:8px}
+.animStill{flex:1;background:#FFFDF6;border:2px solid #A9BFA5;border-radius:12px;padding:4px;cursor:pointer}
+.animStill.sel{border-color:#3E2F26;outline:2px solid #3E2F26}
+.animStill svg{width:100%;height:auto;display:block}
+.animMissing p{margin:4px 0}
+
+/* The door step's mark (door-first ruling, 15 Oct 2026):
+   the app's own icon + wordmark, nothing else above the
+   three choices. */
+.doorMark{display:flex;align-items:center;gap:10px;margin:2px 0 12px}
+.doorMark .doorLogo{width:34px;height:34px;border-radius:9px}
+.doorMark span{font-family:"Zilla Slab",serif;font-weight:700;font-size:1.45rem;color:var(--ink)}
