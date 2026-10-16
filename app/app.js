@@ -18,11 +18,22 @@
     state = L.repairState(JSON.parse(bootRaw || "null"));
   }
   catch (e) { state = L.emptyState(); }
+  if (window.Lang) Lang.use(state.settings && state.settings.lang);
   var currentArea = null, currentSub = null;
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  /* The language layer (i18n.js): every user-facing word
+     resolves through tr(); English is the source of
+     truth, the device language is followed, a Settings
+     choice overrides, English fills gaps. */
+  function wallyLine(key) { return tr("wally." + key, null, window.Wally ? window.Wally.BUBBLES[key] : key); }
+  function tr(key, vars, fallback) {
+    if (!window.Lang) return fallback != null ? fallback : key;
+    var s = window.Lang.t(key, vars);
+    return (s === key && fallback != null) ? fallback : s;
+  }
   /* Saves stay on the device first, always. When the user is
      signed in, each save also mirrors to their account
      (Phase 6, P2). A full device (QA Phase 2 advisory) never
@@ -33,11 +44,11 @@
   function saveLocal() {
     try { localStorage.setItem(KEY, JSON.stringify(state)); saveFailed = false; }
     catch (e) {
-      if (!saveFailed) toast("This device is out of storage room. Your newest changes are safe here for now, and Settings has a note.");
+      if (!saveFailed) toast(tr("toast.storageFull"));
       saveFailed = true;
     }
     var sn = $("saveNote"); if (sn) sn.textContent = saveFailed ?
-      "This device is out of storage room, so the newest changes could not be saved yet. Downloading your data from here keeps a copy safe." : "";
+      tr("set.saveFull") : "";
   }
   function save() { saveLocal(); scheduleMirror(); }
   function toast(msg) { var t = $("toast"); t.textContent = msg; t.classList.remove("hidden");
@@ -82,11 +93,11 @@
     var split = L.areasForNeeds(needs.length ? needs : ["meals", "gym", "peptides", "calendar"]);
     function group(a) {
       var subs = a.subs.map(function (s) {
-        return '<button class="subBtn" data-area="' + a.id + '" data-sub="' + s.id + '">' + esc(s.label) + "</button>";
+        return '<button class="subBtn" data-area="' + a.id + '" data-sub="' + s.id + '">' + esc(tr("sub." + s.id, null, s.label)) + "</button>";
       }).join("");
       return '<div class="areaGroup" data-group="' + a.id + '">' +
         '<button class="areaHead" data-grouphead="' + a.id + '"><span class="navIcon ic-' + a.id + '">' +
-        '<svg class="ic"><use href="' + iconFor(a.id) + '"/></svg></span><span>' + esc(a.label) + "</span>" +
+        '<svg class="ic"><use href="' + iconFor(a.id) + '"/></svg></span><span>' + esc(tr("nav." + a.id, null, a.label)) + "</span>" +
         '<svg class="ic chev"><use href="#i-chev"/></svg></button>' +
         '<div class="subMenu">' + subs + "</div></div>";
     }
@@ -118,18 +129,18 @@
   });
 
   var EMPTY = {
-    peptides: ["No peptides tracked yet.", "Add a peptide"],
-    meals: ["No meals planned yet.", "Plan my week"],
-    gym: ["No routines yet.", "Build a routine"],
-    calendar: ["Nothing on your calendar yet.", "Add your first thing"]
+    peptides: ["empty.pepLine", "pep.addTitle"],
+    meals: ["meal.nonePlanned", "meal.planWeekBtn"],
+    gym: ["gym.noRoutines", "gym.buildRoutine"],
+    calendar: ["empty.calLine", "empty.calBtn"]
   };
   function openArea(areaId, subId) {
     currentArea = areaId; currentSub = subId;
     var a = areaById(areaId); if (!a) return;
     var sub = a.subs.filter(function (s) { return s.id === subId; })[0] || a.subs[0];
     showView("area");
-    $("areaTitle").textContent = a.label;
-    $("areaSub").textContent = sub.label + ".";
+    $("areaTitle").textContent = tr("nav." + a.id, null, a.label);
+    $("areaSub").textContent = tr("sub." + sub.id, null, sub.label) + ".";
     document.querySelectorAll(".subBtn").forEach(function (b) {
       b.classList.toggle("active", b.getAttribute("data-area") === areaId && b.getAttribute("data-sub") === sub.id); });
     if (areaId === "meals") {
@@ -153,13 +164,13 @@
       return;
     }
     $("areaEmpty").classList.remove("hidden");
-    var e = EMPTY[areaId] || ["Nothing here yet.", "Start"];
-    $("areaEmptyLine").textContent = e[0];
-    $("areaEmptyBtn").textContent = e[1];
+    var e = EMPTY[areaId] || ["area.empty", "area.start"];
+    $("areaEmptyLine").textContent = tr(e[0]);
+    $("areaEmptyBtn").textContent = tr(e[1]);
     $("areaEmptyIcon").innerHTML = '<use href="' + iconFor(areaId) + '"/>';
     $("areaBody").innerHTML = "";
   }
-  $("areaEmptyBtn").addEventListener("click", function () { toast("Coming in its own phase. Your place is saved."); });
+  $("areaEmptyBtn").addEventListener("click", function () { toast(tr("toast.comingPhase")); });
 
   /* ================= MEALS (Phase 2) =================
      Engine, recipes, nutrition table and photo pattern are copied
@@ -172,9 +183,9 @@
   function mpKey(isoKey) { return String(isoKey).replace(/-/g, "."); }
   function dayLabel(isoKey) {
     var today = L.todayKey();
-    if (isoKey === today) return "Today";
-    if (isoKey === L.addDays(today, 1)) return "Tomorrow";
-    return ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][L.parseKey(isoKey).getDay()];
+    if (isoKey === today) return tr("nav.today");
+    if (isoKey === L.addDays(today, 1)) return tr("cal.tomorrow");
+    return tr("cal.wd" + L.parseKey(isoKey).getDay());
   }
   function budgetKcal() { var b = L.estimateBudget(state.profile || {}); return b ? b.target : null; }
   function planWeek() {
@@ -193,15 +204,15 @@
   }
   function micInto(textarea) {
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) { toast("Voice typing is not in this browser. Typing works fine."); return; }
+    if (!SR) { toast(tr("toast.voiceNo")); return; }
     var rec = new SR();
-    rec.lang = "en-AU"; rec.interimResults = false;
+    rec.lang = window.Lang && Lang.current() === "es" ? "es-ES" : "en-AU"; rec.interimResults = false;
     rec.onresult = function (ev) {
       var text = ev.results[0][0].transcript;
       textarea.value = (textarea.value ? textarea.value + "\n" : "") + text;
     };
-    rec.onerror = function () { toast("Voice did not catch that. Typing works fine."); };
-    rec.start(); toast("Listening. Say it any way you like.");
+    rec.onerror = function () { toast(tr("toast.voiceMiss")); };
+    rec.start(); toast(tr("toast.listening"));
   }
   function wireMic(btn, textarea) { if (btn) btn.addEventListener("click", function () { micInto(textarea); }); }
 
@@ -209,20 +220,20 @@
     var colors = { breakfast: "#C08552", lunch: "#7A8B6F", dinner: "#52695A" };
     var k = kcalOf(r);
     return '<button class="mealRow" data-recipe="' + r.id + '"><span class="mealDot" style="background:' + colors[meal] + '"></span>' +
-      '<span class="mName">' + esc(r.name) + '</span><span class="kcalChip">' + (k == null ? "no count yet" : "about " + k + " kcal") + "</span></button>";
+      '<span class="mName">' + esc(r.name) + '</span><span class="kcalChip">' + (k == null ? tr("meal.noCount") : tr("meal.aboutKcal", { kcal: k })) + "</span></button>";
   }
   function renderPlan() {
     var el = $("areaBody");
     var target = budgetKcal();
-    var html = '<div class="card"><h2>Your week</h2>' +
-      '<p class="hint">' + (target ? "Planned towards about " + target + " kcal a day, from your setup. An estimate, not medical advice." :
-        "Add your age and formula pick in setup and the plan will aim at a daily estimate. For now it plans tasty days.") + "</p>" +
-      '<div class="row"><button class="primaryBtn" id="planWeekBtn">Plan my week</button></div>' +
-      '<label>Messy note, type or say it. One meal per line works, like: tacos friday<textarea id="mealNote" rows="2" placeholder="tacos friday&#10;green smoothie tomorrow"></textarea></label>' +
-      '<div class="row"><button class="pillBtn" id="mealNoteBtn">Sort my note</button><button class="pillBtn" id="mealNoteMic">Voice</button></div>' +
+    var html = '<div class="card"><h2>' + esc(tr("meal.week")) + "</h2>" +
+      '<p class="hint">' + (target ? tr("legal.planHint", { kcal: target }) :
+        tr("meal.planHintNone")) + "</p>" +
+      '<div class="row"><button class="primaryBtn" id="planWeekBtn">' + esc(tr("meal.planWeekBtn")) + '</button></div>' +
+      '<label>' + esc(tr("meal.noteLabel")) + '<textarea id="mealNote" rows="2" placeholder="' + esc(tr("meal.notePh")) + '"></textarea></label>' +
+      '<div class="row"><button class="pillBtn" id="mealNoteBtn">' + esc(tr("meal.sortBtn")) + '</button><button class="pillBtn" id="mealNoteMic">' + esc(tr("meal.voiceBtn")) + '</button></div>' +
       '<p class="hint" id="mealNoteMsg"></p></div>';
     var has = Object.keys(state.plan).length > 0;
-    if (!has) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-meal"/></svg><p>No meals planned yet.</p><p class="hint">Tap Plan my week and the days fill in.</p></div>';
+    if (!has) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-meal"/></svg><p>' + esc(tr("meal.nonePlanned")) + '</p><p class="hint">' + esc(tr("meal.nonePlannedHint")) + '</p></div>';
     for (var i = 0; i < 7; i++) {
       var iso = L.addDays(L.todayKey(), i), entry = state.plan[mpKey(iso)] || {};
       if (!has && !entry.breakfast) continue;
@@ -238,12 +249,12 @@
       var badToday = iso === L.todayKey() && state.checkins[iso] === "bad" && target;
       if (badToday) dayTarget = L.mealBudgetFor("bad", { target: target }).meals;
       html += '<div class="dayCard"><h3>' + dayLabel(iso) + " · " + iso.slice(8) + "/" + iso.slice(5, 7) + "</h3>" + rows +
-        '<p class="dayTotal">Meals about ' + total + " kcal" + (dayTarget ? " of about " + dayTarget : "") +
-        (badToday ? " · treat room kept aside today" : "") +
-        (treats.length ? " · treats about " + tt.known + " kcal" + (tt.unknown ? " plus " + tt.unknown + " with no count" : "") : "") + "</p></div>";
+        '<p class="dayTotal">' + esc(tr("meal.dayAbout", { kcal: total })) + (dayTarget ? esc(tr("meal.ofAbout", { kcal: dayTarget })) : "") +
+        (badToday ? esc(tr("meal.treatRoomDay")) : "") +
+        (treats.length ? esc(tr("meal.treatsAbout", { kcal: tt.known })) + (tt.unknown ? esc(tr("meal.plusNoCount", { n: tt.unknown })) : "") : "") + "</p></div>";
     }
     el.innerHTML = html;
-    $("planWeekBtn").addEventListener("click", function () { planWeek(); renderPlan(); toast("Your week is planned. Tap any meal for the recipe."); showWallyCelebration("plan"); });
+    $("planWeekBtn").addEventListener("click", function () { planWeek(); renderPlan(); toast(tr("meal.weekPlanned")); showWallyCelebration("plan"); });
     $("mealNoteBtn").addEventListener("click", function () {
       var items = L.parseQuickDump($("mealNote").value, L.todayKey());
       var done = 0, missed = [];
@@ -256,7 +267,7 @@
         } else missed.push(it.title);
       });
       save(); renderPlan();
-      $("mealNoteMsg").textContent = done ? "Sorted " + done + (done === 1 ? " meal" : " meals") + " into your plan." + (missed.length ? " Could not match: " + missed.join(", ") + ". Try the recipe name." : "") : "Nothing matched yet. Try a recipe name, like tacos.";
+      $("mealNoteMsg").textContent = done ? (done === 1 ? tr("meal.sortedOne") : tr("meal.sortedMany", { n: done })) + (missed.length ? tr("meal.noMatch", { list: missed.join(", ") }) : "") : tr("meal.nothingMatched");
     });
     wireMic($("mealNoteMic"), $("mealNote"));
     el.querySelectorAll("[data-recipe]").forEach(function (b) { b.addEventListener("click", function () { openRecipe(b.getAttribute("data-recipe")); }); });
@@ -267,15 +278,15 @@
     var k = kcalOf(r);
     var ads = state.profile ? MP.adaptations(r, [{ name: "You", allergies: state.profile.allergies || [], dislikes: [] }], MD) : [];
     var html = "<h2>" + esc(r.name) + "</h2>" +
-      '<p class="hint">' + esc((r.cuisines || []).join(", ")) + " · " + r.minutes + " min · serves " + r.servings +
-      (k == null ? " · no calorie count yet (an ingredient is not in the table)" : " · about " + k + " kcal per serving") + "</p>";
-    if (r.picture) html += '<img class="photoImg" alt="Your recipe photo" src="' + r.picture + '">';
-    if (ads.length) html += '<div class="swapBox">Made safe for you: ' + ads.map(function (a) {
-      return esc(a.ingredient) + " becomes " + esc(a.swap); }).join("; ") + ".</div>";
-    if ((r.ingredients || []).length) html += "<h3>Ingredients</h3><ul class='ingList'>" + r.ingredients.map(function (i) {
+      '<p class="hint">' + esc((r.cuisines || []).join(", ")) + " · " + r.minutes + " min · " + tr("meal.serves", { n: r.servings }) +
+      (k == null ? tr("meal.noKcalYet") : tr("meal.perServing", { kcal: k })) + "</p>";
+    if (r.picture) html += '<img class="photoImg" alt="' + esc(tr("meal.photoAlt")) + '" src="' + r.picture + '">';
+    if (ads.length) html += '<div class="swapBox">' + esc(tr("meal.madeSafe")) + ads.map(function (a) {
+      return esc(tr("meal.becomes", { ing: a.ingredient, swap: a.swap })); }).join("; ") + ".</div>";
+    if ((r.ingredients || []).length) html += "<h3>" + esc(tr("meal.ingredients")) + "</h3><ul class='ingList'>" + r.ingredients.map(function (i) {
       return "<li>" + esc(i.qty) + " " + esc(i.unit) + " " + esc(i.name) + "</li>"; }).join("") + "</ul>";
-    if ((r.steps || []).length) html += "<h3>Steps</h3><ol class='stepList'>" + r.steps.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ol>";
-    html += '<div class="row"><button class="primaryBtn" id="rmToday">Put on today</button><button class="pillBtn" id="rmClose">Close</button></div>';
+    if ((r.steps || []).length) html += "<h3>" + esc(tr("meal.steps")) + "</h3><ol class='stepList'>" + r.steps.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ol>";
+    html += '<div class="row"><button class="primaryBtn" id="rmToday">' + esc(tr("meal.putToday")) + '</button><button class="pillBtn" id="rmClose">' + esc(tr("common.close")) + '</button></div>';
     $("recipeModalCard").innerHTML = html;
     $("recipeModal").classList.remove("hidden");
     $("rmClose").addEventListener("click", function () { $("recipeModal").classList.add("hidden"); });
@@ -283,27 +294,27 @@
       var key = mpKey(L.todayKey());
       if (!state.plan[key]) state.plan[key] = {};
       state.plan[key][r.meal] = r.id; save();
-      $("recipeModal").classList.add("hidden"); toast("On today. Enjoy.");
+      $("recipeModal").classList.add("hidden"); toast(tr("meal.onToday"));
       if (currentArea === "meals") renderMeals(currentSub);
     });
   }
 
   function renderRecipes() {
     var el = $("areaBody");
-    el.innerHTML = '<div class="card"><h2>Add your recipe</h2>' +
-      '<div class="grid2"><label>Recipe name<input id="ownName" type="text" placeholder="Grandma soup"></label>' +
-      '<label>Meal<select id="ownMeal"><option value="breakfast">Breakfast</option><option value="lunch">Lunch</option><option value="dinner" selected>Dinner</option></select></label>' +
-      '<label>Cook time in minutes<input id="ownMinutes" type="number" min="1" value="30"></label>' +
-      '<label>Serves<input id="ownServings" type="number" min="1" value="2"></label></div>' +
-      '<label>Ingredients, one per line, like 200 g chicken breast<textarea id="ownIngredients" rows="4"></textarea></label>' +
-      '<label>Steps, one per line<textarea id="ownSteps" rows="4"></textarea></label>' +
-      '<div class="row"><button class="primaryBtn" id="ownSave">Save my recipe</button></div>' +
-      '<p class="hint">Or just a name. Type the meal and the app writes a starter recipe for you to approve.</p>' +
-      '<div class="row"><input id="nameMealInput" type="text" placeholder="Type a meal name, like mushroom risotto"><button class="pillBtn" id="nameMealBtn">Get the recipe</button></div><div id="nameMealResult"></div>' +
-      '<h3>Recipe as a picture</h3><p class="hint">Snap a recipe card or a page from a book. It saves with your name for it. The photo stays on your device.</p>' +
-      '<div class="row"><input id="picName" type="text" placeholder="Name for the pictured recipe"><input id="picFile" type="file" accept="image/*"></div><div id="picPreview"></div>' +
-      '<div class="row"><button class="pillBtn" id="picSave">Save picture recipe</button></div></div>' +
-      '<div class="card"><h2>All recipes</h2><div class="row"><input id="recipeSearch" type="text" placeholder="Search recipes"></div><div id="recipeList" class="recipeGrid"></div></div>';
+    el.innerHTML = '<div class="card"><h2>' + esc(tr("meal.addRecipe")) + '</h2>' +
+      '<div class="grid2"><label>' + esc(tr("meal.nameLabel")) + '<input id="ownName" type="text" placeholder="' + esc(tr("meal.namePh")) + '"></label>' +
+      '<label>' + esc(tr("meal.mealLabel")) + '<select id="ownMeal"><option value="breakfast">' + esc(tr("meal.breakfast")) + '</option><option value="lunch">' + esc(tr("meal.lunch")) + '</option><option value="dinner" selected>' + esc(tr("meal.dinner")) + '</option></select></label>' +
+      '<label>' + esc(tr("meal.cookTime")) + '<input id="ownMinutes" type="number" min="1" value="30"></label>' +
+      '<label>' + esc(tr("meal.servesLabel")) + '<input id="ownServings" type="number" min="1" value="2"></label></div>' +
+      '<label>' + esc(tr("meal.ingsLabel")) + '<textarea id="ownIngredients" rows="4"></textarea></label>' +
+      '<label>' + esc(tr("meal.stepsLabel")) + '<textarea id="ownSteps" rows="4"></textarea></label>' +
+      '<div class="row"><button class="primaryBtn" id="ownSave">' + esc(tr("meal.saveRecipe")) + '</button></div>' +
+      '<p class="hint">' + esc(tr("meal.justName")) + '</p>' +
+      '<div class="row"><input id="nameMealInput" type="text" placeholder="' + esc(tr("meal.typeMealPh")) + '"><button class="pillBtn" id="nameMealBtn">' + esc(tr("meal.getRecipe")) + '</button></div><div id="nameMealResult"></div>' +
+      '<h3>' + esc(tr("meal.picRecipe")) + '</h3><p class="hint">' + esc(tr("meal.picHint")) + '</p>' +
+      '<div class="row"><input id="picName" type="text" placeholder="' + esc(tr("meal.picNamePh")) + '"><input id="picFile" type="file" accept="image/*"></div><div id="picPreview"></div>' +
+      '<div class="row"><button class="pillBtn" id="picSave">' + esc(tr("meal.savePic")) + '</button></div></div>' +
+      '<div class="card"><h2>' + esc(tr("meal.allRecipes")) + '</h2><div class="row"><input id="recipeSearch" type="text" placeholder="' + esc(tr("meal.searchPh")) + '"></div><div id="recipeList" class="recipeGrid"></div></div>';
     var picData = "";
     $("picFile").addEventListener("change", function () {
       var f = $("picFile").files[0]; if (!f) return;
@@ -314,46 +325,46 @@
         c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
         c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
         picData = c.toDataURL("image/jpeg", 0.8);
-        $("picPreview").innerHTML = '<img class="photoImg" alt="Your recipe photo" src="' + picData + '">';
+        $("picPreview").innerHTML = '<img class="photoImg" alt="' + esc(tr("meal.photoAlt")) + '" src="' + picData + '">';
         URL.revokeObjectURL(img.src);
       };
       img.src = URL.createObjectURL(f);
     });
     $("picSave").addEventListener("click", function () {
-      if (!picData) { toast("Add a photo first."); return; }
-      var name = $("picName").value.trim() || "My pictured recipe";
+      if (!picData) { toast(tr("toast.addPhoto")); return; }
+      var name = $("picName").value.trim() || tr("meal.myPicRecipe");
       state.customRecipes.push({ id: "custom." + Date.now(), name: name, meal: "dinner", cuisines: ["Mine"],
         minutes: 30, servings: 2, ingredients: [], steps: [], custom: true, picture: picData });
-      save(); renderRecipes(); toast("Saved. It is in your recipes now.");
+      save(); renderRecipes(); toast(tr("meal.savedPic"));
     });
     $("ownSave").addEventListener("click", function () {
-      var name = $("ownName").value.trim(); if (!name) { toast("Give it a name first."); return; }
+      var name = $("ownName").value.trim(); if (!name) { toast(tr("toast.nameFirst")); return; }
       var ings = $("ownIngredients").value.split(/\n+/).map(function (x) { return L.parseIngredientLine(x); }).filter(Boolean);
       var steps = $("ownSteps").value.split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean);
       state.customRecipes.push({ id: "custom." + Date.now(), name: name, meal: $("ownMeal").value,
         cuisines: ["Mine"], minutes: Math.max(1, Number($("ownMinutes").value) || 30),
         servings: Math.max(1, Number($("ownServings").value) || 2),
         ingredients: ings, steps: steps, custom: true });
-      save(); renderRecipes(); toast("Saved. Your recipe is in the list.");
+      save(); renderRecipes(); toast(tr("meal.savedRecipe"));
     });
     $("nameMealBtn").addEventListener("click", function () {
       var name = $("nameMealInput").value.trim(); if (!name) return;
       var found = MP.findRecipeByName(name, MD, state.customRecipes || []);
       var r = found || MP.makeRecipeFromName(name, MD, state.customRecipes || []);
       $("nameMealResult").innerHTML = '<div class="swapBox">' + esc(r.name) + " · " + r.minutes + " min · " +
-        (kcalOf(r) == null ? "no count yet" : "about " + kcalOf(r) + " kcal") +
-        (found ? " (already in your recipes)" : ' <button class="miniBtn" id="nameMealSave">Save this recipe</button>') + "</div>";
+        (kcalOf(r) == null ? tr("meal.noCount") : tr("meal.aboutKcal", { kcal: kcalOf(r) })) +
+        (found ? tr("meal.alreadyIn") : ' <button class="miniBtn" id="nameMealSave">' + esc(tr("meal.saveThis")) + '</button>') + "</div>";
       var sv = $("nameMealSave");
-      if (sv) sv.addEventListener("click", function () { state.customRecipes.push(r); save(); renderRecipes(); toast("Saved."); });
+      if (sv) sv.addEventListener("click", function () { state.customRecipes.push(r); save(); renderRecipes(); toast(tr("common.saved")); });
     });
     function drawList(filter) {
       var list = allRecipes().filter(function (r) { return !filter || r.name.toLowerCase().indexOf(filter) !== -1; });
       $("recipeList").innerHTML = list.map(function (r) {
         var k = kcalOf(r);
         return '<button class="recipeCard" data-recipe="' + r.id + '">' + (r.picture ? '<img alt="" src="' + r.picture + '">' : "") +
-          "<h3>" + esc(r.name) + "</h3><p>" + esc(r.meal) + " · " + r.minutes + " min</p><p>" +
-          (k == null ? "no count yet" : "about " + k + " kcal per serving") + "</p></button>";
-      }).join("") || '<p class="hint">No recipes match that search.</p>';
+          "<h3>" + esc(r.name) + "</h3><p>" + esc(tr("meal." + r.meal, null, r.meal)) + " · " + r.minutes + " min</p><p>" +
+          (k == null ? tr("meal.noCount") : tr("meal.aboutPerServing", { kcal: k })) + "</p></button>";
+      }).join("") || '<p class="hint">' + esc(tr("meal.noMatchSearch")) + '</p>';
       $("recipeList").querySelectorAll("[data-recipe]").forEach(function (b) { b.addEventListener("click", function () { openRecipe(b.getAttribute("data-recipe")); }); });
     }
     drawList("");
@@ -362,24 +373,24 @@
 
   function renderFridge() {
     var el = $("areaBody");
-    el.innerHTML = '<div class="card"><h2>Photo of your fridge</h2>' +
-      '<p class="hint">The photo is looked at on your device and never uploaded. A photo cannot weigh food, so you confirm each amount before it saves.</p>' +
+    el.innerHTML = '<div class="card"><h2>' + esc(tr("meal.fridgeTitle")) + '</h2>' +
+      '<p class="hint">' + esc(tr("meal.fridgeHint")) + '</p>' +
       '<input id="fridgePhoto" type="file" accept="image/*"><div id="photoPreview"></div>' +
-      '<div class="row"><button class="pillBtn" id="photoScan">Look at my photo</button></div><div id="photoResults"></div></div>' +
-      '<div class="card"><h2>Meal ideas from your fridge</h2><p class="hint">Recipes that use what you already have, food that goes off sooner first.</p>' +
-      '<div class="row"><button class="primaryBtn" id="ideasBtn">Give me ideas</button></div><div id="ideasList"></div></div>';
+      '<div class="row"><button class="pillBtn" id="photoScan">' + esc(tr("meal.lookPhoto")) + '</button></div><div id="photoResults"></div></div>' +
+      '<div class="card"><h2>' + esc(tr("meal.ideasTitle")) + '</h2><p class="hint">' + esc(tr("meal.ideasHint")) + '</p>' +
+      '<div class="row"><button class="primaryBtn" id="ideasBtn">' + esc(tr("meal.ideasBtn")) + '</button></div><div id="ideasList"></div></div>';
     var photoData = "";
     $("fridgePhoto").addEventListener("change", function () {
       var f = $("fridgePhoto").files[0]; if (!f) return;
       var rd = new FileReader();
-      rd.onload = function () { photoData = String(rd.result); $("photoPreview").innerHTML = '<img class="photoImg" alt="Your fridge photo" src="' + photoData + '">'; };
+      rd.onload = function () { photoData = String(rd.result); $("photoPreview").innerHTML = '<img class="photoImg" alt="' + esc(tr("meal.fridgeAlt")) + '" src="' + photoData + '">'; };
       rd.readAsDataURL(f);
     });
     function loadScript(src) { return new Promise(function (res, rej) {
       var s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
     function detectRow(name, est) {
-      return '<div class="treatRow"><span class="tName">' + esc(name) + (est ? " · about " + est.kcal + " kcal for " + esc(est.label) : "") +
-        '</span><button class="miniBtn" data-addfood="' + esc(name) + '">Add to my food</button></div>';
+      return '<div class="treatRow"><span class="tName">' + esc(name) + (est ? esc(tr("meal.forServing", { kcal: est.kcal, label: est.label })) : "") +
+        '</span><button class="miniBtn" data-addfood="' + esc(name) + '">' + esc(tr("meal.addFood")) + '</button></div>';
     }
     function bindRows() {
       $("photoResults").querySelectorAll("[data-addfood]").forEach(function (b) {
@@ -387,13 +398,13 @@
           var name = b.getAttribute("data-addfood");
           state.pantry.push({ id: "g" + Date.now(), name: name, qty: 1, unit: "pcs", storage: "fridge",
             added: mpKey(L.todayKey()), shelfDays: MP.shelfDays(name, "fridge", MD) });
-          save(); b.textContent = "Added"; b.disabled = true; toast("Added to your food.");
+          save(); b.textContent = tr("meal.added"); b.disabled = true; toast(tr("meal.addedFood"));
         });
       });
     }
     $("photoScan").addEventListener("click", async function () {
-      if (!photoData) { toast("Add a photo first."); return; }
-      $("photoResults").innerHTML = '<p class="hint">Looking at your photo now.</p>';
+      if (!photoData) { toast(tr("toast.addPhoto")); return; }
+      $("photoResults").innerHTML = '<p class="hint">' + esc(tr("meal.looking")) + '</p>';
       var found = [];
       try {
         if (!window.cocoSsd) { await loadScript("vendor/tf.min.js"); await loadScript("vendor/coco-ssd.min.js"); }
@@ -404,9 +415,9 @@
       } catch (e) { found = []; }
       var named = found.map(function (c) { return { c: c, est: MP.photoKcal(c, MN) }; }).filter(function (x) { return x.est; });
       var html = "";
-      if (named.length) html += "<h3>Found in your photo</h3><p class='hint'>Check each one, then add. Amounts start as a typical serving.</p>" +
+      if (named.length) html += "<h3>" + esc(tr("meal.foundIn")) + "</h3><p class='hint'>" + esc(tr("meal.checkEach")) + "</p>" +
         named.map(function (x) { return detectRow(x.est.food, x.est); }).join("");
-      else html += "<h3>Tap what is in your photo</h3><p class='hint'>The quick look could not name food in this photo. Tap each food you can see.</p>";
+      else html += "<h3>" + esc(tr("meal.tapWhat")) + "</h3><p class='hint'>" + esc(tr("meal.quickLook")) + "</p>";
       html += '<div class="chipRow">' + Object.keys(MN.FRIDGE_SERVINGS).map(function (n) {
         return '<button class="chip" data-tapfood="' + esc(n) + '">' + esc(n) + "</button>"; }).join("") + "</div>";
       $("photoResults").innerHTML = html; bindRows();
@@ -419,7 +430,7 @@
     });
     $("ideasBtn").addEventListener("click", function () {
       var names = (state.pantry || []).map(function (p) { return p.name; });
-      if (!names.length) { $("ideasList").innerHTML = '<p class="hint">Your fridge list is empty. Add a photo or a few foods in Groceries first.</p>'; return; }
+      if (!names.length) { $("ideasList").innerHTML = '<p class="hint">' + esc(tr("meal.ideasEmpty")) + '</p>'; return; }
       var ctx = { preferences: (state.profile || {}).preferences || [], expiringNames: names,
         usedCounts: {}, recentIds: [], family: [], customRecipes: state.customRecipes || [] };
       var scored = allRecipes().map(function (r) { return { r: r, s: MP.recipeScore(r, ctx) }; })
@@ -427,7 +438,7 @@
       $("ideasList").innerHTML = scored.map(function (x) {
         var k = kcalOf(x.r);
         return '<button class="mealRow" data-idea="' + x.r.id + '"><span class="mName">' + esc(x.r.name) + '</span><span class="kcalChip">' +
-          (k == null ? "no count yet" : "about " + k + " kcal") + "</span></button>";
+          (k == null ? tr("meal.noCount") : tr("meal.aboutKcal", { kcal: k })) + "</span></button>";
       }).join("");
       $("ideasList").querySelectorAll("[data-idea]").forEach(function (b) { b.addEventListener("click", function () { openRecipe(b.getAttribute("data-idea")); }); });
     });
@@ -438,29 +449,29 @@
     var byDay = {};
     (state.treats || []).forEach(function (t) { (byDay[t.dateKey] = byDay[t.dateKey] || []).push(t); });
     var days = Object.keys(byDay).sort().reverse();
-    var html = '<div class="card"><h2>Treats</h2>' +
-      '<p class="hint">Treats are part of life. They get written down here, never judged. A bad day even plans room for one.</p>' +
-      '<div class="grid2"><label>What was it?<input id="trName" type="text" placeholder="Chocolate cake"></label>' +
-      '<label>Calories if you know them (optional)<input id="trKcal" type="number" min="0" placeholder="320"></label></div>' +
-      '<div class="row"><button class="primaryBtn" id="trAdd">Add treat</button></div>' +
-      '<label>Quick add, one per line. A number at the end counts as calories.<textarea id="trQuick" rows="2" placeholder="Cake 320&#10;Chips"></textarea></label>' +
-      '<div class="row"><button class="pillBtn" id="trQuickBtn">Sort my treats</button><button class="pillBtn" id="trMic">Voice</button></div></div>';
-    if (!days.length) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-heart"/></svg><p>No treats logged yet.</p></div>';
+    var html = '<div class="card"><h2>' + esc(tr("sub.meals-treats", null, "Treats")) + '</h2>' +
+      '<p class="hint">' + esc(tr("meal.treatsHint")) + '</p>' +
+      '<div class="grid2"><label>' + esc(tr("meal.treatWhat")) + '<input id="trName" type="text" placeholder="' + esc(tr("meal.treatPh")) + '"></label>' +
+      '<label>' + esc(tr("meal.treatKcal")) + '<input id="trKcal" type="number" min="0" placeholder="320"></label></div>' +
+      '<div class="row"><button class="primaryBtn" id="trAdd">' + esc(tr("meal.addTreat")) + '</button></div>' +
+      '<label>' + esc(tr("meal.treatQuick")) + '<textarea id="trQuick" rows="2" placeholder="Cake 320&#10;Chips"></textarea></label>' +
+      '<div class="row"><button class="pillBtn" id="trQuickBtn">' + esc(tr("meal.sortTreats")) + '</button><button class="pillBtn" id="trMic">' + esc(tr("meal.voiceBtn")) + '</button></div></div>';
+    if (!days.length) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-heart"/></svg><p>' + esc(tr("meal.noTreats")) + '</p></div>';
     days.forEach(function (d) {
       var tt = L.treatsTotal(byDay[d]);
       html += '<div class="dayCard"><h3>' + dayLabel(d) + " · " + d.slice(8) + "/" + d.slice(5, 7) + "</h3>" +
         byDay[d].map(function (t) {
           return '<div class="treatRow"><span class="tName">' + esc(t.name) + '</span><span class="kcalChip">' +
-            (t.kcal ? "about " + t.kcal + " kcal" : "no count") + '</span><button class="miniBtn" data-del="' + t.id + '">Remove</button></div>';
+            (t.kcal ? tr("meal.aboutKcal", { kcal: t.kcal }) : tr("meal.noCountShort")) + '</span><button class="miniBtn" data-del="' + t.id + '">' + esc(tr("common.remove")) + '</button></div>';
         }).join("") +
-        '<p class="dayTotal">Treats about ' + tt.known + " kcal" + (tt.unknown ? ", plus " + tt.unknown + " with no count" : "") + ". All fine.</p></div>";
+        '<p class="dayTotal">' + esc(tr("meal.treatsDayAbout", { kcal: tt.known })) + (tt.unknown ? esc(tr("meal.treatsPlus", { n: tt.unknown })) : "") + esc(tr("meal.allFine")) + "</p></div>";
     });
     el.innerHTML = html;
     $("trAdd").addEventListener("click", function () {
-      var name = $("trName").value.trim(); if (!name) { toast("Name the treat first."); return; }
+      var name = $("trName").value.trim(); if (!name) { toast(tr("toast.treatFirst")); return; }
       state.treats.push({ id: "treat." + Date.now(), dateKey: L.todayKey(), name: name,
         kcal: Number($("trKcal").value) > 0 ? Number($("trKcal").value) : null, note: "" });
-      save(); renderTreats(); toast("Written down. No judgement here.");
+      save(); renderTreats(); toast(tr("meal.treatSaved"));
     });
     $("trQuickBtn").addEventListener("click", function () {
       var lines = $("trQuick").value.split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean);
@@ -469,7 +480,7 @@
         state.treats.push({ id: "treat." + Date.now() + Math.floor(Math.random() * 999), dateKey: L.todayKey(),
           name: m ? m[1] : line, kcal: m ? Number(m[2]) : null, note: "" });
       });
-      save(); renderTreats(); toast("Sorted. All written down.");
+      save(); renderTreats(); toast(tr("meal.treatsSorted"));
     });
     wireMic($("trMic"), $("trQuick"));
     el.querySelectorAll("[data-del]").forEach(function (b) {
@@ -485,36 +496,36 @@
     var planMP = state.plan;
     var items = MP.buildGroceryList(planMP, allRecipes(), state.pantry || []);
     var pantrySorted = MP.sortByExpiry((state.pantry || []).slice(), new Date(), MD);
-    var html = '<div class="card"><h2>Grocery list</h2><p class="hint">Built from your planned week. Food you already have is marked.</p>' +
+    var html = '<div class="card"><h2>' + esc(tr("meal.groceryList")) + '</h2><p class="hint">' + esc(tr("meal.grocHint")) + '</p>' +
       (items.length ? items.map(function (i) {
         return '<div class="listRow"><span class="grow">' + esc(i.name) + " · " + esc(i.qty) + " " + esc(i.unit) + "</span>" +
-          (i.haveIt ? '<span class="haveIt">you have this</span>' : "") + "</div>";
-      }).join("") : '<p class="hint">No plan yet. Plan your week in Meal plan and the list builds itself.</p>') +
-      '<div class="row"><input id="extraName" type="text" placeholder="Add anything, like dish soap"><button class="pillBtn" id="extraAdd">Add</button></div>' +
+          (i.haveIt ? '<span class="haveIt">' + esc(tr("meal.haveIt")) + '</span>' : "") + "</div>";
+      }).join("") : '<p class="hint">' + esc(tr("meal.noPlanYet")) + '</p>') +
+      '<div class="row"><input id="extraName" type="text" placeholder="' + esc(tr("meal.addAnythingPh")) + '"><button class="pillBtn" id="extraAdd">' + esc(tr("common.add")) + '</button></div>' +
       (state.extras || []).map(function (x) { return '<div class="listRow"><span class="grow">' + esc(x.name) + "</span></div>"; }).join("") + "</div>";
-    html += '<div class="card"><h2>Food you have</h2>' +
-      '<div class="grid2"><label>Food name<input id="gName" type="text" placeholder="Chicken breast"></label>' +
-      '<label>Amount<input id="gQty" type="number" min="0" step="any" value="500"></label>' +
-      '<label>Unit<select id="gUnit"><option>g</option><option>ml</option><option>pcs</option><option>slices</option></select></label>' +
-      '<label>Stored in<select id="gStorage"><option value="fridge">Fridge</option><option value="freezer">Freezer</option><option value="pantry">Pantry</option></select></label></div>' +
-      '<div class="row"><button class="primaryBtn" id="gAdd">Add food</button></div>' +
+    html += '<div class="card"><h2>' + esc(tr("meal.foodYouHave")) + '</h2>' +
+      '<div class="grid2"><label>' + esc(tr("meal.foodName")) + '<input id="gName" type="text" placeholder="' + esc(tr("meal.foodNamePh")) + '"></label>' +
+      '<label>' + esc(tr("meal.amount")) + '<input id="gQty" type="number" min="0" step="any" value="500"></label>' +
+      '<label>' + esc(tr("meal.unit")) + '<select id="gUnit"><option>g</option><option>ml</option><option>pcs</option><option>slices</option></select></label>' +
+      '<label>' + esc(tr("meal.storedIn")) + '<select id="gStorage"><option value="fridge">' + esc(tr("meal.storeFridge")) + '</option><option value="freezer">' + esc(tr("meal.storeFreezer")) + '</option><option value="pantry">' + esc(tr("meal.storePantry")) + '</option></select></label></div>' +
+      '<div class="row"><button class="primaryBtn" id="gAdd">' + esc(tr("meal.addFoodBtn")) + '</button></div>' +
       (pantrySorted.length ? pantrySorted.map(function (p) {
         var left = MP.daysLeft(p, new Date(), MD);
         return '<div class="listRow"><span class="grow">' + esc(p.name) + " · " + esc(p.qty) + " " + esc(p.unit) + "</span><span class='hint'>" +
-          (left < 0 ? "past its guide date, check it first" : left === 0 ? "use today by the guide" : "about " + left + " days by the guide") + "</span></div>";
-      }).join("") : '<p class="hint">Nothing here yet. Add what is in your fridge, freezer or pantry.</p>') +
-      '<p class="hint">Times come from USDA food storage research and are a guide only. Always check food before eating it.</p></div>';
+          (left < 0 ? tr("meal.pastGuide") : left === 0 ? tr("meal.useToday") : tr("meal.daysGuide", { d: left })) + "</span></div>";
+      }).join("") : '<p class="hint">' + esc(tr("meal.pantryEmpty")) + '</p>') +
+      '<p class="hint">' + esc(tr("meal.usdaNote")) + '</p></div>';
     el.innerHTML = html;
     $("extraAdd").addEventListener("click", function () {
       var n = $("extraName").value.trim(); if (!n) return;
       state.extras.push({ id: "x" + Date.now(), name: n }); save(); renderGroceries();
     });
     $("gAdd").addEventListener("click", function () {
-      var n = $("gName").value.trim(); if (!n) { toast("Name the food first."); return; }
+      var n = $("gName").value.trim(); if (!n) { toast(tr("toast.foodFirst")); return; }
       state.pantry.push({ id: "g" + Date.now(), name: n.toLowerCase(), qty: Math.max(0, Number($("gQty").value) || 0),
         unit: $("gUnit").value, storage: $("gStorage").value, added: mpKey(L.todayKey()),
         shelfDays: MP.shelfDays(n, $("gStorage").value, MD) });
-      save(); renderGroceries(); toast("Added.");
+      save(); renderGroceries(); toast(tr("common.addedToast"));
     });
   }
 
@@ -529,25 +540,25 @@
     ["breakfast", "lunch", "dinner"].forEach(function (m) {
       if (entry[m]) { var r = recipeById(entry[m]); if (r) evs.push({ color: "#97795D", label: r.name, kind: "meal", id: r.id }); }
     });
-    (state.sessions || []).forEach(function (s) { if (s.dateKey === iso && s.status === "done") evs.push({ color: "#52695A", label: "Gym session", kind: "gym" }); });
+    (state.sessions || []).forEach(function (s) { if (s.dateKey === iso && s.status === "done") evs.push({ color: "#52695A", label: tr("cal.gymSession"), kind: "gym" }); });
     (state.routines || []).forEach(function (r) { if (L.routineDueOn(r, iso)) evs.push({ color: "#7A8B6F", label: r.name + (r.time ? " " + r.time : ""), kind: "routine" }); });
     (state.peptides || []).forEach(function (p) {
       (p.log || []).forEach(function (lg) { if (lg.dateKey === iso) evs.push({ color: p.color, label: p.name, kind: "peptide" }); });
     });
     (state.habits || []).forEach(function (h) { if (h.days && h.days[iso]) evs.push({ color: h.color || "#7A8B6F", label: h.name, kind: "habit" }); });
     L.todosOn(state.todos, iso).forEach(function (t) { evs.push({ color: t.color, label: t.title, kind: "todo", id: t.id, time: t.time, done: t.status === "done" }); });
-    if (state.checkins[iso]) evs.push({ color: "#C08552", label: "Checked in: " + state.checkins[iso], kind: "checkin" });
+    if (state.checkins[iso]) evs.push({ color: "#C08552", label: tr("cal.checkedIn", { level: tr("checkin." + state.checkins[iso], null, state.checkins[iso]) }), kind: "checkin" });
     return evs;
   }
   function renderMonth() {
     var el = $("areaBody");
     var now = calCursor || L.todayKey();
     var parts = now.split("-"), year = Number(parts[0]), month = Number(parts[1]) - 1;
-    var names = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    var names = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(function (mi) { return tr("cal.mo" + mi); });
     var grid = L.monthGrid(year, month);
-    var html = '<div class="card"><div class="calHead"><button class="pillBtn" id="calPrev">Back</button>' +
-      "<h3>" + names[month] + " " + year + '</h3><button class="pillBtn" id="calTodayBtn">Today</button><button class="pillBtn" id="calNext">Next</button></div>' +
-      '<div class="calGrid">' + ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map(function (d) { return '<div class="calDow">' + d + "</div>"; }).join("");
+    var html = '<div class="card"><div class="calHead"><button class="pillBtn" id="calPrev">' + esc(tr("cal.back")) + '</button>' +
+      "<h3>" + names[month] + " " + year + '</h3><button class="pillBtn" id="calTodayBtn">' + esc(tr("nav.today")) + '</button><button class="pillBtn" id="calNext">' + esc(tr("cal.next")) + '</button></div>' +
+      '<div class="calGrid">' + [1, 2, 3, 4, 5, 6, 7].map(function (di) { return '<div class="calDow">' + esc(tr("cal.d" + di)) + "</div>"; }).join("");
     grid.forEach(function (iso) {
       var d = L.parseKey(iso);
       var evs = dayEvents(iso);
@@ -575,7 +586,7 @@
     if (iso === L.todayKey() && state.checkins[iso] === "bad") {
       var shapedD = L.shapeTodosForDay(todos, "bad");
       todos = shapedD.shown;
-      if (shapedD.waiting > 0) waitNote = '<p class="hint">Bad day: ' + shapedD.waiting + " more wait for another day. Nothing is lost.</p>";
+      if (shapedD.waiting > 0) waitNote = '<p class="hint">' + esc(tr("cal.badWait", { n: shapedD.waiting })) + "</p>";
     }
     var html = '<div class="card"><h2>' + dayLabel(iso) + " · " + iso.slice(8) + "/" + iso.slice(5, 7) + "</h2>" + waitNote;
     var meals = evs.filter(function (e) { return e.kind === "meal"; });
@@ -596,11 +607,11 @@
         (t.time ? '<span class="kcalChip">' + esc(t.time) + "</span>" : "") + "</div>";
     }).join("");
     var habs = (state.habits || []);
-    if (habs.length) html += '<p class="hint">Habits this day</p><div class="chipRow">' + habs.map(function (h) {
+    if (habs.length) html += '<p class="hint">' + esc(tr("cal.habitsDay")) + '</p><div class="chipRow">' + habs.map(function (h) {
       var on = h.days && h.days[iso];
       return '<button class="chip' + (on ? " on" : "") + '" data-habitday="' + h.id + '">' + esc(h.name) + (on ? " ✓" : "") + "</button>";
     }).join("") + "</div>";
-    if (!meals.length && !todos.length && !others.length && !habs.length) html += '<p class="hint">Nothing planned here yet. A blank day is fine.</p>';
+    if (!meals.length && !todos.length && !others.length && !habs.length) html += '<p class="hint">' + esc(tr("cal.blankDay")) + '</p>';
     html += "</div>";
     box.innerHTML = html;
     box.querySelectorAll("[data-recipe]").forEach(function (b) { b.addEventListener("click", function () { openRecipe(b.getAttribute("data-recipe")); }); });
@@ -618,33 +629,33 @@
   function renderHabits() {
     var el = $("areaBody");
     var today = L.todayKey();
-    var html = '<div class="card"><h2>Add a habit</h2>' +
-      '<div class="grid2"><label>Habit name<input id="hbName" type="text" placeholder="Drink water"></label>' +
-      '<label>Colour<select id="hbColor"><option value="#52695A">Sage</option><option value="#7A8B6F">Leaf</option><option value="#AC9278">Taupe</option><option value="#C08552">Clay</option><option value="#6B7F8C">Slate</option></select></label></div>' +
-      '<div class="row"><button class="primaryBtn" id="hbAdd">Add habit</button></div>' +
-      '<p class="hint">Two starters from your app, tap to add: gym days and healthy eating days.</p><div class="chipRow">' +
-      '<button class="chip" id="hbStartGym">Gym days</button><button class="chip" id="hbStartEat">Healthy eating days</button></div></div>';
-    if (!(state.habits || []).length) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-cal"/></svg><p>No habits yet.</p><p class="hint">Small and daily beats big and rare.</p></div>';
+    var html = '<div class="card"><h2>' + esc(tr("cal.addHabit")) + '</h2>' +
+      '<div class="grid2"><label>' + esc(tr("cal.habitName")) + '<input id="hbName" type="text" placeholder="' + esc(tr("cal.habitPh")) + '"></label>' +
+      '<label>' + esc(tr("cal.colour")) + '<select id="hbColor"><option value="#52695A">' + esc(tr("cal.cSage")) + '</option><option value="#7A8B6F">' + esc(tr("cal.cLeaf")) + '</option><option value="#AC9278">' + esc(tr("cal.cTaupe")) + '</option><option value="#C08552">' + esc(tr("cal.cClay")) + '</option><option value="#6B7F8C">' + esc(tr("cal.cSlate")) + '</option></select></label></div>' +
+      '<div class="row"><button class="primaryBtn" id="hbAdd">' + esc(tr("cal.addHabitBtn")) + '</button></div>' +
+      '<p class="hint">' + esc(tr("cal.startersHint")) + '</p><div class="chipRow">' +
+      '<button class="chip" id="hbStartGym">' + esc(tr("cal.gymDays")) + '</button><button class="chip" id="hbStartEat">' + esc(tr("cal.eatDays")) + '</button></div></div>';
+    if (!(state.habits || []).length) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-cal"/></svg><p>' + esc(tr("cal.noHabits")) + '</p><p class="hint">' + esc(tr("cal.habitHint")) + '</p></div>';
     (state.habits || []).forEach(function (h) {
       var st = L.streakInfo(h.days || {}, today);
       html += '<div class="habitRow"><h3><span class="mealDot" style="background:' + esc(h.color || "#7A8B6F") + ';display:inline-block"></span> ' + esc(h.name) + "</h3>" +
-        '<p class="hint">' + (st.current > 0 ? st.current + (st.current === 1 ? " day" : " days") + " in a row. Lovely." : "Starts today, whenever you are ready.") + "</p>" +
+        '<p class="hint">' + (st.current > 0 ? (st.current === 1 ? tr("cal.streakOne") : tr("cal.streakMany", { n: st.current })) : tr("cal.startsToday")) + "</p>" +
         '<div class="weekDots">' + st.last7.map(function (d) {
-          var wd = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"][L.parseKey(d.key).getDay()];
+          var wd = tr("cal.wdShort" + L.parseKey(d.key).getDay());
           return '<button class="wDot' + (d.done ? " done" : "") + (d.key === today ? " today" : "") + '" data-hdot="' + h.id + "|" + d.key + '">' + wd + "</button>";
         }).join("") + "</div>" +
-        '<div class="row"><button class="pillBtn" data-htoday="' + h.id + '">' + ((h.days || {})[today] ? "Done today ✓ (tap to undo)" : "Done today") + "</button></div></div>";
+        '<div class="row"><button class="pillBtn" data-htoday="' + h.id + '">' + ((h.days || {})[today] ? tr("cal.doneTodayUndo") : tr("cal.doneToday")) + "</button></div></div>";
     });
     el.innerHTML = html;
     function addHabit(name, color) {
-      if (!name) { toast("Name the habit first."); return; }
-      if ((state.habits || []).some(function (h) { return h.name.toLowerCase() === name.toLowerCase(); })) { toast("That one is already here."); return; }
+      if (!name) { toast(tr("toast.habitFirst")); return; }
+      if ((state.habits || []).some(function (h) { return h.name.toLowerCase() === name.toLowerCase(); })) { toast(tr("toast.alreadyHere")); return; }
       state.habits.push({ id: "habit." + Date.now(), name: name, color: color, days: {} });
-      save(); renderHabits(); toast("Added. Small steps count.");
+      save(); renderHabits(); toast(tr("cal.habitAdded"));
     }
     $("hbAdd").addEventListener("click", function () { addHabit($("hbName").value.trim(), $("hbColor").value); });
-    $("hbStartGym").addEventListener("click", function () { addHabit("Gym days", "#52695A"); });
-    $("hbStartEat").addEventListener("click", function () { addHabit("Healthy eating days", "#7A8B6F"); });
+    $("hbStartGym").addEventListener("click", function () { addHabit(tr("cal.gymDays"), "#52695A"); });
+    $("hbStartEat").addEventListener("click", function () { addHabit(tr("cal.eatDays"), "#7A8B6F"); });
     function checkWeek(habitId) {
       var h = (state.habits || []).filter(function (x) { return x.id === habitId; })[0];
       if (h && L.streakInfo(h.days || {}, today).current === 7) showWallyCelebration("week");
@@ -667,10 +678,10 @@
     var groups = ["Today", "Tomorrow", "Later", "Any time", "Done"];
     var byGroup = {}; groups.forEach(function (g) { byGroup[g] = []; });
     (state.todos || []).forEach(function (t) { byGroup[groupOf(t)].push(t); });
-    var html = '<div class="card"><h2>To do, your way</h2>' +
-      '<p class="hint">Write messy, one thing per line, or a whole brain dump. Dates and times sort themselves out.</p>' +
-      '<textarea id="tdDump" rows="3" placeholder="call mum tomorrow at 6pm&#10;buy oats&#10;gym friday"></textarea>' +
-      '<div class="row"><button class="primaryBtn" id="tdSort">Sort my list</button><button class="pillBtn" id="tdMic">Voice</button></div>' +
+    var html = '<div class="card"><h2>' + esc(tr("cal.todoTitle")) + '</h2>' +
+      '<p class="hint">' + esc(tr("cal.todoHint")) + '</p>' +
+      '<textarea id="tdDump" rows="3" placeholder="' + esc(tr("cal.todoPh")) + '"></textarea>' +
+      '<div class="row"><button class="primaryBtn" id="tdSort">' + esc(tr("cal.sortList")) + '</button><button class="pillBtn" id="tdMic">' + esc(tr("meal.voiceBtn")) + '</button></div>' +
       '<p class="hint" id="tdMsg"></p></div>';
     var todayLevel = state.checkins[today] || "ok";
     groups.forEach(function (g) {
@@ -679,23 +690,23 @@
       if (g === "Today" && todayLevel === "bad") {
         var shaped = L.shapeTodosForDay(byGroup[g], "bad");
         rowsList = shaped.shown;
-        if (shaped.waiting > 0) waitingNote = '<p class="hint">' + shaped.waiting + (shaped.waiting === 1 ? " more thing waits" : " more things wait") + " for another day. Nothing is lost, it is all still here tomorrow.</p>";
+        if (shaped.waiting > 0) waitingNote = '<p class="hint">' + esc(shaped.waiting === 1 ? tr("cal.waitOne") : tr("cal.waitMany", { n: shaped.waiting })) + "</p>";
       }
-      html += '<div class="card"><h2>' + g + "</h2>" + (g === "Today" && todayLevel === "bad" ? '<p class="hint">Bad day: essentials only, on purpose.</p>' : "") + rowsList.map(function (t) {
+      html += '<div class="card"><h2>' + esc({ Today: tr("nav.today"), Tomorrow: tr("cal.tomorrow"), Later: tr("cal.gLater"), "Any time": tr("cal.gAnytime"), Done: tr("cal.gDone") }[g] || g) + "</h2>" + (g === "Today" && todayLevel === "bad" ? '<p class="hint">' + esc(tr("cal.badEssentials")) + '</p>' : "") + rowsList.map(function (t) {
         return '<div class="todoRow' + (t.status === "done" ? " done" : "") + '"><button class="todoCheck' + (t.status === "done" ? " done" : "") +
           '" data-todo="' + t.id + '">' + (t.status === "done" ? "✓" : "") + '</button><span class="mealDot" style="background:' + esc(t.color) + '"></span>' +
           '<span class="tTitle">' + esc(t.title) + "</span>" +
           (t.time ? '<span class="kcalChip">' + esc(t.time) + "</span>" : "") +
-          '<span class="kcalChip">' + t.durationMin + ' min</span><button class="miniBtn" data-del="' + t.id + '">Remove</button></div>';
+          '<span class="kcalChip">' + t.durationMin + ' min</span><button class="miniBtn" data-del="' + t.id + '">' + esc(tr("common.remove")) + '</button></div>';
       }).join("") + waitingNote + "</div>";
     });
-    if (!(state.todos || []).length) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-list"/></svg><p>Nothing on your list.</p><p class="hint">Dump it all in the box above. The app sorts it.</p></div>';
+    if (!(state.todos || []).length) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-list"/></svg><p>' + esc(tr("cal.listEmpty")) + '</p><p class="hint">' + esc(tr("cal.dumpHint")) + '</p></div>';
     el.innerHTML = html;
     $("tdSort").addEventListener("click", function () {
       var parsed = L.parseQuickDump($("tdDump").value, today);
-      if (!parsed.length) { $("tdMsg").textContent = "Nothing sortable there yet. A few words per line works."; return; }
+      if (!parsed.length) { $("tdMsg").textContent = tr("cal.nothingSortable"); return; }
       parsed.forEach(function (p, i) { var t = L.makeTodo(p); t.id = "todo." + Date.now() + "." + i; state.todos.push(t); });
-      save(); renderTodos(); toast("Sorted " + parsed.length + (parsed.length === 1 ? " thing" : " things") + ".");
+      save(); renderTodos(); toast(parsed.length === 1 ? tr("cal.sortedOne") : tr("cal.sortedMany", { n: parsed.length }));
     });
     wireMic($("tdMic"), $("tdDump"));
     el.querySelectorAll("[data-todo]").forEach(function (b) { b.addEventListener("click", function () { toggleTodo(b.getAttribute("data-todo")); renderTodos(); }); });
@@ -721,43 +732,44 @@
     if (!ex) return "";
     return '<div class="exRow"><span class="exTile"><svg><use href="#i-gym"/></svg></span>' +
       '<span class="eName">' + esc(ex.name) + '<br><span class="eMeta">' + esc(ex.partLabel) + " · " + esc(ex.equipment) + "</span></span>" +
-      '<span class="kcalChip">' + item.sets + " sets × " + item.reps + (item.timed ? " sec" : " reps") + "</span></div>";
+      '<span class="kcalChip">' + esc(tr("gym.setsChip", { sets: item.sets, reps: item.reps, unit: item.timed ? tr("gym.sec") : tr("gym.reps") })) + "</span></div>";
   }
   function routineCard(r) {
-    var days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    var html = '<div class="card"><h2>' + esc(r.name) + (r.lightened ? " (lighter version)" : "") + "</h2>" +
-      '<p class="hint">About ' + r.minutes + " min · " + (r.days && r.days.length ? r.days.map(function (d) { return days[d]; }).join(", ") : "any day") +
+    var days = [0, 1, 2, 3, 4, 5, 6].map(function (di) { return tr("cal.wd" + di); });
+    var html = '<div class="card"><h2>' + esc(r.name) + (r.lightened ? tr("gym.lighterVersion") : "") + "</h2>" +
+      '<p class="hint">' + esc(tr("gym.aboutMin", { m: r.minutes })) + " · " + (r.days && r.days.length ? r.days.map(function (d) { return days[d]; }).join(", ") : tr("gym.anyDay")) +
       (r.time ? " · " + esc(r.time) : "") + "</p>" +
       (r.items || []).map(function (it) { if (!it || typeof it !== "object") return ""; return exRow(it, exerciseById(it.exerciseId)); }).join("") +
-      '<div class="row"><button class="primaryBtn" data-start="' + r.id + '">Start session</button>' +
-      '<button class="pillBtn" data-delroutine="' + r.id + '">Remove routine</button></div></div>';
+      '<div class="row"><button class="primaryBtn" data-start="' + r.id + '">' + esc(tr("gym.startSession")) + '</button>' +
+      '<button class="pillBtn" data-delroutine="' + r.id + '">' + esc(tr("gym.removeRoutine")) + '</button></div></div>';
     return html;
   }
   function renderRoutines() {
     var el = $("areaBody");
-    var goalOpts = L.GYM_GOALS.map(function (g) { return '<option value="' + g.id + '">' + esc(g.label) + "</option>"; }).join("");
-    var dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    var goalOpts = L.GYM_GOALS.map(function (g) { return '<option value="' + g.id + '">' + esc(tr("gymgoal." + g.id, null, g.label)) + "</option>"; }).join("");
+    var dayNames = [1, 2, 3, 4, 5, 6, 7].map(function (di) { return tr("cal.d" + di); });
     var dayVals = [1, 2, 3, 4, 5, 6, 0];
-    var html = '<div class="card"><h2>Build a routine</h2>' +
-      '<div class="grid2"><label>Goal<select id="gyGoal">' + goalOpts + "</select></label>" +
-      '<label>How long?<select id="gyMinutes"><option>20</option><option selected>30</option><option>45</option><option>60</option><option>90</option></select></label>' +
-      '<label>Time of day<input id="gyTime" type="time" value="18:00"></label></div>' +
-      '<p class="hint">Days</p><div class="dayChips" id="gyDays">' + dayNames.map(function (d, i) {
+    var html = '<div class="card"><h2>' + esc(tr("gym.buildRoutine")) + '</h2>' +
+      '<div class="grid2"><label>' + esc(tr("setup.goal")) + '<select id="gyGoal">' + goalOpts + "</select></label>" +
+      '<label>' + esc(tr("gym.howLong")) + '<select id="gyMinutes"><option>20</option><option selected>30</option><option>45</option><option>60</option><option>90</option></select></label>' +
+      '<label>' + esc(tr("gym.timeOfDay")) + '<input id="gyTime" type="time" value="18:00"></label></div>' +
+      '<p class="hint">' + esc(tr("gym.daysLabel")) + '</p><div class="dayChips" id="gyDays">' + dayNames.map(function (d, i) {
         return '<button class="chip" data-gyday="' + dayVals[i] + '">' + d + "</button>"; }).join("") + "</div>" +
-      '<div class="row"><button class="primaryBtn" id="gyBuild">Build my routine</button></div>' +
-      '<p class="hint">It lands on your calendar on those days, with a colour of its own. Weights are your call, always. Start light.</p></div>';
-    if (!(state.routines || []).length) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-gym"/></svg><p>No routines yet.</p><p class="hint">Build one above, or show the app a machine in Machine photo.</p></div>';
+      '<div class="row"><button class="primaryBtn" id="gyBuild">' + esc(tr("gym.buildBtn")) + '</button></div>' +
+      '<p class="hint">' + esc(tr("gym.routineHint")) + '</p></div>';
+    if (!(state.routines || []).length) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-gym"/></svg><p>' + esc(tr("gym.noRoutines")) + '</p><p class="hint">' + esc(tr("gym.noRoutinesHint")) + '</p></div>';
     (state.routines || []).forEach(function (r) { html += routineCard(r); });
     el.innerHTML = html;
     el.querySelectorAll("[data-gyday]").forEach(function (b) { b.addEventListener("click", function () { b.classList.toggle("on"); }); });
     $("gyBuild").addEventListener("click", function () {
       var built = L.buildRoutine($("gyGoal").value, Number($("gyMinutes").value), EX.EXERCISES);
-      if (!built || !built.items.length) { toast("That goal needs a different plan. Try another."); return; }
+      if (built) built.name = tr("gymgoal." + built.goalId, null, built.name);
+      if (!built || !built.items.length) { toast(tr("gym.goalOdd")); return; }
       var days = [];
       el.querySelectorAll("[data-gyday].on").forEach(function (b) { days.push(Number(b.getAttribute("data-gyday"))); });
       state.routines.push(Object.assign({}, built, { id: "routine." + Date.now(), days: days,
         time: $("gyTime").value || null, createdKey: L.todayKey() }));
-      save(); renderRoutines(); toast("Built and on your calendar.");
+      save(); renderRoutines(); toast(tr("gym.built"));
     });
     el.querySelectorAll("[data-start]").forEach(function (b) { b.addEventListener("click", function () { startSession(b.getAttribute("data-start")); }); });
     el.querySelectorAll("[data-delroutine]").forEach(function (b) { b.addEventListener("click", function () {
@@ -769,14 +781,14 @@
     var r = (state.routines || []).filter(function (x) { return x.id === routineId; })[0];
     if (!r) return;
     var existing = activeSession();
-    if (existing) { toast("A session is already going. It is waiting in Session."); openArea("gym", "gym-session"); return; }
+    if (existing) { toast(tr("gym.alreadyGoing")); openArea("gym", "gym-session"); return; }
     var light = (state.checkins[L.todayKey()] === "bad");
     var use = light ? L.lightenRoutine(r) : r;
     state.sessions.push({ id: "session." + Date.now(), dateKey: L.todayKey(), routineId: r.id,
       routineName: r.name, status: "active", idx: 0, set: 1, doneSets: 0,
       startedAt: Date.now(), items: use.items, lightened: !!use.lightened });
     save(); openArea("gym", "gym-session");
-    toast(light ? "A lighter session today, on purpose." : "Session started. One set at a time.");
+    toast(light ? tr("gym.lighterToday") : tr("gym.sessionStarted"));
   }
   function stopGymTimer() { if (gymTimer) { clearInterval(gymTimer); gymTimer = null; } stopAnim(); }
   /* --- Exercise animations (the locked look, 15 Oct 2026):
@@ -792,12 +804,12 @@
   function guideStamp() { return (state.settings && state.settings.guideStamp) || 0; }
   function skinAskHtml() {
     if (state.settings && state.settings.skinAsked) return "";
-    return '<div class="card skinAsk"><h2>Who shows you the moves?</h2>' +
-      '<p class="hint">Pick your trainer figure. Same moves, your pick, change it any time in Settings.</p>' +
-      '<div class="row"><button class="pillBtn" data-skinpick="girl">Girl</button>' +
-      '<button class="pillBtn" data-skinpick="boy">Boy</button>' +
-      '<button class="pillBtn" data-skinpick="nb">Non-binary</button>' +
-      '<button class="pillBtn" data-skindismiss="1">Not now</button></div></div>';
+    return '<div class="card skinAsk"><h2>' + esc(tr("gym.whoShows")) + '</h2>' +
+      '<p class="hint">' + esc(tr("gym.skinHint")) + '</p>' +
+      '<div class="row"><button class="pillBtn" data-skinpick="girl">' + esc(tr("set.skinGirl")) + '</button>' +
+      '<button class="pillBtn" data-skinpick="boy">' + esc(tr("set.skinBoy")) + '</button>' +
+      '<button class="pillBtn" data-skinpick="nb">' + esc(tr("set.skinNb")) + '</button>' +
+      '<button class="pillBtn" data-skindismiss="1">' + esc(tr("setup.notNow")) + '</button></div></div>';
   }
   function wireSkinAsk(el) {
     el.querySelectorAll("[data-skinpick]").forEach(function (b) {
@@ -806,7 +818,7 @@
         state.settings.trainerSkin = b.getAttribute("data-skinpick");
         state.settings.skinAsked = true;
         save(); renderSession();
-        toast("Your trainer is set. Change any time in Settings.");
+        toast(tr("gym.trainerSet"));
       });
     });
     el.querySelectorAll("[data-skindismiss]").forEach(function (b) {
@@ -832,7 +844,7 @@
       onRest: function () {
         bubblesRested = true; bubblesRestedStamp = guideStamp();
         if (animHandle) animHandle.setBubbles(false);
-        toast(companionName() + " will rest the tips for this session.");
+        toast(tr("gym.restTips", { name: companionName() }));
       }
     });
   }
@@ -842,18 +854,18 @@
     var s = activeSession();
     if (!s) {
       var lvl = state.checkins[L.todayKey()];
-      var html = '<div class="card"><h2>Session</h2><p class="hint">Pick a routine and the app walks you through it: sets, reps and rest, all here.</p>' +
-        (lvl === "great" ? '<p class="hint">Great day energy: full sessions today, plus a stretch at the end if you like.</p>' : "") +
-        (lvl === "bad" ? '<p class="hint">Bad day: sessions start lighter, on purpose.</p>' : "");
+      var html = '<div class="card"><h2>' + esc(tr("sub.gym-session", null, "Session")) + '</h2><p class="hint">' + esc(tr("gym.sessionHint")) + '</p>' +
+        (lvl === "great" ? '<p class="hint">' + esc(tr("gym.greatEnergy")) + '</p>' : "") +
+        (lvl === "bad" ? '<p class="hint">' + esc(tr("gym.badLighter")) + '</p>' : "");
       html = skinAskHtml() + html;
-      if (!(state.routines || []).length) html += '<p class="hint">No routines yet. Build one in Routines first.</p>';
+      if (!(state.routines || []).length) html += '<p class="hint">' + esc(tr("gym.noRoutinesFirst")) + '</p>';
       (state.routines || []).forEach(function (r) {
-        html += '<div class="row"><button class="primaryBtn" data-start="' + r.id + '">Start ' + esc(r.name) + "</button></div>";
+        html += '<div class="row"><button class="primaryBtn" data-start="' + r.id + '">' + esc(tr("gym.startNamed", { name: r.name })) + "</button></div>";
       });
       html += "</div>";
       var done = (state.sessions || []).filter(function (x) { return x.status === "done"; }).slice(-3).reverse();
-      if (done.length) html += '<div class="card"><h2>Done sessions</h2>' + done.map(function (x) {
-        return '<div class="listRow"><span class="grow">' + esc(x.routineName || "Session") + "</span><span class='hint'>" + esc(x.dateKey || "") + " · about " + (x.minutes || 0) + " min</span></div>";
+      if (done.length) html += '<div class="card"><h2>' + esc(tr("gym.doneSessions")) + '</h2>' + done.map(function (x) {
+        return '<div class="listRow"><span class="grow">' + esc(x.routineName || tr("gym.sessionWord")) + "</span><span class='hint'>" + esc(x.dateKey || "") + esc(tr("gym.aboutMinSuffix", { m: x.minutes || 0 })) + "</span></div>";
       }).join("") + "</div>";
       el.innerHTML = html;
       wireSkinAsk(el);
@@ -864,19 +876,19 @@
     if (!ex) { finishSession(s, true); return; }
     var pips = "";
     for (var i = 1; i <= item.sets; i++) pips += '<span class="pip' + (i < s.set ? " done" : "") + '"></span>';
-    el.innerHTML = skinAskHtml() + '<div class="card"><h2>' + esc(s.routineName) + (s.lightened ? " · lighter today" : "") + '</h2>' +
-      '<p class="hint">Exercise ' + (s.idx + 1) + " of " + s.items.length + ' · session time <span id="sessClock">0:00</span></p>' +
+    el.innerHTML = skinAskHtml() + '<div class="card"><h2>' + esc(s.routineName) + (s.lightened ? tr("gym.lighterSuffix") : "") + '</h2>' +
+      '<p class="hint">' + esc(tr("gym.exOf", { a: s.idx + 1, b: s.items.length })) + '<span id="sessClock">0:00</span></p>' +
       '<div class="exRow"><span class="exTile"><svg><use href="#i-gym"/></svg></span><span class="eName sessionBig">' + esc(ex.name) +
       '<br><span class="eMeta">' + esc(ex.partLabel) + " · " + esc(ex.equipment) + "</span></span></div>" +
       '<p class="hint">' + esc(ex.cue) + "</p>" +
       '<div id="animMount"></div>' +
-      '<div class="setPips">' + pips + '</div><p class="hint">Set ' + s.set + " of " + item.sets + "</p>" +
+      '<div class="setPips">' + pips + '</div><p class="hint">' + esc(tr("gym.setOf", { a: s.set, b: item.sets })) + "</p>" +
       (item.timed
-        ? '<div class="timerBig" id="countBox">' + item.reps + ' sec</div><div class="row"><button class="primaryBtn" id="holdBtn">Start the hold</button></div>'
-        : '<div class="repCount" id="repCount">0</div><p class="hint" style="text-align:center">reps done, tap + for each one, or tap Done set when you finish</p>' +
-          '<div class="row"><button class="pillBtn" id="repMinus">Minus 1</button><button class="primaryBtn" id="repPlus">Plus 1 rep</button><button class="primaryBtn" id="setDone">Done set</button></div>' +
-          '<div class="timerBig" id="countBox"></div><div class="row"><button class="pillBtn" id="restBtn">Start rest ' + item.restSec + ' sec</button></div>') +
-      '<div class="row"><button class="pillBtn" id="nextEx">Next exercise</button><button class="pillBtn" id="finishBtn">Finish session</button></div></div>';
+        ? '<div class="timerBig" id="countBox">' + item.reps + esc(tr("gym.secSuffix")) + '</div><div class="row"><button class="primaryBtn" id="holdBtn">' + esc(tr("gym.startHold")) + '</button></div>'
+        : '<div class="repCount" id="repCount">0</div><p class="hint" style="text-align:center">' + esc(tr("gym.repsHint")) + '</p>' +
+          '<div class="row"><button class="pillBtn" id="repMinus">' + esc(tr("gym.minus1")) + '</button><button class="primaryBtn" id="repPlus">' + esc(tr("gym.plus1")) + '</button><button class="primaryBtn" id="setDone">' + esc(tr("gym.doneSet")) + '</button></div>' +
+          '<div class="timerBig" id="countBox"></div><div class="row"><button class="pillBtn" id="restBtn">' + esc(tr("gym.startRest", { sec: item.restSec })) + '</button></div>') +
+      '<div class="row"><button class="pillBtn" id="nextEx">' + esc(tr("gym.nextEx")) + '</button><button class="pillBtn" id="finishBtn">' + esc(tr("gym.finishSession")) + '</button></div></div>';
     var reps = 0;
     function tickClock() { var c = $("sessClock"); if (c) c.textContent = fmtClock((Date.now() - s.startedAt) / 1000); }
     tickClock();
@@ -884,24 +896,24 @@
     function countdown(sec, label, after) {
       /* Rest freezes the loop at its current pose and phase
          (pin 5): the loop clock is handed over, not reset. */
-      var preT = (label === "Rest" && animHandle && animHandle.time) ? animHandle.time() : 0;
+      var preT = (label === "rest" && animHandle && animHandle.time) ? animHandle.time() : 0;
       stopGymTimer();
       var restAnim = null;
-      if (label === "Rest") { mountAnim(ex, preT); restAnim = animHandle; if (restAnim) restAnim.setFrozen(true); }
+      if (label === "rest") { mountAnim(ex, preT); restAnim = animHandle; if (restAnim) restAnim.setFrozen(true); }
       var left = sec;
       var box = $("countBox");
-      function draw() { if (box) box.textContent = label + " " + fmtClock(left); }
+      function draw() { if (box) box.textContent = tr("gym." + label + "Label") + " " + fmtClock(left); }
       draw();
       gymTimer = setInterval(function () {
         left--; draw(); tickClock();
-        if (left <= 0) { var tEnd = restAnim && restAnim.time ? restAnim.time() : 0; stopGymTimer(); gymTimer = setInterval(tickClock, 1000); if (box) box.textContent = "Done. Nicely done."; mountAnim(ex, tEnd); if (after) after(); }
+        if (left <= 0) { var tEnd = restAnim && restAnim.time ? restAnim.time() : 0; stopGymTimer(); gymTimer = setInterval(tickClock, 1000); if (box) box.textContent = tr("gym.countDone"); mountAnim(ex, tEnd); if (after) after(); }
       }, 1000);
     }
-    if (item.timed) $("holdBtn").addEventListener("click", function () { countdown(item.reps, "Hold", function () {}); });
+    if (item.timed) $("holdBtn").addEventListener("click", function () { countdown(item.reps, "hold", function () {}); });
     else {
       $("repPlus").addEventListener("click", function () { reps++; $("repCount").textContent = reps; });
       $("repMinus").addEventListener("click", function () { reps = Math.max(0, reps - 1); $("repCount").textContent = reps; });
-      $("restBtn").addEventListener("click", function () { countdown(item.restSec, "Rest", null); });
+      $("restBtn").addEventListener("click", function () { countdown(item.restSec, "rest", null); });
       $("setDone").addEventListener("click", function () {
         s.doneSets++;
         if (s.set >= item.sets) { s.idx++; s.set = 1; } else s.set++;
@@ -919,13 +931,13 @@
     s.status = "done";
     s.minutes = Math.max(1, Math.round((Date.now() - (s.startedAt || Date.now())) / 60000));
     save();
-    if (!silent) { toast("Session saved. Your future self says thanks."); showWallyCelebration("session"); }
+    if (!silent) { toast(tr("gym.sessionSaved")); showWallyCelebration("session"); }
     renderSession();
   }
   function renderMachine() {
     var el = $("areaBody");
-    el.innerHTML = '<div class="card"><h2>Show a machine</h2>' +
-      '<p class="hint">Snap the machine if you like. A photo rarely names gym machines well, so tap the machine below that matches yours. Same result, no guessing.</p>' +
+    el.innerHTML = '<div class="card"><h2>' + esc(tr("gym.showMachine")) + '</h2>' +
+      '<p class="hint">' + esc(tr("gym.machineHint")) + '</p>' +
       '<input id="mcPhoto" type="file" accept="image/*"><div id="mcPreview"></div>' +
       '<div class="machineGrid" id="mcGrid">' + EX.MACHINES.map(function (m) {
         return '<button class="chip" data-machine="' + m.id + '">' + esc(m.name) + "</button>"; }).join("") + "</div>" +
@@ -933,7 +945,7 @@
     $("mcPhoto").addEventListener("change", function () {
       var f = $("mcPhoto").files[0]; if (!f) return;
       var rd = new FileReader();
-      rd.onload = function () { $("mcPreview").innerHTML = '<img class="photoImg" alt="Your machine photo" src="' + String(rd.result) + '">'; };
+      rd.onload = function () { $("mcPreview").innerHTML = '<img class="photoImg" alt="' + esc(tr("gym.machineAlt")) + '" src="' + String(rd.result) + '">'; };
       rd.readAsDataURL(f);
     });
     el.querySelectorAll("[data-machine]").forEach(function (b) {
@@ -946,11 +958,11 @@
         });
         $("mcResult").innerHTML = '<div class="card"><h2>' + esc(m.name) + "</h2>" +
           items.map(function (it) { return exRow(it, exerciseById(it.exerciseId)); }).join("") +
-          '<div class="row"><button class="primaryBtn" id="mcMake">Make a routine from this</button></div></div>';
+          '<div class="row"><button class="primaryBtn" id="mcMake">' + esc(tr("gym.makeRoutine")) + '</button></div></div>';
         $("mcMake").addEventListener("click", function () {
-          state.routines.push({ id: "routine." + Date.now(), name: m.name + " routine", goalId: null,
+          state.routines.push({ id: "routine." + Date.now(), name: m.name + tr("gym.routineSuffix"), goalId: null,
             minutes: 30, days: [], time: null, createdKey: L.todayKey(), items: items });
-          save(); toast("Routine saved. It is in Routines."); openArea("gym", "gym-routines");
+          save(); toast(tr("gym.routineSaved")); openArea("gym", "gym-routines");
         });
       });
     });
@@ -970,31 +982,30 @@
      with its time. Every peptides screen sits behind it. */
   function peptideById(id) { return (state.peptides || []).filter(function (p) { return p.id === id; })[0] || null; }
   function scheduleText(p) {
-    if (!p.schedule) return "No days set";
+    if (!p.schedule) return tr("pep.noDays");
     if (Array.isArray(p.schedule.days) && p.schedule.days.length) {
-      var names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-      return p.schedule.days.map(function (d) { return names[d]; }).join(", ");
+      return p.schedule.days.map(function (d) { return tr("cal.wd" + d); }).join(", ");
     }
-    if (p.schedule.intervalDays) return "Every " + p.schedule.intervalDays + (p.schedule.intervalDays === 1 ? " day" : " days");
-    return "No days set";
+    if (p.schedule.intervalDays) return p.schedule.intervalDays === 1 ? tr("pep.every1") : tr("pep.everyN", { n: p.schedule.intervalDays });
+    return tr("pep.noDays");
   }
   function nextDoseLine(p) {
     var key = L.nextDoseKey(p, L.todayKey());
-    if (!key) return "Next dose: no days set";
-    var when = key === L.todayKey() ? "today" : key === L.addDays(L.todayKey(), 1) ? "tomorrow" : dayLabel(key) + " " + key.slice(8) + "/" + key.slice(5, 7);
-    return "Next dose: " + when + (p.time ? " at " + p.time : "");
+    if (!key) return tr("pep.nextNone");
+    var when = key === L.todayKey() ? tr("pep.today") : key === L.addDays(L.todayKey(), 1) ? tr("pep.tomorrow") : dayLabel(key) + " " + key.slice(8) + "/" + key.slice(5, 7);
+    return tr("pep.nextPrefix") + when + (p.time ? tr("pep.at") + p.time : "");
   }
   function renderPeptides(subId) {
     var el = $("areaBody");
     if (!L.disclaimerAgreed(state, D.DISCLAIMER_VERSION)) {
-      el.innerHTML = '<div class="card"><h2>Before this part opens</h2>' +
-        '<p>' + esc(D.DISCLAIMER_TEXT) + "</p>" +
-        '<p class="hint">This area only tracks. It records the names, amounts and days you type in, and shows them on your calendar in their own colours. It never suggests an amount or a day. Those choices stay with you and your doctor.</p>' +
-        '<p class="hint">Your agreement and the time you agreed are saved with your data, so the app can show it was done once, properly.</p>' +
-        '<div class="row"><button class="primaryBtn" id="agreeBtn">I understand</button></div></div>';
+      el.innerHTML = '<div class="card"><h2>' + esc(tr("pep.gateTitle")) + '</h2>' +
+        '<p>' + esc(tr("legal.disclaimer", null, D.DISCLAIMER_TEXT)) + "</p>" +
+        '<p class="hint">' + esc(tr("legal.gateHint1")) + '</p>' +
+        '<p class="hint">' + esc(tr("legal.gateHint2")) + '</p>' +
+        '<div class="row"><button class="primaryBtn" id="agreeBtn">' + esc(tr("pep.agree")) + '</button></div></div>';
       $("agreeBtn").addEventListener("click", function () {
         state.disclaimer = { agreedAt: new Date().toISOString(), version: D.DISCLAIMER_VERSION };
-        save(); renderPeptides(subId); toast("Saved. This part is yours now.");
+        save(); renderPeptides(subId); toast(tr("pep.agreedToast"));
       });
       return;
     }
@@ -1004,28 +1015,28 @@
   }
   function renderPepList() {
     var el = $("areaBody");
-    var dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    var dayNames = [1, 2, 3, 4, 5, 6, 7].map(function (di) { return tr("cal.d" + di); });
     var dayVals = [1, 2, 3, 4, 5, 6, 0];
-    var html = '<div class="card"><h2>Add a peptide</h2>' +
-      '<p class="hint">Only what you and your doctor already decided. The app never suggests an amount. It only keeps what you type.</p>' +
-      '<div class="grid2"><label>Name, as your doctor calls it<input id="ppName" type="text" placeholder="The name on your packet"></label>' +
-      '<label>Amount you take<input id="ppAmount" type="text" inputmode="decimal" placeholder="Only yours to type"></label>' +
-      '<label>Unit<select id="ppUnit"><option>mg</option><option>mcg</option><option>units</option><option>ml</option><option>tablets</option><option>clicks</option></select></label>' +
-      '<label>Time<input id="ppTime" type="time" value="09:00"></label></div>' +
-      '<label>How it repeats<select id="ppMode"><option value="days">On set days</option><option value="interval">Every few days</option></select></label>' +
-      '<div id="ppDaysBox"><p class="hint">Days</p><div class="dayChips" id="ppDays">' + dayNames.map(function (d, i) {
+    var html = '<div class="card"><h2>' + esc(tr("pep.addTitle")) + '</h2>' +
+      '<p class="hint">' + esc(tr("legal.addHint")) + '</p>' +
+      '<div class="grid2"><label>' + esc(tr("pep.nameLabel")) + '<input id="ppName" type="text" placeholder="' + esc(tr("pep.namePh")) + '"></label>' +
+      '<label>' + esc(tr("pep.amountLabel")) + '<input id="ppAmount" type="text" inputmode="decimal" placeholder="' + esc(tr("pep.amountPh")) + '"></label>' +
+      '<label>' + esc(tr("meal.unit")) + '<select id="ppUnit"><option>mg</option><option>mcg</option><option value="units">' + esc(tr("pep.unitUnits")) + '</option><option>ml</option><option value="tablets">' + esc(tr("pep.unitTablets")) + '</option><option value="clicks">' + esc(tr("pep.unitClicks")) + '</option></select></label>' +
+      '<label>' + esc(tr("pep.timeLabel")) + '<input id="ppTime" type="time" value="09:00"></label></div>' +
+      '<label>' + esc(tr("pep.howRepeats")) + '<select id="ppMode"><option value="days">' + esc(tr("pep.modeDays")) + '</option><option value="interval">' + esc(tr("pep.modeInterval")) + '</option></select></label>' +
+      '<div id="ppDaysBox"><p class="hint">' + esc(tr("gym.daysLabel")) + '</p><div class="dayChips" id="ppDays">' + dayNames.map(function (d, i) {
         return '<button class="chip" data-ppday="' + dayVals[i] + '">' + d + "</button>"; }).join("") + "</div></div>" +
-      '<div id="ppIntBox" class="hidden"><div class="grid2"><label>Every how many days?<input id="ppInterval" type="number" min="1" value="7"></label>' +
-      '<label>Starting on<input id="ppStart" type="date" value="' + L.todayKey() + '"></label></div></div>' +
-      '<div class="row"><button class="primaryBtn" id="ppAdd">Save this peptide</button></div></div>';
-    if (!(state.peptides || []).length) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-pep"/></svg><p>Nothing tracked yet.</p><p class="hint">Add one above and it gets its own colour.</p></div>';
+      '<div id="ppIntBox" class="hidden"><div class="grid2"><label>' + esc(tr("pep.everyHowMany")) + '<input id="ppInterval" type="number" min="1" value="7"></label>' +
+      '<label>' + esc(tr("pep.startingOn")) + '<input id="ppStart" type="date" value="' + L.todayKey() + '"></label></div></div>' +
+      '<div class="row"><button class="primaryBtn" id="ppAdd">' + esc(tr("pep.saveBtn")) + '</button></div></div>';
+    if (!(state.peptides || []).length) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-pep"/></svg><p>' + esc(tr("pep.nothingTracked")) + '</p><p class="hint">' + esc(tr("pep.nothingHint")) + '</p></div>';
     (state.peptides || []).forEach(function (p) {
       html += '<div class="card"><h2><span class="mealDot" style="background:' + esc(p.color) + ';display:inline-block"></span> ' + esc(p.name) + "</h2>" +
-        '<p class="hint">You take ' + esc(p.amount) + " " + esc(p.unit) + " · " + scheduleText(p) + (p.time ? " · " + esc(p.time) : "") + "</p>" +
+        '<p class="hint">' + esc(tr("pep.youTake", { amount: p.amount, unit: tr("pep.unit" + p.unit.charAt(0).toUpperCase() + p.unit.slice(1), null, p.unit) })) + " · " + scheduleText(p) + (p.time ? " · " + esc(p.time) : "") + "</p>" +
         '<p class="dayTotal">' + nextDoseLine(p) + "</p>" +
-        '<div class="row"><label style="flex:1">Amount this time<input type="text" inputmode="decimal" id="amt-' + p.id + '" value="' + esc(p.amount) + '"></label>' +
-        '<button class="primaryBtn" data-log="' + p.id + '">Log a dose</button>' +
-        '<button class="pillBtn" data-delpep="' + p.id + '">Remove</button></div></div>';
+        '<div class="row"><label style="flex:1">' + esc(tr("pep.amountThisTime")) + '<input type="text" inputmode="decimal" id="amt-' + p.id + '" value="' + esc(p.amount) + '"></label>' +
+        '<button class="primaryBtn" data-log="' + p.id + '">' + esc(tr("pep.logDose")) + '</button>' +
+        '<button class="pillBtn" data-delpep="' + p.id + '">' + esc(tr("common.remove")) + '</button></div></div>';
     });
     el.innerHTML = html;
     el.querySelectorAll("[data-ppday]").forEach(function (b) { b.addEventListener("click", function () { b.classList.toggle("on"); }); });
@@ -1036,9 +1047,9 @@
     });
     $("ppAdd").addEventListener("click", function () {
       var name = $("ppName").value.trim();
-      if (!name) { toast("Name it first, as your doctor calls it."); return; }
+      if (!name) { toast(tr("pep.toastNameFirst")); return; }
       var amount = $("ppAmount").value.trim();
-      if (!amount) { toast("Type the amount you take. The app will not guess it."); return; }
+      if (!amount) { toast(tr("pep.toastAmount")); return; }
       var schedule;
       if ($("ppMode").value === "interval") {
         var n = Math.max(1, Number($("ppInterval").value) || 1);
@@ -1046,12 +1057,12 @@
       } else {
         var days = [];
         el.querySelectorAll("[data-ppday].on").forEach(function (b) { days.push(Number(b.getAttribute("data-ppday"))); });
-        if (!days.length) { toast("Pick at least one day."); return; }
+        if (!days.length) { toast(tr("pep.toastPickDay")); return; }
         schedule = { days: days };
       }
       state.peptides.push({ id: "pep." + Date.now(), name: name, amount: amount, unit: $("ppUnit").value,
         color: L.nextColor((state.peptides || []).map(function (p) { return p.color; })), schedule: schedule, time: $("ppTime").value || null, log: [] });
-      save(); renderPepList(); toast("Saved with its own colour.");
+      save(); renderPepList(); toast(tr("pep.toastSaved"));
     });
     el.querySelectorAll("[data-log]").forEach(function (b) { b.addEventListener("click", function () {
       var p = peptideById(b.getAttribute("data-log")); if (!p) return;
@@ -1059,7 +1070,7 @@
       var now = new Date();
       p.log.push({ dateKey: L.todayKey(), time: ("0" + now.getHours()).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2),
         amount: String(amt).trim() || p.amount, unit: p.unit });
-      save(); renderPepList(); toast("Logged. That is all it does, on purpose."); showWallyCelebration("dose");
+      save(); renderPepList(); toast(tr("pep.toastLogged")); showWallyCelebration("dose");
     }); });
     el.querySelectorAll("[data-delpep]").forEach(function (b) { b.addEventListener("click", function () {
       state.peptides = state.peptides.filter(function (p) { return p.id !== b.getAttribute("data-delpep"); });
@@ -1073,13 +1084,13 @@
       (p.log || []).forEach(function (lg, i) { rows.push({ p: p, lg: lg, idx: i }); });
     });
     rows.sort(function (a, b) { return (b.lg.dateKey + (b.lg.time || "")) < (a.lg.dateKey + (a.lg.time || "")) ? -1 : 1; });
-    var html = '<div class="card"><h2>Dose log</h2><p class="hint">Everything you logged, newest first. Only you can change this list.</p>';
-    if (!rows.length) html += '<p class="hint">Nothing logged yet.</p>';
+    var html = '<div class="card"><h2>' + esc(tr("sub.pep-log", null, "Dose log")) + '</h2><p class="hint">' + esc(tr("pep.logHint")) + '</p>';
+    if (!rows.length) html += '<p class="hint">' + esc(tr("pep.nothingLogged")) + '</p>';
     html += rows.map(function (r) {
       return '<div class="listRow"><span class="mealDot" style="background:' + esc(r.p.color) + '"></span>' +
         '<span class="grow">' + esc(r.p.name) + " · " + esc(r.lg.amount) + " " + esc(r.lg.unit) + "</span>" +
         '<span class="hint">' + esc(r.lg.dateKey) + (r.lg.time ? " " + esc(r.lg.time) : "") + "</span>" +
-        '<button class="miniBtn" data-unlog="' + r.p.id + "|" + r.idx + '">Remove</button></div>';
+        '<button class="miniBtn" data-unlog="' + r.p.id + "|" + r.idx + '">' + esc(tr("common.remove")) + '</button></div>';
     }).join("") + "</div>";
     el.innerHTML = html;
     el.querySelectorAll("[data-unlog]").forEach(function (b) { b.addEventListener("click", function () {
@@ -1090,8 +1101,8 @@
   }
   function renderPepNext() {
     var el = $("areaBody");
-    var html = '<div class="card"><h2>Next doses</h2><p class="hint">From the days you set. Times are yours, set when you added each one.</p>';
-    if (!(state.peptides || []).length) html += '<p class="hint">Nothing tracked yet. Add one in My peptides.</p>';
+    var html = '<div class="card"><h2>' + esc(tr("sub.pep-next", null, "Next doses")) + '</h2><p class="hint">' + esc(tr("pep.nextHint")) + '</p>';
+    if (!(state.peptides || []).length) html += '<p class="hint">' + esc(tr("pep.nextEmpty")) + '</p>';
     (state.peptides || []).forEach(function (p) {
       var keys = [], cursor = L.todayKey();
       for (var i = 0; i < 4; i++) {
@@ -1102,7 +1113,7 @@
       }
       html += '<div class="listRow"><span class="mealDot" style="background:' + esc(p.color) + '"></span>' +
         '<span class="grow">' + esc(p.name) + "</span><span class='hint'>" +
-        (keys.length ? keys.map(function (k) { return dayLabel(k) + " " + k.slice(8) + "/" + k.slice(5, 7); }).join(" · ") : "no days set") +
+        (keys.length ? keys.map(function (k) { return dayLabel(k) + " " + k.slice(8) + "/" + k.slice(5, 7); }).join(" · ") : tr("pep.noDaysShort")) +
         (p.time ? " · " + esc(p.time) : "") + "</span></div>";
     });
     html += "</div>";
@@ -1152,14 +1163,14 @@
      one (her ruling, 15 Oct 2026); his locked line follows. */
   function wallyWelcomeLine() {
     var nm = state.profile && state.profile.name ? String(state.profile.name).trim() : "";
-    return nm ? "Hi, " + nm + ". " + window.Wally.BUBBLES.welcome : window.Wally.BUBBLES.welcome;
+    return nm ? tr("today.hiName", { name: nm }) + " " + wallyLine("welcome") : wallyLine("welcome");
   }
   function renderWallyCheckin() {
     var spot = $("wallySpot"); if (!spot) return;
     if (!guideOn() || !window.Wally) { spot.innerHTML = ""; return; }
     var level = state.checkins[L.todayKey()];
-    if (level === "bad") spot.innerHTML = wallyWrap("soft", window.Wally.BUBBLES.soft);
-    else if (level === "great") spot.innerHTML = wallyWrap("bright", window.Wally.BUBBLES.bright);
+    if (level === "bad") spot.innerHTML = wallyWrap("soft", wallyLine("soft"));
+    else if (level === "great") spot.innerHTML = wallyWrap("bright", wallyLine("bright"));
     else if (level === "ok") spot.innerHTML = wallyWrap("welcome", null);
     else spot.innerHTML = wallyWrap("welcome", wallyWelcomeLine());
   }
@@ -1171,10 +1182,10 @@
     if (state.settings.wally[kind]) return;
     state.settings.wally[kind] = true; save();
     var bad = state.checkins[L.todayKey()] === "bad";
-    var bubble = kind === "week" ? window.Wally.BUBBLES.celebrateWeek :
-      bad ? window.Wally.BUBBLES.tea : window.Wally.BUBBLES.celebrateFirst;
+    var bubble = kind === "week" ? wallyLine("celebrateWeek") :
+      bad ? wallyLine("tea") : wallyLine("celebrateFirst");
     var box = $("wallyFloat");
-    box.innerHTML = wallyWrap(bad ? "rough" : "celebrate", bubble, 64) + '<button class="miniBtn wallyX" id="wallyX">Close</button>';
+    box.innerHTML = wallyWrap(bad ? "rough" : "celebrate", bubble, 64) + '<button class="miniBtn wallyX" id="wallyX">' + esc(tr("common.close")) + '</button>';
     box.classList.remove("hidden");
     $("wallyX").addEventListener("click", function () { box.classList.add("hidden"); });
     if (wallyFloatTimer) clearTimeout(wallyFloatTimer);
@@ -1185,46 +1196,46 @@
     var today = L.todayKey();
     var level = state.checkins[today];
     $("checkinRow").innerHTML = D.CHECKINS.map(function (c) {
-      return '<button class="checkinBtn' + (level === c.id ? " active" : "") + '" data-level="' + c.id + '">' + esc(c.label) + "</button>";
+      return '<button class="checkinBtn' + (level === c.id ? " active" : "") + '" data-level="' + c.id + '">' + esc(tr("checkin." + c.id, null, c.label)) + "</button>";
     }).join("");
     document.querySelectorAll(".checkinBtn").forEach(function (b) {
       b.addEventListener("click", function () {
         state.checkins[L.todayKey()] = b.getAttribute("data-level"); save(); renderToday();
         var c = D.CHECKINS.filter(function (x) { return x.id === b.getAttribute("data-level"); })[0];
-        toast(c.hint);
+        toast(tr("checkin." + c.id + "Hint", null, c.hint));
       });
     });
     var cur = D.CHECKINS.filter(function (x) { return x.id === level; })[0];
-    $("checkinHint").textContent = cur ? cur.hint : "Not checked in yet today. No pressure, Ok is the default.";
+    $("checkinHint").textContent = cur ? tr("checkin." + cur.id + "Hint", null, cur.hint) : tr("checkin.none");
     renderWallyCheckin();
   }
   function renderToday() {
     var p = state.profile;
-    $("stripHi").textContent = p && p.name ? "Hi, " + p.name : "";
-    $("todayTitle").textContent = p && p.name ? "Hi, " + p.name : "Today";
+    $("stripHi").textContent = p && p.name ? tr("today.hiPlain", { name: p.name }) : "";
+    $("todayTitle").textContent = p && p.name ? tr("today.hiPlain", { name: p.name }) : tr("nav.today");
     renderCheckin();
     var budget = L.estimateBudget(p || {});
     var level = state.checkins[L.todayKey()] || "ok";
     if (budget) {
       var day = L.mealBudgetFor(level, budget);
       $("budgetCard").hidden = false;
-      $("budgetLine").textContent = "About " + day.meals + " kcal for meals today" +
-        (day.treatRoom ? ", with " + day.treatRoom + " kcal kept for a treat" : "");
+      $("budgetLine").textContent = tr("today.budget", { kcal: day.meals }) +
+        (day.treatRoom ? tr("today.budgetTreat", { kcal: day.treatRoom }) : "");
       var planned = 0, entry = state.plan[mpKey(L.todayKey())] || {};
       ["breakfast", "lunch", "dinner"].forEach(function (m) { var r = entry[m] ? recipeById(entry[m]) : null; var kk = kcalOf(r); if (kk) planned += kk; });
-      $("budgetNote").textContent = "An estimate from the usual formula, not medical advice. Treats are always allowed. Nothing here judges you." +
-        (planned ? " Planned meals today come to about " + planned + " kcal." : "");
+      $("budgetNote").textContent = tr("legal.budgetNote") +
+        (planned ? tr("today.planned", { kcal: planned }) : "");
     } else { $("budgetCard").hidden = true; }
     var setUp = !!(p && p.setupDone);
     $("todayEmpty").hidden = setUp;
     var ew = $("emptyWally");
-    if (ew) ew.innerHTML = !setUp && guideOn() && window.Wally ? wallyWrap("welcome", window.Wally.BUBBLES.welcome, 64) : "";
+    if (ew) ew.innerHTML = !setUp && guideOn() && window.Wally ? wallyWrap("welcome", wallyLine("welcome"), 64) : "";
     var split = L.areasForNeeds(setUp ? p.needs : ["meals", "gym", "peptides", "calendar"]);
     $("todayAreas").innerHTML = split.active.map(function (id) {
       var a = areaById(id);
       return '<button class="areaCard" data-open="' + id + '"><span class="dot ic-' + id + '">' +
-        '<svg class="ic"><use href="' + iconFor(id) + '"/></svg></span><h3>' + esc(a.label) + "</h3>" +
-        "<p>Tap to open</p></button>";
+        '<svg class="ic"><use href="' + iconFor(id) + '"/></svg></span><h3>' + esc(tr("nav." + id, null, a.label)) + "</h3>" +
+        "<p>" + esc(tr("area.tapOpen")) + "</p></button>";
     }).join("");
     document.querySelectorAll("[data-open]").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -1235,23 +1246,23 @@
   /* --- Settings --- */
   function renderSettings() {
     var p = state.profile;
-    $("profileSummary").textContent = !p ? "No setup yet." :
+    $("profileSummary").textContent = !p ? tr("set.noSetup") :
       [p.name, p.weightKg ? p.weightKg + " kg" : "", p.heightCm ? p.heightCm + " cm" : "",
-       (p.goals || []).join(", ")].filter(Boolean).join(" · ") || "Setup saved.";
+       (p.goals || []).join(", ")].filter(Boolean).join(" · ") || tr("set.setupSaved");
     $("disclaimerStatus").textContent = L.disclaimerAgreed(state, D.DISCLAIMER_VERSION) ?
-      "You agreed to the tracking note on " + new Date(state.disclaimer.agreedAt).toLocaleString() + "." :
-      "The peptide area asks you to agree to a short tracking note before it opens. This app is not a doctor and gives no medical advice.";
+      tr("set.agreedOn", { date: new Date(state.disclaimer.agreedAt).toLocaleString() }) :
+      tr("legal.noteStatus");
     var cname = companionName();
-    $("guideStatus").textContent = guideOn() ? cname + " walks with you in this app." : cname + " is resting. He is still here when you want him.";
-    $("guideToggleBtn").textContent = guideOn() ? cname + " rests for a while" : "Bring " + cname + " back";
+    $("guideStatus").textContent = guideOn() ? tr("set.guideOn", { name: cname }) : tr("set.guideOff", { name: cname });
+    $("guideToggleBtn").textContent = guideOn() ? tr("set.guideRestBtn", { name: cname }) : tr("set.guideBackBtn", { name: cname });
     var restSpot = $("guideRestSpot");
-    if (restSpot) restSpot.innerHTML = !guideOn() && window.Wally ? wallyWrap("rest", window.Wally.BUBBLES.tomorrow, 56) : "";
+    if (restSpot) restSpot.innerHTML = !guideOn() && window.Wally ? wallyWrap("rest", wallyLine("tomorrow"), 56) : "";
     var nm = $("guideNameInput"); if (nm && document.activeElement !== nm) nm.value = (state.settings && state.settings.companionName) || "";
     document.querySelectorAll(".skinBtn").forEach(function (b) {
       b.classList.toggle("on", b.getAttribute("data-skin") === trainerSkin());
     });
     var cp = $("calmPicsBtn");
-    if (cp) cp.textContent = (state.settings && state.settings.calmPics) ? "Moving pictures instead" : "Still frames instead";
+    if (cp) cp.textContent = (state.settings && state.settings.calmPics) ? tr("set.motionInstead") : tr("set.stills");
     document.querySelectorAll(".blanketBtn").forEach(function (b) {
       b.classList.toggle("on", b.getAttribute("data-blanket") === blanketColor());
     });
@@ -1270,6 +1281,21 @@
     toast(state.settings.wallyOff ? companionName() + " is resting." : companionName() + " is back.");
   });
   $("tourReplayBtn").addEventListener("click", replayTour);
+  /* The language row (Settings > Appearance): Auto follows
+     the device; a named language pins it. The choice is
+     the user's setting, saved like every other. */
+  function setLang(choice) {
+    state.settings = state.settings || {};
+    state.settings.lang = choice;
+    save();
+    if (window.Lang) { Lang.use(choice); Lang.applyStatic(); }
+    renderAll();
+    toast(tr("settings.langSet"));
+  }
+  $("langAutoBtn").addEventListener("click", function () { setLang("auto"); });
+  $("langEnBtn").addEventListener("click", function () { setLang("en"); });
+  $("langEsBtn").addEventListener("click", function () { setLang("es"); });
+  if (window.Lang) Lang.applyStatic();
   $("guideNameSave").addEventListener("click", function () {
     state.settings = state.settings || {};
     state.settings.companionName = $("guideNameInput").value.trim();
@@ -1281,7 +1307,7 @@
       state.settings = state.settings || {};
       state.settings.blanketColor = b.getAttribute("data-blanket");
       save(); renderSettings(); renderCheckin();
-      toast("Blanket picked. It suits him.");
+      toast(tr("toast.blanketPicked"));
     });
   });
   document.querySelectorAll(".skinBtn").forEach(function (b) {
@@ -1290,14 +1316,14 @@
       state.settings.trainerSkin = b.getAttribute("data-skin");
       state.settings.skinAsked = true;
       save(); renderSettings();
-      toast("Your trainer is set. Same moves, your pick.");
+      toast(tr("set.trainerSet2"));
     });
   });
   $("calmPicsBtn").addEventListener("click", function () {
     state.settings = state.settings || {};
     state.settings.calmPics = !state.settings.calmPics;
     save(); renderSettings();
-    toast(state.settings.calmPics ? "Still frames in the gym. Calmer, same teaching." : "Moving pictures in the gym.");
+    toast(state.settings.calmPics ? tr("set.stillsToast") : tr("set.motionToast"));
   });
   /* --- Appearance (Law E) ---
      Four quiet choices in Settings. The board look is the
@@ -1328,8 +1354,8 @@
     var row = $("apprPhotoRow"); if (row) row.classList.toggle("hidden", !(a.mode === "image" || a.image));
     var rm = $("apprRemoveBtn"); if (rm) rm.classList.toggle("hidden", !a.image);
     var note = $("apprNote");
-    if (note) note.textContent = a.mode === "image" && !a.image ? "Pick a photo and it becomes your background, under a soft veil so words stay easy to read." :
-      a.image ? "Your photo is saved with your account. Only you can remove it." : "";
+    if (note) note.textContent = a.mode === "image" && !a.image ? tr("set.apprPickNote") :
+      a.image ? tr("set.apprSavedNote") : "";
   }
   document.querySelectorAll(".apprBtn").forEach(function (b) {
     b.addEventListener("click", function () {
@@ -1357,9 +1383,9 @@
       state.settings.appearance.image = cv.toDataURL("image/jpeg", 0.82);
       state.settings.appearance.mode = "image";
       save(); applyAppearance(); renderAppearance();
-      toast("Your photo is your background now.");
+      toast(tr("set.apprToast"));
     };
-    img.onerror = function () { URL.revokeObjectURL(url); toast("That photo did not open. Try another one."); };
+    img.onerror = function () { URL.revokeObjectURL(url); toast(tr("set.apprBadPhoto")); };
     img.src = url;
   });
   $("apprRemoveBtn").addEventListener("click", function () {
@@ -1368,7 +1394,7 @@
     state.settings.appearance.image = null;
     if (state.settings.appearance.mode === "image") state.settings.appearance.mode = "brand";
     save(); applyAppearance(); renderAppearance();
-    toast("Photo removed. The calm board look is back.");
+    toast(tr("toast.photoRemoved"));
   });
   /* --- Accounts (Phase 6, P2 door flip) ---
      The door, as ruled 15 Oct 2026: email + the user's
@@ -1418,7 +1444,7 @@
         mirrorNote = "";
         renderAccount();
       }).catch(function () {
-        mirrorNote = "Your last change could not reach your account yet. It is safe on this device and will try again.";
+        mirrorNote = tr("acc.mirrorNote");
         renderAccount();
       });
     }, 800);
@@ -1428,21 +1454,21 @@
   function authErrWords(e, what) {
     var c = (e && e.code) || "";
     if (c === "auth/invalid-credential" || c === "auth/wrong-password" || c === "auth/user-not-found")
-      return "That email and password do not match. Check them and try again.";
-    if (c === "auth/email-already-in-use") return "That email already has an account. Sign in instead.";
-    if (c === "auth/weak-password") return "That password is a bit short. Six or more characters works.";
-    if (c === "auth/invalid-email") return "That email does not look right. Check it and try again.";
-    if (c === "auth/too-many-requests") return "Too many tries just now. Rest a moment, then try again.";
-    if (c === "auth/network-request-failed") return "The connection did not reach the sign-in. Check it and try again.";
-    return what === "sign-up" ? "The account could not be made. Check the email and try again."
-                               : "Sign-in did not finish. Check the email and password and try again.";
+      return tr("door.tMismatch");
+    if (c === "auth/email-already-in-use") return tr("acc.errInUse");
+    if (c === "auth/weak-password") return tr("acc.errWeak");
+    if (c === "auth/invalid-email") return tr("acc.errEmail");
+    if (c === "auth/too-many-requests") return tr("acc.errMany");
+    if (c === "auth/network-request-failed") return tr("acc.errNet");
+    return what === "sign-up" ? tr("acc.errMake")
+                               : tr("acc.errSignin");
   }
   function renderAccount() {
     var box = $("accountBox"); if (!box) return;
     if (!doorStarted) {
       box.innerHTML = (Date.now() - bootAt < 4500) ?
-        '<p class="hint">One moment, opening your account door.</p>' :
-        '<p class="hint">Sign in needs a connection the first time, so the door is resting. Everything keeps working and saving on this device.</p>';
+        '<p class="hint">' + esc(tr("set.opening")) + '</p>' :
+        '<p class="hint">' + esc(tr("acc.doorResting")) + '</p>';
       return;
     }
     if (!authUser) {
@@ -1464,17 +1490,17 @@
       if (doorStep === 2) {
         box.innerHTML = '<div class="doorPage"><div class="doorCol">' +
           '<div class="doorBigMark"><img src="icon.svg" alt=""></div>' +
-          '<div class="doorEmailRow"><span>' + esc(doorEmail) + '</span><button class="miniBtn" id="accChangeBtn">Change</button></div>' +
-          '<label>Password<input id="accPass" type="password" autocomplete="current-password" placeholder="Your password"></label>' +
-          '<div class="row"><button class="primaryBtn" id="accContinueBtn">Continue</button></div>' +
-          '<p class="hint">This one button does both. It signs you in, or makes your account if you are new.</p>' +
-          '<div class="row"><span class="hint">Forgot your password?</span>' +
-          '<button class="miniBtn" id="accForgotBtn">Reset it</button></div>' +
+          '<div class="doorEmailRow"><span>' + esc(doorEmail) + '</span><button class="miniBtn" id="accChangeBtn">' + esc(tr("door.change")) + '</button></div>' +
+          '<label>' + esc(tr("door.password")) + '<input id="accPass" type="password" autocomplete="current-password" placeholder="' + esc(tr("door.passwordPh")) + '"></label>' +
+          '<div class="row"><button class="primaryBtn" id="accContinueBtn">' + esc(tr("door.continueBtn")) + '</button></div>' +
+          '<p class="hint">' + esc(tr("door.continueHint")) + '</p>' +
+          '<div class="row"><span class="hint">' + esc(tr("door.forgot")) + '</span>' +
+          '<button class="miniBtn" id="accForgotBtn">' + esc(tr("door.reset")) + '</button></div>' +
           '</div></div>';
         $("accChangeBtn").addEventListener("click", function () { doorStep = 1; renderAccount(); });
         $("accContinueBtn").addEventListener("click", function () {
           var pw = $("accPass").value;
-          if (!pw) { toast("Type your password too."); return; }
+          if (!pw) { toast(tr("door.tPwFirst")); return; }
           /* One button, both roads: sign in; a credential
              refusal may simply mean "new here", so offer
              the pair to account creation. An existing
@@ -1484,9 +1510,9 @@
           window.FitAuth.signInWithEmail(doorEmail, pw).catch(function (e) {
             var c = (e && e.code) || "";
             if (c === "auth/invalid-credential" || c === "auth/wrong-password" || c === "auth/user-not-found") {
-              window.FitAuth.signUpWithEmail(doorEmail, pw).then(function () { toast("Account made. Welcome in."); })
+              window.FitAuth.signUpWithEmail(doorEmail, pw).then(function () { toast(tr("door.tMade")); })
                 .catch(function (e2) {
-                  if (((e2 && e2.code) || "") === "auth/email-already-in-use") toast("That email and password do not match. Check them and try again.");
+                  if (((e2 && e2.code) || "") === "auth/email-already-in-use") toast(tr("door.tMismatch"));
                   else toast(authErrWords(e2, "sign-up"));
                 });
             } else { toast(authErrWords(e, "sign-in")); }
@@ -1494,8 +1520,8 @@
         });
         $("accPass").addEventListener("keydown", function (ev) { if (ev.key === "Enter") $("accContinueBtn").click(); });
         $("accForgotBtn").addEventListener("click", function () {
-          window.FitAuth.resetPassword(doorEmail).then(function () { toast("Password reset sent. Check your email."); })
-            .catch(function () { toast("That reset could not be sent. Check the email and your connection."); });
+          window.FitAuth.resetPassword(doorEmail).then(function () { toast(tr("door.tResetSent")); })
+            .catch(function () { toast(tr("door.tResetFail")); });
         });
         var pwEl = $("accPass"); if (pwEl) setTimeout(function () { pwEl.focus(); }, 60);
         return;
@@ -1503,68 +1529,68 @@
       box.innerHTML = '<div class="doorPage"><div class="doorCol">' +
         '<div class="doorBigMark"><img src="icon.svg" alt=""></div>' +
         '<div class="doorBigName">Fit Hard</div>' +
-        '<div class="doorBigSub">Sign in or make your account</div>' +
+        '<div class="doorBigSub">' + esc(tr("door.sub")) + '</div>' +
         '<div class="doorIcons"><button class="doorIconBtn" id="accGoogleBtn" aria-label="Continue with Google">' + GOOGLE_G + '</button>' +
         '<button class="doorIconBtn" id="accAppleBtn" aria-label="Continue with Apple">' + APPLE_G + '</button></div>' +
-        '<div class="doorOr">or with email</div>' +
+        '<div class="doorOr">' + esc(tr("door.orEmail")) + '</div>' +
         '<input id="accEmail" type="email" autocomplete="email" aria-label="Email" placeholder="you@example.com">' +
         '<button class="doorNext" id="accNextBtn" aria-label="Next">' + ARROW + '</button>' +
         '</div>' +
-        '<p class="hint">Just looking? The demo is filled with made-up examples, so you can try everything.</p>' +
-        '<div class="row doorDemoRow"><button class="pillBtn" id="accDemoBtn">Explore the demo</button>' +
-        '<button class="pillBtn" id="accReviewerBtn">Reviewer access</button></div>' +
-        (reviewerOpen ? '<div class="grid2"><label>Access code<input id="accCode" type="text" autocomplete="off" placeholder="From the review notes"></label></div>' +
-          '<div class="row"><button class="pillBtn" id="accCodeBtn">Enter with code</button></div>' : "") + '</div>';
+        '<p class="hint">' + esc(tr("door.demoHint")) + '</p>' +
+        '<div class="row doorDemoRow"><button class="pillBtn" id="accDemoBtn">' + esc(tr("door.demoBtn")) + '</button>' +
+        '<button class="pillBtn" id="accReviewerBtn">' + esc(tr("door.reviewerBtn")) + '</button></div>' +
+        (reviewerOpen ? '<div class="grid2"><label>' + esc(tr("door.codeLabel")) + '<input id="accCode" type="text" autocomplete="off" placeholder="' + esc(tr("door.codePh")) + '"></label></div>' +
+          '<div class="row"><button class="pillBtn" id="accCodeBtn">' + esc(tr("door.codeBtn")) + '</button></div>' : "") + '</div>';
       var emEl = $("accEmail"); if (emEl && doorEmail) emEl.value = doorEmail;
       function doorNext() {
         var em = $("accEmail").value.trim();
-        if (!em) { toast("Type your email first."); return; }
-        if (em.indexOf("@") < 1 || em.indexOf(".", em.indexOf("@")) < 0) { toast("That email does not look right. Check it and try again."); return; }
+        if (!em) { toast(tr("door.tEmailFirst")); return; }
+        if (em.indexOf("@") < 1 || em.indexOf(".", em.indexOf("@")) < 0) { toast(tr("door.tEmailBad")); return; }
         doorEmail = em; doorStep = 2; renderAccount();
       }
       $("accNextBtn").addEventListener("click", doorNext);
       $("accEmail").addEventListener("keydown", function (ev) { if (ev.key === "Enter") doorNext(); });
       $("accGoogleBtn").addEventListener("click", function () {
-        window.FitAuth.signInWithGoogle().catch(function () { toast("Google sign-in did not finish. The email sign-in is right here too."); });
+        window.FitAuth.signInWithGoogle().catch(function () { toast(tr("acc.googleFail")); });
       });
       $("accAppleBtn").addEventListener("click", function () {
-        window.FitAuth.signInWithApple().catch(function () { toast("Apple sign-in did not finish. The other doors are right here too."); });
+        window.FitAuth.signInWithApple().catch(function () { toast(tr("acc.appleFail")); });
       });
       $("accDemoBtn").addEventListener("click", function () { enterDemo(null); });
       $("accReviewerBtn").addEventListener("click", function () { reviewerOpen = true; renderAccount(); });
       var codeBtn = $("accCodeBtn");
       if (codeBtn) codeBtn.addEventListener("click", function () {
         var code = $("accCode").value.trim();
-        if (!code) { toast("Type the access code first."); return; }
+        if (!code) { toast(tr("acc.codeFirst")); return; }
         sha256Hex(code).then(function (hash) {
-          if (!hash) { toast("The code door needs a secure connection. The demo button always works."); return; }
+          if (!hash) { toast(tr("acc.codeSecure")); return; }
           enterDemo(hash);
         });
       });
       return;
     }
     if (demoMode) {
-      box.innerHTML = '<p class="hint">You are exploring the demo. Everything here is made up, and your own app is untouched.</p>' +
-        '<div class="row"><button class="pillBtn" id="accLeaveBtn">Leave the demo</button></div>';
+      box.innerHTML = '<p class="hint">' + esc(tr("acc.demoExploring")) + '</p>' +
+        '<div class="row"><button class="pillBtn" id="accLeaveBtn">' + esc(tr("acc.leaveDemo")) + '</button></div>';
       $("accLeaveBtn").addEventListener("click", function () {
         window.FitAuth.signOutUser().catch(function () {});
       });
       return;
     }
     var planLine = (window.FitAuth && window.FitAuth.planOf(state) === "pro")
-      ? '<p class="hint">Your plan: Pro.</p>'
-      : '<div class="row"><span class="hint">Your plan: Free.</span><button class="miniBtn" id="accProBtn">See what Pro adds</button></div>';
-    var warn = cloudWarnings.length ? '<p class="hint">One part of your saved data is growing large. Nothing is lost, and we keep an eye on it for you.</p>' : "";
+      ? '<p class="hint">' + esc(tr("acc.planPro")) + '</p>'
+      : '<div class="row"><span class="hint">' + esc(tr("acc.planFree")) + '</span><button class="miniBtn" id="accProBtn">' + esc(tr("pro.seeAdds")) + '</button></div>';
+    var warn = cloudWarnings.length ? '<p class="hint">' + esc(tr("acc.warnLarge")) + '</p>' : "";
     var note = mirrorNote ? '<p class="hint">' + esc(mirrorNote) + "</p>" : "";
-    box.innerHTML = '<p class="hint">Signed in as ' + esc(authUser.email || "your account") + ". Your app follows you now.</p>" + planLine + warn + note +
+    box.innerHTML = '<p class="hint">' + esc(tr("acc.signedIn", { email: authUser.email || tr("acc.yourAccount") })) + "</p>" + planLine + warn + note +
       (deleteArmed ?
-        '<p class="hint">Delete your account? Your cloud copy and your sign-in go away, and the copy on this device is wiped too. This cannot be undone.</p>' +
-        (isPasswordUser() ? '<div class="grid2"><label>Your password, to be sure<input id="accDeletePass" type="password" autocomplete="current-password" placeholder="Your password"></label></div>' : "") +
-        '<div class="row"><button class="pillBtn" id="accDeleteYes">Yes, delete my account</button><button class="pillBtn" id="accDeleteNo">Keep my account</button></div>' :
-        '<div class="row"><button class="pillBtn" id="accOutBtn">Sign out</button><button class="pillBtn" id="accDeleteBtn">Delete my account</button></div>');
+        '<p class="hint">' + esc(tr("acc.deleteAsk")) + '</p>' +
+        (isPasswordUser() ? '<div class="grid2"><label>' + esc(tr("acc.deletePwLabel")) + '<input id="accDeletePass" type="password" autocomplete="current-password" placeholder="' + esc(tr("door.passwordPh")) + '"></label></div>' : "") +
+        '<div class="row"><button class="pillBtn" id="accDeleteYes">' + esc(tr("acc.deleteYes")) + '</button><button class="pillBtn" id="accDeleteNo">' + esc(tr("acc.deleteNo")) + '</button></div>' :
+        '<div class="row"><button class="pillBtn" id="accOutBtn">' + esc(tr("acc.signOut")) + '</button><button class="pillBtn" id="accDeleteBtn">' + esc(tr("acc.deleteBtn")) + '</button></div>');
     var proBtn = $("accProBtn"); if (proBtn) proBtn.addEventListener("click", showProMoment);
     var out = $("accOutBtn"); if (out) out.addEventListener("click", function () {
-      window.FitAuth.signOutUser().then(function () { toast("Signed out. Everything stays on this device."); });
+      window.FitAuth.signOutUser().then(function () { toast(tr("acc.signedOut")); });
     });
     var del = $("accDeleteBtn"); if (del) del.addEventListener("click", function () { deleteArmed = true; renderAccount(); });
     var no = $("accDeleteNo"); if (no) no.addEventListener("click", function () { deleteArmed = false; renderAccount(); });
@@ -1582,25 +1608,25 @@
     if (!authUser || !window.FitAuth) return;
     var pwField = $("accDeletePass");
     var pw = pwField ? pwField.value : undefined;
-    if (isPasswordUser() && !pw) { toast("Type your password to confirm, when you are ready."); return; }
+    if (isPasswordUser() && !pw) { toast(tr("acc.deletePwFirst")); return; }
     window.FitAuth.deleteAccount(authUser.uid, pw).then(function () {
-      toast("Your account is deleted. Take care.");
+      toast(tr("acc.deleted"));
       setTimeout(wipeDeviceAndReload, 600);
     }).catch(function (err) {
       if (err && (err.code === "fit/reauth-password" || err.code === "auth/wrong-password" || err.code === "auth/invalid-credential")) {
-        toast("That password did not match. Nothing was removed. Check it and try again.");
+        toast(tr("acc.deletePwBad"));
       } else {
-        toast("The delete did not finish. Nothing was removed, and you can try again.");
+        toast(tr("acc.deleteFail"));
       }
       deleteArmed = false; renderAccount();
     });
   }
   function enterDemo(hash) {
-    if (!window.FitAuth || !window.FitAuth.enterDemoSession) { toast("The demo door is resting. Try again with a connection."); return; }
+    if (!window.FitAuth || !window.FitAuth.enterDemoSession) { toast(tr("acc.demoResting")); return; }
     demoPending = true; demoPendingHash = hash || null;
     window.FitAuth.enterDemoSession().catch(function () {
       demoPending = false;
-      toast("The demo could not open. Your own app is untouched.");
+      toast(tr("acc.demoFail"));
     });
   }
   function demoPicks() {
@@ -1631,7 +1657,7 @@
       saveLocal();
       window.FitAuth.saveCloudState(user.uid, state).catch(function () {});
       renderAll();
-      toast("Welcome to the demo. Everything here is made up.");
+      toast(tr("acc.demoWelcome"));
     }).catch(function () {
       state = L.repairState(window.FitDemo.buildDemoState(demoPicks()));
       state.demoUnlock = demoPendingHash; demoPendingHash = null;
@@ -1721,7 +1747,7 @@
     save();
     var card = $("nameReoffer");
     if (!card) return;
-    $("reofferLine").textContent = companionName() + " here. What should I call you?";
+    $("reofferLine").textContent = tr("reoffer.line", { name: companionName() });
     card.hidden = false;
   }
   function tourDots() {
@@ -1734,7 +1760,7 @@
     var guide = esc(companionName());
     var name = state.profile && state.profile.name;
     var x = '<button class="tourX" id="tourX" aria-label="Close the tour">✕</button>';
-    var skip = '<button class="tourSkip" id="tourSkip">Skip tour</button>';
+    var skip = '<button class="tourSkip" id="tourSkip">' + esc(tr("tour.skip")) + '</button>';
     var face = '<img class="tourFace" src="assets/wally-welcome.webp" alt="">';
     if (tourStep === 1) {
       if (!name) tourAskedName = true;
@@ -1745,9 +1771,9 @@
          a first run with a name greets instead. */
       var showField = !name || tourReplay;
       card.innerHTML = x + face +
-        '<p class="tourLine">Hey! I\'m ' + guide + '. Welcome in!' + ((name && !tourReplay) ? "" : " What's your name?") + '</p>' +
-        (showField ? '<input id="tourName" type="text" autocomplete="name" placeholder="Your name" value="' + (tourReplay && name ? esc(name) : "") + '">' : "") +
-        '<div class="tourRow">' + skip + '<button class="primaryBtn tourNext" id="tourNext">Next →</button></div>' +
+        '<p class="tourLine">' + esc(tr("tour.hey", { name: guide })) + ((name && !tourReplay) ? "" : " " + esc(tr("tour.ask"))) + '</p>' +
+        (showField ? '<input id="tourName" type="text" autocomplete="name" placeholder="' + esc(tr("tour.namePh")) + '" value="' + (tourReplay && name ? esc(name) : "") + '">' : "") +
+        '<div class="tourRow">' + skip + '<button class="primaryBtn tourNext" id="tourNext">' + esc(tr("tour.next")) + ' →</button></div>' +
         '<div class="tourDots">' + tourDots() + '</div>';
       var inp = $("tourName"); if (inp) setTimeout(function () { inp.focus(); }, 60);
     } else if (tourStep === 2) {
@@ -1755,23 +1781,23 @@
       sbOpen = true; applySidebar();
       card.className = "tourCard tourMenu";
       card.innerHTML = x +
-        '<p class="tourLine">This is your menu. Everything lives here, tucked away until you want it.</p>' +
-        '<div class="tourRow">' + skip + '<button class="primaryBtn tourNext" id="tourNext">Next →</button></div>' +
+        '<p class="tourLine">' + esc(tr("tour.menu")) + '</p>' +
+        '<div class="tourRow">' + skip + '<button class="primaryBtn tourNext" id="tourNext">' + esc(tr("tour.next")) + ' →</button></div>' +
         '<div class="tourDots">' + tourDots() + '</div>';
     } else if (tourStep === 3) {
       dim.classList.add("hidden");
       sbOpen = false; applySidebar();
       card.className = "tourCard tourBottom";
       card.innerHTML = x +
-        '<p class="tourLine">This is your day. Peptides, meals, gym and calendar, each in its own colour.</p>' +
-        '<div class="tourRow">' + skip + '<button class="primaryBtn tourNext" id="tourNext">Next →</button></div>' +
+        '<p class="tourLine">' + esc(tr("tour.day")) + '</p>' +
+        '<div class="tourRow">' + skip + '<button class="primaryBtn tourNext" id="tourNext">' + esc(tr("tour.next")) + ' →</button></div>' +
         '<div class="tourDots">' + tourDots() + '</div>';
     } else {
       dim.classList.remove("hidden");
       card.className = "tourCard tourCenter";
       card.innerHTML = x + face +
-        '<p class="tourLine">That\'s the tour. Your app is yours now.</p>' +
-        '<div class="tourRow"><span></span><button class="primaryBtn tourNext" id="tourDone">Done ✓</button></div>' +
+        '<p class="tourLine">' + esc(tr("tour.done")) + '</p>' +
+        '<div class="tourRow"><span></span><button class="primaryBtn tourNext" id="tourDone">' + esc(tr("tour.doneBtn")) + ' ✓</button></div>' +
         '<div class="tourDots">' + tourDots() + '</div>';
     }
     var nx = $("tourNext"); if (nx) nx.addEventListener("click", tourAdvance);
@@ -1835,8 +1861,8 @@
      The demo is its own tour; a resting guide is woken
      first, never overridden. */
   function replayTour() {
-    if (demoMode) { toast("The demo is its own tour. Yours runs when you sign in."); return; }
-    if (!guideOn()) { toast(companionName() + " is resting. Bring the guide back first, then the tour can run."); return; }
+    if (demoMode) { toast(tr("tour.tDemo")); return; }
+    if (!guideOn()) { toast(tr("tour.tResting", { name: companionName() })); return; }
     showView("today");
     tourReplay = true;
     tourRanThisSession = true;
@@ -1853,7 +1879,7 @@
      Quality gate-reads it, Finance confirms the price. */
   function showProMoment() {
     var w = $("proWally");
-    if (w) w.innerHTML = guideOn() && window.Wally ? wallyWrap("welcome", "You found the strong stuff.", 64) : "";
+    if (w) w.innerHTML = guideOn() && window.Wally ? wallyWrap("welcome", tr("pro.bubble"), 64) : "";
     $("proModal").classList.remove("hidden");
   }
   function closeProMoment() { $("proModal").classList.add("hidden"); }
@@ -1871,7 +1897,7 @@
         saveLocal();
         window.FitAuth.saveCloudState(user.uid, state).then(function (r) { cloudWarnings = (r && r.warnings) || []; renderAccount(); maybeSyncPlan(user); }).catch(function () {});
         renderAll();
-        toast("Signed in. Your app is together again.");
+        toast(tr("toast.signedInAgain"));
       } else {
         adoptSignInName(user);
         save();
@@ -1891,7 +1917,7 @@
         var wasDemo = demoMode;
         authUser = null;
         doorStep = 1; doorEmail = "";
-        if (wasDemo) { restoreParkedState(); renderAll(); toast("Demo closed. Your own app is just as you left it."); }
+        if (wasDemo) { restoreParkedState(); renderAll(); toast(tr("toast.demoClosed")); }
         else renderAccount();
       }
     });
@@ -1918,7 +1944,7 @@
   var pickedCuisines = [], pickedNeeds = [];
   function chips(el, items, picked) {
     el.innerHTML = items.map(function (it) {
-      var id = typeof it === "string" ? it : it.id, label = typeof it === "string" ? it : it.label;
+      var id = typeof it === "string" ? it : it.id, label = typeof it === "string" ? it : tr("need." + it.id, null, it.label);
       return '<button class="chip' + (picked.indexOf(id) !== -1 ? " on" : "") + '" data-chip="' + esc(id) + '">' + esc(label) + "</button>";
     }).join("");
     el.querySelectorAll(".chip").forEach(function (b) {
@@ -1931,14 +1957,15 @@
   }
   function openSetup() {
     var spot = $("wallySetup");
-    if (spot) spot.innerHTML = guideOn() && window.Wally ? wallyWrap("welcome", window.Wally.BUBBLES.welcome, 84) : "";
+    if (spot) spot.innerHTML = guideOn() && window.Wally ? wallyWrap("welcome", wallyLine("welcome"), 84) : "";
     $("suCompanion").value = (state.settings && state.settings.companionName) || "";
     var p = state.profile || {};
     $("suName").value = p.name || "";
     $("suWeight").value = p.weightKg || ""; $("suHeight").value = p.heightCm || "";
     $("suAge").value = p.age || ""; $("suSex").value = p.formulaSex || "";
     $("suActivity").value = p.activity || "some"; $("suDeficit").value = p.deficit || "gentle";
-    $("suGoal").innerHTML = D.GOALS.map(function (g) { return "<option" + ((p.goals || [])[0] === g ? " selected" : "") + ">" + esc(g) + "</option>"; }).join("");
+    var GOAL_KEYS = ["goal.lose", "goal.strength", "goal.fitter", "goal.regular", "goal.doses"];
+    $("suGoal").innerHTML = D.GOALS.map(function (g, gi) { return '<option value="' + esc(g) + '"' + ((p.goals || [])[0] === g ? " selected" : "") + ">" + esc(tr(GOAL_KEYS[gi] || "", null, g)) + "</option>"; }).join("");
     $("suAllergies").value = (p.allergies || []).join(", ");
     pickedCuisines = (p.preferences || []).slice();
     pickedNeeds = (p.needs || []).slice();

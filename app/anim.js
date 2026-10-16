@@ -237,6 +237,18 @@
     if (!tr || !tr.keys || !tr.keys[0] || !tr.keys[0].hip || !tr.keys[1]) return null;
     return tr;
   }
+  /* The language layer, when it is on the page: a bubble
+     resolves from the layer, else the track's own words
+     (the English of record) show. */
+  function animTr(key, fallback) {
+    try {
+      if (window.Lang && window.Lang.t) {
+        var s = window.Lang.t(key);
+        if (s && s !== key) return s;
+      }
+    } catch (e) {}
+    return fallback;
+  }
   function svgEl(cls) {
     var s = document.createElementNS(NS, "svg");
     s.setAttribute("viewBox", "0 0 360 270");
@@ -256,7 +268,7 @@
     if (!track) {
       /* Poison leg (QA pin 8): calm placeholder, session continues. */
       card.className = "animCard animMissing";
-      card.innerHTML = '<p class="hint">The moving picture for this one is still being drawn. Your sets still count, exactly the same.</p>';
+      card.innerHTML = '<p class="hint">' + animTr("anim.missing", "The moving picture for this one is still being drawn. Your sets still count, exactly the same.") + '</p>';
       return { stop: function () {}, setFrozen: function () {}, setSkin: function () {}, setBubbles: function () {}, missing: true };
     }
     var stageDiv = document.createElement("div");
@@ -267,10 +279,32 @@
 
     var guide = document.createElement("div");
     guide.className = "animGuide";
-    guide.innerHTML = '<img class="animWally" src="assets/wally-welcome.webp" alt="Wally, your guide">' +
+    guide.innerHTML = '<img class="animWally" src="assets/wally-welcome.webp" alt="' + animTr("anim.wallyAlt", "Wally, your guide") + '">' +
       '<div class="animBubble"><span class="animBubbleText"></span>' +
-      '<button type="button" class="animRestBtn">Rest the tips</button></div>';
+      '<button type="button" class="animRestBtn">' + animTr("anim.restTips", "Rest the tips") + '</button></div>';
     card.appendChild(guide);
+    /* Wally's seats of record (Lab sheet, declared
+       derivatives of the art of record): he OPENS each
+       exercise (hello-wave), WATCHES beside the loop
+       (the profile view; counting rides it too), and
+       RESTS with the frozen loop (rest2). The files are
+       byte copies of the sheet's finals, never redrawn. */
+    var SEAT_SRC = {
+      hello: "assets/wally-hello.webp",
+      profile: "assets/wally-profile.webp",
+      rest: "assets/wally-rest.webp"
+    };
+    var wallyImgEl = guide.querySelector(".animWally");
+    var seatNow = "";
+    function setSeat(name) {
+      if (!wallyImgEl || seatNow === name || !SEAT_SRC[name]) return;
+      seatNow = name;
+      wallyImgEl.src = SEAT_SRC[name];
+    }
+    /* A fresh mount opens the exercise; a mount carrying
+       a startAt is a resume (rest hand-over) and goes
+       straight to the watch seat. */
+    setSeat(opts.startAt ? "profile" : "hello");
     var bubbleText = guide.querySelector(".animBubbleText");
     var bubblesOn = opts.bubbles !== false;
     guide.style.display = bubblesOn ? "" : "none";
@@ -279,6 +313,7 @@
     });
     function setBubble(i) {
       var b = (track.bubbles || [])[i];
+      if (b) b = animTr("bub." + exId + "." + i, b);
       if (b && bubbleText.textContent !== b) bubbleText.textContent = b;
       stageDiv.setAttribute("data-phase", PHASE_NAMES[i] || "setup");
     }
@@ -304,12 +339,13 @@
           sel = ki;
           frames.forEach(function (f, j) { f.className = "animStill" + (j === sel ? " sel" : ""); });
           setBubble(sel);
+          setSeat("profile");
         });
       });
       setBubble(0);
       return {
         stop: function () { dead = true; },
-        setFrozen: function () {},
+        setFrozen: function (f) { setSeat(f ? "rest" : "profile"); },
         setSkin: function (sk) {
           skin = sk;
           frames.forEach(function (holder, ki) {
@@ -334,7 +370,7 @@
       var t = acc / 1000;
       stage.apply(poseAt(track, t));
       var ph = phaseAt(track, t);
-      if (ph !== curPhase) { curPhase = ph; if (bubblesOn) setBubble(ph); }
+      if (ph !== curPhase) { curPhase = ph; if (ph > 0 && !frozen) setSeat("profile"); if (bubblesOn) setBubble(ph); }
       raf = requestAnimationFrame(frame);
     }
     raf = requestAnimationFrame(frame);
@@ -344,7 +380,7 @@
     }
     return {
       stop: function () { dead = true; cancelAnimationFrame(raf); if (obs) obs.disconnect(); },
-      setFrozen: function (f) { frozen = !!f; },
+      setFrozen: function (f) { frozen = !!f; setSeat(frozen ? "rest" : "profile"); },
       setSkin: function (sk) {
         skin = sk;
         stage = buildStage(svg, track, skin);

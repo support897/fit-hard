@@ -17,7 +17,8 @@
   var ART = {
     welcome: "assets/wally-welcome.webp",
     rest: "assets/wally-rest.webp",
-    rough: "assets/wally-rough.webp"
+    rough: "assets/wally-rough.webp",
+    celebrate: "assets/wally-celebrate.webp"
   };
   /* Pose = which piece of the art of record shows. The rest
      state is the burrow state: rough days and celebrations
@@ -28,7 +29,7 @@
   var POSES = {
     welcome: "welcome",
     bright: "welcome",
-    celebrate: "welcome",
+    celebrate: "celebrate",
     soft: "rough",
     rough: "rough",
     rest: "rest"
