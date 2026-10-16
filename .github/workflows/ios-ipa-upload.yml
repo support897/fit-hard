@@ -121,7 +121,8 @@ jobs:
         with:
           name: fit-hard-ios-ipa-PIPELINE-PROOF-not-for-submission
           path: ${{ runner.temp }}/export/*.ipa
-          retention-days: 30 Connect
+          retention-days: 30
+      - name: Upload to App Store Connect
         env:
           ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
           ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
