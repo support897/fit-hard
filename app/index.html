@@ -160,16 +160,27 @@
         <div class="row"><button class="pillBtn" id="calmPicsBtn" data-i18n="set.stills">Still frames instead</button></div>
       </div>
       <div class="card">
+        <h2 data-i18n="set.reminders">Reminders</h2>
+        <p class="hint" id="remindHint"></p>
+        <div class="row"><button class="pillBtn hidden" id="remindBtn"></button></div>
+      </div>
+      <div class="card">
         <h2 data-i18n="set.healthNote">Health tracking note</h2>
         <p class="hint" id="disclaimerStatus" data-i18n="set.noPep">You have not opened the peptide area yet.</p>
       </div>
       <div class="card">
         <h2 data-i18n="set.data">Your data</h2>
         <div class="row"><button class="pillBtn" id="exportBtn" data-i18n="set.download">Download my data</button></div>
+        <div class="row"><button class="pillBtn" id="importOpen2" data-i18n="cal.importTitle">Bring my calendar in</button></div>
         <p class="hint" data-i18n="set.dataHint">Everything you add stays yours. The app never deletes it.</p>
         <p class="hint" id="saveNote"></p>
         <div class="row"><a href="privacy.html" target="_blank" rel="noopener" data-i18n="set.privacy">Privacy policy</a></div>
       </div>
+    </section>
+
+    <section id="view-plans" class="view">
+      <header class="topBar"><div><h1 data-i18n="plan.title">Plans</h1><p class="sub" data-i18n="plan.sub">Pick the shelf that fits. You can change or cancel any time.</p></div></header>
+      <div id="plansBox"></div>
     </section>
   </main>
 </div>
@@ -219,11 +230,31 @@
     <h2>Fit Hard Pro</h2>
     <p data-i18n="pro.body">Unlimited routines and training plans. Your progress from day one, not just the last three months. Your own custom exercises, and body measurements over time. The plate calculator does the maths for you.</p>
     <p class="hint" data-i18n="pro.price">A$7.99 a month, or A$59.99 a year. Your first month is free.</p>
+    <p class="hint" id="proLocalLine" hidden></p>
+    <p class="hint" id="proStateLine"></p>
     <div class="row"><button id="proGo" class="primaryBtn" data-i18n="pro.goBtn">See Pro plans</button><button id="proNotNow" class="pillBtn" data-i18n="setup.notNow">Not now</button></div>
   </div>
 </div>
 
 <div id="recipeModal" class="modal hidden"><div class="modalCard" id="recipeModalCard"></div></div>
+
+<div id="importSheet" class="modal hidden">
+  <div class="modalCard">
+    <h2 data-i18n="cal.importTitle">Bring my calendar in</h2>
+    <p class="hint" data-i18n="cal.importIntro">Read-only. This copies your events into Fit Hard. Nothing in your old calendar changes, and importing again never doubles anything.</p>
+    <div class="row" role="group" aria-label="Where is your calendar?">
+      <button class="pillBtn import-src" data-src="google" data-i18n="cal.srcGoogle">Google Calendar</button>
+      <button class="pillBtn import-src" data-src="apple" data-i18n="cal.srcApple">Apple / iCloud</button>
+      <button class="pillBtn import-src" data-src="outlook" data-i18n="cal.srcOutlook">Outlook</button>
+      <button class="pillBtn import-src" data-src="file" data-i18n="cal.srcFile">A calendar file</button>
+    </div>
+    <p class="hint" id="importGuide"></p>
+    <label><span data-i18n="cal.importLinkLabel">Paste the calendar link</span><input type="url" id="importUrl" placeholder="https://… .ics" autocomplete="off"></label>
+    <div class="row"><button id="importGo" class="primaryBtn" data-i18n="cal.importGo">Bring it in</button><button id="importFileBtn" class="pillBtn" data-i18n="cal.importFileBtn">Choose a file instead</button><input type="file" id="importFile" accept=".ics,text/calendar" hidden></div>
+    <p class="hint" id="importResult" role="status"></p>
+    <div class="row"><button id="importClose" class="pillBtn" data-i18n="cal.importDone">Done</button></div>
+  </div>
+</div>
 
 <div id="wallyFloat" class="hidden"></div>
 <div id="toast" class="toast hidden"></div>
@@ -237,8 +268,17 @@
 <script src="anim.js"></script>
 <script src="wally.js"></script>
 <script src="i18n.js"></script>
+<script src="i18n-content.js"></script>
+<script src="prices-data.js"></script>
 <script src="accounts-config.js"></script>
+<!-- The shop config slot (Tranche B): the RevenueCat public
+     keys land here at the payment sitting. Empty tonight on
+     purpose: with no keys the app says plainly that Pro is
+     not on sale in the store yet, and nothing can be bought. -->
+<script>window.FIT_SHOP_CONFIG = { revenueCatIosKey: "", revenueCatAndroidKey: "" };</script>
 <script src="demo-seed.js"></script>
+<script src="vendor/ical/ical.min.js"></script>
+<script src="calendar-import.js"></script>
 <script src="app.js"></script>
 <script type="module" src="auth.js"></script>
 </body>

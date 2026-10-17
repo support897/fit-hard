@@ -2,13 +2,14 @@
    activate purges every non-current cache, fetch is scoped to the
    current cache, so returning users never run old code forever. */
 "use strict";
-var CACHE = "fitapp-v31";
+var CACHE = "fitapp-v33";
 var FILES = ["./", "index.html", "styles.css", "data.js", "logic.js", "app.js",
-  "meals-data.js", "meals-nutrition.js", "meals-logic.js", "exercises-data.js", "anim-data.js", "anim.js", "wally.js", "i18n.js", "accounts-config.js", "auth.js", "demo-seed.js",
+  "meals-data.js", "meals-nutrition.js", "meals-logic.js", "exercises-data.js", "anim-data.js", "anim.js", "wally.js", "i18n.js", "i18n-content.js", "prices-data.js", "calendar-import.js", "vendor/ical/ical.min.js", "accounts-config.js", "auth.js", "demo-seed.js",
   "icon.svg", "icons/icon-192.png", "icons/icon-512.png", "manifest.webmanifest", "privacy.html",
   "fonts/ZillaSlab-600.woff2", "fonts/ZillaSlab-700.woff2", "fonts/Karla-400.woff2", "fonts/Karla-700.woff2", "fonts/Karla-400-italic.woff2",
   "assets/wally-welcome.webp", "assets/wally-rest.webp", "assets/wally-rough.webp",
-  "assets/wally-hello.webp", "assets/wally-profile.webp", "assets/wally-celebrate.webp"];
+  "assets/wally-hello.webp", "assets/wally-profile.webp", "assets/wally-celebrate.webp",
+  "assets/station-leg-press-1.webp", "assets/station-leg-press-2.webp", "assets/station-leg-press-3.webp"];
 /* The photo model (vendor/, 20 MB) is not precached: it loads on
    first use of a photo tool and the fetch handler caches it then. */
 self.addEventListener("install", function (e) {

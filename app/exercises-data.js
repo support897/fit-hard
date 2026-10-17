@@ -14,6 +14,8 @@ window.FIT_EX = {
    "partLabel": "Front of thigh",
    "equipment": "machine",
    "level": "beginner",
+   "category": "strength",
+   "station": "leg-press",
    "cue": "Sit tall with your back flat on the pad. Push the plate away with your whole foot, then bend slowly back. Keep knees soft at the top.",
    "timed": null,
    "source": "free-exercise-db/Leg_Press"
@@ -25,6 +27,8 @@ window.FIT_EX = {
    "partLabel": "Calves",
    "equipment": "machine",
    "level": "beginner",
+   "category": "strength",
+   "station": "leg-press",
    "cue": "Feet low on the plate, heels free. Push through the balls of your feet, pause, then let your heels sink back slowly.",
    "timed": null,
    "source": "free-exercise-db/Calf_Press_On_The_Leg_Press_Machine"
@@ -36,6 +40,8 @@ window.FIT_EX = {
    "partLabel": "Front of thigh",
    "equipment": "machine",
    "level": "beginner",
+   "category": "strength",
+   "station": "leg-extension",
    "cue": "Sit with the pad on your shins. Lift until your legs are nearly straight, then lower slowly. Small and steady wins.",
    "timed": null,
    "source": "free-exercise-db/Leg_Extensions"
@@ -47,6 +53,8 @@ window.FIT_EX = {
    "partLabel": "Back of thigh",
    "equipment": "machine",
    "level": "beginner",
+   "category": "strength",
+   "station": "leg-curl",
    "cue": "Sit tall, pad behind your ankles. Pull your heels down and back, then return slowly. Keep your hips still.",
    "timed": null,
    "source": "free-exercise-db/Seated_Leg_Curl"
@@ -58,6 +66,8 @@ window.FIT_EX = {
    "partLabel": "Front of thigh",
    "equipment": "barbell",
    "level": "beginner",
+   "category": "strength",
+   "station": "bench-barbell",
    "cue": "Bar on your upper back, feet shoulder wide. Sit your hips back and down, chest tall, then stand up through your heels.",
    "timed": null,
    "source": "free-exercise-db/Barbell_Squat"
@@ -69,6 +79,8 @@ window.FIT_EX = {
    "partLabel": "Front of thigh",
    "equipment": "machine",
    "level": "beginner",
+   "category": "strength",
+   "station": "smith",
    "cue": "Bar on your upper back, feet a step forward. Slide down the rails until thighs are level, then push up tall.",
    "timed": null,
    "source": "free-exercise-db/Smith_Machine_Squat"
@@ -80,6 +92,8 @@ window.FIT_EX = {
    "partLabel": "Calves",
    "equipment": "machine",
    "level": "beginner",
+   "category": "strength",
+   "station": "calf-machine",
    "cue": "Stand tall, balls of your feet on the step. Rise up onto your toes, pause, then lower slowly below the step.",
    "timed": null,
    "source": "free-exercise-db/Standing_Calf_Raises"
@@ -91,6 +105,8 @@ window.FIT_EX = {
    "partLabel": "Glutes",
    "equipment": "body only",
    "level": "beginner",
+   "category": "strength",
+   "station": "bodyweight",
    "cue": "Lie on your back, knees bent, feet flat. Lift your hips until your body makes one line, squeeze, then lower slowly.",
    "timed": null,
    "source": "free-exercise-db/Butt_Lift_Bridge"
@@ -102,6 +118,8 @@ window.FIT_EX = {
    "partLabel": "Front of thigh",
    "equipment": "body only",
    "level": "beginner",
+   "category": "strength",
+   "station": "bodyweight",
    "cue": "Feet shoulder wide, arms forward for balance. Sit back like into a chair, then stand tall. Knees track over toes.",
    "timed": null,
    "source": "free-exercise-db/Bodyweight_Squat"
@@ -113,7 +131,9 @@ window.FIT_EX = {
    "partLabel": "Back",
    "equipment": "cable",
    "level": "beginner",
-   "cue": "Grip wide, sit tall. Pull the bar to your upper chest, elbows down, then let it rise slowly.",
+   "category": "strength",
+   "station": "lat-pulldown",
+   "cue": "Grip close, sit tall. Pull the bar to your upper chest, elbows down, then let it rise slowly.",
    "timed": null,
    "source": "free-exercise-db/Close-Grip_Front_Lat_Pulldown"
   },
@@ -124,6 +144,8 @@ window.FIT_EX = {
    "partLabel": "Back",
    "equipment": "cable",
    "level": "beginner",
+   "category": "strength",
+   "station": "cable-station",
    "cue": "Sit tall, arms long. Pull the handle to your tummy, squeeze your shoulder blades, then reach forward slowly.",
    "timed": null,
    "source": "free-exercise-db/Seated_Cable_Rows"
@@ -135,6 +157,8 @@ window.FIT_EX = {
    "partLabel": "Back",
    "equipment": "dumbbell",
    "level": "beginner",
+   "category": "strength",
+   "station": "dumbbells",
    "cue": "One knee on the bench, back flat. Pull the weight to your hip, then lower it all the way down.",
    "timed": null,
    "source": "free-exercise-db/One-Arm_Dumbbell_Row"
@@ -146,6 +170,8 @@ window.FIT_EX = {
    "partLabel": "Back",
    "equipment": "barbell",
    "level": "beginner",
+   "category": "strength",
+   "station": "bench-barbell",
    "cue": "Hinge at the hips, back flat, knees soft. Pull the bar to your tummy, then lower it with control.",
    "timed": null,
    "source": "free-exercise-db/Bent_Over_Barbell_Row"
@@ -157,6 +183,8 @@ window.FIT_EX = {
    "partLabel": "Lower back",
    "equipment": "other",
    "level": "beginner",
+   "category": "strength",
+   "station": "bodyweight",
    "cue": "Hips on the pad, arms crossed. Lower your chest slowly, then lift until your body is one straight line.",
    "timed": null,
    "source": "free-exercise-db/Hyperextensions_Back_Extensions"
@@ -168,6 +196,8 @@ window.FIT_EX = {
    "partLabel": "Chest",
    "equipment": "machine",
    "level": "beginner",
+   "category": "strength",
+   "station": "pec-deck",
    "cue": "Sit tall, arms on the pads. Bring the pads together in front of your chest, then open slowly.",
    "timed": null,
    "source": "free-exercise-db/Butterfly"
@@ -179,6 +209,8 @@ window.FIT_EX = {
    "partLabel": "Chest",
    "equipment": "cable",
    "level": "beginner",
+   "category": "strength",
+   "station": "cable-station",
    "cue": "Handles at chest height. Push forward until arms are long, then return slowly, chest tall the whole time.",
    "timed": null,
    "source": "free-exercise-db/Cable_Chest_Press"
@@ -190,6 +222,8 @@ window.FIT_EX = {
    "partLabel": "Chest",
    "equipment": "barbell",
    "level": "beginner",
+   "category": "strength",
+   "station": "bench-barbell",
    "cue": "Lie flat, feet on the floor. Lower the bar to your chest with control, then push it back up.",
    "timed": null,
    "source": "free-exercise-db/Barbell_Bench_Press_-_Medium_Grip"
@@ -201,6 +235,8 @@ window.FIT_EX = {
    "partLabel": "Chest",
    "equipment": "body only",
    "level": "beginner",
+   "category": "strength",
+   "station": "bodyweight",
    "cue": "Hands under shoulders, body one line. Lower until elbows bend deep, then push the floor away. Knees down is a fine version.",
    "timed": null,
    "source": "free-exercise-db/Pushups"
@@ -212,6 +248,8 @@ window.FIT_EX = {
    "partLabel": "Shoulders",
    "equipment": "cable",
    "level": "beginner",
+   "category": "strength",
+   "station": "cable-station",
    "cue": "One handle at shoulder height, stand tall. Push up until your arm is long, lower slowly, then swap sides.",
    "timed": null,
    "source": "free-exercise-db/Alternating_Cable_Shoulder_Press"
@@ -223,6 +261,8 @@ window.FIT_EX = {
    "partLabel": "Shoulders",
    "equipment": "dumbbell",
    "level": "beginner",
+   "category": "strength",
+   "station": "dumbbells",
    "cue": "Weights by your sides. Lift out to shoulder height with soft elbows, then lower slowly. No swinging.",
    "timed": null,
    "source": "free-exercise-db/Side_Lateral_Raise"
@@ -234,6 +274,8 @@ window.FIT_EX = {
    "partLabel": "Front of arm",
    "equipment": "dumbbell",
    "level": "beginner",
+   "category": "strength",
+   "station": "dumbbells",
    "cue": "Elbows tucked at your sides. Curl one weight up, then lower slowly. Swap sides each rep.",
    "timed": null,
    "source": "free-exercise-db/Dumbbell_Alternate_Bicep_Curl"
@@ -245,6 +287,8 @@ window.FIT_EX = {
    "partLabel": "Front of arm",
    "equipment": "machine",
    "level": "beginner",
+   "category": "strength",
+   "station": "bicep-machine",
    "cue": "Elbows on the pad, sit tall. Curl the handles up, then lower slowly until arms are nearly straight.",
    "timed": null,
    "source": "free-exercise-db/Machine_Bicep_Curl"
@@ -256,6 +300,8 @@ window.FIT_EX = {
    "partLabel": "Back of arm",
    "equipment": "body only",
    "level": "beginner",
+   "category": "strength",
+   "station": "bodyweight",
    "cue": "Hands on the bench behind you, legs out. Lower by bending elbows, then push back up. Bend knees to make it gentler.",
    "timed": null,
    "source": "free-exercise-db/Bench_Dips"
@@ -267,6 +313,8 @@ window.FIT_EX = {
    "partLabel": "Back of arm",
    "equipment": "cable",
    "level": "beginner",
+   "category": "strength",
+   "station": "cable-station",
    "cue": "Elbows tucked, cable in hand. Push down until your arms are straight, then let it rise slowly.",
    "timed": null,
    "source": "free-exercise-db/Triceps_Pushdown"
@@ -278,6 +326,8 @@ window.FIT_EX = {
    "partLabel": "Tummy",
    "equipment": "body only",
    "level": "beginner",
+   "category": "strength",
+   "station": "bodyweight",
    "cue": "Lie back, hands by your head. Bring elbow to opposite knee, swapping sides like pedalling. Slow beats fast.",
    "timed": null,
    "source": "free-exercise-db/Air_Bike"
@@ -289,6 +339,8 @@ window.FIT_EX = {
    "partLabel": "Tummy",
    "equipment": "body only",
    "level": "beginner",
+   "category": "strength",
+   "station": "bodyweight",
    "cue": "Forearms down, body one long line, tummy pulled in. Breathe slowly and hold. Knees down is a fine version.",
    "timed": 30,
    "source": "free-exercise-db/Plank"
@@ -300,6 +352,8 @@ window.FIT_EX = {
    "partLabel": "Glutes",
    "equipment": "body only",
    "level": "beginner",
+   "category": "strength",
+   "station": "bodyweight",
    "cue": "On all fours, back flat. Push one heel up and back, squeeze, then return. Swap sides each set.",
    "timed": null,
    "source": "free-exercise-db/Glute_Kickback"

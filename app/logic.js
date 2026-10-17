@@ -180,7 +180,7 @@ function safeList(x, fix) {
 }
 function emptyState() {
   return { profile: null, checkins: {}, plan: {}, customRecipes: [], treats: [],
-    pantry: [], extras: [], routines: [], sessions: [], peptides: [], habits: [], todos: [],
+    pantry: [], extras: [], routines: [], sessions: [], peptides: [], habits: [], todos: [], imports: [],
     disclaimer: null, settings: { notifications: false }, demoUnlock: null };
 }
 /* Routine and session items, normalised slot by slot (QA
@@ -251,10 +251,22 @@ function repairState(raw) {
       name: typeof x.name === "string" && x.name ? x.name : "extra" });
   });
   out.peptides = safeList(raw.peptides, function (pp, i) {
-    return Object.assign({}, pp, { id: typeof pp.id === "string" && pp.id ? pp.id : "pep." + i,
+    var base = Object.assign({}, pp, { id: typeof pp.id === "string" && pp.id ? pp.id : "pep." + i,
       name: typeof pp.name === "string" && pp.name ? pp.name : "Peptide",
       color: typeof pp.color === "string" && pp.color ? pp.color : null,
       log: Array.isArray(pp.log) ? pp.log : [] });
+    /* Schedule shapes of record are { days:[..] } and
+       { intervalDays:n, startKey } (what the intake writes and
+       nextDoseKey reads). Older/fixture shapes are translated
+       here, at the repair boundary, keeping every field:
+       { type:"every", every:n, start } gains its intervalDays
+       twin; { type:"daily" } gains the all-week days list. */
+    var sc = base.schedule;
+    if (sc && typeof sc === "object" && !Array.isArray(sc.days) && !(sc.intervalDays > 0)) {
+      if (sc.type === "every" && sc.every > 0) base.schedule = Object.assign({}, sc, { intervalDays: sc.every, startKey: sc.start || base.startKey || null });
+      else if (sc.type === "daily") base.schedule = Object.assign({}, sc, { days: [0, 1, 2, 3, 4, 5, 6] });
+    }
+    return base;
   });
   /* Each peptide keeps its OWN colour (her rule): a missing or
      repeated colour is replaced with the next free palette colour. */
@@ -265,11 +277,11 @@ function repairState(raw) {
   });
   out.routines = safeList(raw.routines, function (r, i) {
     return Object.assign({}, r, { id: typeof r.id === "string" && r.id ? r.id : "routine." + i,
+      createdKey: typeof r.createdKey === "string" && r.createdKey ? r.createdKey : todayKey(),
       name: typeof r.name === "string" && r.name ? r.name : "Routine",
       days: Array.isArray(r.days) ? r.days.filter(function (d) { return Number(d) >= 0 && Number(d) <= 6; }) : [],
       time: typeof r.time === "string" && r.time ? r.time : null,
       items: safeRoutineItems(r.items),
-      createdKey: typeof r.createdKey === "string" && r.createdKey ? r.createdKey : null,
       goalId: typeof r.goalId === "string" ? r.goalId : null });
   });
   out.sessions = safeList(raw.sessions, function (ss, i) {
@@ -293,6 +305,10 @@ function repairState(raw) {
       durationMin: Number(t.durationMin) > 0 ? Number(t.durationMin) : 25,
       status: t.status === "done" ? "done" : "open" });
   });
+  /* The import registry (Bring my calendar in): rows are kept
+     as written; a non-array becomes an empty registry. Repair
+     never drops a row. */
+  out.imports = Array.isArray(raw.imports) ? raw.imports.filter(function (r) { return isObj(r); }) : [];
   if (isObj(raw.disclaimer) && typeof raw.disclaimer.agreedAt === "string") {
     out.disclaimer = { agreedAt: raw.disclaimer.agreedAt,
       version: Number(raw.disclaimer.version) || 1 };
@@ -468,14 +484,29 @@ var GYM_GOALS = [
   { id: "full", label: "Full body", parts: ["quadriceps", "chest", "lats", "abdominals", "glutes"], sets: 3, reps: 10, restSec: 45 },
   { id: "gentle", label: "Gentle start", parts: ["quadriceps", "glutes", "chest", "abdominals"], sets: 2, reps: 10, restSec: 60 }
 ];
+/* D2 eligibility (Exercises Phase 0, gated whole 17 Oct 2026):
+   the ONE pool the routine builder may pick from — category
+   strength AND level beginner, nothing else, no exceptions
+   list. Intermediate is hand-picked only ("A step up"); expert
+   enters no routine by any path in v1; non-strength categories
+   are library held classes, never routine reps. Records that
+   predate the D1 schema (no category field) read as strength:
+   the shipped library was curated beginner strength only, and
+   repair-never-drops means old records keep working. */
+function routinePool(exercises) {
+  return (exercises || []).filter(function (e) {
+    return !!e && e.level === "beginner" && (e.category === "strength" || e.category == null);
+  });
+}
 function buildRoutine(goalId, minutes, exercises) {
   var goal = null;
   GYM_GOALS.forEach(function (g) { if (g.id === goalId) goal = g; });
   if (!goal) return null;
   var count = Math.max(3, Math.min(8, Math.round((Number(minutes) || 30) / 9)));
+  var eligible = routinePool(exercises);
   var byPart = {};
   goal.parts.forEach(function (p) {
-    byPart[p] = (exercises || []).filter(function (e) { return e.part === p; });
+    byPart[p] = eligible.filter(function (e) { return e.part === p; });
   });
   var items = [], used = {};
   var round = 0, added = true;
@@ -515,6 +546,47 @@ function routineDueOn(routine, isoKey) {
   if (isoKey < routine.createdKey) return false;
   var wd = parseKey(isoKey).getDay(); /* 0 = Sunday */
   return routine.days.indexOf(wd) !== -1;
+}
+
+/* --- Reminder planning (Tranche A-4) ------------------------------------
+   Pure: which dose + gym moments deserve a device-local reminder next.
+   The app layer turns these into scheduled phone notifications inside
+   the store wrap; on the web nothing is scheduled (in-app surfaces
+   carry the day). Times are the user's own schedule, read only. */
+function planReminders(st, fromKey, opts) {
+  opts = opts || {};
+  var nowMs = typeof opts.now === "number" ? opts.now : null;
+  var out = [];
+  function push(kind, ref, name, key, time) {
+    if (!key || !time) return;
+    var parts = String(time).split(":");
+    var d = parseKey(key);
+    d.setHours(Number(parts[0]) || 0, Number(parts[1]) || 0, 0, 0);
+    var at = d.getTime();
+    if (nowMs !== null && at <= nowMs) return;
+    out.push({ kind: kind, ref: ref, name: name, key: key, time: time, at: at });
+  }
+  (st.peptides || []).forEach(function (p) {
+    if (!p.time) return;
+    var cursor = fromKey, found = 0, guard = 0;
+    while (found < 3 && guard < 40) {
+      var k = nextDoseKey(p, cursor);
+      if (!k || k > addDays(fromKey, 21)) break;
+      push("dose", p.id, p.name, k, p.time);
+      found++; guard++;
+      cursor = addDays(k, 1);
+    }
+  });
+  (st.routines || []).forEach(function (r) {
+    if (!r.time || !r.days || !r.days.length) return;
+    var found = 0;
+    for (var i = 0; i < 28 && found < 4; i++) {
+      var key = addDays(fromKey, i);
+      if (routineDueOn(r, key)) { push("gym", r.id, r.name, key, r.time); found++; }
+    }
+  });
+  out.sort(function (a, b) { return a.at - b.at; });
+  return out.slice(0, 32);
 }
 
 /* --- Account state merge (Phase 6) -------------------------------------
@@ -621,14 +693,14 @@ var api = { pad: pad, toKey: toKey, parseKey: parseKey, addDays: addDays, todayK
   shapeTodosForDay: shapeTodosForDay,
   SLICE_WARN_BYTES: SLICE_WARN_BYTES, sliceSizes: sliceSizes, oversizedSlices: oversizedSlices,
   mergeStates: mergeStates,
-  GYM_GOALS: GYM_GOALS, buildRoutine: buildRoutine, lightenRoutine: lightenRoutine, routineDueOn: routineDueOn,
+  GYM_GOALS: GYM_GOALS, routinePool: routinePool, buildRoutine: buildRoutine, lightenRoutine: lightenRoutine, routineDueOn: routineDueOn,
   TODO_CATEGORIES: TODO_CATEGORIES, categoryFor: categoryFor, estimateDuration: estimateDuration,
   makeTodo: makeTodo, todosOn: todosOn, monthGrid: monthGrid,
   MEAL_SHARES: MEAL_SHARES, ingredientHitsAllergy: ingredientHitsAllergy, recipeSafe: recipeSafe,
   planDayMeals: planDayMeals, treatsTotal: treatsTotal, parseIngredientLine: parseIngredientLine,
   estimateBudget: estimateBudget, adaptForCheckin: adaptForCheckin,
   mealBudgetFor: mealBudgetFor, areasForNeeds: areasForNeeds, nextColor: nextColor,
-  nextDoseKey: nextDoseKey, disclaimerAgreed: disclaimerAgreed, streakInfo: streakInfo,
+  nextDoseKey: nextDoseKey, planReminders: planReminders, disclaimerAgreed: disclaimerAgreed, streakInfo: streakInfo,
   parseQuickNote: parseQuickNote, parseQuickDump: parseQuickDump,
   emptyState: emptyState, repairState: repairState };
 if (typeof module !== "undefined" && module.exports) module.exports = api;

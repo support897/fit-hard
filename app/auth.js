@@ -235,15 +235,59 @@ async function syncPlan(uid, isAnonymous) {
 function planOf(state) {
   return state && state.tier && state.tier.plan === "pro" ? "pro" : "free";
 }
-/* ENTITLEMENT — resolves from the server-side record, at
-   read time, through the sync ask: syncPlan's pro write is
-   accepted only while _comp/{uid} exists, so its outcome
-   IS the resolution. Until a sync has resolved this
-   session, entitlement is "free" — fail-closed, so a stale
-   mirror left behind by a removed comp grants nothing. */
+/* ENTITLEMENT — resolves at read time. The comp leg still
+   resolves from the server-side record through the sync
+   ask: syncPlan's pro write is accepted only while
+   _comp/{uid} exists, so its outcome IS the comp
+   resolution, and until a sync resolves this session that
+   leg is "free" (fail-closed, so a stale mirror left
+   behind by a removed comp grants nothing). Tranche B
+   added the second leg under it: the free month, read
+   from the account-age fact the app hands over. The tier
+   SLICE still mirrors only the sync ask: the rules gate
+   any client "pro" claim on the comp record, so the free
+   month resolves here at read time and is never written
+   as a pro claim. */
 let resolvedPlan = null;
+/* TIER-MACHINE-BEGIN — the account-age slot + the pure
+   resolver. The node suite and the desk probe extract this
+   exact block to run its truth table, so keep it
+   self-contained: no imports, no Firestore, nothing beyond
+   its arguments and the FREE_MONTH_DAYS constant. */
+const FREE_MONTH_DAYS = 30;
+let accountAgeStart = null;
+function setAccountAge(iso) {
+  /* The app hands over the profile's account-age fact
+     (firstSeenAt, stamped when the account was created and
+     carried forward on every repair, never dropped). */
+  accountAgeStart = (typeof iso === "string" && iso) ? iso : null;
+}
+function resolveTier(compPlan, firstSeenAt, nowMs) {
+  /* Resolution order (Tranche B, resolving the CAP HOLD):
+     the comp resolution wins outright; else the free month
+     (Tier 0: the full app for 30 days from the account-age
+     stamp, no card asked); else Free Forever. */
+  if (compPlan === "pro") return { plan: "pro", reason: "comp", daysLeft: 0 };
+  const t = Date.parse(firstSeenAt || "");
+  if (isFinite(t)) {
+    let diff = nowMs - t; if (diff < 0) diff = 0;
+    const used = Math.floor(diff / 86400000);
+    if (used < FREE_MONTH_DAYS) return { plan: "pro", reason: "freemonth", daysLeft: FREE_MONTH_DAYS - used };
+  }
+  return { plan: "free", reason: "free", daysLeft: 0 };
+}
+function entitlementDetail() {
+  return resolveTier(resolvedPlan, accountAgeStart, Date.now());
+}
+/* TIER-MACHINE-END */
 function entitlement() {
-  return resolvedPlan === "pro" ? "pro" : "free";
+  /* What features call (nothing enforces a cap in this
+     build: caps land only after the TW-3R live case
+     passes). Fail-closed on the comp leg: until a sync
+     resolves, resolvedPlan is null, so only a live free
+     month can resolve pro; with no account-age fact handed
+     over, the answer is "free". */
+  return entitlementDetail().plan;
 }
 
 /* The demo door may be reached before the account door is
@@ -264,7 +308,8 @@ window.FitAuth = {
   initDoor, watchUser, signUpWithEmail, signInWithEmail, resetPassword,
   signInWithGoogle, signInWithApple, enterDemoSession,
   signOutUser, loadCloudState, saveCloudState, deleteAccount,
-  syncPlan, planOf, entitlement
+  syncPlan, planOf, entitlement,
+  setAccountAge, resolveTier, entitlementDetail
 };
 /* app.js (a classic script) always runs before this module;
    the ready event is how it learns the door exists. If the

@@ -6,6 +6,26 @@
   var L = window.FitLogic, D = window.FIT_DATA;
   var KEY = "fit-app-v1";
   var state;
+  /* ACCOUNT AGE (Tranche B): firstSeenAt on the profile is
+     the tier machine's clock. repairState rebuilds the
+     profile from a fixed field list, so the stamp is
+     carried across every repair by hand: a value found in
+     the raw state (or already known this session) wins; a
+     profile without one is stamped at this first load of
+     the build and never dropped after. */
+  var knownFirstSeen = null;
+  function firstSeenOf(raw) {
+    return raw && raw.profile && typeof raw.profile.firstSeenAt === "string" && raw.profile.firstSeenAt ? raw.profile.firstSeenAt : null;
+  }
+  function repairKeep(raw) {
+    var fs = firstSeenOf(raw) || knownFirstSeen;
+    var out = L.repairState(raw);
+    if (out.profile) {
+      out.profile.firstSeenAt = fs || new Date().toISOString();
+      knownFirstSeen = out.profile.firstSeenAt;
+    }
+    return out;
+  }
   /* Boot fence (P4): if the last session was a demo (marker
      set) and a parked real state exists, the REAL state is
      what loads — the demo data in the main key never poses
@@ -15,7 +35,7 @@
   try {
     var bootRaw = localStorage.getItem(KEY);
     if (localStorage.getItem("fit-app-demo") && localStorage.getItem("fit-app-v1-parked")) bootRaw = localStorage.getItem("fit-app-v1-parked");
-    state = L.repairState(JSON.parse(bootRaw || "null"));
+    state = repairKeep(JSON.parse(bootRaw || "null"));
   }
   catch (e) { state = L.emptyState(); }
   if (window.Lang) Lang.use(state.settings && state.settings.lang);
@@ -34,6 +54,28 @@
     var s = window.Lang.t(key, vars);
     return (s === key && fallback != null) ? fallback : s;
   }
+  /* Content pass (Tranche A-3): library names + cues resolve
+     through the language layer's content tables. USER data is
+     never translated: custom recipes keep the name their owner
+     gave them, and stored routine names stay as built. */
+  function cName(kind, id, fallback) {
+    if (!window.Lang || !window.Lang.content) return fallback;
+    return window.Lang.content(kind, id) || fallback;
+  }
+  function recName(r) { return (!r || r.custom) ? (r ? r.name : "") : cName("recipe", r.id, r.name); }
+  function recIngName(r, name) { return (r && r.custom) ? name : cName("ingredient", name, name); }
+  function recUnitName(r, unit) { return (r && r.custom) ? unit : cName("unit", unit, unit); }
+  function recSteps(r) {
+    if (!r) return [];
+    if (r.custom) return r.steps || [];
+    var s = (window.Lang && window.Lang.content) ? window.Lang.content("steps", r.id) : null;
+    return Array.isArray(s) ? s : (r.steps || []);
+  }
+  function exName(e) { return cName("exercise", e.id, e.name); }
+  function exCue(e) { return cName("exerciseCue", e.id, e.cue); }
+  function exPart(e) { return cName("part", e.partLabel, e.partLabel); }
+  function exEquip(e) { return cName("equip", e.equipment, e.equipment); }
+  function machName(m) { return cName("machine", m.id, m.name); }
   /* Saves stay on the device first, always. When the user is
      signed in, each save also mirrors to their account
      (Phase 6, P2). A full device (QA Phase 2 advisory) never
@@ -50,7 +92,225 @@
     var sn = $("saveNote"); if (sn) sn.textContent = saveFailed ?
       tr("set.saveFull") : "";
   }
-  function save() { saveLocal(); scheduleMirror(); }
+  function save() { saveLocal(); scheduleMirror(); FitRemind.sync(); }
+
+  /* --- Device-local reminders (Tranche A-4) ------------------------------
+     Inside the store wrap, dose + gym times schedule gentle phone
+     notifications ON the device (no server, nothing leaves the phone).
+     On the web there is no plugin: sync is a no-op and Today + the
+     calendar carry the reminders, as the Settings row says plainly.
+     A failure here must never break a save: every call is fenced. --- */
+  var FitRemind = (function () {
+    var timer = null;
+    function plugin() {
+      try { return (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) || null; }
+      catch (e) { return null; }
+    }
+    function nid(kind, ref, key) {
+      var s = kind + "|" + ref + "|" + key, h = 0;
+      for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+      return 1000 + (h % 2000000000);
+    }
+    function sync() {
+      var P = plugin(); if (!P) return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(run, 400);
+    }
+    function run() {
+      var P = plugin(); if (!P) return;
+      try {
+        var old = [];
+        try { old = JSON.parse(localStorage.getItem("fit-remind-ids") || "[]"); } catch (e) {}
+        if (old.length) P.cancel({ notifications: old.map(function (id) { return { id: id }; }) }).catch(function () {});
+        if (!state.settings || state.settings.notifications !== true) {
+          try { localStorage.setItem("fit-remind-ids", "[]"); } catch (e) {}
+          return;
+        }
+        var plan = L.planReminders(state, L.todayKey(), { now: Date.now() });
+        var notes = plan.map(function (r) {
+          return { id: nid(r.kind, r.ref, r.key), title: r.name,
+            body: tr(r.kind === "dose" ? "rem.doseBody" : "rem.gymBody"),
+            schedule: { at: new Date(r.at) } };
+        });
+        try { localStorage.setItem("fit-remind-ids", JSON.stringify(notes.map(function (n) { return n.id; }))); } catch (e) {}
+        if (notes.length) P.schedule({ notifications: notes }).catch(function () {});
+      } catch (e) {}
+    }
+    function setOn(on) {
+      var P = plugin(); if (!P) return Promise.resolve(false);
+      if (!on) { state.settings.notifications = false; save(); return Promise.resolve(true); }
+      return P.requestPermissions().then(function (res) {
+        if (res && res.display === "granted") { state.settings.notifications = true; save(); return true; }
+        return false;
+      }).catch(function () { return false; });
+    }
+    return { sync: sync, setOn: setOn, available: function () { return !!plugin(); } };
+  })();
+
+  /* --- Plans, prices and the shop seam (Tranche B) ------------------------
+     The tier machine (auth.js) resolves comp, then the free
+     month, then free; this block only DISPLAYS the resolution
+     and wires the shop. NO feature reads the tier to lock
+     anything in this build: caps land only after the TW-3R
+     live case passes at the payment sitting. Prices come
+     from prices-data.js (Finance's priced table): the
+     device country picks its line, the A$ worth rides
+     beside it, and an unpriced country falls back to the
+     A$ home line. The shop seam speaks to the store only
+     inside the store wraps and only with real keys in the
+     config slot; without them it says so, plainly. --- */
+  function tierDetail() {
+    if (window.FitAuth && window.FitAuth.setAccountAge)
+      window.FitAuth.setAccountAge(state.profile ? state.profile.firstSeenAt : null);
+    if (window.FitAuth && window.FitAuth.entitlementDetail) return window.FitAuth.entitlementDetail();
+    return { plan: "free", reason: "free", daysLeft: 0 };
+  }
+  function deviceCountry() {
+    try {
+      var pinned = localStorage.getItem("fit-country");
+      if (pinned) return String(pinned).toUpperCase();
+    } catch (e) {}
+    var loc = (typeof navigator !== "undefined" && (navigator.language || "")) || "";
+    var parts = loc.split("-");
+    return (parts.length > 1 ? parts[parts.length - 1] : "").toUpperCase();
+  }
+  function priceText(product) {
+    /* -> { text, worth } for the device country, or the A$
+       home line (worth null: the price IS the A$ line). */
+    var P = window.FitPrices;
+    if (P) {
+      var hit = P.priceFor(deviceCountry(), product);
+      if (hit) return { text: hit.text, worth: hit.worth };
+      return { text: P.homePrice(product), worth: null };
+    }
+    return { text: { monthly: "A$7.99", yearly: "A$59.99", forever: "A$149" }[product], worth: null };
+  }
+  function priceWithWorth(product) {
+    var p = priceText(product);
+    return p.worth ? p.text + " (" + tr("plan.worthA", { a: p.worth }) + ")" : p.text;
+  }
+  var FitShop = (function () {
+    var started = false, offers = null;
+    function plugin() {
+      try { return (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Purchases) || null; }
+      catch (e) { return null; }
+    }
+    function apiKey() {
+      var c = window.FIT_SHOP_CONFIG || {};
+      var plat = "";
+      try { plat = (window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || ""; } catch (e) {}
+      return plat === "ios" ? (c.revenueCatIosKey || "") : (c.revenueCatAndroidKey || c.revenueCatIosKey || "");
+    }
+    function ready() { return !!plugin() && !!apiKey(); }
+    function init() {
+      if (started) return; started = true;
+      var P = plugin(); if (!P || !ready()) return;
+      try {
+        var done = function () { refreshOffers(); };
+        if (typeof P.configure === "function") {
+          var r = P.configure({ apiKey: apiKey() });
+          if (r && typeof r.then === "function") r.then(done).catch(function () {});
+          else done();
+        } else done();
+      } catch (e) {}
+    }
+    function refreshOffers() {
+      var P = plugin(); if (!P || typeof P.getOfferings !== "function") return;
+      try {
+        P.getOfferings().then(function (o) {
+          var cur = o && o.current;
+          var pkgs = (cur && cur.availablePackages) || [];
+          offers = {};
+          pkgs.forEach(function (pk) {
+            if (!pk) return;
+            if (pk.packageType === "MONTHLY") offers.monthly = pk;
+            else if (pk.packageType === "ANNUAL") offers.yearly = pk;
+            else if (pk.packageType === "LIFETIME") offers.forever = pk;
+          });
+          if (!Object.keys(offers).length) offers = null;
+          renderPlans();
+        }).catch(function () {});
+      } catch (e) {}
+    }
+    function purchasable() { return !!(offers && (offers.monthly || offers.yearly || offers.forever)); }
+    function explain() { toast(tr("plan.notOnSale")); }
+    function refreshPlan() {
+      if (authUser && window.FitAuth) {
+        window.FitAuth.syncPlan(authUser.uid, false).then(function (p) {
+          if (p) { state.tier = { plan: p }; saveLocal(); }
+          renderAccount(); renderPlans();
+        }).catch(function () { renderAccount(); renderPlans(); });
+      } else { renderAccount(); renderPlans(); }
+    }
+    function buy(product) {
+      if (!purchasable() || !offers[product]) { explain(); return; }
+      var P = plugin();
+      try {
+        P.purchasePackage({ aPackage: offers[product] }).then(function () {
+          toast(tr("plan.boughtOk")); refreshPlan();
+        }).catch(function () {});
+      } catch (e) {}
+    }
+    function restore() {
+      if (!ready()) { explain(); return; }
+      var P = plugin();
+      try {
+        P.restorePurchases().then(function () {
+          toast(tr("plan.restoredOk")); refreshPlan();
+        }).catch(function () {});
+      } catch (e) {}
+    }
+    return { init: init, purchasable: purchasable, buy: buy, restore: restore };
+  })();
+  function openPlans() { FitShop.init(); showView("plans"); renderPlans(); }
+  function tierStateLine() {
+    var d = tierDetail();
+    if (d.plan === "pro" && d.reason === "freemonth") return tr("acc.planFreeMonth", { days: d.daysLeft });
+    if (d.plan === "pro") return tr("plan.statePro");
+    return tr("plan.stateFree");
+  }
+  function renderPlans() {
+    var box = $("plansBox"); if (!box) return;
+    if (demoMode === true) {
+      box.innerHTML = '<div class="card"><p class="hint">' + esc(tr("plan.demoLine")) + "</p>" +
+        '<div class="row"><button class="pillBtn" id="planBackBtn">' + esc(tr("plan.backBtn")) + "</button></div></div>";
+    } else {
+      var onSale = FitShop.purchasable();
+      var proRows =
+        '<p class="big">' + esc(priceWithWorth("monthly")) + " " + esc(tr("plan.perMonth")) + "</p>" +
+        '<p class="big">' + esc(priceWithWorth("yearly")) + " " + esc(tr("plan.perYear")) + "</p>" +
+        '<div class="row"><button class="primaryBtn" id="planBuyMonthly">' + esc(tr("plan.buyMonthly")) + "</button>" +
+        '<button class="primaryBtn" id="planBuyYearly">' + esc(tr("plan.buyYearly")) + "</button></div>" +
+        (onSale ? "" : '<p class="hint">' + esc(tr("plan.notOnSale")) + "</p>");
+      box.innerHTML =
+        '<div class="card"><h2>' + esc(tr("plan.title")) + '</h2><p class="hint">' + esc(tierStateLine()) + "</p></div>" +
+        '<div class="card"><h2>' + esc(tr("plan.t0Name")) + '</h2><p>' + esc(tr("plan.t0Body")) + '</p><p class="big">' + esc(tr("plan.freeWord")) + "</p></div>" +
+        '<div class="card"><h2>' + esc(tr("plan.t1Name")) + '</h2><p>' + esc(tr("plan.t1Body")) + '</p><p class="big">' + esc(tr("plan.freeWord")) + "</p></div>" +
+        '<div class="card"><h2>' + esc(tr("plan.t2Name")) + '</h2><p>' + esc(tr("plan.t2Body")) + "</p>" + proRows + "</div>" +
+        '<div class="card"><h2>' + esc(tr("plan.t3Name")) + '</h2><p>' + esc(tr("plan.t3Body")) + '</p><p class="big">' + esc(priceWithWorth("forever")) + ", " + esc(tr("plan.onceWord")) + '</p><div class="row"><button class="primaryBtn" id="planBuyForever">' + esc(tr("plan.buyForever")) + "</button></div></div>" +
+        '<div class="card"><div class="row"><button class="pillBtn" id="planRestoreBtn">' + esc(tr("plan.restoreBtn")) + '</button><button class="pillBtn" id="planBackBtn">' + esc(tr("plan.backBtn")) + "</button></div></div>";
+      var bm = $("planBuyMonthly"); if (bm) bm.addEventListener("click", function () { FitShop.buy("monthly"); });
+      var by = $("planBuyYearly"); if (by) by.addEventListener("click", function () { FitShop.buy("yearly"); });
+      var bf = $("planBuyForever"); if (bf) bf.addEventListener("click", function () { FitShop.buy("forever"); });
+      var rs = $("planRestoreBtn"); if (rs) rs.addEventListener("click", function () { FitShop.restore(); });
+    }
+    var bk = $("planBackBtn"); if (bk) bk.addEventListener("click", function () { showView("settings"); });
+  }
+  function refreshProModal() {
+    var line = $("proStateLine");
+    if (line) line.textContent = FitShop.purchasable() ? tr("pro.stateOpen") : tr("pro.stateWait");
+    var local = $("proLocalLine");
+    if (local) {
+      var cc = deviceCountry(), P = window.FitPrices;
+      var priced = P && P.lineFor(cc) && P.lineFor(cc).key !== "AU";
+      if (priced) {
+        local.textContent = tr("pro.localLine", { price:
+          priceWithWorth("monthly") + " " + tr("plan.perMonth") + ", " + tr("plan.or") + " " +
+          priceWithWorth("yearly") + " " + tr("plan.perYear") });
+        local.hidden = false;
+      } else local.hidden = true;
+    }
+  }
   function toast(msg) { var t = $("toast"); t.textContent = msg; t.classList.remove("hidden");
     setTimeout(function () { t.classList.add("hidden"); }, 2600); }
 
@@ -179,7 +439,7 @@
   var MP = window.MP_LOGIC, MD = window.MP_DATA, MN = window.MP_NUTRITION;
   function allRecipes() { return MD.RECIPES.concat(state.customRecipes || []); }
   function recipeById(id) { return allRecipes().filter(function (r) { return r.id === id; })[0] || null; }
-  function kcalOf(r) { return r ? MP.recipeKcal(r, MN) : null; }
+  function kcalOf(r) { if (!r || !r.ingredients || !r.ingredients.length) return null; return MP.recipeKcal(r, MN); }
   function mpKey(isoKey) { return String(isoKey).replace(/-/g, "."); }
   function dayLabel(isoKey) {
     var today = L.todayKey();
@@ -220,7 +480,7 @@
     var colors = { breakfast: "#C08552", lunch: "#7A8B6F", dinner: "#52695A" };
     var k = kcalOf(r);
     return '<button class="mealRow" data-recipe="' + r.id + '"><span class="mealDot" style="background:' + colors[meal] + '"></span>' +
-      '<span class="mName">' + esc(r.name) + '</span><span class="kcalChip">' + (k == null ? tr("meal.noCount") : tr("meal.aboutKcal", { kcal: k })) + "</span></button>";
+      '<span class="mName">' + esc(recName(r)) + '</span><span class="kcalChip">' + (k == null ? tr("meal.noCount") : tr("meal.aboutKcal", { kcal: k })) + "</span></button>";
   }
   function renderPlan() {
     var el = $("areaBody");
@@ -277,15 +537,16 @@
     var r = recipeById(id); if (!r) return;
     var k = kcalOf(r);
     var ads = state.profile ? MP.adaptations(r, [{ name: "You", allergies: state.profile.allergies || [], dislikes: [] }], MD) : [];
-    var html = "<h2>" + esc(r.name) + "</h2>" +
+    var html = "<h2>" + esc(recName(r)) + "</h2>" +
       '<p class="hint">' + esc((r.cuisines || []).join(", ")) + " · " + r.minutes + " min · " + tr("meal.serves", { n: r.servings }) +
       (k == null ? tr("meal.noKcalYet") : tr("meal.perServing", { kcal: k })) + "</p>";
     if (r.picture) html += '<img class="photoImg" alt="' + esc(tr("meal.photoAlt")) + '" src="' + r.picture + '">';
     if (ads.length) html += '<div class="swapBox">' + esc(tr("meal.madeSafe")) + ads.map(function (a) {
-      return esc(tr("meal.becomes", { ing: a.ingredient, swap: a.swap })); }).join("; ") + ".</div>";
+      return esc(tr("meal.becomes", { ing: cName("ingredient", a.ingredient, a.ingredient), swap: cName("ingredient", a.swap, a.swap) })); }).join("; ") + ".</div>";
     if ((r.ingredients || []).length) html += "<h3>" + esc(tr("meal.ingredients")) + "</h3><ul class='ingList'>" + r.ingredients.map(function (i) {
-      return "<li>" + esc(i.qty) + " " + esc(i.unit) + " " + esc(i.name) + "</li>"; }).join("") + "</ul>";
-    if ((r.steps || []).length) html += "<h3>" + esc(tr("meal.steps")) + "</h3><ol class='stepList'>" + r.steps.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ol>";
+      return "<li>" + esc(i.qty) + " " + esc(recUnitName(r, i.unit)) + " " + esc(recIngName(r, i.name)) + "</li>"; }).join("") + "</ul>";
+    var steps = recSteps(r);
+    if (steps.length) html += "<h3>" + esc(tr("meal.steps")) + "</h3><ol class='stepList'>" + steps.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ol>";
     html += '<div class="row"><button class="primaryBtn" id="rmToday">' + esc(tr("meal.putToday")) + '</button><button class="pillBtn" id="rmClose">' + esc(tr("common.close")) + '</button></div>';
     $("recipeModalCard").innerHTML = html;
     $("recipeModal").classList.remove("hidden");
@@ -313,6 +574,8 @@
       '<div class="row"><input id="nameMealInput" type="text" placeholder="' + esc(tr("meal.typeMealPh")) + '"><button class="pillBtn" id="nameMealBtn">' + esc(tr("meal.getRecipe")) + '</button></div><div id="nameMealResult"></div>' +
       '<h3>' + esc(tr("meal.picRecipe")) + '</h3><p class="hint">' + esc(tr("meal.picHint")) + '</p>' +
       '<div class="row"><input id="picName" type="text" placeholder="' + esc(tr("meal.picNamePh")) + '"><input id="picFile" type="file" accept="image/*"></div><div id="picPreview"></div>' +
+      '<label>' + esc(tr("meal.ingsLabel")) + '<textarea id="picIngredients" rows="4"></textarea></label>' +
+      '<p class="hint">' + esc(tr("meal.picIngsHint")) + '</p>' +
       '<div class="row"><button class="pillBtn" id="picSave">' + esc(tr("meal.savePic")) + '</button></div></div>' +
       '<div class="card"><h2>' + esc(tr("meal.allRecipes")) + '</h2><div class="row"><input id="recipeSearch" type="text" placeholder="' + esc(tr("meal.searchPh")) + '"></div><div id="recipeList" class="recipeGrid"></div></div>';
     var picData = "";
@@ -333,8 +596,9 @@
     $("picSave").addEventListener("click", function () {
       if (!picData) { toast(tr("toast.addPhoto")); return; }
       var name = $("picName").value.trim() || tr("meal.myPicRecipe");
+      var picIngs = ($("picIngredients").value || "").split(/\n+/).map(function (x) { return L.parseIngredientLine(x); }).filter(Boolean);
       state.customRecipes.push({ id: "custom." + Date.now(), name: name, meal: "dinner", cuisines: ["Mine"],
-        minutes: 30, servings: 2, ingredients: [], steps: [], custom: true, picture: picData });
+        minutes: 30, servings: 2, ingredients: picIngs, steps: [], custom: true, picture: picData });
       save(); renderRecipes(); toast(tr("meal.savedPic"));
     });
     $("ownSave").addEventListener("click", function () {
@@ -351,18 +615,18 @@
       var name = $("nameMealInput").value.trim(); if (!name) return;
       var found = MP.findRecipeByName(name, MD, state.customRecipes || []);
       var r = found || MP.makeRecipeFromName(name, MD, state.customRecipes || []);
-      $("nameMealResult").innerHTML = '<div class="swapBox">' + esc(r.name) + " · " + r.minutes + " min · " +
+      $("nameMealResult").innerHTML = '<div class="swapBox">' + esc(recName(r)) + " · " + r.minutes + " min · " +
         (kcalOf(r) == null ? tr("meal.noCount") : tr("meal.aboutKcal", { kcal: kcalOf(r) })) +
         (found ? tr("meal.alreadyIn") : ' <button class="miniBtn" id="nameMealSave">' + esc(tr("meal.saveThis")) + '</button>') + "</div>";
       var sv = $("nameMealSave");
       if (sv) sv.addEventListener("click", function () { state.customRecipes.push(r); save(); renderRecipes(); toast(tr("common.saved")); });
     });
     function drawList(filter) {
-      var list = allRecipes().filter(function (r) { return !filter || r.name.toLowerCase().indexOf(filter) !== -1; });
+      var list = allRecipes().filter(function (r) { return !filter || r.name.toLowerCase().indexOf(filter) !== -1 || recName(r).toLowerCase().indexOf(filter) !== -1; });
       $("recipeList").innerHTML = list.map(function (r) {
         var k = kcalOf(r);
         return '<button class="recipeCard" data-recipe="' + r.id + '">' + (r.picture ? '<img alt="" src="' + r.picture + '">' : "") +
-          "<h3>" + esc(r.name) + "</h3><p>" + esc(tr("meal." + r.meal, null, r.meal)) + " · " + r.minutes + " min</p><p>" +
+          "<h3>" + esc(recName(r)) + "</h3><p>" + esc(tr("meal." + r.meal, null, r.meal)) + " · " + r.minutes + " min</p><p>" +
           (k == null ? tr("meal.noCount") : tr("meal.aboutPerServing", { kcal: k })) + "</p></button>";
       }).join("") || '<p class="hint">' + esc(tr("meal.noMatchSearch")) + '</p>';
       $("recipeList").querySelectorAll("[data-recipe]").forEach(function (b) { b.addEventListener("click", function () { openRecipe(b.getAttribute("data-recipe")); }); });
@@ -437,7 +701,7 @@
         .sort(function (a, b) { return b.s - a.s; }).slice(0, 3);
       $("ideasList").innerHTML = scored.map(function (x) {
         var k = kcalOf(x.r);
-        return '<button class="mealRow" data-idea="' + x.r.id + '"><span class="mName">' + esc(x.r.name) + '</span><span class="kcalChip">' +
+        return '<button class="mealRow" data-idea="' + x.r.id + '"><span class="mName">' + esc(recName(x.r)) + '</span><span class="kcalChip">' +
           (k == null ? tr("meal.noCount") : tr("meal.aboutKcal", { kcal: k })) + "</span></button>";
       }).join("");
       $("ideasList").querySelectorAll("[data-idea]").forEach(function (b) { b.addEventListener("click", function () { openRecipe(b.getAttribute("data-idea")); }); });
@@ -495,10 +759,21 @@
     var el = $("areaBody");
     var planMP = state.plan;
     var items = MP.buildGroceryList(planMP, allRecipes(), state.pantry || []);
+    /* Grocery rows carry no provenance, so rebuild the library set
+       from the plan: a name translates only when a LIBRARY recipe in
+       this plan uses it. Custom-recipe and pantry words stay raw. */
+    var libIng = {}, libUnit = {};
+    Object.keys(planMP || {}).forEach(function (day) {
+      ["breakfast", "lunch", "dinner"].forEach(function (meal) {
+        var id = planMP[day] && planMP[day][meal]; if (!id) return;
+        var r = allRecipes().filter(function (x) { return x.id === id; })[0];
+        if (r && !r.custom) (r.ingredients || []).forEach(function (i) { libIng[i.name] = 1; libUnit[i.unit] = 1; });
+      });
+    });
     var pantrySorted = MP.sortByExpiry((state.pantry || []).slice(), new Date(), MD);
     var html = '<div class="card"><h2>' + esc(tr("meal.groceryList")) + '</h2><p class="hint">' + esc(tr("meal.grocHint")) + '</p>' +
       (items.length ? items.map(function (i) {
-        return '<div class="listRow"><span class="grow">' + esc(i.name) + " · " + esc(i.qty) + " " + esc(i.unit) + "</span>" +
+        return '<div class="listRow"><span class="grow">' + esc(libIng[i.name] ? cName("ingredient", i.name, i.name) : i.name) + " · " + esc(i.qty) + " " + esc(libUnit[i.unit] ? cName("unit", i.unit, i.unit) : i.unit) + "</span>" +
           (i.haveIt ? '<span class="haveIt">' + esc(tr("meal.haveIt")) + '</span>' : "") + "</div>";
       }).join("") : '<p class="hint">' + esc(tr("meal.noPlanYet")) + '</p>') +
       '<div class="row"><input id="extraName" type="text" placeholder="' + esc(tr("meal.addAnythingPh")) + '"><button class="pillBtn" id="extraAdd">' + esc(tr("common.add")) + '</button></div>' +
@@ -538,7 +813,7 @@
     var evs = [];
     var entry = state.plan[mpKey(iso)] || {};
     ["breakfast", "lunch", "dinner"].forEach(function (m) {
-      if (entry[m]) { var r = recipeById(entry[m]); if (r) evs.push({ color: "#97795D", label: r.name, kind: "meal", id: r.id }); }
+      if (entry[m]) { var r = recipeById(entry[m]); if (r) evs.push({ color: "#97795D", label: recName(r), kind: "meal", id: r.id }); }
     });
     (state.sessions || []).forEach(function (s) { if (s.dateKey === iso && s.status === "done") evs.push({ color: "#52695A", label: tr("cal.gymSession"), kind: "gym" }); });
     (state.routines || []).forEach(function (r) { if (L.routineDueOn(r, iso)) evs.push({ color: "#7A8B6F", label: r.name + (r.time ? " " + r.time : ""), kind: "routine" }); });
@@ -558,6 +833,7 @@
     var grid = L.monthGrid(year, month);
     var html = '<div class="card"><div class="calHead"><button class="pillBtn" id="calPrev">' + esc(tr("cal.back")) + '</button>' +
       "<h3>" + names[month] + " " + year + '</h3><button class="pillBtn" id="calTodayBtn">' + esc(tr("nav.today")) + '</button><button class="pillBtn" id="calNext">' + esc(tr("cal.next")) + '</button></div>' +
+      (demoMode ? "" : '<div class="row"><button class="pillBtn" id="calImportBtn"><svg class="btnIco"><use href="#i-cal"/></svg> ' + esc(tr("cal.importTitle")) + '</button></div>') +
       '<div class="calGrid">' + [1, 2, 3, 4, 5, 6, 7].map(function (di) { return '<div class="calDow">' + esc(tr("cal.d" + di)) + "</div>"; }).join("");
     grid.forEach(function (iso) {
       var d = L.parseKey(iso);
@@ -573,11 +849,56 @@
     $("calPrev").addEventListener("click", function () { shift(-1); });
     $("calNext").addEventListener("click", function () { shift(1); });
     $("calTodayBtn").addEventListener("click", function () { calCursor = L.todayKey(); calSelected = L.todayKey(); renderMonth(); });
+    var cib = $("calImportBtn"); if (cib) cib.addEventListener("click", openImport);
     el.querySelectorAll("[data-day]").forEach(function (b) {
       b.addEventListener("click", function () { calSelected = b.getAttribute("data-day"); renderMonth(); });
     });
     if (calSelected) renderDayDetail(calSelected);
   }
+  /* --- Bring my calendar in (the shared module, adopted whole) --------
+     calendar-import.js is the fleet module, byte-identical; this is
+     only the host wiring its adoption doc names: the sheet, the entry
+     points, shapeToTask onto Fit's to-dos, and the registry in state.
+     Fit has no live repeat model for to-dos, so the plan is made with
+     repeatModel "none" and every series expands into real days. The
+     module only ever receives THIS user's space (the shim below
+     shares the live to-dos + imports arrays), and in demo sessions
+     the entry points do not exist. --- */
+  var IMPORT_GUIDE = { google: "cal.guideGoogle", apple: "cal.guideApple", outlook: "cal.guideOutlook", file: "cal.guideFile" };
+  var IMPORT_LABELS = { google: "Google Calendar", apple: "Apple / iCloud", outlook: "Outlook", file: "a calendar file" };
+  var importSource = "google", importSeq = 0;
+  function openImport() {
+    if (demoMode || !window.CI) return;
+    $("importResult").textContent = "";
+    $("importSheet").classList.remove("hidden");
+    setImportSource(importSource);
+  }
+  function closeImport() { $("importSheet").classList.add("hidden"); }
+  function setImportSource(src) {
+    importSource = src;
+    document.querySelectorAll(".import-src").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-src") === src); });
+    $("importGuide").textContent = tr(IMPORT_GUIDE[src]);
+  }
+  function shapeToTask(s) {
+    var cat = L.categoryFor(s.title);
+    var words = [s.location, s.notes].filter(Boolean).join(" — ");
+    return { id: "todo.imp." + Date.now() + "." + (++importSeq), title: s.title, date: s.date, time: s.time,
+      durationMin: s.durationMin, category: cat.id, color: cat.color, status: "open", steps: [],
+      source: "import", originalText: words, importUid: s.importUid, importKey: s.importKey, repeat: null };
+  }
+  function runImport(text, label) {
+    var parsed = window.CI.parseICS(text);
+    if (parsed.error || !parsed.events.length) { $("importResult").textContent = tr("cal.importBadFile"); return; }
+    var plan = window.CI.planImport(parsed, state.todos, { sourceLabel: label, repeatModel: "none" });
+    var res = window.CI.applyImport({ tasks: state.todos, imports: state.imports }, plan, label, shapeToTask);
+    save(); renderAll();
+    var bits = [tr(res.added === 1 ? "cal.importedOne" : "cal.importedMany", { n: res.added })];
+    if (res.dupes) bits.push(tr("cal.importedDupes", { n: res.dupes }));
+    if (res.skipped) bits.push(tr("cal.importedSkipped", { n: res.skipped }));
+    $("importResult").textContent = bits.join(" · ") + ".";
+    toast(res.added ? tr("cal.importToastDone") : tr("cal.importToastNone"));
+  }
+
   function renderDayDetail(iso) {
     var box = $("dayDetail"); if (!box) return;
     var evs = dayEvents(iso);
@@ -728,10 +1049,13 @@
   var gymTimer = null;
   function exerciseById(id) { return (EX.EXERCISES || []).filter(function (e) { return e.id === id; })[0] || null; }
   function fmtClock(sec) { sec = Math.max(0, Math.round(sec)); return Math.floor(sec / 60) + ":" + ("0" + (sec % 60)).slice(-2); }
+  /* The top timer's guide for a rep set: about 3.5 sec a rep,
+     rounded to the nearest 5. A guide only, never a deadline. */
+  function setGuideSec(reps) { return Math.round(reps * 3.5 / 5) * 5; }
   function exRow(item, ex) {
     if (!ex) return "";
     return '<div class="exRow"><span class="exTile"><svg><use href="#i-gym"/></svg></span>' +
-      '<span class="eName">' + esc(ex.name) + '<br><span class="eMeta">' + esc(ex.partLabel) + " · " + esc(ex.equipment) + "</span></span>" +
+      '<span class="eName">' + esc(exName(ex)) + '<br><span class="eMeta">' + esc(exPart(ex)) + " · " + esc(exEquip(ex)) + "</span></span>" +
       '<span class="kcalChip">' + esc(tr("gym.setsChip", { sets: item.sets, reps: item.reps, unit: item.timed ? tr("gym.sec") : tr("gym.reps") })) + "</span></div>";
   }
   function routineCard(r) {
@@ -878,9 +1202,10 @@
     for (var i = 1; i <= item.sets; i++) pips += '<span class="pip' + (i < s.set ? " done" : "") + '"></span>';
     el.innerHTML = skinAskHtml() + '<div class="card"><h2>' + esc(s.routineName) + (s.lightened ? tr("gym.lighterSuffix") : "") + '</h2>' +
       '<p class="hint">' + esc(tr("gym.exOf", { a: s.idx + 1, b: s.items.length })) + '<span id="sessClock">0:00</span></p>' +
-      '<div class="exRow"><span class="exTile"><svg><use href="#i-gym"/></svg></span><span class="eName sessionBig">' + esc(ex.name) +
-      '<br><span class="eMeta">' + esc(ex.partLabel) + " · " + esc(ex.equipment) + "</span></span></div>" +
-      '<p class="hint">' + esc(ex.cue) + "</p>" +
+      '<div class="exRow"><span class="exTile"><svg><use href="#i-gym"/></svg></span><span class="eName sessionBig">' + esc(exName(ex)) +
+      '<br><span class="eMeta">' + esc(exPart(ex)) + " · " + esc(exEquip(ex)) + "</span></span></div>" +
+      '<p class="hint">' + esc(exCue(ex)) + "</p>" +
+      '<div class="timerBar" id="timerBar"><span class="timerBarClock" id="timerBarClock">0:00</span><span class="timerBarLabel" id="timerBarLabel"></span></div>' +
       '<div id="animMount"></div>' +
       '<div class="setPips">' + pips + '</div><p class="hint">' + esc(tr("gym.setOf", { a: s.set, b: item.sets })) + "</p>" +
       (item.timed
@@ -890,7 +1215,30 @@
           '<div class="timerBig" id="countBox"></div><div class="row"><button class="pillBtn" id="restBtn">' + esc(tr("gym.startRest", { sec: item.restSec })) + '</button></div>') +
       '<div class="row"><button class="pillBtn" id="nextEx">' + esc(tr("gym.nextEx")) + '</button><button class="pillBtn" id="finishBtn">' + esc(tr("gym.finishSession")) + '</button></div></div>';
     var reps = 0;
-    function tickClock() { var c = $("sessClock"); if (c) c.textContent = fmtClock((Date.now() - s.startedAt) / 1000); }
+    /* THE TOP TIMER BAR (order of 17 Oct 2026): one calm bar
+       above the animation for the whole session. Work on a rep
+       set counts UP beside its guide; a hold counts DOWN its
+       seconds; rest counts DOWN. Hold + rest are drawn from
+       countdown()'s own counter (barLeft) — one source of
+       truth, never a second timer. */
+    var barPhase = "work"; /* work | hold | rest */
+    var barLeft = 0;
+    var setStart = Date.now();
+    function drawBar() {
+      var clock = $("timerBarClock"), label = $("timerBarLabel");
+      if (!clock || !label) return;
+      if (barPhase === "hold" || barPhase === "rest") {
+        clock.textContent = fmtClock(barLeft);
+        label.textContent = tr("gym." + barPhase + "Label");
+      } else if (item.timed) {
+        clock.textContent = fmtClock(item.reps);
+        label.textContent = tr("gym.holdLabel");
+      } else {
+        clock.textContent = fmtClock((Date.now() - setStart) / 1000);
+        label.textContent = tr("gym.timerGuide", { t: fmtClock(setGuideSec(item.reps)) });
+      }
+    }
+    function tickClock() { var c = $("sessClock"); if (c) c.textContent = fmtClock((Date.now() - s.startedAt) / 1000); drawBar(); }
     tickClock();
     gymTimer = setInterval(tickClock, 1000);
     function countdown(sec, label, after) {
@@ -901,12 +1249,13 @@
       var restAnim = null;
       if (label === "rest") { mountAnim(ex, preT); restAnim = animHandle; if (restAnim) restAnim.setFrozen(true); }
       var left = sec;
+      barPhase = label; barLeft = sec;
       var box = $("countBox");
-      function draw() { if (box) box.textContent = tr("gym." + label + "Label") + " " + fmtClock(left); }
+      function draw() { barLeft = left; if (box) box.textContent = tr("gym." + label + "Label") + " " + fmtClock(left); drawBar(); }
       draw();
       gymTimer = setInterval(function () {
         left--; draw(); tickClock();
-        if (left <= 0) { var tEnd = restAnim && restAnim.time ? restAnim.time() : 0; stopGymTimer(); gymTimer = setInterval(tickClock, 1000); if (box) box.textContent = tr("gym.countDone"); mountAnim(ex, tEnd); if (after) after(); }
+        if (left <= 0) { barPhase = "work"; setStart = Date.now(); var tEnd = restAnim && restAnim.time ? restAnim.time() : 0; stopGymTimer(); gymTimer = setInterval(tickClock, 1000); if (box) box.textContent = tr("gym.countDone"); drawBar(); mountAnim(ex, tEnd); if (after) after(); }
       }, 1000);
     }
     if (item.timed) $("holdBtn").addEventListener("click", function () { countdown(item.reps, "hold", function () {}); });
@@ -925,6 +1274,7 @@
     $("finishBtn").addEventListener("click", function () { finishSession(s, false); });
     wireSkinAsk(el);
     mountAnim(ex);
+    drawBar();
   }
   function finishSession(s, silent) {
     stopGymTimer();
@@ -934,36 +1284,106 @@
     if (!silent) { toast(tr("gym.sessionSaved")); showWallyCelebration("session"); }
     renderSession();
   }
+  /* --- Machine photo v2: picture match (order 17 Oct 2026).
+     ACCURACY LAW: the app never claims to recognise the
+     machine from the photo. No auto identification, no
+     found-it copy, no scores. The user is the verifier:
+     their tap on the picture that matches is the only match
+     there is, and the confirmed pick is what saves. --- */
+  /* Generated art lands per station as the roll-out makes it
+     (graphic redo, approved 17 Oct 2026). A station with art
+     shows its picture tile plus a looping frame player in its
+     station view; a station without art yet shows a clean
+     name tile and the animation player. Never a fake picture. */
+  var STATION_FRAMES = {
+    "leg-press": ["assets/station-leg-press-1.webp", "assets/station-leg-press-2.webp", "assets/station-leg-press-3.webp"]
+  };
+  var mcFrameTimer = null;
+  function stopMcFrames() { if (mcFrameTimer) { clearInterval(mcFrameTimer); mcFrameTimer = null; } }
+  function mcBubbleLine(ex, i) {
+    var key = "bub." + ex.id + "." + i;
+    var s = tr(key);
+    if (s === key) {
+      var track = window.FIT_ANIM && window.FIT_ANIM[ex.id];
+      s = (track && track.bubbles && track.bubbles[i]) || "";
+    }
+    return s;
+  }
+  function startMcFrames(frames, ex) {
+    var img = $("mcFrameImg"), bub = $("mcBubble");
+    if (!img) return;
+    var step = 0;
+    function show() {
+      if (!document.body.contains(img)) { stopMcFrames(); return; }
+      img.src = frames[step];
+      if (bub) bub.textContent = mcBubbleLine(ex, step);
+      step = (step + 1) % frames.length;
+    }
+    var stills = !!((state.settings && state.settings.calmPics) ||
+      (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches));
+    show();
+    if (stills) { img.addEventListener("click", show); return; }
+    mcFrameTimer = setInterval(show, 870);
+  }
+  function renderStation(m) {
+    stopMcFrames(); stopAnim();
+    var box = $("mcResult");
+    if (!box) return;
+    var items = m.exerciseIds.map(function (id) {
+      var e = exerciseById(id);
+      return { exerciseId: id, sets: 3, reps: e && e.timed ? e.timed : 12, timed: !!(e && e.timed), restSec: 45 };
+    });
+    var first = exerciseById(m.exerciseIds[0]);
+    var frames = STATION_FRAMES[m.id];
+    var stage;
+    if (frames && first) {
+      stage = '<div class="stationStage"><img class="stationFrame" id="mcFrameImg" src="' + frames[0] + '" alt="' + esc(tr("gym.movingAlt")) + '">' +
+        '<div class="animGuide"><img class="animWally" src="assets/wally-profile.webp" alt="' + esc(tr("anim.wallyAlt", null, "Wally, your guide")) + '">' +
+        '<div class="animBubble"><span id="mcBubble">' + esc(mcBubbleLine(first, 0)) + "</span></div></div></div>";
+    } else {
+      stage = '<div id="animMount"></div>';
+    }
+    box.innerHTML = '<div class="card"><h2>' + esc(machName(m)) + "</h2>" + stage +
+      (first ? '<h3>' + esc(tr("gym.howTo")) + '</h3><p class="hint">' + esc(exCue(first)) + "</p>" : "") +
+      items.map(function (it) { return exRow(it, exerciseById(it.exerciseId)); }).join("") +
+      '<div class="row"><button class="primaryBtn" id="mcMake">' + esc(tr("gym.makeRoutine")) + '</button></div></div>';
+    if (frames && first) startMcFrames(frames, first);
+    else if (first) mountAnim(first);
+    $("mcMake").addEventListener("click", function () {
+      state.routines.push({ id: "routine." + Date.now(), name: machName(m) + tr("gym.routineSuffix"), goalId: null,
+        minutes: 30, days: [], time: null, createdKey: L.todayKey(), items: items });
+      save(); toast(tr("gym.routineSaved")); openArea("gym", "gym-routines");
+    });
+    if (box.scrollIntoView) box.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
   function renderMachine() {
+    stopMcFrames(); stopAnim();
     var el = $("areaBody");
     el.innerHTML = '<div class="card"><h2>' + esc(tr("gym.showMachine")) + '</h2>' +
       '<p class="hint">' + esc(tr("gym.machineHint")) + '</p>' +
       '<input id="mcPhoto" type="file" accept="image/*"><div id="mcPreview"></div>' +
+      '<p class="hint">' + esc(tr("gym.matchAsk")) + '</p>' +
       '<div class="machineGrid" id="mcGrid">' + EX.MACHINES.map(function (m) {
-        return '<button class="chip" data-machine="' + m.id + '">' + esc(m.name) + "</button>"; }).join("") + "</div>" +
+        var fr = STATION_FRAMES[m.id];
+        return '<button class="machineTile" data-machine="' + m.id + '">' +
+          (fr ? '<img class="machineTileImg" src="' + fr[0] + '" alt="">' : "") +
+          '<span class="machineTileName">' + esc(machName(m)) + "</span></button>"; }).join("") + "</div>" +
+      '<div class="row"><button class="pillBtn" id="mcNone">' + esc(tr("gym.noneMatch")) + '</button></div>' +
+      '<div id="mcNames" class="hidden"><p class="hint">' + esc(tr("gym.noneHint")) + '</p>' +
+      '<div class="chipRow">' + EX.MACHINES.map(function (m) {
+        return '<button class="chip" data-machine="' + m.id + '">' + esc(machName(m)) + "</button>"; }).join("") + "</div></div>" +
       '<div id="mcResult"></div></div>';
     $("mcPhoto").addEventListener("change", function () {
       var f = $("mcPhoto").files[0]; if (!f) return;
       var rd = new FileReader();
-      rd.onload = function () { $("mcPreview").innerHTML = '<img class="photoImg" alt="' + esc(tr("gym.machineAlt")) + '" src="' + String(rd.result) + '">'; };
+      rd.onload = function () { $("mcPreview").innerHTML = '<img class="photoImg mcPhotoImg" alt="' + esc(tr("gym.machineAlt")) + '" src="' + String(rd.result) + '">'; };
       rd.readAsDataURL(f);
     });
+    $("mcNone").addEventListener("click", function () { $("mcNames").classList.remove("hidden"); });
     el.querySelectorAll("[data-machine]").forEach(function (b) {
       b.addEventListener("click", function () {
         var m = EX.MACHINES.filter(function (x) { return x.id === b.getAttribute("data-machine"); })[0];
-        if (!m) return;
-        var items = m.exerciseIds.map(function (id) {
-          var e = exerciseById(id);
-          return { exerciseId: id, sets: 3, reps: e && e.timed ? e.timed : 12, timed: !!(e && e.timed), restSec: 45 };
-        });
-        $("mcResult").innerHTML = '<div class="card"><h2>' + esc(m.name) + "</h2>" +
-          items.map(function (it) { return exRow(it, exerciseById(it.exerciseId)); }).join("") +
-          '<div class="row"><button class="primaryBtn" id="mcMake">' + esc(tr("gym.makeRoutine")) + '</button></div></div>';
-        $("mcMake").addEventListener("click", function () {
-          state.routines.push({ id: "routine." + Date.now(), name: m.name + tr("gym.routineSuffix"), goalId: null,
-            minutes: 30, days: [], time: null, createdKey: L.todayKey(), items: items });
-          save(); toast(tr("gym.routineSaved")); openArea("gym", "gym-routines");
-        });
+        if (m) renderStation(m);
       });
     });
   }
@@ -1266,6 +1686,18 @@
     document.querySelectorAll(".blanketBtn").forEach(function (b) {
       b.classList.toggle("on", b.getAttribute("data-blanket") === blanketColor());
     });
+    var io2 = $("importOpen2"); if (io2) io2.classList.toggle("hidden", !!demoMode);
+    var rm = $("remindBtn"), rh = $("remindHint");
+    if (rm && rh) {
+      if (FitRemind.available()) {
+        rh.textContent = tr("set.remindersHint");
+        rm.classList.remove("hidden");
+        rm.textContent = (state.settings && state.settings.notifications === true) ? tr("rem.turnOff") : tr("rem.turnOn");
+      } else {
+        rh.textContent = tr("set.remindersWeb");
+        rm.classList.add("hidden");
+      }
+    }
     renderAppearance();
     renderAccount();
   }
@@ -1281,6 +1713,33 @@
     toast(state.settings.wallyOff ? companionName() + " is resting." : companionName() + " is back.");
   });
   $("tourReplayBtn").addEventListener("click", replayTour);
+  $("remindBtn").addEventListener("click", function () {
+    var on = !!(state.settings && state.settings.notifications === true);
+    FitRemind.setOn(!on).then(function (ok) {
+      renderSettings();
+      if (!on && !ok) toast(tr("rem.notAllowed"));
+    });
+  });
+  $("importClose").addEventListener("click", closeImport);
+  $("importOpen2").addEventListener("click", openImport);
+  document.querySelectorAll(".import-src").forEach(function (b) {
+    b.addEventListener("click", function () { setImportSource(b.getAttribute("data-src")); });
+  });
+  $("importGo").addEventListener("click", function () {
+    var url = $("importUrl").value.trim();
+    if (!url) { $("importResult").textContent = tr("cal.importNeedLink"); return; }
+    $("importResult").textContent = tr("cal.importFetching");
+    fetch(url).then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.text(); })
+      .then(function (t) { runImport(t, IMPORT_LABELS[importSource]); })
+      .catch(function () { $("importResult").textContent = tr("cal.importFetchFail"); });
+  });
+  $("importFileBtn").addEventListener("click", function () { $("importFile").click(); });
+  $("importFile").addEventListener("change", function () {
+    var f = $("importFile").files && $("importFile").files[0];
+    if (!f) return;
+    f.text().then(function (t) { runImport(t, IMPORT_LABELS[importSource]); });
+    $("importFile").value = "";
+  });
   /* The language row (Settings > Appearance): Auto follows
      the device; a named language pins it. The choice is
      the user's setting, saved like every other. */
@@ -1423,7 +1882,7 @@
   function restoreParkedState() {
     try {
       var raw = localStorage.getItem(PARK_KEY);
-      if (raw) { state = L.repairState(JSON.parse(raw)); localStorage.removeItem(PARK_KEY); }
+      if (raw) { state = repairKeep(JSON.parse(raw)); localStorage.removeItem(PARK_KEY); }
       localStorage.removeItem(DEMO_MARK);
     } catch (e) {}
     demoMode = false; saveLocal();
@@ -1577,9 +2036,15 @@
       });
       return;
     }
-    var planLine = (window.FitAuth && window.FitAuth.planOf(state) === "pro")
-      ? '<p class="hint">' + esc(tr("acc.planPro")) + '</p>'
-      : '<div class="row"><span class="hint">' + esc(tr("acc.planFree")) + '</span><button class="miniBtn" id="accProBtn">' + esc(tr("pro.seeAdds")) + '</button></div>';
+    var detail = tierDetail();
+    var planLine;
+    if (detail.plan === "pro" && detail.reason === "freemonth")
+      planLine = '<p class="hint">' + esc(tr("acc.planFreeMonth", { days: detail.daysLeft })) + '</p>';
+    else if (detail.plan === "pro")
+      planLine = '<p class="hint">' + esc(tr("acc.planPro")) + '</p>';
+    else
+      planLine = '<div class="row"><span class="hint">' + esc(tr("acc.planFree")) + '</span><button class="miniBtn" id="accProBtn">' + esc(tr("pro.seeAdds")) + '</button></div>';
+    planLine += '<div class="row"><button class="pillBtn" id="accPlansBtn">' + esc(tr("acc.plansBtn")) + '</button></div>';
     var warn = cloudWarnings.length ? '<p class="hint">' + esc(tr("acc.warnLarge")) + '</p>' : "";
     var note = mirrorNote ? '<p class="hint">' + esc(mirrorNote) + "</p>" : "";
     box.innerHTML = '<p class="hint">' + esc(tr("acc.signedIn", { email: authUser.email || tr("acc.yourAccount") })) + "</p>" + planLine + warn + note +
@@ -1589,6 +2054,7 @@
         '<div class="row"><button class="pillBtn" id="accDeleteYes">' + esc(tr("acc.deleteYes")) + '</button><button class="pillBtn" id="accDeleteNo">' + esc(tr("acc.deleteNo")) + '</button></div>' :
         '<div class="row"><button class="pillBtn" id="accOutBtn">' + esc(tr("acc.signOut")) + '</button><button class="pillBtn" id="accDeleteBtn">' + esc(tr("acc.deleteBtn")) + '</button></div>');
     var proBtn = $("accProBtn"); if (proBtn) proBtn.addEventListener("click", showProMoment);
+    var plansBtn = $("accPlansBtn"); if (plansBtn) plansBtn.addEventListener("click", openPlans);
     var out = $("accOutBtn"); if (out) out.addEventListener("click", function () {
       window.FitAuth.signOutUser().then(function () { toast(tr("acc.signedOut")); });
     });
@@ -1647,10 +2113,10 @@
     try { localStorage.setItem(DEMO_MARK, "1"); } catch (e) {}
     window.FitAuth.loadCloudState(user.uid).then(function (cloud) {
       if (cloud && cloud.profile) {
-        state = L.repairState(cloud);
+        state = repairKeep(cloud);
         if (demoPendingHash) state.demoUnlock = demoPendingHash;
       } else {
-        state = L.repairState(window.FitDemo.buildDemoState(demoPicks()));
+        state = repairKeep(window.FitDemo.buildDemoState(demoPicks()));
         state.demoUnlock = demoPendingHash;
       }
       demoPendingHash = null;
@@ -1659,7 +2125,7 @@
       renderAll();
       toast(tr("acc.demoWelcome"));
     }).catch(function () {
-      state = L.repairState(window.FitDemo.buildDemoState(demoPicks()));
+      state = repairKeep(window.FitDemo.buildDemoState(demoPicks()));
       state.demoUnlock = demoPendingHash; demoPendingHash = null;
       saveLocal(); renderAll();
     });
@@ -1674,7 +2140,7 @@
     if (planSynced || demoMode || !user || user.isAnonymous || !window.FitAuth || !window.FitAuth.syncPlan) return;
     planSynced = true;
     window.FitAuth.syncPlan(user.uid, false).then(function (p) {
-      if (p) { state.tier = { plan: p }; saveLocal(); renderAccount(); }
+      if (p) { state.tier = { plan: p }; saveLocal(); renderAccount(); renderPlans(); }
     }).catch(function () {});
   }
   /* The name asked at sign-up (her ruling, 15 Oct 2026):
@@ -1798,10 +2264,12 @@
       card.innerHTML = x + face +
         '<p class="tourLine">' + esc(tr("tour.done")) + '</p>' +
         '<div class="tourRow"><span></span><button class="primaryBtn tourNext" id="tourDone">' + esc(tr("tour.doneBtn")) + ' ✓</button></div>' +
+        '<div class="tourRow"><button class="pillBtn" id="tourImportBtn">' + esc(tr("cal.importOffer")) + '</button><span></span></div>' +
         '<div class="tourDots">' + tourDots() + '</div>';
     }
     var nx = $("tourNext"); if (nx) nx.addEventListener("click", tourAdvance);
     var dn = $("tourDone"); if (dn) dn.addEventListener("click", endTour);
+    var ti = $("tourImportBtn"); if (ti) ti.addEventListener("click", function () { endTour(); openImport(); });
     var sk = $("tourSkip"); if (sk) sk.addEventListener("click", endTour);
     var xx = $("tourX"); if (xx) xx.addEventListener("click", endTour);
   }
@@ -1880,6 +2348,7 @@
   function showProMoment() {
     var w = $("proWally");
     if (w) w.innerHTML = guideOn() && window.Wally ? wallyWrap("welcome", tr("pro.bubble"), 64) : "";
+    refreshProModal();
     $("proModal").classList.remove("hidden");
   }
   function closeProMoment() { $("proModal").classList.add("hidden"); }
@@ -1892,7 +2361,7 @@
     authUser = user;
     window.FitAuth.loadCloudState(user.uid).then(function (cloud) {
       if (cloud) {
-        state = L.repairState(L.mergeStates(cloud, state));
+        state = repairKeep(L.mergeStates(cloud, state));
         adoptSignInName(user);
         saveLocal();
         window.FitAuth.saveCloudState(user.uid, state).then(function (r) { cloudWarnings = (r && r.warnings) || []; renderAccount(); maybeSyncPlan(user); }).catch(function () {});
@@ -1926,8 +2395,7 @@
   window.addEventListener("fit-auth-ready", initAccounts);
   $("proNotNow").addEventListener("click", closeProMoment);
   $("proGo").addEventListener("click", function () {
-    closeProMoment(); showView("settings");
-    var box = $("accountBox"); if (box) box.scrollIntoView();
+    closeProMoment(); openPlans();
   });
   /* The tour wires its own buttons on each render
      (renderTour); there are no standing tour handlers. */
@@ -1975,7 +2443,7 @@
   }
   function closeSetup() { $("setupModal").classList.add("hidden"); }
   $("suSkip").addEventListener("click", function () {
-    if (!state.profile) { state.profile = { name: "", needs: [], preferences: [], allergies: [], goals: [], setupDone: false }; save(); }
+    if (!state.profile) { state.profile = { name: "", needs: [], preferences: [], allergies: [], goals: [], setupDone: false, firstSeenAt: new Date().toISOString() }; save(); }
     closeSetup(); renderAll();
   });
   $("suDone").addEventListener("click", function () {
@@ -1988,8 +2456,10 @@
       activity: $("suActivity").value, deficit: $("suDeficit").value,
       goals: [$("suGoal").value], preferences: pickedCuisines.slice(),
       allergies: $("suAllergies").value.split(",").map(function (s) { return s.trim(); }).filter(Boolean),
-      needs: pickedNeeds.slice(), setupDone: true
+      needs: pickedNeeds.slice(), setupDone: true,
+      firstSeenAt: (state.profile && state.profile.firstSeenAt) || new Date().toISOString()
     };
+    knownFirstSeen = state.profile.firstSeenAt;
     state.settings = state.settings || {};
     state.settings.companionName = $("suCompanion").value.trim();
     save(); closeSetup(); renderAll();

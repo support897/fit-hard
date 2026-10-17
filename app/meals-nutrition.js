@@ -126,7 +126,18 @@ window.MP_NUTRITION = {
     "pizza": 266,
     "cake": 389,
     "sandwich": 287,
-    "donut": 421
+    "donut": 421,
+    "chickpeas": 164,
+    "lentils": 352,
+    "tofu": 144,
+    "prawns": 85,
+    "bacon": 393,
+    "pork mince": 263,
+    "cauliflower": 25,
+    "celery": 14,
+    "beetroot": 43,
+    "ricotta": 150,
+    "sugar": 387
   },
   PIECE_G: {
     "avocado": 201,
@@ -276,6 +287,17 @@ window.MP_NUTRITION = {
     "pizza": { "fdcId": 173292, "desc": "Fast Food, Pizza Chain, 14 inch pizza, cheese topping, regular crust. Photo serving: USDA portion, 1 slice (107 g)." },
     "cake": { "fdcId": 174934, "desc": "Cake, chocolate, commercially prepared with chocolate frosting, in-store bakery. Photo serving: USDA portion, 1 piece, 1/12 of a cake (138 g)." },
     "sandwich": { "fdcId": 2706880, "desc": "Sandwich, NFS (Survey FNDDS). Photo serving: USDA portion, 1 regular (115 g)." },
-    "donut": { "fdcId": 172758, "desc": "Doughnuts, yeast-leavened, glazed, enriched. Photo serving: USDA portion, 1 medium (60 g)." }
+    "donut": { "fdcId": 172758, "desc": "Doughnuts, yeast-leavened, glazed, enriched. Photo serving: USDA portion, 1 medium (60 g)." },
+    "chickpeas": { "fdcId": 173757, "desc": "Chickpeas (garbanzo beans, bengal gram), mature seeds, cooked, boiled, without salt. Recipes weigh chickpeas drained from the can, like the other bean rows." },
+    "lentils": { "fdcId": 172420, "desc": "Lentils, raw. Recipes weigh lentils dry before cooking, like the rice and pasta rows." },
+    "tofu": { "fdcId": 172475, "desc": "Tofu, raw, firm, prepared with calcium sulfate." },
+    "prawns": { "fdcId": 175179, "desc": "Crustaceans, shrimp, raw. The app calls them prawns, the Australian word for the same food." },
+    "bacon": { "fdcId": 168277, "desc": "Pork, cured, bacon, unprepared. Recipes weigh bacon raw, before it is cooked." },
+    "pork mince": { "fdcId": 167902, "desc": "Pork, fresh, ground, raw." },
+    "cauliflower": { "fdcId": 169986, "desc": "Cauliflower, raw." },
+    "celery": { "fdcId": 169988, "desc": "Celery, raw." },
+    "beetroot": { "fdcId": 169145, "desc": "Beets, raw. The app calls them beetroot, the Australian word for the same food." },
+    "ricotta": { "fdcId": 170851, "desc": "Cheese, ricotta, whole milk." },
+    "sugar": { "fdcId": 169655, "desc": "Sugars, granulated." }
   }
 };

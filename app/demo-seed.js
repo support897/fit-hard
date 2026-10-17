@@ -28,7 +28,7 @@
       if (d) plan[mpKey(addDays(monday, i))] = { breakfast: d.breakfast, lunch: d.lunch, dinner: d.dinner };
     });
     var routine = picks.routine || null;
-    if (routine) { routine.days = [1, 3, 5]; routine.time = "18:00"; if (!routine.name) routine.name = "Leg day"; }
+    if (routine) { routine.days = [1, 3, 5]; routine.time = "18:00"; routine.createdKey = addDays(today, -7); if (!routine.name) routine.name = "Leg day"; }
     var habitDays = {}; habitDays[addDays(today, -1)] = true; habitDays[addDays(today, -2)] = true;
     var checkins = {}; checkins[addDays(today, -1)] = "ok"; checkins[today] = "great";
     return {
