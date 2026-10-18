@@ -23,7 +23,8 @@ window.FIT_DATA = (function () {
       subs: [
         { id: "gym-routines", label: "Routines" },
         { id: "gym-session", label: "Session" },
-        { id: "gym-machine", label: "Machine photo" }
+        { id: "gym-machine", label: "Machine photo" },
+        { id: "gym-library", label: "Exercise library" }
       ] },
     { id: "calendar", label: "Calendar", color: "#52695A", soft: "#EAF0E2",
       subs: [

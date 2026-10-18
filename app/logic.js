@@ -498,12 +498,52 @@ function routinePool(exercises) {
     return !!e && e.level === "beginner" && (e.category === "strength" || e.category == null);
   });
 }
-function buildRoutine(goalId, minutes, exercises) {
+/* F7 load leg (Exercises Phase 2, the QA fence's stated
+   behaviour): an exercise may be PLAYED from a saved routine
+   or session only when it is in the library AND it is strength
+   (or a pre-schema record, which reads as strength) AND its
+   level is beginner or intermediate. Expert exercises, the
+   non-strength held classes and unknown ids NEVER play. The
+   saved data itself is never edited by this rule:
+   safeRoutineItems keeps every slot, repairState stays
+   library-blind, and an unplayable saved item simply does not
+   start — the session player skips it, the routine card shows
+   it calm and library-only, and the data stays the user's. */
+function routinePlayable(ex) {
+  return !!ex && (ex.category === "strength" || ex.category == null) &&
+    (ex.level === "beginner" || ex.level === "intermediate");
+}
+function playableItems(items, exercises) {
+  var byId = {};
+  (exercises || []).forEach(function (e) { if (e && e.id) byId[e.id] = e; });
+  return (items || []).filter(function (it) {
+    return !!it && routinePlayable(byId[it.exerciseId]);
+  });
+}
+function buildRoutine(goalId, minutes, exercises, ctx) {
   var goal = null;
   GYM_GOALS.forEach(function (g) { if (g.id === goalId) goal = g; });
   if (!goal) return null;
   var count = Math.max(3, Math.min(8, Math.round((Number(minutes) || 30) / 9)));
-  var eligible = routinePool(exercises);
+  /* Trainer matching (design section 6): when the context
+     carries completed sessions, candidates at stations the user
+     has already used come first within each part. Preference
+     only: the pool is the same set, the parts are the same, and
+     with no logged stations the library order stands untouched,
+     so a build with no history is byte-identical to the plain
+     build. Array sort is stable, so ties keep library order. */
+  var source = exercises;
+  if (ctx && ctx.sessions) {
+    var usedStations = trainerUsedStations(ctx.sessions, exercises);
+    if (Object.keys(usedStations).length) {
+      source = (exercises || []).slice().sort(function (a, b) {
+        var ua = a && usedStations[a.station] ? 0 : 1;
+        var ub = b && usedStations[b.station] ? 0 : 1;
+        return ua - ub;
+      });
+    }
+  }
+  var eligible = routinePool(source);
   var byPart = {};
   goal.parts.forEach(function (p) {
     byPart[p] = eligible.filter(function (e) { return e.part === p; });
@@ -523,7 +563,9 @@ function buildRoutine(goalId, minutes, exercises) {
     }
     round++;
   }
-  return { goalId: goal.id, name: goal.label, minutes: Number(minutes) || 30, items: items };
+  var built = { goalId: goal.id, name: goal.label, minutes: Number(minutes) || 30, items: items };
+  if (ctx) trainerStartVolume(built, goal, ctx);
+  return built;
 }
 /* Bad-day lightening (used by the morning check-in in Phase 7,
    built here because it is gym maths): fewer sets, never zero,
@@ -546,6 +588,198 @@ function routineDueOn(routine, isoKey) {
   if (isoKey < routine.createdKey) return false;
   var wd = parseKey(isoKey).getDay(); /* 0 = Sunday */
   return routine.days.indexOf(wd) !== -1;
+}
+
+/* --- Trainer layer (Exercises trainer slice) ----------------------------
+   The design of record is hidden_files/TRAINER-MATCHING-DESIGN.md.
+   Everything here personalises INSIDE the D2 pool: routinePool is
+   never widened, saved data is never edited, and the only history
+   read is the user's own logged sessions. Weight is part of the
+   context the app passes and is deliberately never read into the
+   arithmetic and never reaches copy (design sections 2 and 7):
+   two contexts that differ only in weight build the identical
+   routine, and the suite pins that. */
+
+/* TRAINER_UNLOCK_SESSIONS is a DESK DESIGN PARAMETER, adopted by
+   this slice: design section 5 proposed 8 completed sessions and
+   ruled the number is decided at the trainer slice. It is not the
+   user's words and not a user ruling; the gates may amend it on
+   record. After this many completed sessions in total,
+   intermediate strength may be offered to HAND-PICKS only. The
+   auto-builder's pool is untouched by it, and expert stays
+   library-only at every count (D2 plus the QA rider, absolute). */
+var TRAINER_UNLOCK_SESSIONS = 8;
+/* The step ladder's ceiling (design section 4 names the step and
+   the ceiling without sizing the space between): at a goal's
+   template the step is +1 set, and sets may climb at most this
+   far above the template. Also a desk parameter of this slice. */
+var TRAINER_SET_HEADROOM = 1;
+var TRAINER_STEP_GAP_DAYS = 14;
+var TRAINER_STEP_PAIR = 2;
+
+function trainerDoneSessions(sessions) {
+  return (sessions || []).filter(function (s) { return !!s && s.status === "done"; }).slice().sort(function (a, b) {
+    var ka = a.dateKey || "", kb = b.dateKey || "";
+    if (ka !== kb) return ka < kb ? -1 : 1;
+    var ta = Number(a.startedAt) || 0, tb = Number(b.startedAt) || 0;
+    if (ta !== tb) return ta - tb;
+    var ia = String(a.id || ""), ib = String(b.id || "");
+    return ia < ib ? -1 : ia > ib ? 1 : 0;
+  });
+}
+function trainerTotalDone(sessions) { return trainerDoneSessions(sessions).length; }
+function stepUpUnlocked(sessions) { return trainerTotalDone(sessions) >= TRAINER_UNLOCK_SESSIONS; }
+function trainerHistoryFor(sessions, routineId) {
+  return trainerDoneSessions(sessions).filter(function (s) { return s.routineId === routineId; });
+}
+/* Stations the user has actually trained at, read from their
+   completed sessions (design section 6b). */
+function trainerUsedStations(sessions, exercises) {
+  var byId = {};
+  (exercises || []).forEach(function (e) { if (e && e.id) byId[e.id] = e; });
+  var used = {};
+  trainerDoneSessions(sessions).forEach(function (s) {
+    (s.items || []).forEach(function (it) {
+      var ex = it && byId[it.exerciseId];
+      if (ex && ex.station) used[ex.station] = true;
+    });
+  });
+  return used;
+}
+function trainerVolumeOf(item) {
+  return item ? { sets: Number(item.sets) || 0, reps: Number(item.reps) || 0 } : null;
+}
+/* Ladder rank, only ever used to compare two volumes of the same
+   exercise under the same goal: sets weigh more than reps. */
+function trainerRank(vol, goal) { return (vol.sets - goal.sets) * 32 + (vol.reps - goal.reps); }
+/* One small step up (design section 4): +1 rep while reps are
+   below the goal's reps, else +1 set, never both, never past
+   the ceiling. Returns null at the ceiling. */
+function trainerStepUp(vol, goal) {
+  if (vol.reps < goal.reps) return { sets: vol.sets, reps: vol.reps + 1 };
+  if (vol.sets < goal.sets + TRAINER_SET_HEADROOM) return { sets: vol.sets + 1, reps: vol.reps };
+  return null;
+}
+/* The volume change one exercise has earned, from one routine's
+   own completed sessions (design section 4). `refItem` is the
+   volume the user was actually training at (the saved routine's
+   item, or the fresh build's item when they are the same).
+   Returns { kind: "up" | "back", vol } or null when the plan
+   holds. Timed holds keep their prescribed volume: progression
+   never stretches a hold. */
+function trainerItemChange(refItem, goal, history, today) {
+  var cur = trainerVolumeOf(refItem);
+  if (!cur || !refItem || refItem.timed) return null;
+  var mine = [];
+  history.forEach(function (s) {
+    (s.items || []).forEach(function (it) {
+      if (it && it.exerciseId === refItem.exerciseId) {
+        mine.push({ vol: trainerVolumeOf(it), lightened: !!s.lightened });
+      }
+    });
+  });
+  if (!mine.length) return null;
+  var last = history[history.length - 1];
+  var gap = today && last.dateKey ? Math.round((parseKey(today) - parseKey(last.dateKey)) / 86400000) : 0;
+  if (gap >= TRAINER_STEP_GAP_DAYS) {
+    /* Step back, kindly: the last volume this exercise was
+       completed twice at. Only full sessions set the target: a
+       lightened day never drags the plan down (design section
+       4). A lightened completion still counts as showing up, so
+       it is the gap clock above that it resets, never this. */
+    var stats = {};
+    mine.forEach(function (m, idx) {
+      if (m.lightened) return;
+      var k = m.vol.sets + "x" + m.vol.reps;
+      if (!stats[k]) stats[k] = { vol: m.vol, count: 0, lastIdx: -1 };
+      stats[k].count++; stats[k].lastIdx = idx;
+    });
+    var target = null, bestIdx = -1;
+    Object.keys(stats).forEach(function (k) {
+      var st = stats[k];
+      if (st.count >= TRAINER_STEP_PAIR && st.lastIdx > bestIdx) { bestIdx = st.lastIdx; target = st.vol; }
+    });
+    if (target && trainerRank(target, goal) < trainerRank(cur, goal)) return { kind: "back", vol: target };
+    return null;
+  }
+  /* Step up: the most recent pair of completions credits the
+     step when each was finished at the current volume, or was a
+     lightened session finished in full (a bad day counts whole,
+     design sections 1 and 4). One completion alone holds. */
+  var recent = mine.slice(-TRAINER_STEP_PAIR);
+  if (recent.length < TRAINER_STEP_PAIR) return null;
+  var credits = recent.every(function (m) {
+    return m.lightened || (m.vol.sets === cur.sets && m.vol.reps === cur.reps);
+  });
+  if (!credits) return null;
+  var up = trainerStepUp(cur, goal);
+  return up ? { kind: "up", vol: up } : null;
+}
+/* Apply the earned volume changes to a list of items. When
+   refItems is given (a rebuild carrying a saved routine's line
+   forward), each exercise's change is read against the saved
+   volume it was trained at, and an earned level above the fresh
+   template is carried, never silently dropped. Input items are
+   never mutated. kind is "up" when any exercise steps up, else
+   "back" when any steps back, else "none": the gap branch is
+   routine-wide, so the two never mix in one pass. */
+function trainerApplyVolumes(items, goal, history, today, refItems) {
+  var ref = {};
+  (refItems || []).forEach(function (it) { if (it) ref[it.exerciseId] = it; });
+  var kind = "none";
+  var out = (items || []).map(function (it) {
+    if (!it) return it;
+    var refItem = ref[it.exerciseId] || it;
+    var r = trainerItemChange(refItem, goal, history, today);
+    if (r) {
+      if (r.kind === "up") kind = "up"; else if (kind === "none") kind = "back";
+      return Object.assign({}, it, { sets: r.vol.sets, reps: r.vol.reps });
+    }
+    var refVol = trainerVolumeOf(refItem), myVol = trainerVolumeOf(it);
+    if (refItems && refVol && myVol && trainerRank(refVol, goal) > trainerRank(myVol, goal)) {
+      return Object.assign({}, it, { sets: refVol.sets, reps: refVol.reps });
+    }
+    return it;
+  });
+  return { kind: kind, items: out };
+}
+/* The trainer's read on a SAVED routine: what a user-tapped
+   rebuild would change today. Pure advice; it edits nothing.
+   The app shows it plainly and applies it only on the user's
+   tap (design section 4: no auto-edits to saved routines). */
+function trainerAdvice(routine, sessions, today) {
+  var none = { kind: "none", items: (routine && routine.items) || [] };
+  if (!routine || !routine.goalId) return none;
+  var goal = null;
+  GYM_GOALS.forEach(function (g) { if (g.id === routine.goalId) goal = g; });
+  if (!goal) return none;
+  var history = trainerHistoryFor(sessions, routine.id);
+  if (!history.length) return none;
+  return trainerApplyVolumes(routine.items, goal, history, today, null);
+}
+/* The trainer layer on a fresh build (design sections 3 and 4).
+   A brand new user's first routines start one set lighter when
+   their own setup words say start gently: the lowest activity
+   option, or the Gentle start goal itself. Starting smaller is
+   the plan working, never a judgement, and no copy says why in
+   body terms. A build for a goal the user already trains
+   carries that routine's progression forward. */
+function trainerStartVolume(built, goal, ctx) {
+  if (!trainerTotalDone(ctx.sessions)) {
+    var profile = ctx.profile || {};
+    if (profile.activity === "low" || goal.id === "gentle") {
+      built.items = built.items.map(function (it) {
+        return Object.assign({}, it, { sets: Math.max(1, (Number(it.sets) || 1) - 1) });
+      });
+    }
+    return;
+  }
+  var prev = ctx.prevRoutine;
+  if (!prev || prev.goalId !== goal.id) return;
+  var history = trainerHistoryFor(ctx.sessions, prev.id);
+  if (!history.length) return;
+  var r = trainerApplyVolumes(built.items, goal, history, ctx.todayKey, prev.items);
+  built.items = r.items;
 }
 
 /* --- Reminder planning (Tranche A-4) ------------------------------------
@@ -694,6 +928,10 @@ var api = { pad: pad, toKey: toKey, parseKey: parseKey, addDays: addDays, todayK
   SLICE_WARN_BYTES: SLICE_WARN_BYTES, sliceSizes: sliceSizes, oversizedSlices: oversizedSlices,
   mergeStates: mergeStates,
   GYM_GOALS: GYM_GOALS, routinePool: routinePool, buildRoutine: buildRoutine, lightenRoutine: lightenRoutine, routineDueOn: routineDueOn,
+  routinePlayable: routinePlayable, playableItems: playableItems,
+  TRAINER_UNLOCK_SESSIONS: TRAINER_UNLOCK_SESSIONS, trainerTotalDone: trainerTotalDone,
+  stepUpUnlocked: stepUpUnlocked, trainerHistoryFor: trainerHistoryFor,
+  trainerUsedStations: trainerUsedStations, trainerAdvice: trainerAdvice,
   TODO_CATEGORIES: TODO_CATEGORIES, categoryFor: categoryFor, estimateDuration: estimateDuration,
   makeTodo: makeTodo, todosOn: todosOn, monthGrid: monthGrid,
   MEAL_SHARES: MEAL_SHARES, ingredientHitsAllergy: ingredientHitsAllergy, recipeSafe: recipeSafe,

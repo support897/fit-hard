@@ -23,18 +23,18 @@
    Rules live in firestore.rules (owner-only at both levels).
    Merging cloud and device copies is Fit logic
    (FitLogic.mergeStates), which never drops user data. */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { initializeApp } from "./sdk/firebase-app.js";
 import {
   getAuth, onAuthStateChanged, signOut, deleteUser,
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
   sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential,
   signInAnonymously,
-  GoogleAuthProvider, OAuthProvider, signInWithPopup,
+  GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithCredential,
   reauthenticateWithPopup
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+} from "./sdk/firebase-auth.js";
 import {
   getFirestore, doc, getDoc, getDocs, collection, setDoc, deleteDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+} from "./sdk/firebase-firestore.js";
 
 let app = null, auth = null, db = null;
 
@@ -72,11 +72,57 @@ async function resetPassword(email) {
 /* §5 door 2: Google. §5 door 3: Apple (parked on the Apple
    Developer credential wall; the call is here so P2 only
    wires the button when the door is live). */
+/* Native door (packaged app only, the native-door fix):
+   inside the store wraps the web popup cannot finish, so
+   on a native platform the Google and Apple doors run on
+   the native layer through the Capacitor Firebase
+   Authentication plugin and complete the session here on
+   the web layer from the credential the plugin hands back:
+   the plugin's own Firebase JavaScript SDK pattern
+   (signInWithCredential with the OAuth credential built
+   from the returned tokens). The plugin config
+   (capacitor.config.json) carries the skip-native-auth
+   setting for the whole plugin, the documented shape
+   when the JavaScript SDK owns the session, so the
+   plugin fetches credentials only and creates no
+   parallel native session; both calls take no options.
+   Apple's nonce
+   comes back on the result's credential and passes to
+   the OAuth credential as rawNonce verbatim, never
+   hashed again. Browsers never take this road: the popup doors
+   below stay exactly as they were, and the email door and
+   the demo door are untouched on every platform. A native
+   failure or cancel rejects, and the door shows the same
+   generic line it shows for a popup that did not finish. */
+function nativeDoorPlugin() {
+  try {
+    return (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()
+      && window.Capacitor.Plugins && window.Capacitor.Plugins.FirebaseAuthentication) || null;
+  } catch (e) { return null; }
+}
+
+async function nativeSignInWithGoogle(plugin) {
+  const result = await plugin.signInWithGoogle();
+  const credential = result.credential || {};
+  return signInWithCredential(auth, GoogleAuthProvider.credential(credential.idToken));
+}
+
+async function nativeSignInWithApple(plugin) {
+  const result = await plugin.signInWithApple();
+  const credential = result.credential || {};
+  const provider = new OAuthProvider("apple.com");
+  return signInWithCredential(auth, provider.credential({ idToken: credential.idToken, rawNonce: credential.nonce }));
+}
+
 async function signInWithGoogle() {
+  const plugin = nativeDoorPlugin();
+  if (plugin) return nativeSignInWithGoogle(plugin);
   return signInWithPopup(auth, new GoogleAuthProvider());
 }
 
 async function signInWithApple() {
+  const plugin = nativeDoorPlugin();
+  if (plugin) return nativeSignInWithApple(plugin);
   return signInWithPopup(auth, new OAuthProvider("apple.com"));
 }
 
