@@ -42,7 +42,7 @@ h1,h2,h3,.big,.stripName,.dayCard h3,.habitRow h3,.recipeCard h3,.sessionBig,.re
 .icInline{width:20px;height:20px;vertical-align:-4px}
 .icBig{width:44px;height:44px;color:var(--sage)}
 #topStrip{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;background:var(--cream);border-bottom:1px solid var(--line);padding:8px 14px}
-.stripToggle{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:5px 7px;cursor:pointer;color:var(--ink)}
+.stripToggle{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:5px 7px;cursor:pointer;color:var(--ink);min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
 .stripLogo{width:28px;height:28px;border-radius:7px}
 .stripName{font-weight:700;font-size:19px}
 .stripHi{margin-left:auto;font-weight:600;color:var(--mut);font-size:14px}
