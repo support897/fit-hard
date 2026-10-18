@@ -1,6 +1,30 @@
 {
 	"appId": "com.ilseplacencia.fithard",
 	"appName": "Fit Hard",
+	"experimental": {
+		"ios": {
+			"spm": {
+				"packageOptions": {
+					"@capacitor-firebase/authentication": {
+						"symlink": true
+					}
+				}
+			}
+		}
+	},
+	"plugins": {
+		"FirebaseAuthentication": {
+			"providers": [
+				"apple.com",
+				"google.com"
+			],
+			"skipNativeAuth": true
+		}
+	},
 	"webDir": "www",
-	"packageClassList": []
+	"packageClassList": [
+		"FirebaseAuthenticationPlugin",
+		"LocalNotificationsPlugin",
+		"PurchasesPlugin"
+	]
 }
