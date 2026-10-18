@@ -72,6 +72,11 @@
     return Array.isArray(s) ? s : (r.steps || []);
   }
   function exName(e) { return cName("exercise", e.id, e.name); }
+  /* Search reads what the user reads: the stored name and the
+     displayed (language-layer) name both count as match sources,
+     with accents folded on both sides, so the name on screen is
+     findable by typing it, with or without its accents. */
+  function foldName(s) { return String(s == null ? "" : s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""); }
   function exCue(e) { return cName("exerciseCue", e.id, e.cue); }
   function exPart(e) { return cName("part", e.partLabel, e.partLabel); }
   function exEquip(e) { return cName("equip", e.equipment, e.equipment); }
@@ -613,11 +618,33 @@
     });
     $("nameMealBtn").addEventListener("click", function () {
       var name = $("nameMealInput").value.trim(); if (!name) return;
-      var found = MP.findRecipeByName(name, MD, state.customRecipes || []);
-      var r = found || MP.makeRecipeFromName(name, MD, state.customRecipes || []);
+      var res = MP.buildRecipeFromName(name, MD, state.customRecipes || [], MN);
+      if (res.status === "uncountable") {
+        $("nameMealResult").innerHTML = '<div class="swapBox">' + esc(tr("meal.makerCant")) + "</div>";
+        return;
+      }
+      if (res.status === "declined") {
+        $("nameMealResult").innerHTML = '<div class="swapBox">' + esc(tr("meal.makerBand", { kcal: res.kcal, meal: tr("meal." + res.slot).toLowerCase(), lo: res.band[0], hi: res.band[1] })) + "</div>";
+        return;
+      }
+      var r = res.recipe;
+      /* Named-food disclosure: when the typed name asked for a food the
+         app cannot count, the card says so in plain words before the
+         save tap. The recipe still saves under the typed name; the
+         words are the fix, not a rename. */
+      var missingLine = "";
+      if (res.status === "made" && res.missing && res.missing.length) {
+        var esNow = window.Lang && Lang.current() === "es";
+        var foods = res.missing.length === 1 ? res.missing[0]
+          : res.missing.slice(0, -1).join(", ") + (esNow ? " ni " : " or ") + res.missing[res.missing.length - 1];
+        var way = res.standin
+          ? (esNow ? "con " : "with ") + cName("ingredient", res.standin, res.standin)
+          : (esNow ? "sin eso" : "without it");
+        missingLine = '<p class="hint">' + esc(tr("meal.makerMissing", { food: foods, way: way })) + "</p>";
+      }
       $("nameMealResult").innerHTML = '<div class="swapBox">' + esc(recName(r)) + " · " + r.minutes + " min · " +
         (kcalOf(r) == null ? tr("meal.noCount") : tr("meal.aboutKcal", { kcal: kcalOf(r) })) +
-        (found ? tr("meal.alreadyIn") : ' <button class="miniBtn" id="nameMealSave">' + esc(tr("meal.saveThis")) + '</button>') + "</div>";
+        (res.status === "found" ? tr("meal.alreadyIn") : '<p class="hint">' + esc(tr("meal.makerHow")) + '</p>' + missingLine + ' <button class="miniBtn" id="nameMealSave">' + esc(tr("meal.saveThis")) + '</button>') + "</div>";
       var sv = $("nameMealSave");
       if (sv) sv.addEventListener("click", function () { state.customRecipes.push(r); save(); renderRecipes(); toast(tr("common.saved")); });
     });
@@ -1052,25 +1079,57 @@
   /* The top timer's guide for a rep set: about 3.5 sec a rep,
      rounded to the nearest 5. A guide only, never a deadline. */
   function setGuideSec(reps) { return Math.round(reps * 3.5 / 5) * 5; }
+  function classKey(cat) {
+    return { stretching: "gym.classStretching", plyometrics: "gym.classPlyometrics", powerlifting: "gym.classPowerlifting",
+      "olympic weightlifting": "gym.classOlympic", strongman: "gym.classStrongman", cardio: "gym.classCardio" }[cat] || "gym.kindStrength";
+  }
+  /* The D2 labels, one chip rule everywhere: expert reads
+     Advanced, a held class reads Library only, intermediate
+     strength reads A step up beside its sets. Beginner
+     auto-picks carry no label at all. */
   function exRow(item, ex) {
     if (!ex) return "";
+    var chip;
+    if (!L.routinePlayable(ex)) {
+      chip = '<span class="kcalChip">' + esc(ex.level === "expert" ? tr("gym.advanced") : tr("gym.libraryOnly")) + "</span>";
+    } else if (ex.level === "intermediate") {
+      chip = '<span class="kcalChip">' + esc(tr("gym.stepUp")) + '</span><span class="kcalChip">' +
+        esc(tr("gym.setsChip", { sets: item.sets, reps: item.reps, unit: item.timed ? tr("gym.sec") : tr("gym.reps") })) + "</span>";
+    } else {
+      chip = '<span class="kcalChip">' + esc(tr("gym.setsChip", { sets: item.sets, reps: item.reps, unit: item.timed ? tr("gym.sec") : tr("gym.reps") })) + "</span>";
+    }
     return '<div class="exRow"><span class="exTile"><svg><use href="#i-gym"/></svg></span>' +
-      '<span class="eName">' + esc(exName(ex)) + '<br><span class="eMeta">' + esc(exPart(ex)) + " · " + esc(exEquip(ex)) + "</span></span>" +
-      '<span class="kcalChip">' + esc(tr("gym.setsChip", { sets: item.sets, reps: item.reps, unit: item.timed ? tr("gym.sec") : tr("gym.reps") })) + "</span></div>";
+      '<span class="eName">' + esc(exName(ex)) + '<br><span class="eMeta">' + esc(exPart(ex)) + " · " + esc(exEquip(ex)) + "</span></span>" + chip + "</div>";
   }
   function routineCard(r) {
     var days = [0, 1, 2, 3, 4, 5, 6].map(function (di) { return tr("cal.wd" + di); });
+    /* Trainer advice (design section 4): when this routine has
+       earned a step, the card says so plainly and offers the
+       rebuild. The saved routine changes only on this tap. */
+    var advice = L.trainerAdvice(r, state.sessions, L.todayKey());
     var html = '<div class="card"><h2>' + esc(r.name) + (r.lightened ? tr("gym.lighterVersion") : "") + "</h2>" +
       '<p class="hint">' + esc(tr("gym.aboutMin", { m: r.minutes })) + " · " + (r.days && r.days.length ? r.days.map(function (d) { return days[d]; }).join(", ") : tr("gym.anyDay")) +
       (r.time ? " · " + esc(r.time) : "") + "</p>" +
       (r.items || []).map(function (it) { if (!it || typeof it !== "object") return ""; return exRow(it, exerciseById(it.exerciseId)); }).join("") +
+      (advice.kind !== "none" ? '<p class="hint">' + esc(tr(advice.kind === "up" ? "gym.stepReadyHint" : "gym.stepBackHint")) + "</p>" : "") +
       '<div class="row"><button class="primaryBtn" data-start="' + r.id + '">' + esc(tr("gym.startSession")) + '</button>' +
+      (advice.kind !== "none" ? '<button class="pillBtn" data-rebuild="' + r.id + '">' + esc(tr("gym.rebuildBtn")) + "</button>" : "") +
       '<button class="pillBtn" data-delroutine="' + r.id + '">' + esc(tr("gym.removeRoutine")) + '</button></div></div>';
     return html;
   }
+  /* Goal choice (design section 2): the setup goals the user
+     stated offer a first template. A map from their own words to
+     the general templates; the user can always pick another. */
+  function suggestedGoalId() {
+    var goals = (state.profile && state.profile.goals) || [];
+    if (goals.indexOf("Build strength") !== -1 || goals.indexOf("Feel fitter") !== -1) return "full";
+    if (goals.indexOf("Lose weight gently") !== -1) return "gentle";
+    return "legs";
+  }
   function renderRoutines() {
     var el = $("areaBody");
-    var goalOpts = L.GYM_GOALS.map(function (g) { return '<option value="' + g.id + '">' + esc(tr("gymgoal." + g.id, null, g.label)) + "</option>"; }).join("");
+    var suggested = suggestedGoalId();
+    var goalOpts = L.GYM_GOALS.map(function (g) { return '<option value="' + g.id + '"' + (g.id === suggested ? " selected" : "") + ">" + esc(tr("gymgoal." + g.id, null, g.label)) + "</option>"; }).join("");
     var dayNames = [1, 2, 3, 4, 5, 6, 7].map(function (di) { return tr("cal.d" + di); });
     var dayVals = [1, 2, 3, 4, 5, 6, 0];
     var html = '<div class="card"><h2>' + esc(tr("gym.buildRoutine")) + '</h2>' +
@@ -1086,7 +1145,13 @@
     el.innerHTML = html;
     el.querySelectorAll("[data-gyday]").forEach(function (b) { b.addEventListener("click", function () { b.classList.toggle("on"); }); });
     $("gyBuild").addEventListener("click", function () {
-      var built = L.buildRoutine($("gyGoal").value, Number($("gyMinutes").value), EX.EXERCISES);
+      var goalId = $("gyGoal").value;
+      /* The trainer context: the user's own profile and logged
+         sessions, plus their latest routine for this goal, whose
+         line a fresh build carries forward. */
+      var built = L.buildRoutine(goalId, Number($("gyMinutes").value), EX.EXERCISES, {
+        profile: state.profile, sessions: state.sessions, todayKey: L.todayKey(),
+        prevRoutine: (state.routines || []).filter(function (r) { return r.goalId === goalId; }).slice(-1)[0] || null });
       if (built) built.name = tr("gymgoal." + built.goalId, null, built.name);
       if (!built || !built.items.length) { toast(tr("gym.goalOdd")); return; }
       var days = [];
@@ -1096,6 +1161,14 @@
       save(); renderRoutines(); toast(tr("gym.built"));
     });
     el.querySelectorAll("[data-start]").forEach(function (b) { b.addEventListener("click", function () { startSession(b.getAttribute("data-start")); }); });
+    el.querySelectorAll("[data-rebuild]").forEach(function (b) { b.addEventListener("click", function () {
+      var r = (state.routines || []).filter(function (x) { return x.id === b.getAttribute("data-rebuild"); })[0];
+      if (!r) return;
+      var adv = L.trainerAdvice(r, state.sessions, L.todayKey());
+      if (adv.kind === "none") return;
+      r.items = adv.items; save(); renderRoutines();
+      toast(tr(adv.kind === "up" ? "gym.rebuiltStep" : "gym.rebuiltBack"));
+    }); });
     el.querySelectorAll("[data-delroutine]").forEach(function (b) { b.addEventListener("click", function () {
       state.routines = state.routines.filter(function (r) { return r.id !== b.getAttribute("data-delroutine"); });
       save(); renderRoutines(); }); });
@@ -1108,9 +1181,14 @@
     if (existing) { toast(tr("gym.alreadyGoing")); openArea("gym", "gym-session"); return; }
     var light = (state.checkins[L.todayKey()] === "bad");
     var use = light ? L.lightenRoutine(r) : r;
+    /* F7 (Phase 2): only playable items enter a session. The
+       saved routine itself is never edited; unplayable saved
+       items simply do not start. */
+    var items = L.playableItems(use.items, EX.EXERCISES);
+    if (!items.length) { toast(tr("gym.nothingPlayable")); return; }
     state.sessions.push({ id: "session." + Date.now(), dateKey: L.todayKey(), routineId: r.id,
       routineName: r.name, status: "active", idx: 0, set: 1, doneSets: 0,
-      startedAt: Date.now(), items: use.items, lightened: !!use.lightened });
+      startedAt: Date.now(), items: items, lightened: !!use.lightened });
     save(); openArea("gym", "gym-session");
     toast(light ? tr("gym.lighterToday") : tr("gym.sessionStarted"));
   }
@@ -1197,13 +1275,20 @@
       return;
     }
     var item = s.items[s.idx], ex = item ? exerciseById(item.exerciseId) : null;
-    if (!ex) { finishSession(s, true); return; }
+    /* F7 (Phase 2): a stored session may carry items that can
+       no longer play (an expert or held-class id saved by
+       hand, an unknown id). The player SKIPS them and finishes
+       only when nothing playable remains; the stored data is
+       never edited. */
+    while (item && (!ex || !L.routinePlayable(ex))) { s.idx++; item = s.items[s.idx]; ex = item ? exerciseById(item.exerciseId) : null; }
+    if (!item || !ex) { finishSession(s, true); return; }
     var pips = "";
     for (var i = 1; i <= item.sets; i++) pips += '<span class="pip' + (i < s.set ? " done" : "") + '"></span>';
     el.innerHTML = skinAskHtml() + '<div class="card"><h2>' + esc(s.routineName) + (s.lightened ? tr("gym.lighterSuffix") : "") + '</h2>' +
       '<p class="hint">' + esc(tr("gym.exOf", { a: s.idx + 1, b: s.items.length })) + '<span id="sessClock">0:00</span></p>' +
       '<div class="exRow"><span class="exTile"><svg><use href="#i-gym"/></svg></span><span class="eName sessionBig">' + esc(exName(ex)) +
-      '<br><span class="eMeta">' + esc(exPart(ex)) + " · " + esc(exEquip(ex)) + "</span></span></div>" +
+      '<br><span class="eMeta">' + esc(exPart(ex)) + " · " + esc(exEquip(ex)) + "</span>" +
+      (ex.level === "intermediate" ? ' <span class="kcalChip">' + esc(tr("gym.stepUp")) + "</span>" : "") + "</span></div>" +
       '<p class="hint">' + esc(exCue(ex)) + "</p>" +
       '<div class="timerBar" id="timerBar"><span class="timerBarClock" id="timerBarClock">0:00</span><span class="timerBarLabel" id="timerBarLabel"></span></div>' +
       '<div id="animMount"></div>' +
@@ -1290,14 +1375,19 @@
      found-it copy, no scores. The user is the verifier:
      their tap on the picture that matches is the only match
      there is, and the confirmed pick is what saves. --- */
-  /* Generated art lands per station as the roll-out makes it
-     (graphic redo, approved 17 Oct 2026). A station with art
-     shows its picture tile plus a looping frame player in its
-     station view; a station without art yet shows a clean
-     name tile and the animation player. Never a fake picture. */
-  var STATION_FRAMES = {
-    "leg-press": ["assets/station-leg-press-1.webp", "assets/station-leg-press-2.webp", "assets/station-leg-press-3.webp"]
-  };
+  /* Generated art (graphic redo, approved 17 Oct 2026):
+     station art derives from the player's generated frame
+     sets (FitAnim.framesFor), never a second hand-kept
+     list. A station shows the moving frames of its first
+     exercise, in the user's picked figure, when that
+     exercise holds a set; a station whose exercise holds
+     no set yet shows a clean name tile plus the animation
+     player in its view. Never a fake picture. */
+  function stationFramesFor(m) {
+    var first = m && m.exerciseIds && m.exerciseIds[0];
+    if (!first || !window.FitAnim || !window.FitAnim.framesFor) return null;
+    return window.FitAnim.framesFor(first, trainerSkin());
+  }
   var mcFrameTimer = null;
   function stopMcFrames() { if (mcFrameTimer) { clearInterval(mcFrameTimer); mcFrameTimer = null; } }
   function mcBubbleLine(ex, i) {
@@ -1334,7 +1424,7 @@
       return { exerciseId: id, sets: 3, reps: e && e.timed ? e.timed : 12, timed: !!(e && e.timed), restSec: 45 };
     });
     var first = exerciseById(m.exerciseIds[0]);
-    var frames = STATION_FRAMES[m.id];
+    var frames = stationFramesFor(m);
     var stage;
     if (frames && first) {
       stage = '<div class="stationStage"><img class="stationFrame" id="mcFrameImg" src="' + frames[0] + '" alt="' + esc(tr("gym.movingAlt")) + '">' +
@@ -1343,15 +1433,23 @@
     } else {
       stage = '<div id="animMount"></div>';
     }
+    var hasLibraryOnly = items.some(function (it) { var e = exerciseById(it.exerciseId); return !!e && !L.routinePlayable(e); });
     box.innerHTML = '<div class="card"><h2>' + esc(machName(m)) + "</h2>" + stage +
       (first ? '<h3>' + esc(tr("gym.howTo")) + '</h3><p class="hint">' + esc(exCue(first)) + "</p>" : "") +
-      items.map(function (it) { return exRow(it, exerciseById(it.exerciseId)); }).join("") +
+      items.slice(0, 40).map(function (it) { return exRow(it, exerciseById(it.exerciseId)); }).join("") +
+      (items.length > 40 ? '<p class="hint">' + esc(tr("gym.showingCount", { a: 40, b: items.length })) + "</p>" : "") +
+      (hasLibraryOnly ? '<p class="hint">' + esc(tr("gym.stationLibraryOnly")) + "</p>" : "") +
       '<div class="row"><button class="primaryBtn" id="mcMake">' + esc(tr("gym.makeRoutine")) + '</button></div></div>';
     if (frames && first) startMcFrames(frames, first);
     else if (first) mountAnim(first);
     $("mcMake").addEventListener("click", function () {
+      /* F7: a station routine is built from the playable
+         items only; library-only exercises stay in the
+         library, never in a routine. */
+      var playable = L.playableItems(items, EX.EXERCISES);
+      if (!playable.length) { toast(tr("gym.nothingPlayable")); return; }
       state.routines.push({ id: "routine." + Date.now(), name: machName(m) + tr("gym.routineSuffix"), goalId: null,
-        minutes: 30, days: [], time: null, createdKey: L.todayKey(), items: items });
+        minutes: 30, days: [], time: null, createdKey: L.todayKey(), items: playable });
       save(); toast(tr("gym.routineSaved")); openArea("gym", "gym-routines");
     });
     if (box.scrollIntoView) box.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1364,7 +1462,7 @@
       '<input id="mcPhoto" type="file" accept="image/*"><div id="mcPreview"></div>' +
       '<p class="hint">' + esc(tr("gym.matchAsk")) + '</p>' +
       '<div class="machineGrid" id="mcGrid">' + EX.MACHINES.map(function (m) {
-        var fr = STATION_FRAMES[m.id];
+        var fr = stationFramesFor(m);
         return '<button class="machineTile" data-machine="' + m.id + '">' +
           (fr ? '<img class="machineTileImg" src="' + fr[0] + '" alt="">' : "") +
           '<span class="machineTileName">' + esc(machName(m)) + "</span></button>"; }).join("") + "</div>" +
@@ -1387,9 +1485,71 @@
       });
     });
   }
+  /* --- Exercise library (Phase 2): the full spliced set,
+     searchable, with the D2 labels. Expert and held-class
+     exercises are here to look at; the Add button exists only
+     where a hand-built routine may take the exercise (strength,
+     beginner or intermediate). Intermediate joins hand-picks
+     only once the trainer unlock opens (design section 5: the
+     count is a desk parameter in logic.js). No surface renders
+     the whole set at once: results are windowed. --- */
+  var libState = { q: "", kind: "all" };
+  function addToPicks(exId) {
+    var ex = exerciseById(exId);
+    if (!ex || !((ex.category === "strength" || ex.category == null) && ex.level !== "expert")) return;
+    if (ex.level === "intermediate" && !L.stepUpUnlocked(state.sessions)) { toast(tr("gym.stepUpLocked")); return; }
+    var picks = (state.routines || []).filter(function (r) { return r.handBuilt; })[0];
+    if (!picks) {
+      picks = { id: "routine.picks", name: tr("gym.myPicks"), goalId: null, minutes: 30,
+        days: [], time: null, createdKey: L.todayKey(), handBuilt: true, items: [] };
+      state.routines.push(picks);
+    }
+    if ((picks.items || []).some(function (it) { return it.exerciseId === exId; })) { toast(tr("gym.alreadyIn")); return; }
+    picks.items.push({ exerciseId: exId, sets: 3, reps: ex.timed ? ex.timed : 12, timed: !!ex.timed, restSec: 45 });
+    save(); toast(tr("gym.addedToPicks"));
+  }
+  function renderLibrary(refocus) {
+    stopMcFrames(); stopAnim();
+    var el = $("areaBody");
+    var kinds = [["all", "gym.allKinds"], ["strength", "gym.kindStrength"], ["stretching", "gym.classStretching"],
+      ["plyometrics", "gym.classPlyometrics"], ["powerlifting", "gym.classPowerlifting"],
+      ["olympic weightlifting", "gym.classOlympic"], ["strongman", "gym.classStrongman"], ["cardio", "gym.classCardio"]];
+    var q = foldName(libState.q.trim());
+    var list = (EX.EXERCISES || []).filter(function (e) {
+      if (libState.kind !== "all" && (e.category || "strength") !== libState.kind) return false;
+      if (q && foldName(e.name).indexOf(q) === -1 && foldName(exName(e)).indexOf(q) === -1) return false;
+      return true;
+    });
+    var shown = list.slice(0, 100);
+    var rows = shown.map(function (e) {
+      var chip = "";
+      if (e.level === "expert") chip = ' <span class="kcalChip">' + esc(tr("gym.advanced")) + "</span>";
+      else if (e.category && e.category !== "strength") chip = ' <span class="kcalChip">' + esc(tr(classKey(e.category))) + "</span>";
+      else if (e.level === "intermediate") chip = ' <span class="kcalChip">' + esc(tr("gym.stepUp")) + "</span>";
+      var canAdd = (e.category === "strength" || e.category == null) && e.level !== "expert" &&
+        (e.level !== "intermediate" || L.stepUpUnlocked(state.sessions));
+      return '<div class="exRow"><span class="exTile"><svg><use href="#i-gym"/></svg></span>' +
+        '<span class="eName">' + esc(exName(e)) + '<br><span class="eMeta">' + esc(exPart(e)) + " · " + esc(exEquip(e)) + "</span></span>" + chip +
+        (canAdd ? '<button class="pillBtn" data-libadd="' + e.id + '">' + esc(tr("gym.addBtn")) + "</button>" : "") + "</div>";
+    }).join("");
+    el.innerHTML = '<div class="card"><h2>' + esc(tr("sub.gym-library", null, "Exercise library")) + '</h2>' +
+      '<p class="hint">' + esc(tr("gym.libraryHint")) + '</p>' +
+      (L.stepUpUnlocked(state.sessions) ? "" : '<p class="hint">' + esc(tr("gym.stepUpLocked")) + "</p>") +
+      '<input id="libSearch" type="search" placeholder="' + esc(tr("gym.searchPh")) + '" value="' + esc(libState.q) + '">' +
+      '<div class="chipRow">' + kinds.map(function (k) {
+        return '<button class="chip' + (libState.kind === k[0] ? " on" : "") + '" data-libkind="' + k[0] + '">' + esc(tr(k[1])) + "</button>"; }).join("") + "</div>" +
+      (list.length > shown.length ? '<p class="hint">' + esc(tr("gym.showingCount", { a: shown.length, b: list.length })) + "</p>" : "") +
+      (rows || '<p class="hint">' + esc(tr("gym.noMatch")) + "</p>") + "</div>";
+    var search = $("libSearch");
+    search.addEventListener("input", function () { libState.q = search.value; renderLibrary(true); });
+    el.querySelectorAll("[data-libkind]").forEach(function (b) { b.addEventListener("click", function () { libState.kind = b.getAttribute("data-libkind"); renderLibrary(false); }); });
+    el.querySelectorAll("[data-libadd]").forEach(function (b) { b.addEventListener("click", function () { addToPicks(b.getAttribute("data-libadd")); }); });
+    if (refocus) { var ns = $("libSearch"); if (ns) { ns.focus(); try { ns.setSelectionRange(ns.value.length, ns.value.length); } catch (e) {} } }
+  }
   function renderGym(subId) {
     if (subId === "gym-session") renderSession();
     else if (subId === "gym-machine") renderMachine();
+    else if (subId === "gym-library") renderLibrary(false);
     else renderRoutines();
   }
 

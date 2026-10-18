@@ -229,6 +229,399 @@
     };
   }
 
+  /* ---- generated frame sets (graphic redo, approved
+     17 Oct 2026): three frames per exercise, cut from
+     the approved generated art and re-encoded for the
+     app. Keyed by trainer figure, then exercise: the
+     girl holds all 206 sets; the boy and the non-binary
+     figure hold 25 each. Their Barbell Bench Press sets
+     are held at the master, so those two resolve to the
+     girl set through the fallback below (a fallback,
+     never a redraw).
+     Expansion Batches A, B, C, D, E, F, G, H, I, J, K,
+     L, M, N, O, P and Q (18 Oct 2026) added 180 girl sets for spliced
+     library exercises; no boy or non-binary art exists
+     for those 180 yet, so both figures resolve the girl
+     set through the same fallback. Band Skull Crusher,
+     Barbell Incline Shoulder Raise, Bent Over Dumbbell
+     Rear Delt Raise With Head On Bench, Cable Crunch and
+     Dumbbell Tricep Extension Pronated Grip are held at
+     the master and carry no set; Cable Wrist Curl and
+     Calf Raises With Bands are held on form at the
+     master and carry no set either. External Rotation
+     was refused at the master itself, with nothing
+     banked, and carries no set. Leverage High Row was
+     refused at the master itself too, its corrected
+     attempt, with nothing banked, and carries no set.
+     Lying Cambered Barbell Row is held on form at the
+     master and carries no set either. Lying Supine
+     Dumbbell Curl was refused at the master itself,
+     with nothing banked, and carries no set.
+     One Arm Pronated Dumbbell Triceps Extension was
+     refused at the master itself too, its corrected
+     attempt, with nothing banked, and carries no set.
+     One Arm Supinated Dumbbell Triceps Extension was
+     refused at the master itself, with nothing banked,
+     and carries no set. Palms-Down Dumbbell Wrist Curl
+     Over A Bench and Palms-Up Dumbbell Wrist Curl Over
+     A Bench are held on form at the master and carry
+     no set either. Palms-Down Wrist Curl Over A Bench
+     and Palms-Up Barbell Wrist Curl Over A Bench are
+     held on form with nothing banked and carry no set
+     either. Preacher Hammer Dumbbell Curl is held on
+     form at the master and carries no set either.
+     Seated Dumbbell Palms-Down Wrist Curl is held on
+     form at the master and carries no set either.
+     Seated Bent-Over One-Arm Dumbbell Triceps
+     Extension, Seated Dumbbell Palms-Up Wrist Curl,
+     Seated One-Arm Dumbbell Palms-Up Wrist Curl,
+     Seated Palm-Up Barbell Wrist Curl and Seated
+     Palms-Down Barbell Wrist Curl are held on form
+     with nothing banked and carry no set either.
+     Leg Press rides the station frames already shipped
+     for the machine-photo station view: the same art,
+     one source. An exercise with no set (Standing Calf
+     Raises, parked) keeps the drawn rig below. ---- */
+  var FRAMES = {
+    girl: {
+      "Leg_Press": ["assets/station-leg-press-1.webp", "assets/station-leg-press-2.webp", "assets/station-leg-press-3.webp"],
+      "Calf_Press_On_The_Leg_Press_Machine": ["assets/anim-calf_press_on_the_leg_press_machine-1.webp", "assets/anim-calf_press_on_the_leg_press_machine-2.webp", "assets/anim-calf_press_on_the_leg_press_machine-3.webp"],
+      "Leg_Extensions": ["assets/anim-leg_extensions-1.webp", "assets/anim-leg_extensions-2.webp", "assets/anim-leg_extensions-3.webp"],
+      "Seated_Leg_Curl": ["assets/anim-seated_leg_curl-1.webp", "assets/anim-seated_leg_curl-2.webp", "assets/anim-seated_leg_curl-3.webp"],
+      "Barbell_Squat": ["assets/anim-barbell_squat-1.webp", "assets/anim-barbell_squat-2.webp", "assets/anim-barbell_squat-3.webp"],
+      "Smith_Machine_Squat": ["assets/anim-smith_machine_squat-1.webp", "assets/anim-smith_machine_squat-2.webp", "assets/anim-smith_machine_squat-3.webp"],
+      "Butt_Lift_Bridge": ["assets/anim-butt_lift_bridge-1.webp", "assets/anim-butt_lift_bridge-2.webp", "assets/anim-butt_lift_bridge-3.webp"],
+      "Bodyweight_Squat": ["assets/anim-bodyweight_squat-1.webp", "assets/anim-bodyweight_squat-2.webp", "assets/anim-bodyweight_squat-3.webp"],
+      "Close-Grip_Front_Lat_Pulldown": ["assets/anim-close-grip_front_lat_pulldown-1.webp", "assets/anim-close-grip_front_lat_pulldown-2.webp", "assets/anim-close-grip_front_lat_pulldown-3.webp"],
+      "Seated_Cable_Rows": ["assets/anim-seated_cable_rows-1.webp", "assets/anim-seated_cable_rows-2.webp", "assets/anim-seated_cable_rows-3.webp"],
+      "One-Arm_Dumbbell_Row": ["assets/anim-one-arm_dumbbell_row-1.webp", "assets/anim-one-arm_dumbbell_row-2.webp", "assets/anim-one-arm_dumbbell_row-3.webp"],
+      "Bent_Over_Barbell_Row": ["assets/anim-bent_over_barbell_row-1.webp", "assets/anim-bent_over_barbell_row-2.webp", "assets/anim-bent_over_barbell_row-3.webp"],
+      "Hyperextensions_Back_Extensions": ["assets/anim-hyperextensions_back_extensions-1.webp", "assets/anim-hyperextensions_back_extensions-2.webp", "assets/anim-hyperextensions_back_extensions-3.webp"],
+      "Butterfly": ["assets/anim-butterfly-1.webp", "assets/anim-butterfly-2.webp", "assets/anim-butterfly-3.webp"],
+      "Cable_Chest_Press": ["assets/anim-cable_chest_press-1.webp", "assets/anim-cable_chest_press-2.webp", "assets/anim-cable_chest_press-3.webp"],
+      "Barbell_Bench_Press_-_Medium_Grip": ["assets/anim-barbell_bench_press_-_medium_grip-1.webp", "assets/anim-barbell_bench_press_-_medium_grip-2.webp", "assets/anim-barbell_bench_press_-_medium_grip-3.webp"],
+      "Pushups": ["assets/anim-pushups-1.webp", "assets/anim-pushups-2.webp", "assets/anim-pushups-3.webp"],
+      "Alternating_Cable_Shoulder_Press": ["assets/anim-alternating_cable_shoulder_press-1.webp", "assets/anim-alternating_cable_shoulder_press-2.webp", "assets/anim-alternating_cable_shoulder_press-3.webp"],
+      "Side_Lateral_Raise": ["assets/anim-side_lateral_raise-1.webp", "assets/anim-side_lateral_raise-2.webp", "assets/anim-side_lateral_raise-3.webp"],
+      "Dumbbell_Alternate_Bicep_Curl": ["assets/anim-dumbbell_alternate_bicep_curl-1.webp", "assets/anim-dumbbell_alternate_bicep_curl-2.webp", "assets/anim-dumbbell_alternate_bicep_curl-3.webp"],
+      "Machine_Bicep_Curl": ["assets/anim-machine_bicep_curl-1.webp", "assets/anim-machine_bicep_curl-2.webp", "assets/anim-machine_bicep_curl-3.webp"],
+      "Bench_Dips": ["assets/anim-bench_dips-1.webp", "assets/anim-bench_dips-2.webp", "assets/anim-bench_dips-3.webp"],
+      "Triceps_Pushdown": ["assets/anim-triceps_pushdown-1.webp", "assets/anim-triceps_pushdown-2.webp", "assets/anim-triceps_pushdown-3.webp"],
+      "Air_Bike": ["assets/anim-air_bike-1.webp", "assets/anim-air_bike-2.webp", "assets/anim-air_bike-3.webp"],
+      "Plank": ["assets/anim-plank-1.webp", "assets/anim-plank-2.webp", "assets/anim-plank-3.webp"],
+      "Glute_Kickback": ["assets/anim-glute_kickback-1.webp", "assets/anim-glute_kickback-2.webp", "assets/anim-glute_kickback-3.webp"],
+      "Alternate_Hammer_Curl": ["assets/anim-alternate_hammer_curl-1.webp", "assets/anim-alternate_hammer_curl-2.webp", "assets/anim-alternate_hammer_curl-3.webp"],
+      "Alternate_Incline_Dumbbell_Curl": ["assets/anim-alternate_incline_dumbbell_curl-1.webp", "assets/anim-alternate_incline_dumbbell_curl-2.webp", "assets/anim-alternate_incline_dumbbell_curl-3.webp"],
+      "Alternating_Deltoid_Raise": ["assets/anim-alternating_deltoid_raise-1.webp", "assets/anim-alternating_deltoid_raise-2.webp", "assets/anim-alternating_deltoid_raise-3.webp"],
+      "Alternating_Floor_Press": ["assets/anim-alternating_floor_press-1.webp", "assets/anim-alternating_floor_press-2.webp", "assets/anim-alternating_floor_press-3.webp"],
+      "Anti-Gravity_Press": ["assets/anim-anti-gravity_press-1.webp", "assets/anim-anti-gravity_press-2.webp", "assets/anim-anti-gravity_press-3.webp"],
+      "Back_Flyes_-_With_Bands": ["assets/anim-back_flyes_-_with_bands-1.webp", "assets/anim-back_flyes_-_with_bands-2.webp", "assets/anim-back_flyes_-_with_bands-3.webp"],
+      "Balance_Board": ["assets/anim-balance_board-1.webp", "assets/anim-balance_board-2.webp", "assets/anim-balance_board-3.webp"],
+      "Ball_Leg_Curl": ["assets/anim-ball_leg_curl-1.webp", "assets/anim-ball_leg_curl-2.webp", "assets/anim-ball_leg_curl-3.webp"],
+      "Band_Assisted_Pull-Up": ["assets/anim-band_assisted_pull-up-1.webp", "assets/anim-band_assisted_pull-up-2.webp", "assets/anim-band_assisted_pull-up-3.webp"],
+      "Band_Hip_Adductions": ["assets/anim-band_hip_adductions-1.webp", "assets/anim-band_hip_adductions-2.webp", "assets/anim-band_hip_adductions-3.webp"],
+      "Band_Pull_Apart": ["assets/anim-band_pull_apart-1.webp", "assets/anim-band_pull_apart-2.webp", "assets/anim-band_pull_apart-3.webp"],
+      "Barbell_Curl": ["assets/anim-barbell_curl-1.webp", "assets/anim-barbell_curl-2.webp", "assets/anim-barbell_curl-3.webp"],
+      "Barbell_Curls_Lying_Against_An_Incline": ["assets/anim-barbell_curls_lying_against_an_incline-1.webp", "assets/anim-barbell_curls_lying_against_an_incline-2.webp", "assets/anim-barbell_curls_lying_against_an_incline-3.webp"],
+      "Barbell_Incline_Bench_Press_-_Medium_Grip": ["assets/anim-barbell_incline_bench_press_-_medium_grip-1.webp", "assets/anim-barbell_incline_bench_press_-_medium_grip-2.webp", "assets/anim-barbell_incline_bench_press_-_medium_grip-3.webp"],
+      "Barbell_Rear_Delt_Row": ["assets/anim-barbell_rear_delt_row-1.webp", "assets/anim-barbell_rear_delt_row-2.webp", "assets/anim-barbell_rear_delt_row-3.webp"],
+      "Barbell_Seated_Calf_Raise": ["assets/anim-barbell_seated_calf_raise-1.webp", "assets/anim-barbell_seated_calf_raise-2.webp", "assets/anim-barbell_seated_calf_raise-3.webp"],
+      "Barbell_Shrug": ["assets/anim-barbell_shrug-1.webp", "assets/anim-barbell_shrug-2.webp", "assets/anim-barbell_shrug-3.webp"],
+      "Barbell_Shrug_Behind_The_Back": ["assets/anim-barbell_shrug_behind_the_back-1.webp", "assets/anim-barbell_shrug_behind_the_back-2.webp", "assets/anim-barbell_shrug_behind_the_back-3.webp"],
+      "Barbell_Side_Bend": ["assets/anim-barbell_side_bend-1.webp", "assets/anim-barbell_side_bend-2.webp", "assets/anim-barbell_side_bend-3.webp"],
+      "Barbell_Side_Split_Squat": ["assets/anim-barbell_side_split_squat-1.webp", "assets/anim-barbell_side_split_squat-2.webp", "assets/anim-barbell_side_split_squat-3.webp"],
+      "Barbell_Walking_Lunge": ["assets/anim-barbell_walking_lunge-1.webp", "assets/anim-barbell_walking_lunge-2.webp", "assets/anim-barbell_walking_lunge-3.webp"],
+      "Battling_Ropes": ["assets/anim-battling_ropes-1.webp", "assets/anim-battling_ropes-2.webp", "assets/anim-battling_ropes-3.webp"],
+      "Bench_Press_-_With_Bands": ["assets/anim-bench_press_-_with_bands-1.webp", "assets/anim-bench_press_-_with_bands-2.webp", "assets/anim-bench_press_-_with_bands-3.webp"],
+      "Bent_Over_Low-Pulley_Side_Lateral": ["assets/anim-bent_over_low-pulley_side_lateral-1.webp", "assets/anim-bent_over_low-pulley_side_lateral-2.webp", "assets/anim-bent_over_low-pulley_side_lateral-3.webp"],
+      "Bent_Over_One-Arm_Long_Bar_Row": ["assets/anim-bent_over_one-arm_long_bar_row-1.webp", "assets/anim-bent_over_one-arm_long_bar_row-2.webp", "assets/anim-bent_over_one-arm_long_bar_row-3.webp"],
+      "Bent_Over_Two-Dumbbell_Row": ["assets/anim-bent_over_two-dumbbell_row-1.webp", "assets/anim-bent_over_two-dumbbell_row-2.webp", "assets/anim-bent_over_two-dumbbell_row-3.webp"],
+      "Bent_Over_Two-Dumbbell_Row_With_Palms_In": ["assets/anim-bent_over_two-dumbbell_row_with_palms_in-1.webp", "assets/anim-bent_over_two-dumbbell_row_with_palms_in-2.webp", "assets/anim-bent_over_two-dumbbell_row_with_palms_in-3.webp"],
+      "Bosu_Ball_Cable_Crunch_With_Side_Bends": ["assets/anim-bosu_ball_cable_crunch_with_side_bends-1.webp", "assets/anim-bosu_ball_cable_crunch_with_side_bends-2.webp", "assets/anim-bosu_ball_cable_crunch_with_side_bends-3.webp"],
+      "Bradford_Rocky_Presses": ["assets/anim-bradford_rocky_presses-1.webp", "assets/anim-bradford_rocky_presses-2.webp", "assets/anim-bradford_rocky_presses-3.webp"],
+      "Cable_Crossover": ["assets/anim-cable_crossover-1.webp", "assets/anim-cable_crossover-2.webp", "assets/anim-cable_crossover-3.webp"],
+      "Cable_Deadlifts": ["assets/anim-cable_deadlifts-1.webp", "assets/anim-cable_deadlifts-2.webp", "assets/anim-cable_deadlifts-3.webp"],
+      "Cable_Hammer_Curls_-_Rope_Attachment": ["assets/anim-cable_hammer_curls_-_rope_attachment-1.webp", "assets/anim-cable_hammer_curls_-_rope_attachment-2.webp", "assets/anim-cable_hammer_curls_-_rope_attachment-3.webp"],
+      "Cable_Hip_Adduction": ["assets/anim-cable_hip_adduction-1.webp", "assets/anim-cable_hip_adduction-2.webp", "assets/anim-cable_hip_adduction-3.webp"],
+      "Cable_Incline_Pushdown": ["assets/anim-cable_incline_pushdown-1.webp", "assets/anim-cable_incline_pushdown-2.webp", "assets/anim-cable_incline_pushdown-3.webp"],
+      "Cable_Incline_Triceps_Extension": ["assets/anim-cable_incline_triceps_extension-1.webp", "assets/anim-cable_incline_triceps_extension-2.webp", "assets/anim-cable_incline_triceps_extension-3.webp"],
+      "Cable_Internal_Rotation": ["assets/anim-cable_internal_rotation-1.webp", "assets/anim-cable_internal_rotation-2.webp", "assets/anim-cable_internal_rotation-3.webp"],
+      "Cable_Iron_Cross": ["assets/anim-cable_iron_cross-1.webp", "assets/anim-cable_iron_cross-2.webp", "assets/anim-cable_iron_cross-3.webp"],
+      "Cable_Judo_Flip": ["assets/anim-cable_judo_flip-1.webp", "assets/anim-cable_judo_flip-2.webp", "assets/anim-cable_judo_flip-3.webp"],
+      "Cable_Lying_Triceps_Extension": ["assets/anim-cable_lying_triceps_extension-1.webp", "assets/anim-cable_lying_triceps_extension-2.webp", "assets/anim-cable_lying_triceps_extension-3.webp"],
+      "Cable_One_Arm_Tricep_Extension": ["assets/anim-cable_one_arm_tricep_extension-1.webp", "assets/anim-cable_one_arm_tricep_extension-2.webp", "assets/anim-cable_one_arm_tricep_extension-3.webp"],
+      "Cable_Preacher_Curl": ["assets/anim-cable_preacher_curl-1.webp", "assets/anim-cable_preacher_curl-2.webp", "assets/anim-cable_preacher_curl-3.webp"],
+      "Cable_Rear_Delt_Fly": ["assets/anim-cable_rear_delt_fly-1.webp", "assets/anim-cable_rear_delt_fly-2.webp", "assets/anim-cable_rear_delt_fly-3.webp"],
+      "Cable_Reverse_Crunch": ["assets/anim-cable_reverse_crunch-1.webp", "assets/anim-cable_reverse_crunch-2.webp", "assets/anim-cable_reverse_crunch-3.webp"],
+      "Cable_Rope_Overhead_Triceps_Extension": ["assets/anim-cable_rope_overhead_triceps_extension-1.webp", "assets/anim-cable_rope_overhead_triceps_extension-2.webp", "assets/anim-cable_rope_overhead_triceps_extension-3.webp"],
+      "Cable_Rope_Rear-Delt_Rows": ["assets/anim-cable_rope_rear-delt_rows-1.webp", "assets/anim-cable_rope_rear-delt_rows-2.webp", "assets/anim-cable_rope_rear-delt_rows-3.webp"],
+      "Cable_Russian_Twists": ["assets/anim-cable_russian_twists-1.webp", "assets/anim-cable_russian_twists-2.webp", "assets/anim-cable_russian_twists-3.webp"],
+      "Cable_Seated_Crunch": ["assets/anim-cable_seated_crunch-1.webp", "assets/anim-cable_seated_crunch-2.webp", "assets/anim-cable_seated_crunch-3.webp"],
+      "Cable_Seated_Lateral_Raise": ["assets/anim-cable_seated_lateral_raise-1.webp", "assets/anim-cable_seated_lateral_raise-2.webp", "assets/anim-cable_seated_lateral_raise-3.webp"],
+      "Cable_Shoulder_Press": ["assets/anim-cable_shoulder_press-1.webp", "assets/anim-cable_shoulder_press-2.webp", "assets/anim-cable_shoulder_press-3.webp"],
+      "Cable_Shrugs": ["assets/anim-cable_shrugs-1.webp", "assets/anim-cable_shrugs-2.webp", "assets/anim-cable_shrugs-3.webp"],
+      "Calf-Machine_Shoulder_Shrug": ["assets/anim-calf-machine_shoulder_shrug-1.webp", "assets/anim-calf-machine_shoulder_shrug-2.webp", "assets/anim-calf-machine_shoulder_shrug-3.webp"],
+      "Calf_Press": ["assets/anim-calf_press-1.webp", "assets/anim-calf_press-2.webp", "assets/anim-calf_press-3.webp"],
+      "Car_Drivers": ["assets/anim-car_drivers-1.webp", "assets/anim-car_drivers-2.webp", "assets/anim-car_drivers-3.webp"],
+      "Chair_Squat": ["assets/anim-chair_squat-1.webp", "assets/anim-chair_squat-2.webp", "assets/anim-chair_squat-3.webp"],
+      "Close-Grip_Barbell_Bench_Press": ["assets/anim-close-grip_barbell_bench_press-1.webp", "assets/anim-close-grip_barbell_bench_press-2.webp", "assets/anim-close-grip_barbell_bench_press-3.webp"],
+      "Close-Grip_Dumbbell_Press": ["assets/anim-close-grip_dumbbell_press-1.webp", "assets/anim-close-grip_dumbbell_press-2.webp", "assets/anim-close-grip_dumbbell_press-3.webp"],
+      "Close-Grip_EZ-Bar_Curl_with_Band": ["assets/anim-close-grip_ez-bar_curl_with_band-1.webp", "assets/anim-close-grip_ez-bar_curl_with_band-2.webp", "assets/anim-close-grip_ez-bar_curl_with_band-3.webp"],
+      "Close-Grip_EZ-Bar_Press": ["assets/anim-close-grip_ez-bar_press-1.webp", "assets/anim-close-grip_ez-bar_press-2.webp", "assets/anim-close-grip_ez-bar_press-3.webp"],
+      "Close-Grip_EZ_Bar_Curl": ["assets/anim-close-grip_ez_bar_curl-1.webp", "assets/anim-close-grip_ez_bar_curl-2.webp", "assets/anim-close-grip_ez_bar_curl-3.webp"],
+      "Close-Grip_Push-Up_off_of_a_Dumbbell": ["assets/anim-close-grip_push-up_off_of_a_dumbbell-1.webp", "assets/anim-close-grip_push-up_off_of_a_dumbbell-2.webp", "assets/anim-close-grip_push-up_off_of_a_dumbbell-3.webp"],
+      "Close-Grip_Standing_Barbell_Curl": ["assets/anim-close-grip_standing_barbell_curl-1.webp", "assets/anim-close-grip_standing_barbell_curl-2.webp", "assets/anim-close-grip_standing_barbell_curl-3.webp"],
+      "Cocoons": ["assets/anim-cocoons-1.webp", "assets/anim-cocoons-2.webp", "assets/anim-cocoons-3.webp"],
+      "Conans_Wheel": ["assets/anim-conans_wheel-1.webp", "assets/anim-conans_wheel-2.webp", "assets/anim-conans_wheel-3.webp"],
+      "Concentration_Curls": ["assets/anim-concentration_curls-1.webp", "assets/anim-concentration_curls-2.webp", "assets/anim-concentration_curls-3.webp"],
+      "Cross-Body_Crunch": ["assets/anim-cross-body_crunch-1.webp", "assets/anim-cross-body_crunch-2.webp", "assets/anim-cross-body_crunch-3.webp"],
+      "Cross_Body_Hammer_Curl": ["assets/anim-cross_body_hammer_curl-1.webp", "assets/anim-cross_body_hammer_curl-2.webp", "assets/anim-cross_body_hammer_curl-3.webp"],
+      "Cross_Over_-_With_Bands": ["assets/anim-cross_over_-_with_bands-1.webp", "assets/anim-cross_over_-_with_bands-2.webp", "assets/anim-cross_over_-_with_bands-3.webp"],
+      "Decline_Barbell_Bench_Press": ["assets/anim-decline_barbell_bench_press-1.webp", "assets/anim-decline_barbell_bench_press-2.webp", "assets/anim-decline_barbell_bench_press-3.webp"],
+      "Decline_Dumbbell_Bench_Press": ["assets/anim-decline_dumbbell_bench_press-1.webp", "assets/anim-decline_dumbbell_bench_press-2.webp", "assets/anim-decline_dumbbell_bench_press-3.webp"],
+      "Decline_Dumbbell_Flyes": ["assets/anim-decline_dumbbell_flyes-1.webp", "assets/anim-decline_dumbbell_flyes-2.webp", "assets/anim-decline_dumbbell_flyes-3.webp"],
+      "Decline_Dumbbell_Triceps_Extension": ["assets/anim-decline_dumbbell_triceps_extension-1.webp", "assets/anim-decline_dumbbell_triceps_extension-2.webp", "assets/anim-decline_dumbbell_triceps_extension-3.webp"],
+      "Decline_EZ_Bar_Triceps_Extension": ["assets/anim-decline_ez_bar_triceps_extension-1.webp", "assets/anim-decline_ez_bar_triceps_extension-2.webp", "assets/anim-decline_ez_bar_triceps_extension-3.webp"],
+      "Decline_Smith_Press": ["assets/anim-decline_smith_press-1.webp", "assets/anim-decline_smith_press-2.webp", "assets/anim-decline_smith_press-3.webp"],
+      "Dip_Machine": ["assets/anim-dip_machine-1.webp", "assets/anim-dip_machine-2.webp", "assets/anim-dip_machine-3.webp"],
+      "Dumbbell_Bench_Press": ["assets/anim-dumbbell_bench_press-1.webp", "assets/anim-dumbbell_bench_press-2.webp", "assets/anim-dumbbell_bench_press-3.webp"],
+      "Dumbbell_Bench_Press_with_Neutral_Grip": ["assets/anim-dumbbell_bench_press_with_neutral_grip-1.webp", "assets/anim-dumbbell_bench_press_with_neutral_grip-2.webp", "assets/anim-dumbbell_bench_press_with_neutral_grip-3.webp"],
+      "Dumbbell_Bicep_Curl": ["assets/anim-dumbbell_bicep_curl-1.webp", "assets/anim-dumbbell_bicep_curl-2.webp", "assets/anim-dumbbell_bicep_curl-3.webp"],
+      "Dumbbell_Flyes": ["assets/anim-dumbbell_flyes-1.webp", "assets/anim-dumbbell_flyes-2.webp", "assets/anim-dumbbell_flyes-3.webp"],
+      "Dumbbell_Incline_Row": ["assets/anim-dumbbell_incline_row-1.webp", "assets/anim-dumbbell_incline_row-2.webp", "assets/anim-dumbbell_incline_row-3.webp"],
+      "Dumbbell_Incline_Shoulder_Raise": ["assets/anim-dumbbell_incline_shoulder_raise-1.webp", "assets/anim-dumbbell_incline_shoulder_raise-2.webp", "assets/anim-dumbbell_incline_shoulder_raise-3.webp"],
+      "Dumbbell_Lunges": ["assets/anim-dumbbell_lunges-1.webp", "assets/anim-dumbbell_lunges-2.webp", "assets/anim-dumbbell_lunges-3.webp"],
+      "Dumbbell_Raise": ["assets/anim-dumbbell_raise-1.webp", "assets/anim-dumbbell_raise-2.webp", "assets/anim-dumbbell_raise-3.webp"],
+      "Dumbbell_Scaption": ["assets/anim-dumbbell_scaption-1.webp", "assets/anim-dumbbell_scaption-2.webp", "assets/anim-dumbbell_scaption-3.webp"],
+      "Dumbbell_Seated_One-Leg_Calf_Raise": ["assets/anim-dumbbell_seated_one-leg_calf_raise-1.webp", "assets/anim-dumbbell_seated_one-leg_calf_raise-2.webp", "assets/anim-dumbbell_seated_one-leg_calf_raise-3.webp"],
+      "Dumbbell_Shrug": ["assets/anim-dumbbell_shrug-1.webp", "assets/anim-dumbbell_shrug-2.webp", "assets/anim-dumbbell_shrug-3.webp"],
+      "Dumbbell_Side_Bend": ["assets/anim-dumbbell_side_bend-1.webp", "assets/anim-dumbbell_side_bend-2.webp", "assets/anim-dumbbell_side_bend-3.webp"],
+      "Dumbbell_Squat": ["assets/anim-dumbbell_squat-1.webp", "assets/anim-dumbbell_squat-2.webp", "assets/anim-dumbbell_squat-3.webp"],
+      "EZ-Bar_Curl": ["assets/anim-ez-bar_curl-1.webp", "assets/anim-ez-bar_curl-2.webp", "assets/anim-ez-bar_curl-3.webp"],
+      "EZ-Bar_Skullcrusher": ["assets/anim-ez-bar_skullcrusher-1.webp", "assets/anim-ez-bar_skullcrusher-2.webp", "assets/anim-ez-bar_skullcrusher-3.webp"],
+      "Exercise_Ball_Crunch": ["assets/anim-exercise_ball_crunch-1.webp", "assets/anim-exercise_ball_crunch-2.webp", "assets/anim-exercise_ball_crunch-3.webp"],
+      "Exercise_Ball_Pull-In": ["assets/anim-exercise_ball_pull-in-1.webp", "assets/anim-exercise_ball_pull-in-2.webp", "assets/anim-exercise_ball_pull-in-3.webp"],
+      "Extended_Range_One-Arm_Kettlebell_Floor_Press": ["assets/anim-extended_range_one-arm_kettlebell_floor_press-1.webp", "assets/anim-extended_range_one-arm_kettlebell_floor_press-2.webp", "assets/anim-extended_range_one-arm_kettlebell_floor_press-3.webp"],
+      "External_Rotation_with_Band": ["assets/anim-external_rotation_with_band-1.webp", "assets/anim-external_rotation_with_band-2.webp", "assets/anim-external_rotation_with_band-3.webp"],
+      "External_Rotation_with_Cable": ["assets/anim-external_rotation_with_cable-1.webp", "assets/anim-external_rotation_with_cable-2.webp", "assets/anim-external_rotation_with_cable-3.webp"],
+      "Finger_Curls": ["assets/anim-finger_curls-1.webp", "assets/anim-finger_curls-2.webp", "assets/anim-finger_curls-3.webp"],
+      "Flexor_Incline_Dumbbell_Curls": ["assets/anim-flexor_incline_dumbbell_curls-1.webp", "assets/anim-flexor_incline_dumbbell_curls-2.webp", "assets/anim-flexor_incline_dumbbell_curls-3.webp"],
+      "Front_Cable_Raise": ["assets/anim-front_cable_raise-1.webp", "assets/anim-front_cable_raise-2.webp", "assets/anim-front_cable_raise-3.webp"],
+      "Front_Dumbbell_Raise": ["assets/anim-front_dumbbell_raise-1.webp", "assets/anim-front_dumbbell_raise-2.webp", "assets/anim-front_dumbbell_raise-3.webp"],
+      "Front_Incline_Dumbbell_Raise": ["assets/anim-front_incline_dumbbell_raise-1.webp", "assets/anim-front_incline_dumbbell_raise-2.webp", "assets/anim-front_incline_dumbbell_raise-3.webp"],
+      "Front_Raise_And_Pullover": ["assets/anim-front_raise_and_pullover-1.webp", "assets/anim-front_raise_and_pullover-2.webp", "assets/anim-front_raise_and_pullover-3.webp"],
+      "Front_Two-Dumbbell_Raise": ["assets/anim-front_two-dumbbell_raise-1.webp", "assets/anim-front_two-dumbbell_raise-2.webp", "assets/anim-front_two-dumbbell_raise-3.webp"],
+      "Goblet_Squat": ["assets/anim-goblet_squat-1.webp", "assets/anim-goblet_squat-2.webp", "assets/anim-goblet_squat-3.webp"],
+      "Hack_Squat": ["assets/anim-hack_squat-1.webp", "assets/anim-hack_squat-2.webp", "assets/anim-hack_squat-3.webp"],
+      "Hammer_Curls": ["assets/anim-hammer_curls-1.webp", "assets/anim-hammer_curls-2.webp", "assets/anim-hammer_curls-3.webp"],
+      "Hammer_Grip_Incline_DB_Bench_Press": ["assets/anim-hammer_grip_incline_db_bench_press-1.webp", "assets/anim-hammer_grip_incline_db_bench_press-2.webp", "assets/anim-hammer_grip_incline_db_bench_press-3.webp"],
+      "Hip_Extension_with_Bands": ["assets/anim-hip_extension_with_bands-1.webp", "assets/anim-hip_extension_with_bands-2.webp", "assets/anim-hip_extension_with_bands-3.webp"],
+      "Hip_Flexion_with_Band": ["assets/anim-hip_flexion_with_band-1.webp", "assets/anim-hip_flexion_with_band-2.webp", "assets/anim-hip_flexion_with_band-3.webp"],
+      "Incline_Bench_Pull": ["assets/anim-incline_bench_pull-1.webp", "assets/anim-incline_bench_pull-2.webp", "assets/anim-incline_bench_pull-3.webp"],
+      "Incline_Cable_Chest_Press": ["assets/anim-incline_cable_chest_press-1.webp", "assets/anim-incline_cable_chest_press-2.webp", "assets/anim-incline_cable_chest_press-3.webp"],
+      "Incline_Dumbbell_Bench_With_Palms_Facing_In": ["assets/anim-incline_dumbbell_bench_with_palms_facing_in-1.webp", "assets/anim-incline_dumbbell_bench_with_palms_facing_in-2.webp", "assets/anim-incline_dumbbell_bench_with_palms_facing_in-3.webp"],
+      "Incline_Dumbbell_Curl": ["assets/anim-incline_dumbbell_curl-1.webp", "assets/anim-incline_dumbbell_curl-2.webp", "assets/anim-incline_dumbbell_curl-3.webp"],
+      "Incline_Dumbbell_Flyes": ["assets/anim-incline_dumbbell_flyes-1.webp", "assets/anim-incline_dumbbell_flyes-2.webp", "assets/anim-incline_dumbbell_flyes-3.webp"],
+      "Incline_Dumbbell_Flyes_-_With_A_Twist": ["assets/anim-incline_dumbbell_flyes_-_with_a_twist-1.webp", "assets/anim-incline_dumbbell_flyes_-_with_a_twist-2.webp", "assets/anim-incline_dumbbell_flyes_-_with_a_twist-3.webp"],
+      "Incline_Dumbbell_Press": ["assets/anim-incline_dumbbell_press-1.webp", "assets/anim-incline_dumbbell_press-2.webp", "assets/anim-incline_dumbbell_press-3.webp"],
+      "Incline_Hammer_Curls": ["assets/anim-incline_hammer_curls-1.webp", "assets/anim-incline_hammer_curls-2.webp", "assets/anim-incline_hammer_curls-3.webp"],
+      "Incline_Inner_Biceps_Curl": ["assets/anim-incline_inner_biceps_curl-1.webp", "assets/anim-incline_inner_biceps_curl-2.webp", "assets/anim-incline_inner_biceps_curl-3.webp"],
+      "Internal_Rotation_with_Band": ["assets/anim-internal_rotation_with_band-1.webp", "assets/anim-internal_rotation_with_band-2.webp", "assets/anim-internal_rotation_with_band-3.webp"],
+      "Inverted_Row_with_Straps": ["assets/anim-inverted_row_with_straps-1.webp", "assets/anim-inverted_row_with_straps-2.webp", "assets/anim-inverted_row_with_straps-3.webp"],
+      "JM_Press": ["assets/anim-jm_press-1.webp", "assets/anim-jm_press-2.webp", "assets/anim-jm_press-3.webp"],
+      "Kettlebell_Halo": ["assets/anim-kettlebell_halo-1.webp", "assets/anim-kettlebell_halo-2.webp", "assets/anim-kettlebell_halo-3.webp"],
+      "Kettlebell_Overhead_Triceps_Extension": ["assets/anim-kettlebell_overhead_triceps_extension-1.webp", "assets/anim-kettlebell_overhead_triceps_extension-2.webp", "assets/anim-kettlebell_overhead_triceps_extension-3.webp"],
+      "Kettlebell_Pirate_Ships": ["assets/anim-kettlebell_pirate_ships-1.webp", "assets/anim-kettlebell_pirate_ships-2.webp", "assets/anim-kettlebell_pirate_ships-3.webp"],
+      "Knee_Hip_Raise_On_Parallel_Bars": ["assets/anim-knee_hip_raise_on_parallel_bars-1.webp", "assets/anim-knee_hip_raise_on_parallel_bars-2.webp", "assets/anim-knee_hip_raise_on_parallel_bars-3.webp"],
+      "Kneeling_Cable_Crunch_With_Alternating_Oblique_Twists": ["assets/anim-kneeling_cable_crunch_with_alternating_oblique_twists-1.webp", "assets/anim-kneeling_cable_crunch_with_alternating_oblique_twists-2.webp", "assets/anim-kneeling_cable_crunch_with_alternating_oblique_twists-3.webp"],
+      "Kneeling_High_Pulley_Row": ["assets/anim-kneeling_high_pulley_row-1.webp", "assets/anim-kneeling_high_pulley_row-2.webp", "assets/anim-kneeling_high_pulley_row-3.webp"],
+      "Kneeling_Single-Arm_High_Pulley_Row": ["assets/anim-kneeling_single-arm_high_pulley_row-1.webp", "assets/anim-kneeling_single-arm_high_pulley_row-2.webp", "assets/anim-kneeling_single-arm_high_pulley_row-3.webp"],
+      "Landmine_180s": ["assets/anim-landmine_180s-1.webp", "assets/anim-landmine_180s-2.webp", "assets/anim-landmine_180s-3.webp"],
+      "Lateral_Raise_-_With_Bands": ["assets/anim-lateral_raise_-_with_bands-1.webp", "assets/anim-lateral_raise_-_with_bands-2.webp", "assets/anim-lateral_raise_-_with_bands-3.webp"],
+      "Leverage_Chest_Press": ["assets/anim-leverage_chest_press-1.webp", "assets/anim-leverage_chest_press-2.webp", "assets/anim-leverage_chest_press-3.webp"],
+      "Leverage_Deadlift": ["assets/anim-leverage_deadlift-1.webp", "assets/anim-leverage_deadlift-2.webp", "assets/anim-leverage_deadlift-3.webp"],
+      "Leverage_Decline_Chest_Press": ["assets/anim-leverage_decline_chest_press-1.webp", "assets/anim-leverage_decline_chest_press-2.webp", "assets/anim-leverage_decline_chest_press-3.webp"],
+      "Leverage_Incline_Chest_Press": ["assets/anim-leverage_incline_chest_press-1.webp", "assets/anim-leverage_incline_chest_press-2.webp", "assets/anim-leverage_incline_chest_press-3.webp"],
+      "Leverage_Iso_Row": ["assets/anim-leverage_iso_row-1.webp", "assets/anim-leverage_iso_row-2.webp", "assets/anim-leverage_iso_row-3.webp"],
+      "Leverage_Shoulder_Press": ["assets/anim-leverage_shoulder_press-1.webp", "assets/anim-leverage_shoulder_press-2.webp", "assets/anim-leverage_shoulder_press-3.webp"],
+      "Leverage_Shrug": ["assets/anim-leverage_shrug-1.webp", "assets/anim-leverage_shrug-2.webp", "assets/anim-leverage_shrug-3.webp"],
+      "Low_Cable_Crossover": ["assets/anim-low_cable_crossover-1.webp", "assets/anim-low_cable_crossover-2.webp", "assets/anim-low_cable_crossover-3.webp"],
+      "Low_Cable_Triceps_Extension": ["assets/anim-low_cable_triceps_extension-1.webp", "assets/anim-low_cable_triceps_extension-2.webp", "assets/anim-low_cable_triceps_extension-3.webp"],
+      "Low_Pulley_Row_To_Neck": ["assets/anim-low_pulley_row_to_neck-1.webp", "assets/anim-low_pulley_row_to_neck-2.webp", "assets/anim-low_pulley_row_to_neck-3.webp"],
+      "Lying_Close-Grip_Bar_Curl_On_High_Pulley": ["assets/anim-lying_close-grip_bar_curl_on_high_pulley-1.webp", "assets/anim-lying_close-grip_bar_curl_on_high_pulley-2.webp", "assets/anim-lying_close-grip_bar_curl_on_high_pulley-3.webp"],
+      "Lying_Leg_Curls": ["assets/anim-lying_leg_curls-1.webp", "assets/anim-lying_leg_curls-2.webp", "assets/anim-lying_leg_curls-3.webp"],
+      "Machine_Bench_Press": ["assets/anim-machine_bench_press-1.webp", "assets/anim-machine_bench_press-2.webp", "assets/anim-machine_bench_press-3.webp"],
+      "Machine_Preacher_Curls": ["assets/anim-machine_preacher_curls-1.webp", "assets/anim-machine_preacher_curls-2.webp", "assets/anim-machine_preacher_curls-3.webp"],
+      "Machine_Shoulder_Military_Press": ["assets/anim-machine_shoulder_military_press-1.webp", "assets/anim-machine_shoulder_military_press-2.webp", "assets/anim-machine_shoulder_military_press-3.webp"],
+      "Machine_Triceps_Extension": ["assets/anim-machine_triceps_extension-1.webp", "assets/anim-machine_triceps_extension-2.webp", "assets/anim-machine_triceps_extension-3.webp"],
+      "Monster_Walk": ["assets/anim-monster_walk-1.webp", "assets/anim-monster_walk-2.webp", "assets/anim-monster_walk-3.webp"],
+      "One-Arm_Flat_Bench_Dumbbell_Flye": ["assets/anim-one-arm_flat_bench_dumbbell_flye-1.webp", "assets/anim-one-arm_flat_bench_dumbbell_flye-2.webp", "assets/anim-one-arm_flat_bench_dumbbell_flye-3.webp"],
+      "One-Arm_High-Pulley_Cable_Side_Bends": ["assets/anim-one-arm_high-pulley_cable_side_bends-1.webp", "assets/anim-one-arm_high-pulley_cable_side_bends-2.webp", "assets/anim-one-arm_high-pulley_cable_side_bends-3.webp"],
+      "One-Arm_Incline_Lateral_Raise": ["assets/anim-one-arm_incline_lateral_raise-1.webp", "assets/anim-one-arm_incline_lateral_raise-2.webp", "assets/anim-one-arm_incline_lateral_raise-3.webp"],
+      "One-Arm_Long_Bar_Row": ["assets/anim-one-arm_long_bar_row-1.webp", "assets/anim-one-arm_long_bar_row-2.webp", "assets/anim-one-arm_long_bar_row-3.webp"],
+      "One-Arm_Medicine_Ball_Slam": ["assets/anim-one-arm_medicine_ball_slam-1.webp", "assets/anim-one-arm_medicine_ball_slam-2.webp", "assets/anim-one-arm_medicine_ball_slam-3.webp"],
+      "One-Arm_Side_Laterals": ["assets/anim-one-arm_side_laterals-1.webp", "assets/anim-one-arm_side_laterals-2.webp", "assets/anim-one-arm_side_laterals-3.webp"],
+      "One_Arm_Dumbbell_Bench_Press": ["assets/anim-one_arm_dumbbell_bench_press-1.webp", "assets/anim-one_arm_dumbbell_bench_press-2.webp", "assets/anim-one_arm_dumbbell_bench_press-3.webp"],
+      "One_Arm_Dumbbell_Preacher_Curl": ["assets/anim-one_arm_dumbbell_preacher_curl-1.webp", "assets/anim-one_arm_dumbbell_preacher_curl-2.webp", "assets/anim-one_arm_dumbbell_preacher_curl-3.webp"],
+      "One_Arm_Lat_Pulldown": ["assets/anim-one_arm_lat_pulldown-1.webp", "assets/anim-one_arm_lat_pulldown-2.webp", "assets/anim-one_arm_lat_pulldown-3.webp"],
+      "Otis-Up": ["assets/anim-otis-up-1.webp", "assets/anim-otis-up-2.webp", "assets/anim-otis-up-3.webp"],
+      "Pallof_Press": ["assets/anim-pallof_press-1.webp", "assets/anim-pallof_press-2.webp", "assets/anim-pallof_press-3.webp"],
+      "Pallof_Press_With_Rotation": ["assets/anim-pallof_press_with_rotation-1.webp", "assets/anim-pallof_press_with_rotation-2.webp", "assets/anim-pallof_press_with_rotation-3.webp"],
+      "Parallel_Bar_Dip": ["assets/anim-parallel_bar_dip-1.webp", "assets/anim-parallel_bar_dip-2.webp", "assets/anim-parallel_bar_dip-3.webp"],
+      "Physioball_Hip_Bridge": ["assets/anim-physioball_hip_bridge-1.webp", "assets/anim-physioball_hip_bridge-2.webp", "assets/anim-physioball_hip_bridge-3.webp"],
+      "Platform_Hamstring_Slides": ["assets/anim-platform_hamstring_slides-1.webp", "assets/anim-platform_hamstring_slides-2.webp", "assets/anim-platform_hamstring_slides-3.webp"],
+      "Plie_Dumbbell_Squat": ["assets/anim-plie_dumbbell_squat-1.webp", "assets/anim-plie_dumbbell_squat-2.webp", "assets/anim-plie_dumbbell_squat-3.webp"],
+      "Power_Partials": ["assets/anim-power_partials-1.webp", "assets/anim-power_partials-2.webp", "assets/anim-power_partials-3.webp"],
+      "Preacher_Curl": ["assets/anim-preacher_curl-1.webp", "assets/anim-preacher_curl-2.webp", "assets/anim-preacher_curl-3.webp"],
+      "Pull_Through": ["assets/anim-pull_through-1.webp", "assets/anim-pull_through-2.webp", "assets/anim-pull_through-3.webp"],
+      "Reverse_Barbell_Curl": ["assets/anim-reverse_barbell_curl-1.webp", "assets/anim-reverse_barbell_curl-2.webp", "assets/anim-reverse_barbell_curl-3.webp"],
+      "Reverse_Cable_Curl": ["assets/anim-reverse_cable_curl-1.webp", "assets/anim-reverse_cable_curl-2.webp", "assets/anim-reverse_cable_curl-3.webp"],
+      "Reverse_Flyes": ["assets/anim-reverse_flyes-1.webp", "assets/anim-reverse_flyes-2.webp", "assets/anim-reverse_flyes-3.webp"],
+      "Reverse_Grip_Triceps_Pushdown": ["assets/anim-reverse_grip_triceps_pushdown-1.webp", "assets/anim-reverse_grip_triceps_pushdown-2.webp", "assets/anim-reverse_grip_triceps_pushdown-3.webp"],
+      "Reverse_Machine_Flyes": ["assets/anim-reverse_machine_flyes-1.webp", "assets/anim-reverse_machine_flyes-2.webp", "assets/anim-reverse_machine_flyes-3.webp"],
+      "Reverse_Plate_Curls": ["assets/anim-reverse_plate_curls-1.webp", "assets/anim-reverse_plate_curls-2.webp", "assets/anim-reverse_plate_curls-3.webp"],
+      "Rocking_Standing_Calf_Raise": ["assets/anim-rocking_standing_calf_raise-1.webp", "assets/anim-rocking_standing_calf_raise-2.webp", "assets/anim-rocking_standing_calf_raise-3.webp"],
+      "Rope_Crunch": ["assets/anim-rope_crunch-1.webp", "assets/anim-rope_crunch-2.webp", "assets/anim-rope_crunch-3.webp"],
+      "Rope_Straight-Arm_Pulldown": ["assets/anim-rope_straight-arm_pulldown-1.webp", "assets/anim-rope_straight-arm_pulldown-2.webp", "assets/anim-rope_straight-arm_pulldown-3.webp"],
+      "Seated_Band_Hamstring_Curl": ["assets/anim-seated_band_hamstring_curl-1.webp", "assets/anim-seated_band_hamstring_curl-2.webp", "assets/anim-seated_band_hamstring_curl-3.webp"],
+      "Seated_Barbell_Twist": ["assets/anim-seated_barbell_twist-1.webp", "assets/anim-seated_barbell_twist-2.webp", "assets/anim-seated_barbell_twist-3.webp"],
+      "Seated_Cable_Shoulder_Press": ["assets/anim-seated_cable_shoulder_press-1.webp", "assets/anim-seated_cable_shoulder_press-2.webp", "assets/anim-seated_cable_shoulder_press-3.webp"],
+      "Seated_Calf_Raise": ["assets/anim-seated_calf_raise-1.webp", "assets/anim-seated_calf_raise-2.webp", "assets/anim-seated_calf_raise-3.webp"],
+      "Seated_Dumbbell_Curl": ["assets/anim-seated_dumbbell_curl-1.webp", "assets/anim-seated_dumbbell_curl-2.webp", "assets/anim-seated_dumbbell_curl-3.webp"],
+      "Seated_Dumbbell_Inner_Biceps_Curl": ["assets/anim-seated_dumbbell_inner_biceps_curl-1.webp", "assets/anim-seated_dumbbell_inner_biceps_curl-2.webp", "assets/anim-seated_dumbbell_inner_biceps_curl-3.webp"],
+      "Seated_Dumbbell_Press": ["assets/anim-seated_dumbbell_press-1.webp", "assets/anim-seated_dumbbell_press-2.webp", "assets/anim-seated_dumbbell_press-3.webp"],
+      "Seated_Side_Lateral_Raise": ["assets/anim-seated_side_lateral_raise-1.webp", "assets/anim-seated_side_lateral_raise-2.webp", "assets/anim-seated_side_lateral_raise-3.webp"],
+      "Seated_Triceps_Press": ["assets/anim-seated_triceps_press-1.webp", "assets/anim-seated_triceps_press-2.webp", "assets/anim-seated_triceps_press-3.webp"],
+      "Shotgun_Row": ["assets/anim-shotgun_row-1.webp", "assets/anim-shotgun_row-2.webp", "assets/anim-shotgun_row-3.webp"],
+      "Shoulder_Press_-_With_Bands": ["assets/anim-shoulder_press_-_with_bands-1.webp", "assets/anim-shoulder_press_-_with_bands-2.webp", "assets/anim-shoulder_press_-_with_bands-3.webp"],
+      "Side_Laterals_to_Front_Raise": ["assets/anim-side_laterals_to_front_raise-1.webp", "assets/anim-side_laterals_to_front_raise-2.webp", "assets/anim-side_laterals_to_front_raise-3.webp"],
+      "Single-Arm_Cable_Crossover": ["assets/anim-single-arm_cable_crossover-1.webp", "assets/anim-single-arm_cable_crossover-2.webp", "assets/anim-single-arm_cable_crossover-3.webp"],
+      "Single-Leg_High_Box_Squat": ["assets/anim-single-leg_high_box_squat-1.webp", "assets/anim-single-leg_high_box_squat-2.webp", "assets/anim-single-leg_high_box_squat-3.webp"],
+      "Single-Leg_Leg_Extension": ["assets/anim-single-leg_leg_extension-1.webp", "assets/anim-single-leg_leg_extension-2.webp", "assets/anim-single-leg_leg_extension-3.webp"],
+      "Single_Dumbbell_Raise": ["assets/anim-single_dumbbell_raise-1.webp", "assets/anim-single_dumbbell_raise-2.webp", "assets/anim-single_dumbbell_raise-3.webp"],
+      "Sled_Overhead_Backward_Walk": ["assets/anim-sled_overhead_backward_walk-1.webp", "assets/anim-sled_overhead_backward_walk-2.webp", "assets/anim-sled_overhead_backward_walk-3.webp"],
+      "Sled_Overhead_Triceps_Extension": ["assets/anim-sled_overhead_triceps_extension-1.webp", "assets/anim-sled_overhead_triceps_extension-2.webp", "assets/anim-sled_overhead_triceps_extension-3.webp"],
+      "Sled_Reverse_Flye": ["assets/anim-sled_reverse_flye-1.webp", "assets/anim-sled_reverse_flye-2.webp", "assets/anim-sled_reverse_flye-3.webp"],
+      "Sled_Row": ["assets/anim-sled_row-1.webp", "assets/anim-sled_row-2.webp", "assets/anim-sled_row-3.webp"],
+      "Smith_Incline_Shoulder_Raise": ["assets/anim-smith_incline_shoulder_raise-1.webp", "assets/anim-smith_incline_shoulder_raise-2.webp", "assets/anim-smith_incline_shoulder_raise-3.webp"],
+      "Smith_Machine_Behind_the_Back_Shrug": ["assets/anim-smith_machine_behind_the_back_shrug-1.webp", "assets/anim-smith_machine_behind_the_back_shrug-2.webp", "assets/anim-smith_machine_behind_the_back_shrug-3.webp"],
+      "Smith_Machine_Bench_Press": ["assets/anim-smith_machine_bench_press-1.webp", "assets/anim-smith_machine_bench_press-2.webp", "assets/anim-smith_machine_bench_press-3.webp"],
+      "Smith_Machine_Bent_Over_Row": ["assets/anim-smith_machine_bent_over_row-1.webp", "assets/anim-smith_machine_bent_over_row-2.webp", "assets/anim-smith_machine_bent_over_row-3.webp"],
+      "Smith_Machine_Calf_Raise": ["assets/anim-smith_machine_calf_raise-1.webp", "assets/anim-smith_machine_calf_raise-2.webp", "assets/anim-smith_machine_calf_raise-3.webp"],
+      "Smith_Machine_Close-Grip_Bench_Press": ["assets/anim-smith_machine_close-grip_bench_press-1.webp", "assets/anim-smith_machine_close-grip_bench_press-2.webp", "assets/anim-smith_machine_close-grip_bench_press-3.webp"],
+      "Smith_Machine_Incline_Bench_Press": ["assets/anim-smith_machine_incline_bench_press-1.webp", "assets/anim-smith_machine_incline_bench_press-2.webp", "assets/anim-smith_machine_incline_bench_press-3.webp"],
+      "Smith_Machine_One-Arm_Upright_Row": ["assets/anim-smith_machine_one-arm_upright_row-1.webp", "assets/anim-smith_machine_one-arm_upright_row-2.webp", "assets/anim-smith_machine_one-arm_upright_row-3.webp"],
+      "Smith_Machine_Overhead_Shoulder_Press": ["assets/anim-smith_machine_overhead_shoulder_press-1.webp", "assets/anim-smith_machine_overhead_shoulder_press-2.webp", "assets/anim-smith_machine_overhead_shoulder_press-3.webp"],
+      "Smith_Machine_Stiff-Legged_Deadlift": ["assets/anim-smith_machine_stiff-legged_deadlift-1.webp", "assets/anim-smith_machine_stiff-legged_deadlift-2.webp", "assets/anim-smith_machine_stiff-legged_deadlift-3.webp"],
+      "Smith_Machine_Upright_Row": ["assets/anim-smith_machine_upright_row-1.webp", "assets/anim-smith_machine_upright_row-2.webp", "assets/anim-smith_machine_upright_row-3.webp"],
+      "Smith_Single-Leg_Split_Squat": ["assets/anim-smith_single-leg_split_squat-1.webp", "assets/anim-smith_single-leg_split_squat-2.webp", "assets/anim-smith_single-leg_split_squat-3.webp"],
+      "Speed_Band_Overhead_Triceps": ["assets/anim-speed_band_overhead_triceps-1.webp", "assets/anim-speed_band_overhead_triceps-2.webp", "assets/anim-speed_band_overhead_triceps-3.webp"],
+      "Spell_Caster": ["assets/anim-spell_caster-1.webp", "assets/anim-spell_caster-2.webp", "assets/anim-spell_caster-3.webp"],
+      "Split_Squat_with_Dumbbells": ["assets/anim-split_squat_with_dumbbells-1.webp", "assets/anim-split_squat_with_dumbbells-2.webp", "assets/anim-split_squat_with_dumbbells-3.webp"],
+      "Squats_-_With_Bands": ["assets/anim-squats_-_with_bands-1.webp", "assets/anim-squats_-_with_bands-2.webp", "assets/anim-squats_-_with_bands-3.webp"],
+      "Standing_Alternating_Dumbbell_Press": ["assets/anim-standing_alternating_dumbbell_press-1.webp", "assets/anim-standing_alternating_dumbbell_press-2.webp", "assets/anim-standing_alternating_dumbbell_press-3.webp"],
+      "Standing_Barbell_Calf_Raise": ["assets/anim-standing_barbell_calf_raise-1.webp", "assets/anim-standing_barbell_calf_raise-2.webp", "assets/anim-standing_barbell_calf_raise-3.webp"],
+      "Standing_Biceps_Cable_Curl": ["assets/anim-standing_biceps_cable_curl-1.webp", "assets/anim-standing_biceps_cable_curl-2.webp", "assets/anim-standing_biceps_cable_curl-3.webp"],
+      "Standing_Bradford_Press": ["assets/anim-standing_bradford_press-1.webp", "assets/anim-standing_bradford_press-2.webp", "assets/anim-standing_bradford_press-3.webp"],
+      "Standing_Cable_Chest_Press": ["assets/anim-standing_cable_chest_press-1.webp", "assets/anim-standing_cable_chest_press-2.webp", "assets/anim-standing_cable_chest_press-3.webp"],
+      "Standing_Cable_Lift": ["assets/anim-standing_cable_lift-1.webp", "assets/anim-standing_cable_lift-2.webp", "assets/anim-standing_cable_lift-3.webp"],
+      "Standing_Cable_Wood_Chop": ["assets/anim-standing_cable_wood_chop-1.webp", "assets/anim-standing_cable_wood_chop-2.webp", "assets/anim-standing_cable_wood_chop-3.webp"],
+      "Standing_Concentration_Curl": ["assets/anim-standing_concentration_curl-1.webp", "assets/anim-standing_concentration_curl-2.webp", "assets/anim-standing_concentration_curl-3.webp"],
+      "Standing_Dumbbell_Press": ["assets/anim-standing_dumbbell_press-1.webp", "assets/anim-standing_dumbbell_press-2.webp", "assets/anim-standing_dumbbell_press-3.webp"],
+      "Standing_Dumbbell_Triceps_Extension": ["assets/anim-standing_dumbbell_triceps_extension-1.webp", "assets/anim-standing_dumbbell_triceps_extension-2.webp", "assets/anim-standing_dumbbell_triceps_extension-3.webp"],
+      "Standing_Dumbbell_Upright_Row": ["assets/anim-standing_dumbbell_upright_row-1.webp", "assets/anim-standing_dumbbell_upright_row-2.webp", "assets/anim-standing_dumbbell_upright_row-3.webp"],
+      "Standing_Leg_Curl": ["assets/anim-standing_leg_curl-1.webp", "assets/anim-standing_leg_curl-2.webp", "assets/anim-standing_leg_curl-3.webp"],
+      "Standing_Low-Pulley_Deltoid_Raise": ["assets/anim-standing_low-pulley_deltoid_raise-1.webp", "assets/anim-standing_low-pulley_deltoid_raise-2.webp", "assets/anim-standing_low-pulley_deltoid_raise-3.webp"],
+      "Standing_Military_Press": ["assets/anim-standing_military_press-1.webp", "assets/anim-standing_military_press-2.webp", "assets/anim-standing_military_press-3.webp"],
+      "Standing_Olympic_Plate_Hand_Squeeze": ["assets/anim-standing_olympic_plate_hand_squeeze-1.webp", "assets/anim-standing_olympic_plate_hand_squeeze-2.webp", "assets/anim-standing_olympic_plate_hand_squeeze-3.webp"],
+      "Standing_Overhead_Barbell_Triceps_Extension": ["assets/anim-standing_overhead_barbell_triceps_extension-1.webp", "assets/anim-standing_overhead_barbell_triceps_extension-2.webp", "assets/anim-standing_overhead_barbell_triceps_extension-3.webp"],
+      "Standing_Palm-In_One-Arm_Dumbbell_Press": ["assets/anim-standing_palm-in_one-arm_dumbbell_press-1.webp", "assets/anim-standing_palm-in_one-arm_dumbbell_press-2.webp", "assets/anim-standing_palm-in_one-arm_dumbbell_press-3.webp"],
+      "Standing_Rope_Crunch": ["assets/anim-standing_rope_crunch-1.webp", "assets/anim-standing_rope_crunch-2.webp", "assets/anim-standing_rope_crunch-3.webp"],
+      "Stiff-Legged_Dumbbell_Deadlift": ["assets/anim-stiff-legged_dumbbell_deadlift-1.webp", "assets/anim-stiff-legged_dumbbell_deadlift-2.webp", "assets/anim-stiff-legged_dumbbell_deadlift-3.webp"],
+      "Straight-Arm_Pulldown": ["assets/anim-straight-arm_pulldown-1.webp", "assets/anim-straight-arm_pulldown-2.webp", "assets/anim-straight-arm_pulldown-3.webp"],
+      "Straight_Bar_Bench_Mid_Rows": ["assets/anim-straight_bar_bench_mid_rows-1.webp", "assets/anim-straight_bar_bench_mid_rows-2.webp", "assets/anim-straight_bar_bench_mid_rows-3.webp"],
+      "Straight_Raises_on_Incline_Bench": ["assets/anim-straight_raises_on_incline_bench-1.webp", "assets/anim-straight_raises_on_incline_bench-2.webp", "assets/anim-straight_raises_on_incline_bench-3.webp"],
+      "Suspended_Push-Up": ["assets/anim-suspended_push-up-1.webp", "assets/anim-suspended_push-up-2.webp", "assets/anim-suspended_push-up-3.webp"],
+      "Suspended_Reverse_Crunch": ["assets/anim-suspended_reverse_crunch-1.webp", "assets/anim-suspended_reverse_crunch-2.webp", "assets/anim-suspended_reverse_crunch-3.webp"],
+      "Suspended_Row": ["assets/anim-suspended_row-1.webp", "assets/anim-suspended_row-2.webp", "assets/anim-suspended_row-3.webp"],
+      "Svend_Press": ["assets/anim-svend_press-1.webp", "assets/anim-svend_press-2.webp", "assets/anim-svend_press-3.webp"],
+      "T-Bar_Row_with_Handle": ["assets/anim-t-bar_row_with_handle-1.webp", "assets/anim-t-bar_row_with_handle-2.webp", "assets/anim-t-bar_row_with_handle-3.webp"],
+      "Thigh_Abductor": ["assets/anim-thigh_abductor-1.webp", "assets/anim-thigh_abductor-2.webp", "assets/anim-thigh_abductor-3.webp"],
+      "Thigh_Adductor": ["assets/anim-thigh_adductor-1.webp", "assets/anim-thigh_adductor-2.webp", "assets/anim-thigh_adductor-3.webp"],
+      "Trap_Bar_Deadlift": ["assets/anim-trap_bar_deadlift-1.webp", "assets/anim-trap_bar_deadlift-2.webp", "assets/anim-trap_bar_deadlift-3.webp"],
+      "Triceps_Overhead_Extension_with_Rope": ["assets/anim-triceps_overhead_extension_with_rope-1.webp", "assets/anim-triceps_overhead_extension_with_rope-2.webp", "assets/anim-triceps_overhead_extension_with_rope-3.webp"],
+      "Triceps_Pushdown_-_Rope_Attachment": ["assets/anim-triceps_pushdown_-_rope_attachment-1.webp", "assets/anim-triceps_pushdown_-_rope_attachment-2.webp", "assets/anim-triceps_pushdown_-_rope_attachment-3.webp"],
+      "Triceps_Pushdown_-_V-Bar_Attachment": ["assets/anim-triceps_pushdown_-_v-bar_attachment-1.webp", "assets/anim-triceps_pushdown_-_v-bar_attachment-2.webp", "assets/anim-triceps_pushdown_-_v-bar_attachment-3.webp"],
+      "Underhand_Cable_Pulldowns": ["assets/anim-underhand_cable_pulldowns-1.webp", "assets/anim-underhand_cable_pulldowns-2.webp", "assets/anim-underhand_cable_pulldowns-3.webp"],
+      "Upright_Barbell_Row": ["assets/anim-upright_barbell_row-1.webp", "assets/anim-upright_barbell_row-2.webp", "assets/anim-upright_barbell_row-3.webp"],
+      "Upright_Row_-_With_Bands": ["assets/anim-upright_row_-_with_bands-1.webp", "assets/anim-upright_row_-_with_bands-2.webp", "assets/anim-upright_row_-_with_bands-3.webp"],
+      "Weighted_Crunches": ["assets/anim-weighted_crunches-1.webp", "assets/anim-weighted_crunches-2.webp", "assets/anim-weighted_crunches-3.webp"],
+      "Wide-Grip_Lat_Pulldown": ["assets/anim-wide-grip_lat_pulldown-1.webp", "assets/anim-wide-grip_lat_pulldown-2.webp", "assets/anim-wide-grip_lat_pulldown-3.webp"],
+      "Wide-Grip_Standing_Barbell_Curl": ["assets/anim-wide-grip_standing_barbell_curl-1.webp", "assets/anim-wide-grip_standing_barbell_curl-2.webp", "assets/anim-wide-grip_standing_barbell_curl-3.webp"],
+      "Wrist_Roller": ["assets/anim-wrist_roller-1.webp", "assets/anim-wrist_roller-2.webp", "assets/anim-wrist_roller-3.webp"],
+      "Wrist_Rotations_with_Straight_Bar": ["assets/anim-wrist_rotations_with_straight_bar-1.webp", "assets/anim-wrist_rotations_with_straight_bar-2.webp", "assets/anim-wrist_rotations_with_straight_bar-3.webp"]
+    },
+    boy: {
+      "Leg_Press": ["assets/anim-boy-leg_press-1.webp", "assets/anim-boy-leg_press-2.webp", "assets/anim-boy-leg_press-3.webp"],
+      "Calf_Press_On_The_Leg_Press_Machine": ["assets/anim-boy-calf_press_on_the_leg_press_machine-1.webp", "assets/anim-boy-calf_press_on_the_leg_press_machine-2.webp", "assets/anim-boy-calf_press_on_the_leg_press_machine-3.webp"],
+      "Leg_Extensions": ["assets/anim-boy-leg_extensions-1.webp", "assets/anim-boy-leg_extensions-2.webp", "assets/anim-boy-leg_extensions-3.webp"],
+      "Seated_Leg_Curl": ["assets/anim-boy-seated_leg_curl-1.webp", "assets/anim-boy-seated_leg_curl-2.webp", "assets/anim-boy-seated_leg_curl-3.webp"],
+      "Barbell_Squat": ["assets/anim-boy-barbell_squat-1.webp", "assets/anim-boy-barbell_squat-2.webp", "assets/anim-boy-barbell_squat-3.webp"],
+      "Smith_Machine_Squat": ["assets/anim-boy-smith_machine_squat-1.webp", "assets/anim-boy-smith_machine_squat-2.webp", "assets/anim-boy-smith_machine_squat-3.webp"],
+      "Butt_Lift_Bridge": ["assets/anim-boy-butt_lift_bridge-1.webp", "assets/anim-boy-butt_lift_bridge-2.webp", "assets/anim-boy-butt_lift_bridge-3.webp"],
+      "Bodyweight_Squat": ["assets/anim-boy-bodyweight_squat-1.webp", "assets/anim-boy-bodyweight_squat-2.webp", "assets/anim-boy-bodyweight_squat-3.webp"],
+      "Close-Grip_Front_Lat_Pulldown": ["assets/anim-boy-close-grip_front_lat_pulldown-1.webp", "assets/anim-boy-close-grip_front_lat_pulldown-2.webp", "assets/anim-boy-close-grip_front_lat_pulldown-3.webp"],
+      "Seated_Cable_Rows": ["assets/anim-boy-seated_cable_rows-1.webp", "assets/anim-boy-seated_cable_rows-2.webp", "assets/anim-boy-seated_cable_rows-3.webp"],
+      "One-Arm_Dumbbell_Row": ["assets/anim-boy-one-arm_dumbbell_row-1.webp", "assets/anim-boy-one-arm_dumbbell_row-2.webp", "assets/anim-boy-one-arm_dumbbell_row-3.webp"],
+      "Bent_Over_Barbell_Row": ["assets/anim-boy-bent_over_barbell_row-1.webp", "assets/anim-boy-bent_over_barbell_row-2.webp", "assets/anim-boy-bent_over_barbell_row-3.webp"],
+      "Hyperextensions_Back_Extensions": ["assets/anim-boy-hyperextensions_back_extensions-1.webp", "assets/anim-boy-hyperextensions_back_extensions-2.webp", "assets/anim-boy-hyperextensions_back_extensions-3.webp"],
+      "Butterfly": ["assets/anim-boy-butterfly-1.webp", "assets/anim-boy-butterfly-2.webp", "assets/anim-boy-butterfly-3.webp"],
+      "Cable_Chest_Press": ["assets/anim-boy-cable_chest_press-1.webp", "assets/anim-boy-cable_chest_press-2.webp", "assets/anim-boy-cable_chest_press-3.webp"],
+      "Pushups": ["assets/anim-boy-pushups-1.webp", "assets/anim-boy-pushups-2.webp", "assets/anim-boy-pushups-3.webp"],
+      "Alternating_Cable_Shoulder_Press": ["assets/anim-boy-alternating_cable_shoulder_press-1.webp", "assets/anim-boy-alternating_cable_shoulder_press-2.webp", "assets/anim-boy-alternating_cable_shoulder_press-3.webp"],
+      "Side_Lateral_Raise": ["assets/anim-boy-side_lateral_raise-1.webp", "assets/anim-boy-side_lateral_raise-2.webp", "assets/anim-boy-side_lateral_raise-3.webp"],
+      "Dumbbell_Alternate_Bicep_Curl": ["assets/anim-boy-dumbbell_alternate_bicep_curl-1.webp", "assets/anim-boy-dumbbell_alternate_bicep_curl-2.webp", "assets/anim-boy-dumbbell_alternate_bicep_curl-3.webp"],
+      "Machine_Bicep_Curl": ["assets/anim-boy-machine_bicep_curl-1.webp", "assets/anim-boy-machine_bicep_curl-2.webp", "assets/anim-boy-machine_bicep_curl-3.webp"],
+      "Bench_Dips": ["assets/anim-boy-bench_dips-1.webp", "assets/anim-boy-bench_dips-2.webp", "assets/anim-boy-bench_dips-3.webp"],
+      "Triceps_Pushdown": ["assets/anim-boy-triceps_pushdown-1.webp", "assets/anim-boy-triceps_pushdown-2.webp", "assets/anim-boy-triceps_pushdown-3.webp"],
+      "Air_Bike": ["assets/anim-boy-air_bike-1.webp", "assets/anim-boy-air_bike-2.webp", "assets/anim-boy-air_bike-3.webp"],
+      "Plank": ["assets/anim-boy-plank-1.webp", "assets/anim-boy-plank-2.webp", "assets/anim-boy-plank-3.webp"],
+      "Glute_Kickback": ["assets/anim-boy-glute_kickback-1.webp", "assets/anim-boy-glute_kickback-2.webp", "assets/anim-boy-glute_kickback-3.webp"]
+    },
+    nb: {
+      "Leg_Press": ["assets/anim-nb-leg_press-1.webp", "assets/anim-nb-leg_press-2.webp", "assets/anim-nb-leg_press-3.webp"],
+      "Calf_Press_On_The_Leg_Press_Machine": ["assets/anim-nb-calf_press_on_the_leg_press_machine-1.webp", "assets/anim-nb-calf_press_on_the_leg_press_machine-2.webp", "assets/anim-nb-calf_press_on_the_leg_press_machine-3.webp"],
+      "Leg_Extensions": ["assets/anim-nb-leg_extensions-1.webp", "assets/anim-nb-leg_extensions-2.webp", "assets/anim-nb-leg_extensions-3.webp"],
+      "Seated_Leg_Curl": ["assets/anim-nb-seated_leg_curl-1.webp", "assets/anim-nb-seated_leg_curl-2.webp", "assets/anim-nb-seated_leg_curl-3.webp"],
+      "Barbell_Squat": ["assets/anim-nb-barbell_squat-1.webp", "assets/anim-nb-barbell_squat-2.webp", "assets/anim-nb-barbell_squat-3.webp"],
+      "Smith_Machine_Squat": ["assets/anim-nb-smith_machine_squat-1.webp", "assets/anim-nb-smith_machine_squat-2.webp", "assets/anim-nb-smith_machine_squat-3.webp"],
+      "Butt_Lift_Bridge": ["assets/anim-nb-butt_lift_bridge-1.webp", "assets/anim-nb-butt_lift_bridge-2.webp", "assets/anim-nb-butt_lift_bridge-3.webp"],
+      "Bodyweight_Squat": ["assets/anim-nb-bodyweight_squat-1.webp", "assets/anim-nb-bodyweight_squat-2.webp", "assets/anim-nb-bodyweight_squat-3.webp"],
+      "Close-Grip_Front_Lat_Pulldown": ["assets/anim-nb-close-grip_front_lat_pulldown-1.webp", "assets/anim-nb-close-grip_front_lat_pulldown-2.webp", "assets/anim-nb-close-grip_front_lat_pulldown-3.webp"],
+      "Seated_Cable_Rows": ["assets/anim-nb-seated_cable_rows-1.webp", "assets/anim-nb-seated_cable_rows-2.webp", "assets/anim-nb-seated_cable_rows-3.webp"],
+      "One-Arm_Dumbbell_Row": ["assets/anim-nb-one-arm_dumbbell_row-1.webp", "assets/anim-nb-one-arm_dumbbell_row-2.webp", "assets/anim-nb-one-arm_dumbbell_row-3.webp"],
+      "Bent_Over_Barbell_Row": ["assets/anim-nb-bent_over_barbell_row-1.webp", "assets/anim-nb-bent_over_barbell_row-2.webp", "assets/anim-nb-bent_over_barbell_row-3.webp"],
+      "Hyperextensions_Back_Extensions": ["assets/anim-nb-hyperextensions_back_extensions-1.webp", "assets/anim-nb-hyperextensions_back_extensions-2.webp", "assets/anim-nb-hyperextensions_back_extensions-3.webp"],
+      "Butterfly": ["assets/anim-nb-butterfly-1.webp", "assets/anim-nb-butterfly-2.webp", "assets/anim-nb-butterfly-3.webp"],
+      "Cable_Chest_Press": ["assets/anim-nb-cable_chest_press-1.webp", "assets/anim-nb-cable_chest_press-2.webp", "assets/anim-nb-cable_chest_press-3.webp"],
+      "Pushups": ["assets/anim-nb-pushups-1.webp", "assets/anim-nb-pushups-2.webp", "assets/anim-nb-pushups-3.webp"],
+      "Alternating_Cable_Shoulder_Press": ["assets/anim-nb-alternating_cable_shoulder_press-1.webp", "assets/anim-nb-alternating_cable_shoulder_press-2.webp", "assets/anim-nb-alternating_cable_shoulder_press-3.webp"],
+      "Side_Lateral_Raise": ["assets/anim-nb-side_lateral_raise-1.webp", "assets/anim-nb-side_lateral_raise-2.webp", "assets/anim-nb-side_lateral_raise-3.webp"],
+      "Dumbbell_Alternate_Bicep_Curl": ["assets/anim-nb-dumbbell_alternate_bicep_curl-1.webp", "assets/anim-nb-dumbbell_alternate_bicep_curl-2.webp", "assets/anim-nb-dumbbell_alternate_bicep_curl-3.webp"],
+      "Machine_Bicep_Curl": ["assets/anim-nb-machine_bicep_curl-1.webp", "assets/anim-nb-machine_bicep_curl-2.webp", "assets/anim-nb-machine_bicep_curl-3.webp"],
+      "Bench_Dips": ["assets/anim-nb-bench_dips-1.webp", "assets/anim-nb-bench_dips-2.webp", "assets/anim-nb-bench_dips-3.webp"],
+      "Triceps_Pushdown": ["assets/anim-nb-triceps_pushdown-1.webp", "assets/anim-nb-triceps_pushdown-2.webp", "assets/anim-nb-triceps_pushdown-3.webp"],
+      "Air_Bike": ["assets/anim-nb-air_bike-1.webp", "assets/anim-nb-air_bike-2.webp", "assets/anim-nb-air_bike-3.webp"],
+      "Plank": ["assets/anim-nb-plank-1.webp", "assets/anim-nb-plank-2.webp", "assets/anim-nb-plank-3.webp"],
+      "Glute_Kickback": ["assets/anim-nb-glute_kickback-1.webp", "assets/anim-nb-glute_kickback-2.webp", "assets/anim-nb-glute_kickback-3.webp"]
+    }
+  };
+  function framesFor(exId, skin) {
+    var byFig = FRAMES[skin];
+    if (byFig && byFig[exId]) return byFig[exId];
+    return (FRAMES.girl && FRAMES.girl[exId]) || null;
+  }
+
   /* ---- the player ---- */
   var PHASE_NAMES = ["setup", "push", "return"];
   function trackOf(id) {
@@ -320,20 +713,36 @@
 
     if (opts.stills) {
       /* Reduced motion: the three teaching frames, tap to step.
-         Bubble i rides frame i (QA delta pin a). */
+         Bubble i rides frame i (QA delta pin a). Where the
+         exercise holds a generated frame set, the stills ARE
+         those frames; the rest keep the drawn rig's poses. */
       var strip = document.createElement("div");
       strip.className = "animStills";
       stageDiv.appendChild(strip);
       var frames = [], sel = 0;
+      function fillStill(holder, ki) {
+        holder.innerHTML = "";
+        var set = framesFor(exId, skin);
+        if (set) {
+          var im = document.createElement("img");
+          im.className = "animStillImg";
+          im.setAttribute("style", "width:100%;height:auto;display:block;border-radius:8px");
+          im.alt = "";
+          im.src = set[ki];
+          holder.appendChild(im);
+        } else {
+          var s = svgEl("animSvgStill");
+          holder.appendChild(s);
+          var st = buildStage(s, track, skin);
+          st.apply(ki === 1 ? track.keys[1] : track.keys[0]);
+        }
+      }
       [0, 1, 2].forEach(function (ki) {
         var holder = document.createElement("button");
         holder.type = "button";
         holder.className = "animStill" + (ki === 0 ? " sel" : "");
-        var s = svgEl("animSvgStill");
-        holder.appendChild(s);
+        fillStill(holder, ki);
         strip.appendChild(holder);
-        var st = buildStage(s, track, skin);
-        st.apply(ki === 1 ? track.keys[1] : track.keys[0]);
         frames.push(holder);
         holder.addEventListener("click", function () {
           sel = ki;
@@ -348,28 +757,42 @@
         setFrozen: function (f) { setSeat(f ? "rest" : "profile"); },
         setSkin: function (sk) {
           skin = sk;
-          frames.forEach(function (holder, ki) {
-            var s = holder.querySelector("svg");
-            var st = buildStage(s, track, skin);
-            st.apply(ki === 1 ? track.keys[1] : track.keys[0]);
-          });
+          frames.forEach(function (holder, ki) { fillStill(holder, ki); });
         },
         setBubbles: function (on) { guide.style.display = on ? "" : "none"; },
         missing: false
       };
     }
 
-    var svg = svgEl("animSvg");
-    stageDiv.appendChild(svg);
-    var stage = buildStage(svg, track, skin);
+    /* The stage: a generated frame set where the exercise
+       holds one (the frame follows the loop's own phase, so
+       bubbles, seats, the freeze and the rest hand-over ride
+       the same clock as ever, about 870 ms a step on the
+       standard loop), else the drawn rig exactly as before. */
     var acc = (opts.startAt || 0) * 1000, last = 0, frozen = false, visible = true, curPhase = -1;
+    var frameSet = framesFor(exId, skin), frameImg = null, frameShown = -1, svg = null, stage = null;
+    if (frameSet) {
+      frameImg = document.createElement("img");
+      frameImg.className = "animFrameImg";
+      frameImg.setAttribute("style", "width:100%;height:auto;display:block;border-radius:14px;background:#FAEED6");
+      frameImg.alt = "";
+      frameSet.forEach(function (src) { var p = new Image(); p.src = src; });
+      frameShown = phaseAt(track, acc / 1000);
+      frameImg.src = frameSet[frameShown];
+      stageDiv.appendChild(frameImg);
+    } else {
+      svg = svgEl("animSvg");
+      stageDiv.appendChild(svg);
+      stage = buildStage(svg, track, skin);
+    }
     function frame(now) {
       if (dead) return;
       if (last && !frozen && visible && !document.hidden) acc += now - last;
       last = now;
       var t = acc / 1000;
-      stage.apply(poseAt(track, t));
       var ph = phaseAt(track, t);
+      if (frameImg) { if (ph !== frameShown) { frameShown = ph; frameImg.src = frameSet[ph]; } }
+      else stage.apply(poseAt(track, t));
       if (ph !== curPhase) { curPhase = ph; if (ph > 0 && !frozen) setSeat("profile"); if (bubblesOn) setBubble(ph); }
       raf = requestAnimationFrame(frame);
     }
@@ -383,8 +806,13 @@
       setFrozen: function (f) { frozen = !!f; setSeat(frozen ? "rest" : "profile"); },
       setSkin: function (sk) {
         skin = sk;
-        stage = buildStage(svg, track, skin);
-        stage.apply(poseAt(track, acc / 1000));
+        if (frameImg) {
+          var ns = framesFor(exId, skin);
+          if (ns) { frameSet = ns; frameShown = -1; }
+        } else {
+          stage = buildStage(svg, track, skin);
+          stage.apply(poseAt(track, acc / 1000));
+        }
       },
       setBubbles: function (on) { bubblesOn = !!on; guide.style.display = bubblesOn ? "" : "none"; if (bubblesOn && curPhase >= 0) setBubble(curPhase); },
       time: function () { return acc / 1000; },
@@ -400,5 +828,6 @@
     svg.setAttribute("data-phase", PHASE_NAMES[phaseAt(track, tSec)]);
     return true;
   }
-  window.FitAnim = { mount: mount, renderAt: renderAt, poseAt: poseAt, phaseAt: phaseAt, trackOf: trackOf, PHASE_NAMES: PHASE_NAMES };
+  window.FitAnim = { mount: mount, renderAt: renderAt, poseAt: poseAt, phaseAt: phaseAt, trackOf: trackOf, framesFor: framesFor, PHASE_NAMES: PHASE_NAMES };
+  window.FIT_FRAMES = FRAMES;
 })();
