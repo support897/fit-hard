@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Fit Hard — Owner</title>
+<link rel="icon" type="image/svg+xml" href="icons/icon-192.png">
+<style>
+  @font-face { font-family: "Zilla Slab"; src: url("fonts/ZillaSlab-600.woff2") format("woff2"); font-weight: 600; font-display: swap; }
+  @font-face { font-family: "Zilla Slab"; src: url("fonts/ZillaSlab-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+  @font-face { font-family: "Karla"; src: url("fonts/Karla-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+  @font-face { font-family: "Karla"; src: url("fonts/Karla-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+  :root { --ink:#3E2F26; --cream:#FAEED6; --surface:#FFFDF7; --blush:#FDF6E9; --line:#E4D3B8; --mut:#6E5D4B; --sage:#52695A; --tint:#DCE7D8; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Karla", sans-serif; background: var(--cream); color: var(--ink); }
+  h1, h2, h3 { font-family: "Zilla Slab", serif; }
+  header.top { display: flex; align-items: center; gap: 12px; padding: 16px 20px; }
+  header.top img { width: 36px; height: 36px; }
+  header.top .who { margin-left: auto; font-size: 14px; color: var(--mut); }
+  main { max-width: 1060px; margin: 0 auto; padding: 6px 20px 60px; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin: 12px 0; }
+  .num { font-family: "Zilla Slab", serif; font-size: 34px; font-weight: 700; }
+  .lbl { color: var(--mut); font-size: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .layout { display: grid; grid-template-columns: 200px 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 720px) { .layout { grid-template-columns: 1fr; } }
+  nav.side { display: flex; flex-direction: column; gap: 6px; }
+  nav.side button { text-align: left; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 10px 12px; font: inherit; font-weight: 700; cursor: pointer; color: var(--ink); }
+  nav.side button.on { background: var(--sage); color: #fff; border-color: var(--sage); }
+  button.act { border: 0; background: var(--sage); color: #fff; border-radius: 10px; padding: 10px 16px; font: inherit; font-weight: 700; cursor: pointer; }
+  button.ghost { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 10px; padding: 10px 16px; font: inherit; font-weight: 700; cursor: pointer; }
+  input, textarea { width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font: inherit; background: #fff; color: var(--ink); }
+  label { display: block; font-weight: 700; margin: 10px 0 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+  .hint { color: var(--mut); font-size: 14px; }
+  .err { color: #A9604F; font-weight: 700; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header class="top">
+  <img src="icons/icon-512.png" alt="">
+  <h1 style="font-size:22px;margin:0">Fit Hard — Owner</h1>
+  <span class="who" id="whoLine"></span>
+</header>
+<main>
+  <!-- Door -->
+  <section id="doorBox" class="card">
+    <h2 style="margin-top:0">Sign in</h2>
+    <p class="hint">This page is for the owner only. Everyone else gets a plain no.</p>
+    <label>Email<input id="doorEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>
+    <label>Password<input id="doorPass" type="password" autocomplete="current-password" placeholder="Your password"></label>
+    <p><button class="act" id="doorSignIn">Sign in</button></p>
+    <p><button class="ghost" id="doorGoogle">Continue with Google</button>
+       <button class="ghost" id="doorApple" hidden>Continue with Apple</button></p>
+    <p class="err" id="doorMsg" role="alert"></p>
+  </section>
+
+  <div id="ownerMount"></div>
+</main>
+<script src="accounts-config.js"></script>
+<script type="module" src="owner.js"></script>
+</body>
+</html>
