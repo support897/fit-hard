@@ -194,6 +194,20 @@
     var p = priceText(product);
     return p.worth ? p.text + " (" + tr("plan.worthA", { a: p.worth }) + ")" : p.text;
   }
+  /* F2 (G7): the paywall disclosure + legal links stand ON
+     the paywall itself. Prices compose from the buttons' own
+     source (priceText), never a second copy of the figures. */
+  var PRIVACY_URL = "https://support897.github.io/fit-hard/privacy.html";
+  var TERMS_URL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
+  function renewText() {
+    return tr("plan.renewPro", { m: priceText("monthly").text, y: priceText("yearly").text }) + " " +
+      tr("plan.renewForever", { f: priceText("forever").text });
+  }
+  function paywallLegalHtml() {
+    return '<p class="hint">' + esc(renewText()) + "</p>" +
+      '<p class="row"><a href="' + PRIVACY_URL + '" target="_blank" rel="noopener">' + esc(tr("plan.privacyLink")) + "</a>" +
+      '<a href="' + TERMS_URL + '" target="_blank" rel="noopener">' + esc(tr("plan.termsLink")) + "</a></p>";
+  }
   var FitShop = (function () {
     var started = false, offers = null;
     function plugin() {
@@ -293,6 +307,7 @@
         '<div class="card"><h2>' + esc(tr("plan.t1Name")) + '</h2><p>' + esc(tr("plan.t1Body")) + '</p><p class="big">' + esc(tr("plan.freeWord")) + "</p></div>" +
         '<div class="card"><h2>' + esc(tr("plan.t2Name")) + '</h2><p>' + esc(tr("plan.t2Body")) + "</p>" + proRows + "</div>" +
         '<div class="card"><h2>' + esc(tr("plan.t3Name")) + '</h2><p>' + esc(tr("plan.t3Body")) + '</p><p class="big">' + esc(priceWithWorth("forever")) + ", " + esc(tr("plan.onceWord")) + '</p><div class="row"><button class="primaryBtn" id="planBuyForever">' + esc(tr("plan.buyForever")) + "</button></div></div>" +
+        '<div class="card">' + paywallLegalHtml() + "</div>" +
         '<div class="card"><div class="row"><button class="pillBtn" id="planRestoreBtn">' + esc(tr("plan.restoreBtn")) + '</button><button class="pillBtn" id="planBackBtn">' + esc(tr("plan.backBtn")) + "</button></div></div>";
       var bm = $("planBuyMonthly"); if (bm) bm.addEventListener("click", function () { FitShop.buy("monthly"); });
       var by = $("planBuyYearly"); if (by) by.addEventListener("click", function () { FitShop.buy("yearly"); });
@@ -304,6 +319,8 @@
   function refreshProModal() {
     var line = $("proStateLine");
     if (line) line.textContent = FitShop.purchasable() ? tr("pro.stateOpen") : tr("pro.stateWait");
+    var renew = $("proRenew");
+    if (renew) renew.innerHTML = paywallLegalHtml();
     var local = $("proLocalLine");
     if (local) {
       var cc = deviceCountry(), P = window.FitPrices;
