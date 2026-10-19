@@ -126,7 +126,7 @@
         <div class="row hidden" id="apprPhotoRow">
           <button class="pillBtn" id="apprPickBtn" data-i18n="set.pickPhoto" onclick="document.getElementById('apprFile').click()">Choose a photo</button>
           <button class="pillBtn hidden" id="apprRemoveBtn" data-i18n="set.removePhoto">Remove my photo</button>
-          <input type="file" id="apprFile" accept="image/*" class="hidden">
+          <input type="file" id="apprFile" accept="image/*" class="hidden" aria-label="Add your own background photo">
         </div>
         <p class="hint" id="apprNote"></p>
         <div class="row"><span class="hint" data-i18n="settings.langLabel">Language</span>
@@ -250,7 +250,7 @@
     </div>
     <p class="hint" id="importGuide"></p>
     <label><span data-i18n="cal.importLinkLabel">Paste the calendar link</span><input type="url" id="importUrl" placeholder="https://… .ics" autocomplete="off"></label>
-    <div class="row"><button id="importGo" class="primaryBtn" data-i18n="cal.importGo">Bring it in</button><button id="importFileBtn" class="pillBtn" data-i18n="cal.importFileBtn">Choose a file instead</button><input type="file" id="importFile" accept=".ics,text/calendar" hidden></div>
+    <div class="row"><button id="importGo" class="primaryBtn" data-i18n="cal.importGo">Bring it in</button><button id="importFileBtn" class="pillBtn" data-i18n="cal.importFileBtn">Choose a file instead</button><input type="file" id="importFile" accept=".ics,text/calendar" hidden aria-label="Choose a calendar file"></div>
     <p class="hint" id="importResult" role="status"></p>
     <div class="row"><button id="importClose" class="pillBtn" data-i18n="cal.importDone">Done</button></div>
   </div>
