@@ -1156,6 +1156,7 @@
         prevRoutine: (state.routines || []).filter(function (r) { return r.goalId === goalId; }).slice(-1)[0] || null });
       if (built) built.name = tr("gymgoal." + built.goalId, null, built.name);
       if (!built || !built.items.length) { toast(tr("gym.goalOdd")); return; }
+      if (!maySaveRoutine()) return;
       var days = [];
       el.querySelectorAll("[data-gyday].on").forEach(function (b) { days.push(Number(b.getAttribute("data-gyday"))); });
       state.routines.push(Object.assign({}, built, { id: "routine." + Date.now(), days: days,
@@ -1445,6 +1446,7 @@
     if (frames && first) startMcFrames(frames, first);
     else if (first) mountAnim(first);
     $("mcMake").addEventListener("click", function () {
+      if (!maySaveRoutine()) return;
       /* F7: a station routine is built from the playable
          items only; library-only exercises stay in the
          library, never in a routine. */
@@ -1502,6 +1504,7 @@
     if (ex.level === "intermediate" && !L.stepUpUnlocked(state.sessions)) { toast(tr("gym.stepUpLocked")); return; }
     var picks = (state.routines || []).filter(function (r) { return r.handBuilt; })[0];
     if (!picks) {
+      if (!maySaveRoutine()) return;
       picks = { id: "routine.picks", name: tr("gym.myPicks"), goalId: null, minutes: 30,
         days: [], time: null, createdKey: L.todayKey(), handBuilt: true, items: [] };
       state.routines.push(picks);
@@ -2507,6 +2510,26 @@
      app usable. Copy is the locked tier design's own
      words (PLAN-fit-hard.md, approved 15 Oct 2026);
      Quality gate-reads it, Finance confirms the price. */
+  /* PAYMENTS WIRING (Finance chapter §3/§5; HQ order 19 Oct
+     2026): the free/paid split enforced at the tap. planNow
+     reads the resolved entitlement of record (FitAuth:
+     the comp gate plus the in-app free month, fail-closed)
+     — free features never call it. A locked tap speaks in
+     plain words, then opens the Pro moment: never silent,
+     never a partial unlock. Demo sessions are never gated:
+     the fixture shows the whole app. */
+  var FREE_ROUTINE_CAP = 3;
+  function planNow() {
+    if (window.FitAuth && window.FitAuth.entitlement) return window.FitAuth.entitlement();
+    return (state.tier && state.tier.plan === "pro") ? "pro" : "free";
+  }
+  function lockedTap() { toast(tr("pro.lockedTap")); showProMoment(); }
+  function maySaveRoutine() {
+    if (demoMode) return true;
+    if (planNow() === "pro") return true;
+    if ((state.routines || []).length < FREE_ROUTINE_CAP) return true;
+    lockedTap(); return false;
+  }
   function showProMoment() {
     var w = $("proWally");
     if (w) w.innerHTML = guideOn() && window.Wally ? wallyWrap("welcome", tr("pro.bubble"), 64) : "";
