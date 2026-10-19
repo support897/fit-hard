@@ -578,7 +578,7 @@
       '<p class="hint">' + esc(tr("meal.justName")) + '</p>' +
       '<div class="row"><input id="nameMealInput" type="text" placeholder="' + esc(tr("meal.typeMealPh")) + '"><button class="pillBtn" id="nameMealBtn">' + esc(tr("meal.getRecipe")) + '</button></div><div id="nameMealResult"></div>' +
       '<h3>' + esc(tr("meal.picRecipe")) + '</h3><p class="hint">' + esc(tr("meal.picHint")) + '</p>' +
-      '<div class="row"><input id="picName" type="text" placeholder="' + esc(tr("meal.picNamePh")) + '"><input id="picFile" type="file" accept="image/*"></div><div id="picPreview"></div>' +
+      '<div class="row"><input id="picName" type="text" placeholder="' + esc(tr("meal.picNamePh")) + '"><input id="picFile" type="file" accept="image/*" aria-label="Add a recipe photo"></div><div id="picPreview"></div>' +
       '<label>' + esc(tr("meal.ingsLabel")) + '<textarea id="picIngredients" rows="4"></textarea></label>' +
       '<p class="hint">' + esc(tr("meal.picIngsHint")) + '</p>' +
       '<div class="row"><button class="pillBtn" id="picSave">' + esc(tr("meal.savePic")) + '</button></div></div>' +
@@ -666,7 +666,7 @@
     var el = $("areaBody");
     el.innerHTML = '<div class="card"><h2>' + esc(tr("meal.fridgeTitle")) + '</h2>' +
       '<p class="hint">' + esc(tr("meal.fridgeHint")) + '</p>' +
-      '<input id="fridgePhoto" type="file" accept="image/*"><div id="photoPreview"></div>' +
+      '<input id="fridgePhoto" type="file" accept="image/*" aria-label="Add a fridge photo"><div id="photoPreview"></div>' +
       '<div class="row"><button class="pillBtn" id="photoScan">' + esc(tr("meal.lookPhoto")) + '</button></div><div id="photoResults"></div></div>' +
       '<div class="card"><h2>' + esc(tr("meal.ideasTitle")) + '</h2><p class="hint">' + esc(tr("meal.ideasHint")) + '</p>' +
       '<div class="row"><button class="primaryBtn" id="ideasBtn">' + esc(tr("meal.ideasBtn")) + '</button></div><div id="ideasList"></div></div>';
@@ -685,6 +685,8 @@
     }
     function bindRows() {
       $("photoResults").querySelectorAll("[data-addfood]").forEach(function (b) {
+        if (b.dataset.bound) return; /* FIT (QA leg 6): re-binding stacked a second handler on every row, so one tap added the food twice */
+        b.dataset.bound = "1";
         b.addEventListener("click", function () {
           var name = b.getAttribute("data-addfood");
           state.pantry.push({ id: "g" + Date.now(), name: name, qty: 1, unit: "pcs", storage: "fridge",
@@ -1459,7 +1461,7 @@
     var el = $("areaBody");
     el.innerHTML = '<div class="card"><h2>' + esc(tr("gym.showMachine")) + '</h2>' +
       '<p class="hint">' + esc(tr("gym.machineHint")) + '</p>' +
-      '<input id="mcPhoto" type="file" accept="image/*"><div id="mcPreview"></div>' +
+      '<input id="mcPhoto" type="file" accept="image/*" aria-label="Add a machine photo"><div id="mcPreview"></div>' +
       '<p class="hint">' + esc(tr("gym.matchAsk")) + '</p>' +
       '<div class="machineGrid" id="mcGrid">' + EX.MACHINES.map(function (m) {
         var fr = stationFramesFor(m);
@@ -2282,12 +2284,12 @@
       demoPendingHash = null;
       saveLocal();
       window.FitAuth.saveCloudState(user.uid, state).catch(function () {});
-      renderAll();
+      renderAll(); settleSetupSheet();
       toast(tr("acc.demoWelcome"));
     }).catch(function () {
       state = repairKeep(window.FitDemo.buildDemoState(demoPicks()));
       state.demoUnlock = demoPendingHash; demoPendingHash = null;
-      saveLocal(); renderAll();
+      saveLocal(); renderAll(); settleSetupSheet();
     });
   }
   /* Two-hat plan sync: once per session, for a real signed-in
@@ -2525,12 +2527,12 @@
         adoptSignInName(user);
         saveLocal();
         window.FitAuth.saveCloudState(user.uid, state).then(function (r) { cloudWarnings = (r && r.warnings) || []; renderAccount(); maybeSyncPlan(user); }).catch(function () {});
-        renderAll();
+        renderAll(); settleSetupSheet();
         toast(tr("toast.signedInAgain"));
       } else {
         adoptSignInName(user);
         save();
-        renderAll();
+        renderAll(); settleSetupSheet();
       }
       renderAccount();
       joinFollowUp();
@@ -2602,6 +2604,11 @@
     $("setupModal").classList.remove("hidden");
   }
   function closeSetup() { $("setupModal").classList.add("hidden"); }
+  /* FIT (QA leg 7): a restored state that already holds a completed
+     setup closes the sheet — the wall must never stand over a
+     finished profile (the upgrade case: boot opened it from the
+     parked guest state before the demo profile landed). */
+  function settleSetupSheet() { if (state.profile && state.profile.setupDone) closeSetup(); }
   $("suSkip").addEventListener("click", function () {
     if (!state.profile) { state.profile = { name: "", needs: [], preferences: [], allergies: [], goals: [], setupDone: false, firstSeenAt: new Date().toISOString() }; save(); }
     closeSetup(); renderAll();
@@ -2632,7 +2639,13 @@
   renderAll();
   initAccounts();
   setTimeout(renderAccount, 5000);
-  if (!state.profile || !state.profile.setupDone) openSetup();
+  if (!state.profile || !state.profile.setupDone) {
+    /* A returning demo session restores its fixture profile (always
+       setup-complete) a beat later — never wall it meanwhile (QA leg 7). */
+    var demoReturning = false;
+    try { demoReturning = !!localStorage.getItem(DEMO_MARK); } catch (e) {}
+    if (!demoReturning) openSetup();
+  }
 
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("service-worker.js").catch(function () {});
