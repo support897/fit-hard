@@ -50,7 +50,15 @@ function initDoor(config) {
 
 function watchUser(callback) {
   if (!auth) return function () {};
-  return onAuthStateChanged(auth, callback);
+  return onAuthStateChanged(auth, function (u) {
+    /* F1 (QA, build 5): the free month anchors to the AUTH
+       account's creation time — a fact that lives on the
+       account and can never re-stamp per device. */
+    try {
+      noteAuthAnchor(u && !u.isAnonymous && u.metadata ? u.metadata.creationTime : null);
+    } catch (e) {}
+    callback(u);
+  });
 }
 
 /* Door 1: email + a password the user chooses (the
@@ -302,10 +310,19 @@ let resolvedPlan = null;
    its arguments and the FREE_MONTH_DAYS constant. */
 const FREE_MONTH_DAYS = 30;
 let accountAgeStart = null;
+let authAnchorIso = null;
+function noteAuthAnchor(iso) {
+  /* The AUTH account's creation time, captured at the door.
+     When it exists it WINS over the profile stamp: a fresh
+     device can re-stamp the profile, it can never move the
+     account's creation time (QA finding F1, build 5). */
+  authAnchorIso = (typeof iso === "string" && iso) ? iso : null;
+}
 function setAccountAge(iso) {
   /* The app hands over the profile's account-age fact
      (firstSeenAt, stamped when the account was created and
-     carried forward on every repair, never dropped). */
+     carried forward on every repair, never dropped). It is
+     the fallback anchor only — the auth fact wins. */
   accountAgeStart = (typeof iso === "string" && iso) ? iso : null;
 }
 function resolveTier(compPlan, firstSeenAt, nowMs) {
@@ -323,7 +340,7 @@ function resolveTier(compPlan, firstSeenAt, nowMs) {
   return { plan: "free", reason: "free", daysLeft: 0 };
 }
 function entitlementDetail() {
-  return resolveTier(resolvedPlan, accountAgeStart, Date.now());
+  return resolveTier(resolvedPlan, authAnchorIso || accountAgeStart, Date.now());
 }
 /* TIER-MACHINE-END */
 function entitlement() {
