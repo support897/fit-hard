@@ -2130,7 +2130,7 @@
       var ARROW = '<svg width="27" height="27" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
       if (doorStep === 2) {
         box.innerHTML = '<div class="doorPage"><div class="doorCol">' +
-          '<div class="doorBigMark"><img src="icon.svg" alt=""></div>' +
+          '<div class="doorBigMark"><img src="icons/icon-512.png" alt=""></div>' +
           '<div class="doorEmailRow"><span>' + esc(doorEmail) + '</span><button class="miniBtn" id="accChangeBtn">' + esc(tr("door.change")) + '</button></div>' +
           '<label>' + esc(tr("door.password")) + '<input id="accPass" type="password" autocomplete="current-password" placeholder="' + esc(tr("door.passwordPh")) + '"></label>' +
           '<div class="row"><button class="primaryBtn" id="accContinueBtn">' + esc(tr("door.continueBtn")) + '</button></div>' +
@@ -2168,7 +2168,7 @@
         return;
       }
       box.innerHTML = '<div class="doorPage"><div class="doorCol">' +
-        '<div class="doorBigMark"><img src="icon.svg" alt=""></div>' +
+        '<div class="doorBigMark"><img src="icons/icon-512.png" alt=""></div>' +
         '<div class="doorBigName">Fit Hard</div>' +
         '<div class="doorBigSub">' + esc(tr("door.sub")) + '</div>' +
         '<div class="doorIcons"><button class="doorIconBtn" id="accGoogleBtn" aria-label="Continue with Google">' + GOOGLE_G + '</button>' +
