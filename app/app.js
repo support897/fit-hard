@@ -201,7 +201,7 @@
   var TERMS_URL = "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/";
   function renewText() {
     return tr("plan.renewPro", { m: priceText("monthly").text, y: priceText("yearly").text }) + " " +
-      tr("plan.renewForever", { f: priceText("forever").text });
+      tr("plan.renewForever");
   }
   function paywallLegalHtml() {
     return '<p class="hint">' + esc(renewText()) + "</p>" +
