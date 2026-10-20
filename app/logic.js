@@ -219,7 +219,12 @@ function repairState(raw) {
       preferences: Array.isArray(p.preferences) ? p.preferences.filter(function (g) { return typeof g === "string"; }) : [],
       allergies: Array.isArray(p.allergies) ? p.allergies.filter(function (g) { return typeof g === "string"; }) : [],
       needs: Array.isArray(p.needs) ? p.needs.filter(function (g) { return typeof g === "string"; }) : [],
-      setupDone: !!p.setupDone
+      setupDone: !!p.setupDone,
+      /* The free-month anchor rides the rebuild (F1 writer
+         cure, 20 Oct 2026): a repair that strips it forces
+         the load path to re-birth a LOCAL stamp, and a moved
+         stamp is refused by the server fence forever. */
+      firstSeenAt: typeof p.firstSeenAt === "string" && p.firstSeenAt ? p.firstSeenAt : null
     };
   }
   if (isObj(raw.checkins)) Object.keys(raw.checkins).forEach(function (k) {
