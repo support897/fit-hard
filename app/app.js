@@ -302,7 +302,7 @@
         '<button class="primaryBtn" id="planBuyYearly">' + esc(tr("plan.buyYearly")) + "</button></div>" +
         (onSale ? "" : '<p class="hint">' + esc(tr("plan.notOnSale")) + "</p>");
       box.innerHTML =
-        '<div class="card"><h2>' + esc(tr("plan.title")) + '</h2><p class="hint">' + esc(tierStateLine()) + "</p></div>" +
+        '<div class="card"><p class="hint">' + esc(tierStateLine()) + "</p></div>" +
         '<div class="card"><h2>' + esc(tr("plan.t0Name")) + '</h2><p>' + esc(tr("plan.t0Body")) + '</p><p class="big">' + esc(tr("plan.freeWord")) + "</p></div>" +
         '<div class="card"><h2>' + esc(tr("plan.t1Name")) + '</h2><p>' + esc(tr("plan.t1Body")) + '</p><p class="big">' + esc(tr("plan.freeWord")) + "</p></div>" +
         '<div class="card"><h2>' + esc(tr("plan.t2Name")) + '</h2><p>' + esc(tr("plan.t2Body")) + "</p>" + proRows + "</div>" +
