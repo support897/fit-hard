@@ -863,6 +863,18 @@ function mergeStates(cloud, local) {
   var out = {};
   var lp = isObj(local.profile) ? local.profile : null, cp = isObj(cloud.profile) ? cloud.profile : null;
   out.profile = (lp && lp.setupDone) ? lp : (cp || lp);
+  /* F1 WRITER CURE (Security ruling, 20 Oct 2026): the
+     free-month anchor resolves CLOUD-FIRST at the merge.
+     Once a stamp exists on the server record it is CARRIED,
+     never moved by a local profile — a guest setup walked
+     on a fresh device births its own stamp, and that stamp
+     must never overwrite the account's (the server fence
+     refuses a moved stamp, permanently). Birth happens
+     only when no stamp exists anywhere (the load repair
+     stamps a profile that has none). */
+  if (out.profile && cp && typeof cp.firstSeenAt === "string" && cp.firstSeenAt) {
+    out.profile = Object.assign({}, out.profile, { firstSeenAt: cp.firstSeenAt });
+  }
   out.checkins = unionMap(cloud.checkins, local.checkins);
   out.plan = unionMap(cloud.plan, local.plan);
   out.customRecipes = unionList(cloud.customRecipes, local.customRecipes);
