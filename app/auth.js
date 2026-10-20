@@ -201,9 +201,23 @@ async function saveCloudState(uid, state) {
      live BELOW this line, constructed from sliceData only
      after the root has landed. */
   await setDoc(doc(db, "users", uid), rootDocData);
-  await Promise.all(sliceData.map(function (pair) {
-    return setDoc(doc(db, "users", uid, "slices", pair[0]), { value: pair[1] });
+  var sliceErrs = await Promise.all(sliceData.map(function (pair) {
+    return setDoc(doc(db, "users", uid, "slices", pair[0]), { value: pair[1] }).then(function () { return null; }, function (e) {
+      /* THE DESIGNED REFUSAL IS NOT A FAILURE (21 Oct 2026,
+         the Test chair's flash observation): the tier slice's
+         "pro" claim is refused BY DESIGN whenever no _comp
+         record stands — that refusal IS the entitlement
+         resolution, and it must never fail the mirror (the
+         account note would flash a failure during a healthy
+         sign-in settle, for a save that then succeeds). Every
+         other refusal still fails the batch, and the note
+         still tells the truth when data is at risk. */
+      if (pair[0] === "tier" && pair[1] && pair[1].plan === "pro" && e && e.code === "permission-denied") return null;
+      return e || new Error("slice write failed");
+    });
   }));
+  var badSlice = sliceErrs.filter(Boolean);
+  if (badSlice.length) throw badSlice[0];
   let warnings = [];
   if (typeof window !== "undefined" && window.FitLogic && window.FitLogic.oversizedSlices) {
     warnings = window.FitLogic.oversizedSlices(state);
