@@ -131,16 +131,16 @@ textarea{resize:vertical}
 /* --- Calendar, habits, to-dos --- */
 .calHead{display:flex;align-items:center;gap:10px;margin-bottom:10px}
 .calHead h3{margin:0;flex:1;font-size:19px}
-.calGrid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.calGrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
 .calDow{font-size:12px;font-weight:700;color:var(--mut);text-align:center;padding:2px 0}
-.calCell{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:74px;padding:6px;cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
+.calCell{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:74px;padding:6px;cursor:pointer;text-align:left;font:inherit;color:var(--ink);min-width:0;overflow:hidden}
 .calCell.dim{opacity:.42}
 .calCell.today{outline:2px solid var(--sage)}
 .calCell.sel{outline:2px solid var(--ink)}
 .calCell .dNum{font-weight:700;font-size:13px}
 .calCell .dots{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px}
 .calCell .evDot{width:8px;height:8px;border-radius:50%}
-.calCell .evTxt{font-size:11px;font-weight:700;color:var(--mut2);line-height:1.25}
+.calCell .evTxt{font-size:11px;font-weight:700;color:var(--mut2);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .habitRow{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin:10px 0;box-shadow:0 1px 4px rgba(62,47,38,.05)}
 .habitRow h3{margin:0 0 2px;font-size:16px}
 .weekDots{display:flex;gap:6px;margin-top:8px}
