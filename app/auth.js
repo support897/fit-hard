@@ -25,7 +25,7 @@
    (FitLogic.mergeStates), which never drops user data. */
 import { initializeApp } from "./sdk/firebase-app.js";
 import {
-  getAuth, initializeAuth, indexedDBLocalPersistence, onAuthStateChanged, signOut, deleteUser,
+  getAuth, initializeAuth, browserLocalPersistence, onAuthStateChanged, signOut, deleteUser,
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
   sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential,
   signInAnonymously,
@@ -42,15 +42,20 @@ function initDoor(config) {
   if (!config) return false;
   if (!app) {
     app = initializeApp(config);
-    /* THE DOOR CURE (the fleet bisect of record, 21 Oct 2026):
-       on native, plain getAuth() leaves sign-in results and
-       the auth-state listener hanging in iPhone Capacitor
-       apps — the system sheet completes and the app never
-       registers it (her films, three apps). Native takes
-       initializeAuth with IndexedDB persistence, the plugin
-       guide's required shape; the web keeps getAuth. */
+    /* THE DOOR CURE (the fleet bisect of record, as amended
+       to the proven control's settler, 21 Oct 2026): on
+       native, plain getAuth() leaves sign-in results and the
+       auth-state listener hanging in iPhone Capacitor apps —
+       the system sheet completes and the app never registers
+       it (her films, three apps). Native takes initializeAuth
+       naming browserLocalPersistence: the default chain
+       settles through IndexedDB, the layer that can stall
+       inside WKWebView under the packaged app's scheme;
+       browser-local persistence is the reliable settler in
+       that webview (the device-completing control's shape).
+       The web keeps getAuth. */
     auth = (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())
-      ? initializeAuth(app, { persistence: indexedDBLocalPersistence })
+      ? initializeAuth(app, { persistence: browserLocalPersistence })
       : getAuth(app);
     db = getFirestore(app);
   }
