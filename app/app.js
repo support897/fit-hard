@@ -2727,7 +2727,14 @@
      parked guest state before the demo profile landed). */
   function settleSetupSheet() { if (state.profile && state.profile.setupDone) closeSetup(); }
   $("suSkip").addEventListener("click", function () {
-    if (!state.profile) { state.profile = { name: "", needs: [], preferences: [], allergies: [], goals: [], setupDone: false, firstSeenAt: new Date().toISOString() }; save(); }
+    /* The skip is a birth too (F-B11-1, the chairs' skip
+       shape): a first-boot skip on a profile-less state
+       births the stamped whole default, exactly as the
+       walled builds did — and the skip always persists, so
+       no road out of the setup leaves the app unborn. */
+    if (!state.profile) { state.profile = { name: "", needs: [], preferences: [], allergies: [], goals: [], setupDone: false, firstSeenAt: new Date().toISOString() }; }
+    else ensureFullProfile();
+    save();
     closeSetup(); renderAll();
   });
   $("suDone").addEventListener("click", function () {
