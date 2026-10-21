@@ -2126,6 +2126,12 @@
   }
   function renderAccount() {
     var box = $("accountBox"); if (!box) return;
+    /* DOOR PURITY + ACCOUNT MANDATORY (fleet rulings, 21 Oct
+       2026): before entry the app shows the DOOR and nothing
+       else — the settings page carries sign-up/sign-in only,
+       the menu and Wally stay inside, and there is no road in
+       without an account. Entry (or the demo) lifts the class. */
+    document.body.classList.toggle("signedOut", !authUser && !demoMode);
     if (!doorStarted) {
       box.innerHTML = (Date.now() - bootAt < 4500) ?
         '<p class="hint">' + esc(tr("set.opening")) + '</p>' :
@@ -2202,7 +2208,7 @@
         '<button class="pillBtn" id="accReviewerBtn">' + esc(tr("door.reviewerBtn")) + '</button></div>' +
         (reviewerOpen ? '<div class="grid2"><label>' + esc(tr("door.codeLabel")) + '<input id="accCode" type="text" autocomplete="off" placeholder="' + esc(tr("door.codePh")) + '"></label></div>' +
           '<div class="row"><button class="pillBtn" id="accCodeBtn">' + esc(tr("door.codeBtn")) + '</button></div>' : "") +
-        '<div class="row doorGuestRow"><button class="miniBtn" id="accGuestBtn">' + esc(tr("door.guestBtn")) + '</button></div></div>';
+        '</div>';
       var emEl = $("accEmail"); if (emEl && doorEmail) emEl.value = doorEmail;
       function doorNext() {
         var em = $("accEmail").value.trim();
@@ -2219,7 +2225,6 @@
         window.FitAuth.signInWithApple().catch(function () { toast(tr("acc.appleFail")); });
       });
       $("accDemoBtn").addEventListener("click", function () { enterDemo(null); });
-      $("accGuestBtn").addEventListener("click", function () { showView("today"); openSetup(); });
       $("accReviewerBtn").addEventListener("click", function () { reviewerOpen = true; renderAccount(); });
       var codeBtn = $("accCodeBtn");
       if (codeBtn) codeBtn.addEventListener("click", function () {
