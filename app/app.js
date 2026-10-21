@@ -405,6 +405,10 @@
     $("view-" + name).classList.add("active");
     document.querySelectorAll("[data-view]").forEach(function (b) {
       b.classList.toggle("active", b.getAttribute("data-view") === name); });
+    /* EVERY VIEW OPENS AT ITS TOP (Polar device finding F3):
+       a scroll position earned inside a form or a long view
+       never carries into the next screen. */
+    if (window.scrollTo) window.scrollTo(0, 0);
   }
   document.querySelectorAll("[data-view]").forEach(function (b) {
     b.addEventListener("click", function () { showView(b.getAttribute("data-view")); });
@@ -1106,6 +1110,16 @@
      Advanced, a held class reads Library only, intermediate
      strength reads A step up beside its sets. Beginner
      auto-picks carry no label at all. */
+  /* ONE SET, ONE REP (Polar device finding F5): the counts
+     speak in the singular when the count is one, in every
+     language the tables carry. */
+  function setsChipFor(item) {
+    return tr("gym.setsChip", {
+      sets: item.sets, reps: item.reps,
+      setsWord: item.sets === 1 ? tr("gym.setOne") : tr("gym.setsWord"),
+      unit: item.timed ? tr("gym.sec") : (item.reps === 1 ? tr("gym.repOne") : tr("gym.reps"))
+    });
+  }
   function exRow(item, ex) {
     if (!ex) return "";
     var chip;
@@ -1113,9 +1127,9 @@
       chip = '<span class="kcalChip">' + esc(ex.level === "expert" ? tr("gym.advanced") : tr("gym.libraryOnly")) + "</span>";
     } else if (ex.level === "intermediate") {
       chip = '<span class="kcalChip">' + esc(tr("gym.stepUp")) + '</span><span class="kcalChip">' +
-        esc(tr("gym.setsChip", { sets: item.sets, reps: item.reps, unit: item.timed ? tr("gym.sec") : tr("gym.reps") })) + "</span>";
+        esc(setsChipFor(item)) + "</span>";
     } else {
-      chip = '<span class="kcalChip">' + esc(tr("gym.setsChip", { sets: item.sets, reps: item.reps, unit: item.timed ? tr("gym.sec") : tr("gym.reps") })) + "</span>";
+      chip = '<span class="kcalChip">' + esc(setsChipFor(item)) + "</span>";
     }
     return '<div class="exRow"><span class="exTile"><svg><use href="#i-gym"/></svg></span>' +
       '<span class="eName">' + esc(exName(ex)) + '<br><span class="eMeta">' + esc(exPart(ex)) + " · " + esc(exEquip(ex)) + "</span></span>" + chip + "</div>";
@@ -1176,6 +1190,12 @@
       if (!maySaveRoutine()) return;
       var days = [];
       el.querySelectorAll("[data-gyday].on").forEach(function (b) { days.push(Number(b.getAttribute("data-gyday"))); });
+      /* A ROUTINE WITH NO DAYS IS ON NO CALENDAR (Polar
+         device finding F4): the success line must never
+         claim a calendar place the build did not take.
+         No day picked, no build — the user hears the one
+         plain thing they need to do. */
+      if (!days.length) { toast(tr("gym.pickDayFirst")); return; }
       state.routines.push(Object.assign({}, built, { id: "routine." + Date.now(), days: days,
         time: $("gyTime").value || null, createdKey: L.todayKey() }));
       save(); renderRoutines(); toast(tr("gym.built"));
@@ -2181,7 +2201,8 @@
         '<div class="row doorDemoRow"><button class="pillBtn" id="accDemoBtn">' + esc(tr("door.demoBtn")) + '</button>' +
         '<button class="pillBtn" id="accReviewerBtn">' + esc(tr("door.reviewerBtn")) + '</button></div>' +
         (reviewerOpen ? '<div class="grid2"><label>' + esc(tr("door.codeLabel")) + '<input id="accCode" type="text" autocomplete="off" placeholder="' + esc(tr("door.codePh")) + '"></label></div>' +
-          '<div class="row"><button class="pillBtn" id="accCodeBtn">' + esc(tr("door.codeBtn")) + '</button></div>' : "") + '</div>';
+          '<div class="row"><button class="pillBtn" id="accCodeBtn">' + esc(tr("door.codeBtn")) + '</button></div>' : "") +
+        '<div class="row doorGuestRow"><button class="miniBtn" id="accGuestBtn">' + esc(tr("door.guestBtn")) + '</button></div></div>';
       var emEl = $("accEmail"); if (emEl && doorEmail) emEl.value = doorEmail;
       function doorNext() {
         var em = $("accEmail").value.trim();
@@ -2198,6 +2219,7 @@
         window.FitAuth.signInWithApple().catch(function () { toast(tr("acc.appleFail")); });
       });
       $("accDemoBtn").addEventListener("click", function () { enterDemo(null); });
+      $("accGuestBtn").addEventListener("click", function () { showView("today"); openSetup(); });
       $("accReviewerBtn").addEventListener("click", function () { reviewerOpen = true; renderAccount(); });
       var codeBtn = $("accCodeBtn");
       if (codeBtn) codeBtn.addEventListener("click", function () {
@@ -2684,7 +2706,15 @@
        setup-complete) a beat later — never wall it meanwhile (QA leg 7). */
     var demoReturning = false;
     try { demoReturning = !!localStorage.getItem(DEMO_MARK); } catch (e) {}
-    if (!demoReturning) openSetup();
+    if (!demoReturning) {
+      /* DOOR FIRST (Polar device finding F1, 21 Oct 2026):
+         a cold open meets the DOOR, never the setup form.
+         The setup follows a choice made at the door: a
+         sign-in (the tour leads into it), the demo, or the
+         door's own "continue without an account" road. */
+      showView("settings");
+      setTimeout(function () { var ab = $("accountBox"); if (ab && ab.scrollIntoView) ab.scrollIntoView(); }, 60);
+    }
   }
 
   if ("serviceWorker" in navigator) {
