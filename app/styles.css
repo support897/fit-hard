@@ -14,6 +14,11 @@
   --mut:#6E5D4B; --mut2:#5D4C3A;
   --sage:#52695A; --sage-mist:#A9BFA5; --sage-tint:#DCE7D8; --taupe:#AC9278; --on-accent:#FFFFFF;
   --meals:#52695A; --gym:#52695A; --pep:#52695A; --cal:#52695A; --amber:#C08552;
+  /* THE STATUS BAR'S GROUND (fleet ruling, 21 Oct 2026):
+     the device's own safe-area inset, taken once here — every
+     piece of top chrome grows by it, so nothing tappable ever
+     sits under the clock on any iPhone shape. */
+  --sat: env(safe-area-inset-top, 0px);
 }
 body[data-appearance="white"]{
   --cream:#FFFFFF; --surface:#FFFFFF; --blush:#F7F1E3; --line:#E6D9BE;
@@ -41,13 +46,13 @@ h1,h2,h3,.big,.stripName,.dayCard h3,.habitRow h3,.recipeCard h3,.sessionBig,.re
 .ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
 .icInline{width:20px;height:20px;vertical-align:-4px}
 .icBig{width:44px;height:44px;color:var(--sage)}
-#topStrip{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;background:var(--cream);border-bottom:1px solid var(--line);padding:8px 14px}
+#topStrip{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:10px;background:var(--cream);border-bottom:1px solid var(--line);padding:8px 14px;padding-top:calc(8px + var(--sat))}
 .stripToggle{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:5px 7px;cursor:pointer;color:var(--ink);min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center}
 .stripLogo{width:28px;height:28px;border-radius:7px}
 .stripName{font-weight:700;font-size:19px}
 .stripHi{margin-left:auto;font-weight:600;color:var(--mut);font-size:14px}
 #app{display:flex;align-items:flex-start}
-#sidebar{width:272px;flex:0 0 272px;background:var(--blush);border-right:1px solid var(--line);padding:16px 12px;position:sticky;top:49px;height:calc(100vh - 49px);overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+#sidebar{width:272px;flex:0 0 272px;background:var(--blush);border-right:1px solid var(--line);padding:16px 12px;position:sticky;top:calc(49px + var(--sat));height:calc(100vh - 49px - var(--sat));overflow-y:auto;display:flex;flex-direction:column;gap:4px}
 body.sbHidden #sidebar{display:none}
 #main{flex:1;min-width:0;max-width:920px;margin:0 auto;padding:18px 16px 48px;width:100%}
 body:not(.sbHidden) #main{max-width:none}
