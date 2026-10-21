@@ -2124,8 +2124,34 @@
     return what === "sign-up" ? tr("acc.errMake")
                                : tr("acc.errSignin");
   }
+  /* D-B (door-feel ruling, 21 Oct 2026): while any door
+     attempt flies, the door LOOKS busy and a second tap is a
+     no-op — a door that looks dead during its own wait
+     invites the double tap that poisons the return. */
+  var doorBusy = false;
+  function doorBusyOn() { doorBusy = true; var b = $("accountBox"); if (b) b.classList.add("doorBusy"); }
+  function doorBusyOff() { doorBusy = false; var b = $("accountBox"); if (b) b.classList.remove("doorBusy"); }
+  /* D-A (same ruling): a cancel is not a failure — the user
+     changed their mind, so the door simply stands, silent.
+     Cancels arrive as the popup-closed code on the web, or
+     with "cancel" in the message in the native providers'
+     own words. */
+  function isDoorCancel(e) {
+    var code = (e && e.code) || "", msg = (e && e.message) || "";
+    return code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request" || /cancel/i.test(msg);
+  }
+  function doorAttempt(promise, failKey) {
+    if (doorBusy) return;
+    doorBusyOn();
+    promise.then(function () { /* the auth listener takes it from here */ }, function (e) {
+      doorBusyOff();
+      if (isDoorCancel(e)) return;
+      toast(tr(failKey));
+    });
+  }
   function renderAccount() {
     var box = $("accountBox"); if (!box) return;
+    doorBusy = false;
     /* DOOR PURITY + ACCOUNT MANDATORY (fleet rulings, 21 Oct
        2026): before entry the app shows the DOOR and nothing
        else — the settings page carries sign-up/sign-in only,
@@ -2166,8 +2192,10 @@
           '</div></div>';
         $("accChangeBtn").addEventListener("click", function () { doorStep = 1; renderAccount(); });
         $("accContinueBtn").addEventListener("click", function () {
+          if (doorBusy) return;
           var pw = $("accPass").value;
           if (!pw) { toast(tr("door.tPwFirst")); return; }
+          doorBusyOn();
           /* One button, both roads: sign in; a credential
              refusal may simply mean "new here", so offer
              the pair to account creation. An existing
@@ -2177,12 +2205,13 @@
           window.FitAuth.signInWithEmail(doorEmail, pw).catch(function (e) {
             var c = (e && e.code) || "";
             if (c === "auth/invalid-credential" || c === "auth/wrong-password" || c === "auth/user-not-found") {
-              window.FitAuth.signUpWithEmail(doorEmail, pw).then(function () { toast(tr("door.tMade")); })
+              window.FitAuth.signUpWithEmail(doorEmail, pw).then(function () { doorBusyOff(); toast(tr("door.tMade")); })
                 .catch(function (e2) {
+                  doorBusyOff();
                   if (((e2 && e2.code) || "") === "auth/email-already-in-use") toast(tr("door.tMismatch"));
                   else toast(authErrWords(e2, "sign-up"));
                 });
-            } else { toast(authErrWords(e, "sign-in")); }
+            } else { doorBusyOff(); toast(authErrWords(e, "sign-in")); }
           });
         });
         $("accPass").addEventListener("keydown", function (ev) { if (ev.key === "Enter") $("accContinueBtn").click(); });
@@ -2219,10 +2248,10 @@
       $("accNextBtn").addEventListener("click", doorNext);
       $("accEmail").addEventListener("keydown", function (ev) { if (ev.key === "Enter") doorNext(); });
       $("accGoogleBtn").addEventListener("click", function () {
-        window.FitAuth.signInWithGoogle().catch(function () { toast(tr("acc.googleFail")); });
+        doorAttempt(window.FitAuth.signInWithGoogle(), "acc.googleFail");
       });
       $("accAppleBtn").addEventListener("click", function () {
-        window.FitAuth.signInWithApple().catch(function () { toast(tr("acc.appleFail")); });
+        doorAttempt(window.FitAuth.signInWithApple(), "acc.appleFail");
       });
       $("accDemoBtn").addEventListener("click", function () { enterDemo(null); });
       $("accReviewerBtn").addEventListener("click", function () { reviewerOpen = true; renderAccount(); });
@@ -2297,9 +2326,12 @@
     });
   }
   function enterDemo(hash) {
+    if (doorBusy) return;
     if (!window.FitAuth || !window.FitAuth.enterDemoSession) { toast(tr("acc.demoResting")); return; }
+    doorBusyOn();
     demoPending = true; demoPendingHash = hash || null;
     window.FitAuth.enterDemoSession().catch(function () {
+      doorBusyOff();
       demoPending = false;
       toast(tr("acc.demoFail"));
     });
