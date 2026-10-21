@@ -40,7 +40,7 @@ body[data-appearance="image"]{
   background-size:cover;background-position:center;background-attachment:fixed;
 }
 *{box-sizing:border-box}
-html,body{margin:0;padding:0}
+html,body{margin:0;padding:0;touch-action:manipulation}
 body{font-family:Karla,-apple-system,"Segoe UI",sans-serif;background-color:var(--cream);color:var(--ink)}
 h1,h2,h3,.big,.stripName,.dayCard h3,.habitRow h3,.recipeCard h3,.sessionBig,.repCount,.timerBig{font-family:"Zilla Slab",Georgia,serif}
 .ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
