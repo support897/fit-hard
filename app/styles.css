@@ -48,6 +48,9 @@ html,body{margin:0;padding:0;touch-action:manipulation}
 body.signedOut #sidebar,body.signedOut #wallyFloat{display:none}
 body.signedOut #view-settings .card:not(#accountCard){display:none}
 body.signedOut #guideControls{display:none}
+/* D-B: while a door attempt flies, the door's buttons rest —
+   visibly busy, and a second tap lands nowhere. */
+#accountBox.doorBusy button{opacity:.55;pointer-events:none}
 body{font-family:Karla,-apple-system,"Segoe UI",sans-serif;background-color:var(--cream);color:var(--ink)}
 h1,h2,h3,.big,.stripName,.dayCard h3,.habitRow h3,.recipeCard h3,.sessionBig,.repCount,.timerBig{font-family:"Zilla Slab",Georgia,serif}
 .ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
