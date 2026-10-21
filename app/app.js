@@ -358,7 +358,7 @@
   $("reofferSave").addEventListener("click", function () {
     var v = $("reofferName").value.trim().slice(0, 60);
     if (v) {
-      state.profile = state.profile || {};
+      ensureFullProfile();
       state.profile.name = v;
       save();
       renderAll();
@@ -371,7 +371,7 @@
   function iconFor(areaId) { return { peptides: "#i-pep", meals: "#i-meal", gym: "#i-gym", calendar: "#i-cal" }[areaId] || "#i-star"; }
 
   function buildSidebar() {
-    var needs = state.profile ? state.profile.needs : [];
+    var needs = (state.profile && state.profile.needs) || [];
     var split = L.areasForNeeds(needs.length ? needs : ["meals", "gym", "peptides", "calendar"]);
     function group(a) {
       var subs = a.subs.map(function (s) {
@@ -2389,11 +2389,29 @@
      user by it. A name typed at Create account wins first;
      a Google name is adopted when the profile has none.
      An existing profile name is never overwritten. */
+  /* BIRTH INTEGRITY (F-B11-1, QA's placed TypeError, 21 Oct
+     2026): a profile born thin — a name and nothing else —
+     poisons every render that reads its arrays (buildSidebar
+     read profile.needs unguarded and died, taking the birth
+     session's renders with it). Any site that creates the
+     profile creates it WHOLE: the four array fields always
+     stand. The free-month stamp keeps its own cured
+     machinery and is never minted here. */
+  function ensureFullProfile() {
+    var p = state.profile || {};
+    if (!Array.isArray(p.needs)) p.needs = [];
+    if (!Array.isArray(p.preferences)) p.preferences = [];
+    if (!Array.isArray(p.allergies)) p.allergies = [];
+    if (!Array.isArray(p.goals)) p.goals = [];
+    if (typeof p.name !== "string") p.name = "";
+    state.profile = p;
+    return p;
+  }
   function adoptSignInName(user) {
     var adopt = (pendingName || user.displayName || "").trim().slice(0, 60);
     pendingName = "";
     if (!adopt) return;
-    state.profile = state.profile || {};
+    ensureFullProfile();
     if (state.profile.name) return;
     state.profile.name = adopt;
     saveLocal();
@@ -2528,7 +2546,7 @@
            evening J3 friendly stop, which applied the
            name-SCREEN text to the tour.) */
         var v = inp.value.trim().slice(0, 60);
-        state.profile = state.profile || {};
+        ensureFullProfile();
         /* A typed name saves (on a replay, an edited
            name updates). A blank writes NOTHING — on
            replay it can never erase a saved name. */
@@ -2543,7 +2561,7 @@
       var inp = $("tourName");
       if (inp) {
         var v = inp.value.trim().slice(0, 60);
-        state.profile = state.profile || {};
+        ensureFullProfile();
         if (v && (tourReplay || !state.profile.name)) { state.profile.name = v; renderAll(); }
       }
     }
