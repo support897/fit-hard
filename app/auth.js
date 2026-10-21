@@ -121,12 +121,20 @@ function nativeDoorPlugin() {
 async function nativeSignInWithGoogle(plugin) {
   const result = await plugin.signInWithGoogle();
   const credential = result.credential || {};
+  /* D-A (door-feel ruling, 21 Oct 2026): a return carrying
+     no token is NOT a credential — name it here instead of
+     feeding an undefined token into the exchange, where it
+     would surface as the wrong failure. A user cancel never
+     reaches this line: the plugin rejects it, and the door
+     reads a cancel as a cancel, silently. */
+  if (!credential.idToken) { const e = new Error("The sign-in did not finish."); e.code = "fit/door-unfinished"; throw e; }
   return signInWithCredential(auth, GoogleAuthProvider.credential(credential.idToken));
 }
 
 async function nativeSignInWithApple(plugin) {
   const result = await plugin.signInWithApple();
   const credential = result.credential || {};
+  if (!credential.idToken) { const e = new Error("The sign-in did not finish."); e.code = "fit/door-unfinished"; throw e; }
   const provider = new OAuthProvider("apple.com");
   return signInWithCredential(auth, provider.credential({ idToken: credential.idToken, rawNonce: credential.nonce }));
 }
