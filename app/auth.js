@@ -177,7 +177,10 @@ async function signInWithApple() {
 }
 
 async function signOutUser() {
-  return signOut(auth);
+  /* Bounded like every door call: a sign-out that hangs under a
+     stuck sync must still settle, so the app can end the local
+     session and speak. The caller owns the words. */
+  return withDoorTimeout(signOut(auth), 10000);
 }
 
 /* Small slices stay in the root document; everything else is
