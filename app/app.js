@@ -2100,6 +2100,9 @@
     if (!authUser || !window.FitAuth) return;
     if (mirrorTimer) clearTimeout(mirrorTimer);
     mirrorTimer = setTimeout(function () {
+      /* Re-checked at fire time: a sign-out inside the window
+         ends the session, and a dead session saves nothing. */
+      if (!authUser || !window.FitAuth) return;
       window.FitAuth.saveCloudState(authUser.uid, state).then(function (r) {
         cloudWarnings = (r && r.warnings) || [];
         mirrorNote = "";
@@ -2147,6 +2150,27 @@
       doorBusyOff();
       if (isDoorCancel(e)) return;
       toast(tr(failKey));
+    });
+  }
+  /* Sign-out, owned end to end (QA fix order, build 13): the
+     local session ends NOW, on this device, whatever the sync
+     or the network is doing — the same end the auth listener
+     runs when it hears null, run by hand so a stuck sync can
+     never trap the user in the account. The server call then
+     settles (bounded in auth.js) and its result only chooses
+     the line that speaks: the given key on success, the
+     sign-out failure line on any failure. Never silence. */
+  function signOutFlow(okKey) {
+    var wasDemo = demoMode;
+    authUser = null;
+    doorStep = 1; doorEmail = "";
+    if (wasDemo) { restoreParkedState(); renderAll(); }
+    else renderAccount();
+    if (!window.FitAuth || !window.FitAuth.signOutUser) { toast(tr("acc.signOutFail")); return; }
+    window.FitAuth.signOutUser().then(function () {
+      toast(tr(okKey));
+    }).catch(function () {
+      toast(tr("acc.signOutFail"));
     });
   }
   function renderAccount() {
@@ -2270,7 +2294,7 @@
       box.innerHTML = '<p class="hint">' + esc(tr("acc.demoExploring")) + '</p>' +
         '<div class="row"><button class="pillBtn" id="accLeaveBtn">' + esc(tr("acc.leaveDemo")) + '</button></div>';
       $("accLeaveBtn").addEventListener("click", function () {
-        window.FitAuth.signOutUser().catch(function () {});
+        signOutFlow("toast.demoClosed");
       });
       return;
     }
@@ -2294,7 +2318,7 @@
     var proBtn = $("accProBtn"); if (proBtn) proBtn.addEventListener("click", showProMoment);
     var plansBtn = $("accPlansBtn"); if (plansBtn) plansBtn.addEventListener("click", openPlans);
     var out = $("accOutBtn"); if (out) out.addEventListener("click", function () {
-      window.FitAuth.signOutUser().then(function () { toast(tr("acc.signedOut")); });
+      signOutFlow("acc.signedOut");
     });
     var del = $("accDeleteBtn"); if (del) del.addEventListener("click", function () { deleteArmed = true; renderAccount(); });
     var no = $("accDeleteNo"); if (no) no.addEventListener("click", function () { deleteArmed = false; renderAccount(); });
