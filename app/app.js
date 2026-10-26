@@ -1420,12 +1420,11 @@
     if (!silent) { toast(tr("gym.sessionSaved")); showWallyCelebration("session"); }
     renderSession();
   }
-  /* --- Machine photo v2: picture match (order 17 Oct 2026).
-     ACCURACY LAW: the app never claims to recognise the
-     machine from the photo. No auto identification, no
-     found-it copy, no scores. The user is the verifier:
-     their tap on the picture that matches is the only match
-     there is, and the confirmed pick is what saves. --- */
+  /* --- Machine photo: user-verified picture match.
+     This build has no machine-specific photo model, so it
+     never guesses, claims a match, or invents a confidence
+     score. Search or pick a name; when a photo is present,
+     show the user's choice and ask for confirmation. --- */
   /* Generated art (graphic redo, approved 17 Oct 2026):
      station art derives from the player's generated frame
      sets (FitAnim.framesFor), never a second hand-kept
@@ -1512,19 +1511,61 @@
     el.innerHTML = '<div class="card"><h2>' + esc(tr("gym.showMachine")) + '</h2>' +
       '<p class="hint">' + esc(tr("gym.machineHint")) + '</p>' +
       '<input id="mcPhoto" type="file" accept="image/*" aria-label="Add a machine photo"><div id="mcPreview"></div>' +
+      '<p class="hint" id="mcPhotoStatus" role="status" aria-live="polite"></p>' +
       '<p class="hint">' + esc(tr("gym.matchAsk")) + '</p>' +
+      '<label for="mcSearch">' + esc(tr("gym.machineSearchLabel")) +
+      '<input id="mcSearch" type="search" autocomplete="off" placeholder="' + esc(tr("gym.machineSearchPlaceholder")) + '"></label>' +
+      '<p class="hint" id="mcSearchStatus" role="status" aria-live="polite"></p>' +
+      '<div class="row"><button class="pillBtn hidden" id="mcClearSearch" type="button">' + esc(tr("gym.machineSearchShowAll")) + '</button></div>' +
       '<div class="machineGrid" id="mcGrid">' + EX.MACHINES.map(function (m) {
         var fr = stationFramesFor(m);
-        return '<button class="machineTile" data-machine="' + m.id + '">' +
+        return '<button class="machineTile" type="button" data-machine="' + m.id + '">' +
           (fr ? '<img class="machineTileImg" src="' + fr[0] + '" alt="">' : "") +
           '<span class="machineTileName">' + esc(machName(m)) + "</span></button>"; }).join("") + "</div>" +
-      '<div class="row"><button class="pillBtn" id="mcNone">' + esc(tr("gym.noneMatch")) + '</button></div>' +
+      '<div class="row"><button class="pillBtn" id="mcNone" type="button">' + esc(tr("gym.noneMatch")) + '</button></div>' +
       '<div id="mcNames" class="hidden"><p class="hint">' + esc(tr("gym.noneHint")) + '</p>' +
       '<div class="chipRow">' + EX.MACHINES.map(function (m) {
-        return '<button class="chip" data-machine="' + m.id + '">' + esc(machName(m)) + "</button>"; }).join("") + "</div></div>" +
-      '<div id="mcResult"></div></div>';
+        return '<button class="chip" type="button" data-machine="' + m.id + '">' + esc(machName(m)) + "</button>"; }).join("") + "</div></div>" +
+      '<div id="mcConfirm" class="hidden" aria-live="polite"></div><div id="mcResult"></div></div>';
+    var photoSelected = false;
+    function folded(s) {
+      return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+    }
+    function updateMachineSearch() {
+      var q = folded($("mcSearch").value);
+      var matches = {};
+      EX.MACHINES.forEach(function (m) {
+        if (!q || folded(machName(m) + " " + m.name + " " + m.id).indexOf(q) !== -1) matches[m.id] = true;
+      });
+      el.querySelectorAll("[data-machine]").forEach(function (b) {
+        b.classList.toggle("hidden", !matches[b.getAttribute("data-machine")]);
+      });
+      var count = Object.keys(matches).length;
+      $("mcSearchStatus").textContent = q && !count ? tr("gym.machineSearchNoResults") : "";
+      $("mcClearSearch").classList.toggle("hidden", !q);
+    }
+    function selectMachine(m) {
+      if (!m) return;
+      if (!photoSelected) { renderStation(m); return; }
+      var confirm = $("mcConfirm");
+      confirm.innerHTML = '<div class="card"><h3>' + esc(tr("gym.machinePicked", { name: machName(m) })) + '</h3>' +
+        '<p class="hint">' + esc(tr("gym.machineConfidenceUnavailable")) + '</p><div class="row">' +
+        '<button class="primaryBtn" id="mcConfirmYes" type="button">' + esc(tr("gym.machineConfirm")) + '</button>' +
+        '<button class="pillBtn" id="mcConfirmNo" type="button">' + esc(tr("gym.machineChooseAnother")) + '</button></div></div>';
+      confirm.classList.remove("hidden");
+      $("mcConfirmYes").addEventListener("click", function () { confirm.classList.add("hidden"); renderStation(m); });
+      $("mcConfirmNo").addEventListener("click", function () { confirm.classList.add("hidden"); $("mcSearch").focus(); });
+    }
+    $("mcSearch").addEventListener("input", updateMachineSearch);
+    $("mcClearSearch").addEventListener("click", function () {
+      $("mcSearch").value = ""; updateMachineSearch(); $("mcSearch").focus();
+    });
     $("mcPhoto").addEventListener("change", function () {
       var f = $("mcPhoto").files[0]; if (!f) return;
+      photoSelected = true;
+      $("mcResult").innerHTML = "";
+      $("mcConfirm").classList.add("hidden");
+      $("mcPhotoStatus").textContent = tr("gym.machineConfidenceUnavailable");
       var rd = new FileReader();
       rd.onload = function () { $("mcPreview").innerHTML = '<img class="photoImg mcPhotoImg" alt="' + esc(tr("gym.machineAlt")) + '" src="' + String(rd.result) + '">'; };
       rd.readAsDataURL(f);
@@ -1533,9 +1574,10 @@
     el.querySelectorAll("[data-machine]").forEach(function (b) {
       b.addEventListener("click", function () {
         var m = EX.MACHINES.filter(function (x) { return x.id === b.getAttribute("data-machine"); })[0];
-        if (m) renderStation(m);
+        selectMachine(m);
       });
     });
+    updateMachineSearch();
   }
   /* --- Exercise library (Phase 2): the full spliced set,
      searchable, with the D2 labels. Expert and held-class
