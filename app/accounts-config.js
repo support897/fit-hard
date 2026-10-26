@@ -6,7 +6,7 @@
    values by design; the security lives in firestore.rules
    (owner-only) and the Security desk's live battery. */
 window.FIT_ACCOUNT_CONFIG = {
-  apiKey: "AIzaSyBGfUieliw1vBsx9hioNw0rxEg2fL9xnPQ",
+  apiKey: "AIzaSyDZXZM0kamF2mZVHpKL2SK4JAHjsQIQI0g",
   authDomain: "fit-app-7f25f.firebaseapp.com",
   projectId: "fit-app-7f25f",
   storageBucket: "fit-app-7f25f.firebasestorage.app",

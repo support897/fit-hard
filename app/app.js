@@ -5,6 +5,8 @@
 (function () {
   var L = window.FitLogic, D = window.FIT_DATA;
   var KEY = "fit-app-v1";
+  var OWNER_KEY = KEY + "-owner";
+  function accountStateKey(uid) { return KEY + "-account-" + encodeURIComponent(String(uid)); }
   var state;
   /* ACCOUNT AGE (Tranche B): firstSeenAt on the profile is
      the tier machine's clock. repairState rebuilds the
@@ -35,6 +37,7 @@
   try {
     var bootRaw = localStorage.getItem(KEY);
     if (localStorage.getItem("fit-app-demo") && localStorage.getItem("fit-app-v1-parked")) bootRaw = localStorage.getItem("fit-app-v1-parked");
+    else if (localStorage.getItem(OWNER_KEY)) bootRaw = null;
     state = repairKeep(JSON.parse(bootRaw || "null"));
   }
   catch (e) { state = L.emptyState(); }
@@ -89,7 +92,15 @@
      next change. */
   var saveFailed = false;
   function saveLocal() {
-    try { localStorage.setItem(KEY, JSON.stringify(state)); saveFailed = false; }
+    try {
+      var raw = JSON.stringify(state);
+      if (authUser && !authUser.isAnonymous) {
+        localStorage.setItem(OWNER_KEY, authUser.uid);
+        localStorage.setItem(accountStateKey(authUser.uid), raw);
+      }
+      localStorage.setItem(KEY, raw);
+      saveFailed = false;
+    }
     catch (e) {
       if (!saveFailed) toast(tr("toast.storageFull"));
       saveFailed = true;
@@ -2069,6 +2080,38 @@
   var authUser = null, doorStarted = false, pendingName = "",
       joinPopped = false,
       cloudWarnings = [], mirrorNote = "", deleteArmed = false;
+  /* A device cache belongs to one signed-in uid at a time. Keep
+     a separate local copy per account, and never merge a prior
+     account's cache into the next account. */
+  function activateAccountStorage(uid) {
+    try {
+      var previousUid = localStorage.getItem(OWNER_KEY);
+      var ownKey = accountStateKey(uid);
+      var ownRaw = localStorage.getItem(ownKey);
+      if (previousUid !== uid) knownFirstSeen = null;
+      if (previousUid && previousUid !== uid) {
+        var previousRaw = localStorage.getItem(KEY);
+        if (previousRaw && !localStorage.getItem(accountStateKey(previousUid)))
+          localStorage.setItem(accountStateKey(previousUid), previousRaw);
+        state = repairKeep(JSON.parse(ownRaw || "null"));
+      } else if (ownRaw) {
+        state = repairKeep(JSON.parse(ownRaw));
+      } else if (previousUid === uid) {
+        state = repairKeep(JSON.parse(localStorage.getItem(KEY) || "null"));
+      }
+      localStorage.setItem(OWNER_KEY, uid);
+      var raw = JSON.stringify(state);
+      localStorage.setItem(KEY, raw);
+      localStorage.setItem(ownKey, raw);
+    } catch (e) {
+      state = repairKeep(null);
+      try {
+        localStorage.setItem(OWNER_KEY, uid);
+        localStorage.setItem(KEY, JSON.stringify(state));
+        localStorage.setItem(accountStateKey(uid), JSON.stringify(state));
+      } catch (e2) {}
+    }
+  }
   /* Demo (P4, SPARK SHAPE): a demo session is an anonymous
      session seeded from the invented fixture. The real device
      state is PARKED under a separate key before the demo
@@ -2661,6 +2704,7 @@
        screen, the device copy is restored BEFORE the merge,
        so demo data can never join a real account. */
     if (demoMode) restoreParkedState();
+    activateAccountStorage(user.uid);
     authUser = user;
     window.FitAuth.loadCloudState(user.uid).then(function (cloud) {
       if (cloud) {
@@ -2686,11 +2730,22 @@
     window.FitAuth.watchUser(function (user) {
       if (user) onSignedIn(user);
       else {
-        var wasDemo = demoMode;
+        var wasDemo = demoMode, previousUser = authUser;
+        if (previousUser && !previousUser.isAnonymous && !wasDemo) {
+          try { localStorage.setItem(accountStateKey(previousUser.uid), JSON.stringify(state)); } catch (e) {}
+          state = repairKeep(null);
+          try {
+            localStorage.setItem(KEY, JSON.stringify(state));
+            localStorage.removeItem(OWNER_KEY);
+          } catch (e) {}
+        }
         authUser = null;
         doorStep = 1; doorEmail = "";
         if (wasDemo) { restoreParkedState(); renderAll(); toast(tr("toast.demoClosed")); }
-        else renderAccount();
+        else {
+          if (previousUser && !previousUser.isAnonymous) { saveLocal(); renderAll(); }
+          renderAccount();
+        }
       }
     });
     renderAccount();
