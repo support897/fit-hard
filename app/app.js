@@ -499,6 +499,16 @@
     }
     save();
   }
+  function mealPlanForDay(level, recent) {
+    var target = budgetKcal();
+    if (!target) return null;
+    var budget = L.mealBudgetFor(level, { target: target });
+    var day = L.planDayMeals(budget.meals, allRecipes(), kcalOf, state.profile || {}, recent || []);
+    if (!day || !day.complete) return null;
+    var entry = {};
+    ["breakfast", "lunch", "dinner"].forEach(function (m) { if (day[m]) entry[m] = day[m].id; });
+    return entry;
+  }
   function micInto(textarea) {
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SR) { toast(tr("toast.voiceNo")); return; }
@@ -1875,8 +1885,15 @@
     }).join("");
     document.querySelectorAll(".checkinBtn").forEach(function (b) {
       b.addEventListener("click", function () {
-        state.checkins[L.todayKey()] = b.getAttribute("data-level"); save(); renderToday();
-        var c = D.CHECKINS.filter(function (x) { return x.id === b.getAttribute("data-level"); })[0];
+        var chosenLevel = b.getAttribute("data-level"), todayKey = L.todayKey();
+        state.checkins[todayKey] = chosenLevel;
+        var currentPlan = state.plan[mpKey(todayKey)] || {};
+        if (chosenLevel === "bad" && !currentPlan.breakfast && !currentPlan.lunch && !currentPlan.dinner) {
+          var gentlePlan = mealPlanForDay("bad", []);
+          if (gentlePlan) state.plan[mpKey(todayKey)] = gentlePlan;
+        }
+        save(); renderToday();
+        var c = D.CHECKINS.filter(function (x) { return x.id === chosenLevel; })[0];
         toast(tr("checkin." + c.id + "Hint", null, c.hint));
       });
     });
@@ -1900,6 +1917,20 @@
       ["breakfast", "lunch", "dinner"].forEach(function (m) { var r = entry[m] ? recipeById(entry[m]) : null; var kk = kcalOf(r); if (kk) planned += kk; });
       $("budgetNote").textContent = tr("legal.budgetNote") +
         (planned ? tr("today.planned", { kcal: planned }) : "");
+      var planAction = $("todayPlanAction");
+      if (planAction) {
+        if (level === "bad" && planned > day.meals) {
+          planAction.hidden = false;
+          planAction.innerHTML = '<p class="hint">' + esc(tr("today.planActionNote")) + '</p>' +
+            '<button type="button" class="pillBtn" id="todayPlanBadBtn">' + esc(tr("today.planReplaceBtn")) + '</button>';
+          $("todayPlanBadBtn").addEventListener("click", function () {
+            var freshPlan = mealPlanForDay("bad", []);
+            if (!freshPlan) { toast(tr("today.planUnavailable")); return; }
+            state.plan[mpKey(L.todayKey())] = freshPlan;
+            save(); renderToday(); toast(tr("today.planUpdated"));
+          });
+        } else { planAction.hidden = true; planAction.innerHTML = ""; }
+      }
     } else { $("budgetCard").hidden = true; }
     var setUp = !!(p && p.setupDone);
     $("todayEmpty").hidden = setUp;
