@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <rect width="240" height="240" rx="52" fill="#FAEED6"/>
+  <!-- REDUCTION drawing for 32px and under: fewer strokes, heavier weight,
+       head merged toward the body arc so the figure survives at 16px -->
+  <path d="M14 240 A 140 66 0 0 1 226 240 Z" fill="#52695A"/>
+  <g stroke="#3E2F26" stroke-linecap="round" fill="none">
+    <path d="M100 200 L110 140" stroke-width="30"/>
+    <path d="M146 200 L118 138" stroke-width="30"/>
+    <path d="M114 142 C 126 108, 148 84, 182 62" stroke-width="30"/>
+  </g>
+  <circle cx="88" cy="104" r="24" fill="#3E2F26"/>
+</svg>
