@@ -1,0 +1,7 @@
+This is not a calendar at all.
+BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:No dates on this one
+END:VEVENT
+END:VCALENDAR
