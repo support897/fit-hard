@@ -1,0 +1,50 @@
+{
+ "tasks": [
+  {
+   "id": "tuc-1",
+   "title": "TEST C \u2014 Read a chapter",
+   "date": "2026-10-14",
+   "time": null,
+   "durationMin": 20,
+   "priority": 0,
+   "repeat": null,
+   "category": "rest",
+   "color": "#8E7CC3",
+   "essential": false,
+   "status": "todo",
+   "steps": [],
+   "minVersion": "",
+   "fullVersion": "",
+   "source": "seed",
+   "originalText": "",
+   "skipDates": [],
+   "doneDates": []
+  }
+ ],
+ "feelings": {},
+ "settings": {
+  "appearance": {
+   "theme": "lavender",
+   "cute": true
+  },
+  "guideDone": true,
+  "sidebarCollapsed": true,
+  "sound": false,
+  "notif": {
+   "digestTimes": [
+    "12:30"
+   ]
+  }
+ },
+ "welcomed": true,
+ "sent": {},
+ "todos": [
+  {
+   "id": "tuc-t1",
+   "text": "TEST C \u2014 Ring the library",
+   "done": true
+  }
+ ],
+ "habits": [],
+ "imports": []
+}

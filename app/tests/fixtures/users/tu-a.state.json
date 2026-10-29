@@ -1,0 +1,106 @@
+{
+ "tasks": [
+  {
+   "id": "tua-1",
+   "title": "TEST A \u2014 Quarterly planning",
+   "date": "2026-10-15",
+   "time": "10:00",
+   "durationMin": 60,
+   "priority": 0,
+   "repeat": null,
+   "category": "work",
+   "color": "#5B6BD5",
+   "essential": false,
+   "status": "todo",
+   "steps": [],
+   "minVersion": "",
+   "fullVersion": "",
+   "source": "seed",
+   "originalText": "",
+   "skipDates": [],
+   "doneDates": []
+  },
+  {
+   "id": "tua-2",
+   "title": "TEST A \u2014 Water the plants",
+   "date": "2026-10-14",
+   "time": null,
+   "durationMin": 10,
+   "priority": 0,
+   "repeat": null,
+   "category": "home",
+   "color": "#35704E",
+   "essential": false,
+   "status": "todo",
+   "steps": [],
+   "minVersion": "",
+   "fullVersion": "",
+   "source": "seed",
+   "originalText": "",
+   "skipDates": [],
+   "doneDates": []
+  },
+  {
+   "id": "tua-3",
+   "title": "TEST A \u2014 Imported dentist",
+   "date": "2026-10-16",
+   "time": "14:00",
+   "durationMin": 60,
+   "priority": 0,
+   "repeat": null,
+   "category": "health",
+   "color": "#E85D75",
+   "essential": false,
+   "status": "todo",
+   "steps": [],
+   "minVersion": "",
+   "fullVersion": "",
+   "source": "import",
+   "originalText": "",
+   "skipDates": [],
+   "doneDates": [],
+   "importUid": "g4@google.com",
+   "importKey": "imp-test-a"
+  }
+ ],
+ "feelings": {},
+ "settings": {
+  "appearance": {
+   "theme": "sky",
+   "cute": false
+  },
+  "guideDone": true,
+  "sidebarCollapsed": true,
+  "sound": false,
+  "notif": {
+   "digestTimes": [
+    "12:30"
+   ]
+  }
+ },
+ "welcomed": true,
+ "sent": {},
+ "todos": [
+  {
+   "id": "tua-t1",
+   "text": "TEST A \u2014 Book the car service",
+   "done": false
+  }
+ ],
+ "habits": [
+  {
+   "id": "tua-h1",
+   "name": "TEST A \u2014 Morning stretch",
+   "icon": "h-sun",
+   "days": {}
+  }
+ ],
+ "imports": [
+  {
+   "key": "imp-test-a",
+   "source": "Google Calendar",
+   "at": "2026-10-14T00:00:00.000Z",
+   "count": 1
+  }
+ ]
+}

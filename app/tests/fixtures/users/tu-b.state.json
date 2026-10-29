@@ -1,0 +1,44 @@
+{
+ "tasks": [
+  {
+   "id": "tub-1",
+   "title": "TEST B \u2014 Gym session",
+   "date": "2026-10-15",
+   "time": "07:00",
+   "durationMin": 45,
+   "priority": 0,
+   "repeat": null,
+   "category": "health",
+   "color": "#E85D75",
+   "essential": false,
+   "status": "todo",
+   "steps": [],
+   "minVersion": "",
+   "fullVersion": "",
+   "source": "seed",
+   "originalText": "",
+   "skipDates": [],
+   "doneDates": []
+  }
+ ],
+ "feelings": {},
+ "settings": {
+  "appearance": {
+   "theme": "white",
+   "cute": false
+  },
+  "guideDone": true,
+  "sidebarCollapsed": true,
+  "sound": false,
+  "notif": {
+   "digestTimes": [
+    "12:30"
+   ]
+  }
+ },
+ "welcomed": true,
+ "sent": {},
+ "todos": [],
+ "habits": [],
+ "imports": []
+}
