@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Fit App — Brand Board v2 — Wally</title>
+<style>
+@font-face { font-family: "Zilla Slab"; src: url("ZillaSlab-700.ttf") format("truetype"); font-weight: 700; }
+@font-face { font-family: "Zilla Slab"; src: url("ZillaSlab-600.ttf") format("truetype"); font-weight: 600; }
+@font-face { font-family: "Karla"; src: url("Karla-400.woff2") format("woff2"); font-weight: 400; }
+@font-face { font-family: "Karla"; src: url("Karla-700.woff2") format("woff2"); font-weight: 700; }
+@font-face { font-family: "Karla"; src: url("Karla-400-italic.woff2") format("woff2"); font-weight: 400; font-style: italic; }
+* { margin: 0; box-sizing: border-box; }
+body { background: #FAEED6; color: #3E2F26; font-family: "Karla", sans-serif; width: 1440px; padding: 52px 64px 46px; }
+.kicker { font-weight: 700; letter-spacing: 3px; font-size: 15px; color: #52695A; text-transform: uppercase; }
+h1 { font-family: "Zilla Slab"; font-weight: 700; font-size: 66px; line-height: 1.03; margin: 10px 0 8px; letter-spacing: 0; }
+.sub { font-size: 21px; max-width: 920px; line-height: 1.45; }
+.row { display: flex; gap: 26px; margin-top: 30px; }
+.card { background: #FFFDF7; border: 2px solid #3E2F26; border-radius: 22px; padding: 24px 26px; }
+.tag { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; opacity: .62; margin-bottom: 9px; }
+.swatches { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 32px; }
+.sw { border: 2px solid #3E2F26; border-radius: 18px; overflow: hidden; background: #FFFDF7; }
+.sw .chip { height: 82px; }
+.sw .meta { padding: 10px 14px 12px; }
+.sw .name { font-family: "Zilla Slab"; font-weight: 600; font-size: 20px; }
+.sw .hex { font-size: 14px; opacity: .75; }
+.sw .role { font-size: 14px; margin-top: 2px; line-height: 1.35; }
+.specimen .big { font-family: "Zilla Slab"; font-weight: 700; font-size: 41px; line-height: 1.08; }
+.specimen .mid { font-family: "Zilla Slab"; font-weight: 600; font-size: 26px; margin-top: 10px; color: #52695A; }
+.specimen .body { font-size: 19px; line-height: 1.5; margin-top: 10px; max-width: 560px; }
+.icons { display: flex; gap: 13px; flex-wrap: wrap; }
+.icTile { width: 72px; height: 72px; border-radius: 18px; display: flex; align-items: center; justify-content: center; border: 2px solid #3E2F26; background: #DCE7D8; }
+.icTile svg { width: 38px; height: 38px; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.contrast { font-size: 16.5px; line-height: 1.62; }
+.contrast b { font-family: "Zilla Slab"; font-weight: 600; }
+.wallyGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.wallyFrame { background: #FFFFFF; border: 2px solid #3E2F26; border-radius: 18px; padding: 10px; }
+.wallyFrame img { display: block; width: 100%; height: 292px; object-fit: cover; border-radius: 12px; }
+.wallyFrame .cap { font-family: "Zilla Slab"; font-weight: 600; font-size: 19px; margin-top: 9px; }
+.wallyFrame .note { font-size: 14.5px; line-height: 1.4; margin-top: 2px; }
+.evidence { font-size: 17px; line-height: 1.55; }
+.evidence li { margin-left: 20px; margin-bottom: 7px; }
+.mood { margin-top: 34px; text-align: center; font-family: "Zilla Slab"; font-weight: 700; font-size: 35px; color: #52695A; }
+.claim { margin-top: 12px; text-align: center; font-size: 15.5px; opacity: .8; }
+</style></head>
+<body>
+<div class="kicker">Fit App · Brand Board v2 · Wally's World · For the Innovation Lab read</div>
+<h1>Come in. Rest counts here.</h1>
+<p class="sub">Board v2 is drawn from the audience research and Wally's burrow: one warm ground, one ink, one calm sage lead, and soft tints. The four bright area colours are gone. Areas are told apart by name and icon, not by shouting.</p>
+
+<div class="swatches">
+  <div class="sw"><div class="chip" style="background:#FAEED6"></div><div class="meta"><div class="name">Burrow Cream</div><div class="hex">#FAEED6 · the ground, 54%</div><div class="role">Warm and quiet. Every screen begins here.</div></div></div>
+  <div class="sw"><div class="chip" style="background:#3E2F26"></div><div class="meta"><div class="name">Burrow Ink</div><div class="hex">#3E2F26 · text and line, 15%</div><div class="role">All body text. Warm brown black, never harsh.</div></div></div>
+  <div class="sw"><div class="chip" style="background:#52695A"></div><div class="meta"><div class="name">Burrow Sage</div><div class="hex">#52695A · the one lead, 11%</div><div class="role">Headings, icons, key actions. AA on cream at 5.18.</div></div></div>
+  <div class="sw"><div class="chip" style="background:#A9BFA5"></div><div class="meta"><div class="name">Sage Mist</div><div class="hex">#A9BFA5 · soft tint, 9%</div><div class="role">Blanket colour and gentle highlights. Never text.</div></div></div>
+  <div class="sw"><div class="chip" style="background:#DCE7D8"></div><div class="meta"><div class="name">Sage Tint</div><div class="hex">#DCE7D8 · quiet surface, 6%</div><div class="role">Cards, chips and calm fills under ink text.</div></div></div>
+  <div class="sw"><div class="chip" style="background:#AC9278"></div><div class="meta"><div class="name">Wally Taupe</div><div class="hex">#AC9278 · Wally only, 5%</div><div class="role">His warm coat and tiny accents. Never a UI fill.</div></div></div>
+</div>
+
+<div class="row">
+  <div class="card specimen" style="flex: 1.08">
+    <span class="tag">Display · Zilla Slab</span>
+    <div class="big">Good morning. How does today feel?</div>
+    <div class="mid">A burrow day is still a good day</div>
+    <span class="tag" style="margin-top:18px">Body · Karla</span>
+    <p class="body">Tell Wally how today feels, and the day shapes itself around it. A rough day can lighten the gym, soften the plan, and leave room to rest. <b>Nothing is ever lost</b>, and <i>nothing is ever a telling-off</i>.</p>
+  </div>
+  <div class="card" style="flex: .92">
+    <span class="tag">Why this world · audience research</span>
+    <ul class="evidence">
+      <li><b>47%</b> name fear of judgement as the top barrier to the gym.</li>
+      <li><b>78%</b> of non-exercisers are not moved by typical sports advertising.</li>
+      <li>Calm, muted, nature-adjacent colour lowers the temperature.</li>
+      <li>Rest is a named reason gentle-app users stay.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="row">
+  <div class="card" style="flex: 1.25">
+    <span class="tag">Wally · guide art of record, simple flat, on white</span>
+    <div class="wallyGrid">
+      <div class="wallyFrame"><img src="wally-flat-welcome.webp" alt="Wally the Wombat, welcome" style="object-fit:contain;background:#FFFFFF"><div class="cap">Welcome</div><p class="note">Round body, two ears, dot eyes, cream belly, sage blanket folded beside him. He sits beside you and fixes nothing.</p></div>
+      <div class="wallyFrame"><img src="wally-flat-rest.webp" alt="Wally resting in the sage blanket" style="object-fit:contain;background:#FFFFFF"><div class="cap">Rest day</div><p class="note">The same Wally, tucked into the sage blanket, eyes closed in happy curves. Rest is his favourite state.</p></div>
+    </div>
+    <p class="contrast" style="margin-top:14px">Guide art by the Lab's simple-flat make: flat shapes only, no texture, white presentation. The rich scene frames stand as world and mood reference only.</p>
+  </div>
+  <div class="card" style="flex: .75">
+    <span class="tag">The icon set · one calm system</span>
+    <div class="icons" id="iconRow"></div>
+    <p class="contrast" style="margin-top:14px">One hand-built SVG sprite, one stroke system, one sage. No rainbow coding, no emoji, no gradients.</p>
+    <p class="contrast" style="margin-top:10px">At small sizes Wally reads as a round body, two ears and the sage blanket. His shape never changes. He is never sad, never disappointed, never a coach.</p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="card" style="flex: 1">
+    <span class="tag">Contrast · script-computed</span>
+    <p class="contrast"><b>Ink on Cream 11.14</b> (AAA) · <b>Ink on Sage Tint 10.04</b> (AAA) · <b>Ink on Sage Mist 6.52</b> (AA) · <b>Burrow Sage on Cream 5.18</b> (AA) · <b>White on Burrow Sage 5.95</b> (AA). Taupe and the pale tints are surfaces and character colour, never small text.</p>
+  </div>
+  <div class="card" style="flex: 1">
+    <span class="tag">The claim · fonts</span>
+    <p class="contrast"><b>Zilla Slab</b> (display) + <b>Karla</b> (body). Open Font Licence, embeddable and self-hostable. Grounded and storybook in display, human and clear in body. Neither family is claimed by another app in the program.</p>
+  </div>
+</div>
+
+<div class="mood">a friend who is not a coach</div>
+<p class="claim">Fit App brand board v2 · drawn by the Build desk in Wally's world · for the Innovation Lab design read, then HQ, then Ilse</p>
+
+<script>
+fetch("sprite.svg").then(r => r.text()).then(t => {
+  document.body.insertAdjacentHTML("afterbegin", t.replace('aria-hidden="true"', 'style="display:none"'));
+  const picks = ["i-meal", "i-cam", "i-gym", "i-clock", "i-pep", "i-cal", "i-list", "i-star", "i-home", "i-heart"];
+  document.getElementById("iconRow").innerHTML = picks.map(id =>
+    '<div class="icTile"><svg style="stroke:#52695A"><use href="#' + id + '"/></svg></div>').join("");
+});
+</script>
+</body></html>
