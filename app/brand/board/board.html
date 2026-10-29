@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Fit App — Brand Board</title>
+<style>
+@font-face { font-family: "Baloo 2"; src: url("Baloo2-800.woff2") format("woff2"); font-weight: 800; }
+@font-face { font-family: "Baloo 2"; src: url("Baloo2-600.woff2") format("woff2"); font-weight: 600; }
+@font-face { font-family: "Karla"; src: url("Karla-400.woff2") format("woff2"); font-weight: 400; }
+@font-face { font-family: "Karla"; src: url("Karla-700.woff2") format("woff2"); font-weight: 700; }
+@font-face { font-family: "Karla"; src: url("Karla-400-italic.woff2") format("woff2"); font-weight: 400; font-style: italic; }
+* { margin: 0; box-sizing: border-box; }
+body { background: #FFF8F4; color: #2B2230; font-family: "Karla", sans-serif; width: 1440px; padding: 56px 64px 48px; }
+.kicker { font-weight: 700; letter-spacing: 3px; font-size: 15px; color: #8B5CF6; text-transform: uppercase; }
+h1 { font-family: "Baloo 2"; font-weight: 800; font-size: 64px; line-height: 1.05; margin: 10px 0 6px; }
+.sub { font-size: 21px; max-width: 880px; line-height: 1.45; }
+.row { display: flex; gap: 28px; margin-top: 36px; }
+.card { background: #fff; border: 2px solid #2B2230; border-radius: 22px; padding: 24px 26px; }
+.card h2 { font-family: "Baloo 2"; font-weight: 600; font-size: 24px; margin-bottom: 12px; }
+.swatches { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 36px; }
+.sw { border: 2px solid #2B2230; border-radius: 18px; overflow: hidden; background: #fff; }
+.sw .chip { height: 86px; }
+.sw .meta { padding: 10px 14px 12px; }
+.sw .name { font-family: "Baloo 2"; font-weight: 600; font-size: 19px; }
+.sw .hex { font-size: 14px; opacity: .75; }
+.sw .role { font-size: 14px; margin-top: 2px; }
+.specimen .big { font-family: "Baloo 2"; font-weight: 800; font-size: 40px; line-height: 1.1; }
+.specimen .mid { font-family: "Baloo 2"; font-weight: 600; font-size: 26px; margin-top: 10px; }
+.specimen .body { font-size: 19px; line-height: 1.5; margin-top: 10px; max-width: 560px; }
+.specimen .body b { font-weight: 700; }
+.specimen .body i { font-style: italic; }
+.tag { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; opacity: .6; margin-bottom: 8px; }
+.icons { display: flex; gap: 14px; flex-wrap: wrap; }
+.icTile { width: 76px; height: 76px; border-radius: 18px; display: flex; align-items: center; justify-content: center; border: 2px solid #2B2230; }
+.icTile svg { width: 40px; height: 40px; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.contrast { font-size: 16.5px; line-height: 1.65; }
+.contrast b { font-family: "Baloo 2"; font-weight: 600; }
+.mossBox { text-align: center; }
+.mossBox img { width: 190px; }
+.mood { margin-top: 38px; text-align: center; font-family: "Baloo 2"; font-weight: 800; font-size: 34px; }
+.claim { margin-top: 14px; text-align: center; font-size: 15.5px; opacity: .8; }
+</style></head>
+<body>
+<div class="kicker">Fit App · Brand Board · For the Innovation Lab read</div>
+<h1>Small steps. Moss walks with you.</h1>
+<p class="sub">The board formalises the world that already lives in the built app: Moss the Pebble, his cream and ink, his amber stripe, and one colour per area. Nothing here contradicts Moss. His shape and stripe are locked.</p>
+
+<div class="swatches">
+  <div class="sw"><div class="chip" style="background:#FFF8F4"></div><div class="meta"><div class="name">Pebble Cream</div><div class="hex">#FFF8F4 · the ground, 62%</div><div class="role">Every screen sits on it. Warm, never stark.</div></div></div>
+  <div class="sw"><div class="chip" style="background:#2B2230"></div><div class="meta"><div class="name">Pebble Ink</div><div class="hex">#2B2230 · text and line, 14%</div><div class="role">All words live in ink on cream, 14.5 to 1.</div></div></div>
+  <div class="sw"><div class="chip" style="background:#F2A93B"></div><div class="meta"><div class="name">Moss Amber</div><div class="hex">#F2A93B · check-in, 8%</div><div class="role">Moss wears it. Morning check-in and treats.</div></div></div>
+  <div class="sw"><div class="chip" style="background:#C9BBA9"></div><div class="meta"><div class="name">Moss Stone</div><div class="hex">#C9BBA9 · Moss himself</div><div class="role">His body colour. Never a UI fill.</div></div></div>
+  <div class="sw"><div class="chip" style="background:#DE5A83"></div><div class="meta"><div class="name">Berry</div><div class="hex">#DE5A83 · Meals</div><div class="role">Headings, icons, chips. Never body text.</div></div></div>
+  <div class="sw"><div class="chip" style="background:#2F7CF6"></div><div class="meta"><div class="name">Sky</div><div class="hex">#2F7CF6 · Gym</div><div class="role">Headings, icons, chips. Never body text.</div></div></div>
+  <div class="sw"><div class="chip" style="background:#8B5CF6"></div><div class="meta"><div class="name">Violet</div><div class="hex">#8B5CF6 · Peptides</div><div class="role">Each peptide then takes its own colour.</div></div></div>
+  <div class="sw"><div class="chip" style="background:#1F9D8A"></div><div class="meta"><div class="name">Teal</div><div class="hex">#1F9D8A · Calendar</div><div class="role">The one area colour that carries ink text.</div></div></div>
+</div>
+
+<div class="row">
+  <div class="card specimen" style="flex: 1.35">
+    <span class="tag">Display · Baloo 2</span>
+    <div class="big">Good morning. How does today feel?</div>
+    <div class="mid">Leg day, at your pace</div>
+    <span class="tag" style="margin-top:18px">Body · Karla</span>
+    <p class="body">Tell Moss how today feels, and the day shapes itself around it. A rough day lightens the gym, softens the plan, and keeps a little treat room aside. <b>Nothing is ever lost</b>, and <i>nothing is ever a telling-off</i>.</p>
+  </div>
+  <div class="card" style="flex: 1">
+    <span class="tag">The icon set · one sprite, area tints</span>
+    <div class="icons" id="iconRow"></div>
+    <p class="contrast" style="margin-top:14px">Hand-built SVG, one stroke system, tinted by area. No emoji, no AI art, no gradients.</p>
+  </div>
+  <div class="card mossBox" style="flex: .8">
+    <span class="tag">Moss · design of record</span><br>
+    <div style="width:190px;margin:0 auto"><svg xmlns="http://www.w3.org/2000/svg" class="mossSvg" width="200" height="160" viewBox="0 0 120 96" aria-hidden="true"><g transform="translate(0,-3)"><ellipse cx="60" cy="56" rx="42" ry="30" fill="#C9BBA9" stroke="#2B2230" stroke-width="3"/><clipPath id="mossClip"><ellipse cx="60" cy="56" rx="42" ry="30"/></clipPath><g clip-path="url(#mossClip)"><path d="M12 50 Q60 33 108 50" stroke="#F2A93B" stroke-width="14" fill="none"/></g><circle cx="45" cy="58" r="3.4" fill="#2B2230"/><circle cx="75" cy="58" r="3.4" fill="#2B2230"/><path d="M54 68 q6 5 12 0" stroke="#2B2230" stroke-width="3" fill="none" stroke-linecap="round"/></g></svg></div>
+    <p class="contrast">Grey oval, one amber stripe. He never changes shape — the friend does not change.</p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="card" style="flex: 1">
+    <span class="tag">Contrast · script-computed, fenced honestly</span>
+    <p class="contrast"><b>Ink on Cream 14.54</b> (AAA, all body text) · <b>Ink on Amber 7.65</b> · <b>Ink on Moss Stone 8.12</b> · <b>Ink on Teal 4.55</b> (AA). Area colours on cream run 3.20 to 4.03, so they carry headings, icons and chips at AA-large, never small text. White on area colours is large-bold chips only.</p>
+  </div>
+  <div class="card" style="flex: 1">
+    <span class="tag">The claim · fonts</span>
+    <p class="contrast"><b>Baloo 2</b> (display) + <b>Karla</b> (body). Google Fonts, Open Font Licence, embeddable and self-hostable. Rounded and humanist — no serif (two siblings are serif-led), no geometric sans, and neither family is used by any other app in the program.</p>
+  </div>
+</div>
+
+<div class="mood">a friend who is not a coach</div>
+<p class="claim">Fit App brand board · drawn by the Build desk from the locked world of Moss · for the Innovation Lab design read, then HQ, then Ilse</p>
+
+<script>
+fetch("sprite.svg").then(r => r.text()).then(t => {
+  document.body.insertAdjacentHTML("afterbegin", t.replace('aria-hidden="true"', 'style="display:none"'));
+  const picks = [["i-meal", "#DE5A83"], ["i-cam", "#DE5A83"], ["i-gym", "#2F7CF6"], ["i-clock", "#2F7CF6"],
+    ["i-pep", "#8B5CF6"], ["i-cal", "#1F9D8A"], ["i-list", "#1F9D8A"], ["i-star", "#F2A93B"], ["i-home", "#2B2230"], ["i-heart", "#DE5A83"]];
+  document.getElementById("iconRow").innerHTML = picks.map(([id, c]) =>
+    '<div class="icTile" style="background:#FFF8F4"><svg style="stroke:' + c + '"><use href="#' + id + '"/></svg></div>').join("");
+});
+</script>
+</body></html>
