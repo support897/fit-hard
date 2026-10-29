@@ -28,16 +28,19 @@
     }
     return out;
   }
-  /* Boot fence (P4): if the last session was a demo (marker
-     set) and a parked real state exists, the REAL state is
-     what loads — the demo data in the main key never poses
-     as the user's own app. If the demo session is still
-     alive, startDemo loads the demo afresh from its own
-     cloud space. */
+  /* Legacy rescue (build 17): demo sessions are gone (her
+     20:57 rule — the door is sign up or sign in, always). An
+     install that once parked its real state for a demo gets
+     that state back here, once: the parked copy wins, both
+     legacy keys are cleared, and no demo can ever start. */
+  try {
+    var parkedOnce = localStorage.getItem("fit-app-v1-parked");
+    if (parkedOnce) { localStorage.setItem(KEY, parkedOnce); localStorage.removeItem("fit-app-v1-parked"); }
+    localStorage.removeItem("fit-app-demo");
+  } catch (e) {}
   try {
     var bootRaw = localStorage.getItem(KEY);
-    if (localStorage.getItem("fit-app-demo") && localStorage.getItem("fit-app-v1-parked")) bootRaw = localStorage.getItem("fit-app-v1-parked");
-    else if (localStorage.getItem(OWNER_KEY)) bootRaw = null;
+    if (localStorage.getItem(OWNER_KEY)) bootRaw = null;
     state = repairKeep(JSON.parse(bootRaw || "null"));
   }
   catch (e) { state = L.emptyState(); }
@@ -144,7 +147,7 @@
         }
         var plan = L.planReminders(state, L.todayKey(), { now: Date.now() });
         var notes = plan.map(function (r) {
-          return { id: nid(r.kind, r.ref, r.key), title: r.name,
+          return { id: nid(r.kind, r.ref, r.key), title: r.kind === "water" ? tr("water.remindTitle") : r.name,
             body: tr(r.kind === "dose" ? "rem.doseBody" : "rem.gymBody"),
             schedule: { at: new Date(r.at) } };
         });
@@ -301,14 +304,23 @@
   }
   function renderPlans() {
     var box = $("plansBox"); if (!box) return;
-    if (demoMode === true) {
-      box.innerHTML = '<div class="card"><p class="hint">' + esc(tr("plan.demoLine")) + "</p>" +
-        '<div class="row"><button class="pillBtn" id="planBackBtn">' + esc(tr("plan.backBtn")) + "</button></div></div>";
-    } else {
+    {
       var onSale = FitShop.purchasable();
+      var yText = priceText("yearly");
+      var yMaths = "";
+      (function () {
+        var m = String(yText.text).match(/^([^\d]*)([\d]+(?:[.,][\d]+)?)([^\d]*)$/);
+        if (!m) return;
+        var euDecimal = !/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(m[2]) && m[2].indexOf(",") !== -1;
+        var yn = euDecimal ? parseFloat(m[2].replace(",", ".")) : parseFloat(m[2].replace(/,/g, ""));
+        if (!(yn > 0)) return;
+        var ym = Math.round(yn / 12 * 100) / 100;
+        var ys = (ym % 1 === 0 ? String(ym) : ym.toFixed(2)).replace(".", euDecimal ? "," : ".");
+        yMaths = '<p class="hint">' + esc(tr("plan.yearlyMaths", { a: m[1] + ys + m[3] })) + "</p>";
+      })();
       var proRows =
         '<p class="big">' + esc(priceWithWorth("monthly")) + " " + esc(tr("plan.perMonth")) + "</p>" +
-        '<p class="big">' + esc(priceWithWorth("yearly")) + " " + esc(tr("plan.perYear")) + "</p>" +
+        '<p class="big">' + esc(priceWithWorth("yearly")) + " " + esc(tr("plan.perYear")) + "</p>" + yMaths +
         '<div class="row"><button class="primaryBtn" id="planBuyMonthly">' + esc(tr("plan.buyMonthly")) + "</button>" +
         '<button class="primaryBtn" id="planBuyYearly">' + esc(tr("plan.buyYearly")) + "</button></div>" +
         (onSale ? "" : '<p class="hint">' + esc(tr("plan.notOnSale")) + "</p>");
@@ -318,6 +330,9 @@
         '<div class="card"><h2>' + esc(tr("plan.t1Name")) + '</h2><p>' + esc(tr("plan.t1Body")) + '</p><p class="big">' + esc(tr("plan.freeWord")) + "</p></div>" +
         '<div class="card"><h2>' + esc(tr("plan.t2Name")) + '</h2><p>' + esc(tr("plan.t2Body")) + "</p>" + proRows + "</div>" +
         '<div class="card"><h2>' + esc(tr("plan.t3Name")) + '</h2><p>' + esc(tr("plan.t3Body")) + '</p><p class="big">' + esc(priceWithWorth("forever")) + ", " + esc(tr("plan.onceWord")) + '</p><div class="row"><button class="primaryBtn" id="planBuyForever">' + esc(tr("plan.buyForever")) + "</button></div></div>" +
+        '<div class="card"><h2>' + esc(tr("plan.freeTitle")) + '</h2><p class="hint">' + esc(tr("plan.freePromise")) + '</p><ul class="ingList">' +
+        tr("plan.freeItems").split("|").map(function (x) { return "<li>" + esc(x) + "</li>"; }).join("") + "</ul>" +
+        '<h3>' + esc(tr("plan.proAddsTitle")) + '</h3><p>' + esc(tr("plan.proAdds")) + "</p></div>" +
         '<div class="card">' + paywallLegalHtml() + "</div>" +
         '<div class="card"><div class="row"><button class="pillBtn" id="planRestoreBtn">' + esc(tr("plan.restoreBtn")) + '</button><button class="pillBtn" id="planBackBtn">' + esc(tr("plan.backBtn")) + "</button></div></div>";
       var bm = $("planBuyMonthly"); if (bm) bm.addEventListener("click", function () { FitShop.buy("monthly"); });
@@ -529,13 +544,91 @@
     return '<button class="mealRow" data-recipe="' + r.id + '"><span class="mealDot" style="background:' + colors[meal] + '"></span>' +
       '<span class="mName">' + esc(recName(r)) + '</span><span class="kcalChip">' + (k == null ? tr("meal.noCount") : tr("meal.aboutKcal", { kcal: k })) + "</span></button>";
   }
+  /* --- Water (build 17, Wave 1): sips, not lectures. Fixed
+     friendly sizes, the user's own bottle once set, an undo
+     that takes back the last tap, a goal they pick, and one
+     reminder at a time they choose. --- */
+  function waterCardHtml() {
+    var today = L.todayKey();
+    var have = (state.water || {})[today] || 0;
+    var goal = L.waterGoalMl(state);
+    var taps = (state.waterTaps || {})[today] || [];
+    var bottle = Number(state.settings && state.settings.bottleMl) || 0;
+    var html = '<div class="card"><h2>' + esc(tr("water.title")) + "</h2>" +
+      '<p class="big">' + esc(tr("water.line", { have: have, goal: goal })) + "</p>" +
+      (have >= goal ? '<p class="hint">' + esc(tr("water.done")) + "</p>" : "") +
+      '<div class="row"><button class="pillBtn" data-water="250">' + esc(tr("water.glass")) + "</button>" +
+      '<button class="pillBtn" data-water="500">' + esc(tr("water.bottle")) + "</button>" +
+      '<button class="pillBtn" data-water="750">' + esc(tr("water.big")) + "</button>" +
+      (bottle >= 100 && bottle <= 5000 ? '<button class="pillBtn" data-water="' + bottle + '">' + esc(tr("water.yourBottle", { ml: bottle })) + "</button>" : "") +
+      (taps.length ? '<button class="pillBtn" id="waterUndo">' + esc(tr("water.undo")) + "</button>" : "") + "</div>" +
+      '<div class="grid2"><label>' + esc(tr("water.goal")) + '<select id="waterGoal">' +
+      [1500, 2000, 2500, 3000].map(function (g) { return '<option value="' + g + '"' + (g === goal ? " selected" : "") + ">" + g + " ml</option>"; }).join("") + "</select></label>" +
+      "<label>" + esc(tr("water.bottleLabel")) + '<input id="waterBottleMl" type="number" min="100" max="5000" value="' + (bottle || "") + '"></label></div>' +
+      '<div class="row"><button class="pillBtn" id="waterBottleBtn">' + esc(tr("water.bottleSet")) + "</button></div>" +
+      '<div class="grid2"><label>' + esc(tr("water.remind")) + '<input id="waterRemind" type="time" value="' + esc((state.settings && state.settings.waterReminder) || "") + '"></label></div>' +
+      '<div class="row"><button class="pillBtn" id="waterRemindBtn">' + esc(tr("water.remind")) + "</button>" +
+      ((state.settings && state.settings.waterReminder) ? '<button class="pillBtn" id="waterRemindOff">' + esc(tr("water.remindOff")) + "</button>" : "") + "</div></div>";
+    return html;
+  }
+  function wireWater() {
+    document.querySelectorAll("[data-water]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var ml = Number(b.getAttribute("data-water")) || 0;
+        if (!ml) return;
+        var today = L.todayKey();
+        state.water = state.water || {}; state.waterTaps = state.waterTaps || {};
+        state.waterTaps[today] = state.waterTaps[today] || [];
+        state.waterTaps[today].push(ml);
+        state.water[today] = (state.water[today] || 0) + ml;
+        save(); renderPlan(); renderChallenge();
+      });
+    });
+    var undo = $("waterUndo");
+    if (undo) undo.addEventListener("click", function () {
+      var today = L.todayKey();
+      var taps = (state.waterTaps || {})[today] || [];
+      if (!taps.length) return;
+      var ml = taps.pop();
+      state.water[today] = Math.max(0, (state.water[today] || 0) - ml);
+      save(); renderPlan(); renderChallenge();
+    });
+    var goalSel = $("waterGoal");
+    if (goalSel) goalSel.addEventListener("change", function () {
+      state.settings = state.settings || {};
+      state.settings.waterGoalMl = Number(goalSel.value) || 2000;
+      save(); renderPlan(); renderChallenge();
+    });
+    var bBtn = $("waterBottleBtn");
+    if (bBtn) bBtn.addEventListener("click", function () {
+      var v = Math.round(Number($("waterBottleMl").value) || 0);
+      state.settings = state.settings || {};
+      state.settings.bottleMl = v >= 100 && v <= 5000 ? v : null;
+      save(); renderPlan();
+    });
+    var rBtn = $("waterRemindBtn");
+    if (rBtn) rBtn.addEventListener("click", function () {
+      var v = $("waterRemind").value;
+      state.settings = state.settings || {};
+      state.settings.waterReminder = /^\d{2}:\d{2}$/.test(v || "") ? v : null;
+      save(); renderPlan();
+    });
+    var rOff = $("waterRemindOff");
+    if (rOff) rOff.addEventListener("click", function () {
+      state.settings = state.settings || {};
+      state.settings.waterReminder = null;
+      save(); renderPlan();
+    });
+  }
   function renderPlan() {
     var el = $("areaBody");
     var target = budgetKcal();
-    var html = '<div class="card"><h2>' + esc(tr("meal.week")) + "</h2>" +
+    var html = waterCardHtml() + '<div class="card"><h2>' + esc(tr("meal.week")) + "</h2>" +
       '<p class="hint">' + (target ? tr("legal.planHint", { kcal: target }) :
         tr("meal.planHintNone")) + "</p>" +
       '<div class="row"><button class="primaryBtn" id="planWeekBtn">' + esc(tr("meal.planWeekBtn")) + '</button></div>' +
+      ((function () { var y = state.plan[mpKey(L.addDays(L.todayKey(), -1))] || {}; return ["breakfast", "lunch", "dinner"].some(function (m) { return !!y[m]; }); })()
+        ? '<div class="row"><button class="pillBtn" id="sameYesterdayBtn">' + esc(tr("meal.sameYesterday")) + '</button></div>' : "") +
       '<label>' + esc(tr("meal.noteLabel")) + '<textarea id="mealNote" rows="2" placeholder="' + esc(tr("meal.notePh")) + '"></textarea></label>' +
       '<div class="row"><button class="pillBtn" id="mealNoteBtn">' + esc(tr("meal.sortBtn")) + '</button><button class="pillBtn" id="mealNoteMic">' + esc(tr("meal.voiceBtn")) + '</button></div>' +
       '<p class="hint" id="mealNoteMsg"></p></div>';
@@ -561,6 +654,15 @@
         (treats.length ? esc(tr("meal.treatsAbout", { kcal: tt.known })) + (tt.unknown ? esc(tr("meal.plusNoCount", { n: tt.unknown })) : "") : "") + "</p></div>";
     }
     el.innerHTML = html;
+    wireWater();
+    var syb = $("sameYesterdayBtn");
+    if (syb) syb.addEventListener("click", function () {
+      var y = state.plan[mpKey(L.addDays(L.todayKey(), -1))] || {};
+      var key = mpKey(L.todayKey());
+      if (!state.plan[key]) state.plan[key] = {};
+      ["breakfast", "lunch", "dinner"].forEach(function (m) { if (y[m]) state.plan[key][m] = y[m]; });
+      save(); renderPlan(); toast(tr("meal.yesterdayCopied"));
+    });
     $("planWeekBtn").addEventListener("click", function () { planWeek(); renderPlan(); toast(tr("meal.weekPlanned")); showWallyCelebration("plan"); });
     $("mealNoteBtn").addEventListener("click", function () {
       var items = L.parseQuickDump($("mealNote").value, L.todayKey());
@@ -594,9 +696,19 @@
       return "<li>" + esc(i.qty) + " " + esc(recUnitName(r, i.unit)) + " " + esc(recIngName(r, i.name)) + "</li>"; }).join("") + "</ul>";
     var steps = recSteps(r);
     if (steps.length) html += "<h3>" + esc(tr("meal.steps")) + "</h3><ol class='stepList'>" + steps.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ol>";
-    html += '<div class="row"><button class="primaryBtn" id="rmToday">' + esc(tr("meal.putToday")) + '</button><button class="pillBtn" id="rmClose">' + esc(tr("common.close")) + '</button></div>';
+    var isFav = (state.favRecipes || []).indexOf(r.id) !== -1;
+    html += '<div class="row"><button class="primaryBtn" id="rmToday">' + esc(tr("meal.putToday")) + '</button>' +
+      '<button class="pillBtn" id="rmFav">' + esc(tr(isFav ? "meal.favRemove" : "meal.favAdd")) + '</button>' +
+      '<button class="pillBtn" id="rmClose">' + esc(tr("common.close")) + '</button></div>';
     $("recipeModalCard").innerHTML = html;
     $("recipeModal").classList.remove("hidden");
+    $("rmFav").addEventListener("click", function () {
+      state.favRecipes = state.favRecipes || [];
+      var i = state.favRecipes.indexOf(r.id);
+      if (i === -1) state.favRecipes.push(r.id); else state.favRecipes.splice(i, 1);
+      save(); openRecipe(r.id);
+      if (currentArea === "meals" && currentSub === "meal-recipes") renderRecipes();
+    });
     $("rmClose").addEventListener("click", function () { $("recipeModal").classList.add("hidden"); });
     $("rmToday").addEventListener("click", function () {
       var key = mpKey(L.todayKey());
@@ -691,13 +803,25 @@
       if (sv) sv.addEventListener("click", function () { state.customRecipes.push(r); save(); renderRecipes(); toast(tr("common.saved")); });
     });
     function drawList(filter) {
-      var list = allRecipes().filter(function (r) { return !filter || r.name.toLowerCase().indexOf(filter) !== -1 || recName(r).toLowerCase().indexOf(filter) !== -1; });
-      $("recipeList").innerHTML = list.map(function (r) {
+      var all = allRecipes();
+      var list = all.filter(function (r) { return !filter || r.name.toLowerCase().indexOf(filter) !== -1 || recName(r).toLowerCase().indexOf(filter) !== -1; });
+      function card(r) {
         var k = kcalOf(r);
         return '<button class="recipeCard" data-recipe="' + r.id + '">' + (r.picture ? '<img alt="" src="' + r.picture + '">' : "") +
           "<h3>" + esc(recName(r)) + "</h3><p>" + esc(tr("meal." + r.meal, null, r.meal)) + " · " + r.minutes + " min</p><p>" +
           (k == null ? tr("meal.noCount") : tr("meal.aboutPerServing", { kcal: k })) + "</p></button>";
-      }).join("") || '<p class="hint">' + esc(tr("meal.noMatchSearch")) + '</p>';
+      }
+      var html = "";
+      if (!filter) {
+        var byId = {}; all.forEach(function (r) { byId[r.id] = r; });
+        var favs = (state.favRecipes || []).map(function (id) { return byId[id]; }).filter(Boolean);
+        var recents = L.recentRecipeIds(state, L.todayKey()).map(function (id) { return byId[id]; }).filter(Boolean);
+        if (favs.length) html += '<h3 class="gridHead">' + esc(tr("meal.favsHead")) + "</h3>" + favs.map(card).join("");
+        if (recents.length) html += '<h3 class="gridHead">' + esc(tr("meal.recentsHead")) + "</h3>" + recents.map(card).join("");
+        if (html) html += '<h3 class="gridHead">' + esc(tr("meal.allRecipes")) + "</h3>";
+      }
+      html += list.map(card).join("") || '<p class="hint">' + esc(tr("meal.noMatchSearch")) + '</p>';
+      $("recipeList").innerHTML = html;
       $("recipeList").querySelectorAll("[data-recipe]").forEach(function (b) { b.addEventListener("click", function () { openRecipe(b.getAttribute("data-recipe")); }); });
     }
     drawList("");
@@ -790,7 +914,23 @@
       '<label>' + esc(tr("meal.treatKcal")) + '<input id="trKcal" type="number" min="0" placeholder="320"></label></div>' +
       '<div class="row"><button class="primaryBtn" id="trAdd">' + esc(tr("meal.addTreat")) + '</button></div>' +
       '<label>' + esc(tr("meal.treatQuick")) + '<textarea id="trQuick" rows="2" placeholder="Cake 320&#10;Chips"></textarea></label>' +
-      '<div class="row"><button class="pillBtn" id="trQuickBtn">' + esc(tr("meal.sortTreats")) + '</button><button class="pillBtn" id="trMic">' + esc(tr("meal.voiceBtn")) + '</button></div></div>';
+      '<div class="row"><button class="pillBtn" id="trQuickBtn">' + esc(tr("meal.sortTreats")) + '</button><button class="pillBtn" id="trMic">' + esc(tr("meal.voiceBtn")) + '</button></div>' +
+      (function () {
+        var counts = {}, latest = {};
+        (state.treats || []).forEach(function (t) {
+          var k = (t.name || "").toLowerCase(); if (!k) return;
+          counts[k] = (counts[k] || 0) + 1;
+          if (!latest[k] || t.dateKey >= latest[k].dateKey) latest[k] = t;
+        });
+        var usual = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || (latest[b].dateKey < latest[a].dateKey ? -1 : 1); }).slice(0, 6);
+        if (!usual.length) return "";
+        return '<p class="hint">' + esc(tr("meal.usualTreats")) + '</p><div class="row">' + usual.map(function (k, i) {
+          var t = latest[k];
+          return '<button class="pillBtn" data-utchip="' + i + '" data-utname="' + esc(t.name) + '" data-utkcal="' + (t.kcal || "") + '">' + esc(t.name) + (t.kcal ? " · " + t.kcal : "") + "</button>";
+        }).join("") + "</div>";
+      })() +
+      '<div class="grid2"><label>' + esc(tr("meal.barcodeLabel")) + '<input id="trBarcode" type="text" inputmode="numeric" autocomplete="off"></label></div>' +
+      '<div class="row"><button class="pillBtn" id="trBarcodeBtn">' + esc(tr("meal.barcodeBtn")) + '</button></div><p class="hint" id="trBarcodeMsg"></p></div>';
     if (!days.length) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-heart"/></svg><p>' + esc(tr("meal.noTreats")) + '</p></div>';
     days.forEach(function (d) {
       var tt = L.treatsTotal(byDay[d]);
@@ -802,6 +942,28 @@
         '<p class="dayTotal">' + esc(tr("meal.treatsDayAbout", { kcal: tt.known })) + (tt.unknown ? esc(tr("meal.treatsPlus", { n: tt.unknown })) : "") + esc(tr("meal.allFine")) + "</p></div>";
     });
     el.innerHTML = html;
+    el.querySelectorAll("[data-utchip]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var kcal = Number(b.getAttribute("data-utkcal")) || null;
+        state.treats.push({ id: "treat." + Date.now(), dateKey: L.todayKey(), name: b.getAttribute("data-utname"), kcal: kcal, note: "" });
+        save(); renderTreats(); toast(tr("meal.treatSaved"));
+      });
+    });
+    $("trBarcodeBtn").addEventListener("click", function () {
+      var msg = $("trBarcodeMsg");
+      var code = ($("trBarcode").value || "").replace(/\D/g, "");
+      if (code.length < 6) { msg.textContent = tr("meal.barcodeShort"); return; }
+      msg.textContent = "";
+      fetch("https://world.openfoodfacts.org/api/v2/product/" + code + ".json").then(function (r) { return r.json(); }).then(function (j) {
+        if (!j || j.status !== 1 || !j.product) { msg.textContent = tr("meal.barcodeNone"); return; }
+        var p = j.product, n = p.nutriments || {};
+        var ks = Number(n["energy-kcal_serving"]), k100 = Number(n["energy-kcal_100g"]);
+        var kcal = isFinite(ks) && ks > 0 ? Math.round(ks) : (isFinite(k100) && k100 > 0 ? Math.round(k100) : null);
+        if (p.product_name) $("trName").value = String(p.product_name).slice(0, 80);
+        if (kcal) $("trKcal").value = kcal;
+        msg.textContent = tr("meal.barcodeFound") + (kcal && !(isFinite(ks) && ks > 0) ? " " + tr("meal.barcodePer100") : "");
+      }).catch(function () { msg.textContent = tr("meal.barcodeOff"); });
+    });
     $("trAdd").addEventListener("click", function () {
       var name = $("trName").value.trim(); if (!name) { toast(tr("toast.treatFirst")); return; }
       state.treats.push({ id: "treat." + Date.now(), dateKey: L.todayKey(), name: name,
@@ -904,7 +1066,7 @@
     var grid = L.monthGrid(year, month);
     var html = '<div class="card"><div class="calHead"><button class="pillBtn" id="calPrev">' + esc(tr("cal.back")) + '</button>' +
       "<h3>" + names[month] + " " + year + '</h3><button class="pillBtn" id="calTodayBtn">' + esc(tr("nav.today")) + '</button><button class="pillBtn" id="calNext">' + esc(tr("cal.next")) + '</button></div>' +
-      (demoMode ? "" : '<div class="row"><button class="pillBtn" id="calImportBtn"><svg class="btnIco"><use href="#i-cal"/></svg> ' + esc(tr("cal.importTitle")) + '</button></div>') +
+      ('<div class="row"><button class="pillBtn" id="calImportBtn"><svg class="btnIco"><use href="#i-cal"/></svg> ' + esc(tr("cal.importTitle")) + '</button></div>') +
       '<div class="calGrid">' + [1, 2, 3, 4, 5, 6, 7].map(function (di) { return '<div class="calDow">' + esc(tr("cal.d" + di)) + "</div>"; }).join("");
     grid.forEach(function (iso) {
       var d = L.parseKey(iso);
@@ -939,7 +1101,7 @@
   var IMPORT_LABELS = { google: "Google Calendar", apple: "Apple / iCloud", outlook: "Outlook", file: "a calendar file" };
   var importSource = "google", importSeq = 0;
   function openImport() {
-    if (demoMode || !window.CI) return;
+    if (!window.CI) return;
     $("importResult").textContent = "";
     $("importSheet").classList.remove("hidden");
     setImportSource(importSource);
@@ -1947,6 +2109,144 @@
       b.addEventListener("click", function () {
         var a = areaById(b.getAttribute("data-open")); openArea(a.id, a.subs[0].id); });
     });
+    renderChallenge();
+  }
+
+  /* --- Challenge card (build 17, Wave 1): three modes on the
+     logic engine. A missed day is a calm gap, never a wipe.
+     The strict restart (Hard only) moves only the count, and
+     only by the user's own tap. --- */
+  var chBuild = null, chEndArmed = false;
+  function chTaskLabel(t) {
+    if (t.kind === "habit") { var h = (state.habits || []).filter(function (x) { return x.id === t.id; })[0]; return h ? h.name : t.kind; }
+    if (t.kind === "custom") return t.label || "";
+    return tr("ch.task." + t.kind);
+  }
+  function chArchiveCurrent() {
+    if (!state.challenge) return;
+    state.challengePast = state.challengePast || [];
+    state.challengePast.push(Object.assign({}, state.challenge, { endedISO: L.todayKey() }));
+    state.challenge = null;
+  }
+  function chStart(mode, tasks, lengthDays, strict) {
+    chArchiveCurrent();
+    state.challenge = L.repairChallenge({ id: "ch." + L.todayKey() + "." + mode + "." + Date.now(),
+      mode: mode, startISO: L.todayKey(), lengthDays: lengthDays, tasks: tasks, strict: !!strict });
+    chBuild = null; chEndArmed = false;
+    save(); renderChallenge();
+  }
+  function chDefaultTasks(mode) {
+    var tasks = [{ kind: "workout" }, { kind: "meals" }, { kind: "water" }, { kind: "checkin" }];
+    if (mode === "hard" && (state.peptides || []).length) tasks.push({ kind: "peptide" });
+    return tasks;
+  }
+  function renderChallenge() {
+    var box = $("challengeCard"); if (!box) return;
+    var p = state.profile;
+    if (!p || !p.setupDone || !authUser) { box.hidden = true; box.innerHTML = ""; return; }
+    box.hidden = false;
+    var today = L.todayKey();
+    var ch = state.challenge;
+    if (chBuild) {
+      var kinds = [["workout"], ["meals"], ["water"], ["checkin"]];
+      if ((state.peptides || []).length) kinds.push(["peptide"]);
+      var rows = kinds.map(function (k) {
+        return '<label class="chTask"><input type="checkbox" data-chpick="' + k[0] + '"><span class="grow">' + esc(tr("ch.task." + k[0])) + "</span></label>";
+      }).join("") + (state.habits || []).map(function (h) {
+        return '<label class="chTask"><input type="checkbox" data-chpick="habit" data-chhabit="' + esc(h.id) + '"><span class="grow">' + esc(h.name) + "</span></label>";
+      }).join("");
+      box.innerHTML = '<p class="big">' + esc(tr("ch.pickTasks")) + "</p>" + rows +
+        '<div class="grid2"><label>' + esc(tr("ch.days")) + '<input id="chDays" type="number" min="7" max="365" value="30"></label>' +
+        "<label>" + esc(tr("ch.ownTask")) + '<input id="chOwn" type="text" placeholder="' + esc(tr("ch.ownTaskPh")) + '"></label></div>' +
+        '<div class="row"><button class="pillBtn" id="chStartBtn">' + esc(tr("ch.startCustom")) + '</button>' +
+        '<button class="pillBtn" id="chBackBtn">' + esc(tr("plan.backBtn")) + "</button></div>";
+      $("chBackBtn").addEventListener("click", function () { chBuild = null; renderChallenge(); });
+      $("chStartBtn").addEventListener("click", function () {
+        var tasks = [];
+        box.querySelectorAll("[data-chpick]").forEach(function (c) {
+          if (!c.checked) return;
+          var kind = c.getAttribute("data-chpick");
+          tasks.push(kind === "habit" ? { kind: "habit", id: c.getAttribute("data-chhabit") } : { kind: kind });
+        });
+        var own = $("chOwn").value.trim();
+        if (own) tasks.push({ kind: "custom", label: own });
+        if (!tasks.length) { toast(tr("ch.needTask")); return; }
+        var days = Math.round(Number($("chDays").value) || 30);
+        chStart("custom", tasks, days, false);
+      });
+      return;
+    }
+    if (!ch) {
+      box.innerHTML = '<p class="big">' + esc(tr("ch.title")) + '</p><p class="hint">' + esc(tr("ch.intro")) + "</p>" +
+        [["hard", "ch.hard", "ch.hardLine"], ["steady", "ch.steady", "ch.steadyLine"], ["custom", "ch.custom", "ch.customLine"]].map(function (m) {
+          return '<div class="chTask"><span class="grow"><strong>' + esc(tr(m[1])) + "</strong><br>" + esc(tr(m[2])) + '</span><button class="pillBtn" data-chmode="' + m[0] + '">' + esc(tr("ch.start")) + "</button></div>";
+        }).join("");
+      box.querySelectorAll("[data-chmode]").forEach(function (b) {
+        b.addEventListener("click", function () {
+          var mode = b.getAttribute("data-chmode");
+          if (mode === "custom") { chBuild = { mode: "custom" }; renderChallenge(); return; }
+          chStart(mode, chDefaultTasks(mode), 75, false);
+        });
+      });
+      return;
+    }
+    var prog = L.challengeProgress(state, today);
+    if (prog.finished) {
+      box.innerHTML = '<p class="big">' + esc(tr("ch.title")) + '</p><p class="hint">' +
+        esc(tr("ch.finished", { n: prog.daysDone, t: ch.lengthDays })) + "</p>" +
+        '<div class="row"><button class="pillBtn" id="chAgainBtn">' + esc(tr("ch.again")) + "</button></div>";
+      $("chAgainBtn").addEventListener("click", function () { chArchiveCurrent(); save(); renderChallenge(); });
+      return;
+    }
+    var day = L.challengeDay(state, today);
+    var strip = prog.days.filter(function (d) { return d.iso <= today; }).slice(-14).map(function (d) {
+      return '<span class="chDot ' + d.state + '" title="' + d.iso + '"></span>';
+    }).join("");
+    var head = '<p class="big">' + esc(tr(ch.mode === "hard" ? "ch.hard" : ch.mode === "steady" ? "ch.steady" : "ch.custom")) + "</p>" +
+      '<p class="hint">' + esc(tr("ch.dayOf", { d: prog.dayIndex, n: ch.lengthDays })) + " · " + esc(prog.daysDone === 1 ? tr("ch.oneDayDone") : tr("ch.daysDone", { n: prog.daysDone })) + "</p>" +
+      '<div class="chDots">' + strip + "</div>";
+    var softer = state.checkins[today] === "bad" ? '<p class="hint">' + esc(tr("ch.softer")) + "</p>" : "";
+    var body = "";
+    if (day.rest) {
+      body = '<p class="hint">' + esc(tr("ch.restPlanned")) + "</p>" +
+        '<div class="row"><button class="pillBtn" id="chUnrestBtn">' + esc(tr("ch.unrest")) + "</button></div>";
+    } else {
+      body = day.tasks.map(function (t) {
+        var label = esc(chTaskLabel(t));
+        if (t.satisfied) return '<div class="chTask"><span class="grow">' + label + '</span><span class="okMark">' + esc(tr("ch.tick")) + "</span></div>";
+        if (t.auto || t.kind === "habit") return '<div class="chTask"><span class="grow">' + label + '</span><span class="hint">' + esc(tr("ch.notYet")) + "</span></div>";
+        return '<div class="chTask"><span class="grow">' + label + '</span><button class="miniBtn" data-chtick="' + esc(t.key) + '">' + esc(tr("ch.tick")) + "</button></div>";
+      }).join("") +
+        '<div class="row"><button class="pillBtn" id="chRestBtn">' + esc(tr("ch.restToday")) + "</button></div>";
+    }
+    var foot = "";
+    if (ch.mode === "steady") foot += '<p class="hint">' + esc(tr("ch.weeklyRest")) + "</p>";
+    if (ch.mode === "hard") {
+      if (!ch.strict) foot += '<p class="hint">' + esc(tr("ch.strictLine")) + '</p><div class="row"><button class="pillBtn" id="chStrictBtn">' + esc(tr("ch.strictOn")) + "</button></div>";
+      else {
+        foot += '<p class="hint">' + esc(tr("ch.strictOnLine")) + "</p>";
+        var missed = prog.days.some(function (d) { return d.state === "missed" && d.iso >= prog.countFrom && d.iso < today; });
+        if (missed) foot += '<div class="row"><button class="pillBtn" id="chRestartBtn">' + esc(tr("ch.restartCount")) + "</button></div>";
+      }
+    }
+    foot += '<div class="row"><button class="pillBtn" id="chEndBtn">' + esc(chEndArmed ? tr("ch.endSure") : tr("ch.end")) + "</button></div>";
+    box.innerHTML = head + softer + body + foot;
+    box.querySelectorAll("[data-chtick]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var key = b.getAttribute("data-chtick");
+        ch.ticks = ch.ticks || {}; ch.ticks[today] = ch.ticks[today] || {};
+        if (ch.ticks[today][key]) delete ch.ticks[today][key]; else ch.ticks[today][key] = true;
+        save(); renderChallenge();
+      });
+    });
+    var rb = $("chRestBtn"); if (rb) rb.addEventListener("click", function () { ch.restDays[today] = true; save(); renderChallenge(); });
+    var ub = $("chUnrestBtn"); if (ub) ub.addEventListener("click", function () { delete ch.restDays[today]; save(); renderChallenge(); });
+    var sb = $("chStrictBtn"); if (sb) sb.addEventListener("click", function () { ch.strict = true; save(); renderChallenge(); });
+    var kb = $("chRestartBtn"); if (kb) kb.addEventListener("click", function () { ch.countFrom = today; save(); renderChallenge(); });
+    var eb = $("chEndBtn"); if (eb) eb.addEventListener("click", function () {
+      if (!chEndArmed) { chEndArmed = true; renderChallenge(); return; }
+      chEndArmed = false; chArchiveCurrent(); save(); renderChallenge();
+    });
   }
 
   /* --- Settings --- */
@@ -1972,7 +2272,7 @@
     document.querySelectorAll(".blanketBtn").forEach(function (b) {
       b.classList.toggle("on", b.getAttribute("data-blanket") === blanketColor());
     });
-    var io2 = $("importOpen2"); if (io2) io2.classList.toggle("hidden", !!demoMode);
+
     var rm = $("remindBtn"), rh = $("remindHint");
     if (rm && rh) {
       if (FitRemind.available()) {
@@ -2185,32 +2485,7 @@
       } catch (e2) {}
     }
   }
-  /* Demo (P4, SPARK SHAPE): a demo session is an anonymous
-     session seeded from the invented fixture. The real device
-     state is PARKED under a separate key before the demo
-     starts and restored when it ends — a demo never touches
-     the user's own data, and a demo session never converts
-     into a real account (sign-up starts fresh after leaving). */
-  var PARK_KEY = "fit-app-v1-parked", DEMO_MARK = "fit-app-demo";
-  var demoMode = false, demoPending = false, demoPendingHash = null, reviewerOpen = false;
   var doorStep = 1, doorEmail = "";
-  function parkDeviceState() {
-    try { if (!localStorage.getItem(PARK_KEY)) localStorage.setItem(PARK_KEY, JSON.stringify(state)); } catch (e) {}
-  }
-  function restoreParkedState() {
-    try {
-      var raw = localStorage.getItem(PARK_KEY);
-      if (raw) { state = repairKeep(JSON.parse(raw)); localStorage.removeItem(PARK_KEY); }
-      localStorage.removeItem(DEMO_MARK);
-    } catch (e) {}
-    demoMode = false; saveLocal();
-  }
-  function sha256Hex(text) {
-    if (!window.crypto || !crypto.subtle) return Promise.resolve(null);
-    return crypto.subtle.digest("SHA-256", new TextEncoder().encode(text)).then(function (buf) {
-      return Array.prototype.map.call(new Uint8Array(buf), function (x) { return ("0" + x.toString(16)).slice(-2); }).join("");
-    });
-  }
   var mirrorTimer = null;
   function scheduleMirror() {
     if (!authUser || !window.FitAuth) return;
@@ -2277,11 +2552,9 @@
      the line that speaks: the given key on success, the
      sign-out failure line on any failure. Never silence. */
   function signOutFlow(okKey) {
-    var wasDemo = demoMode;
     authUser = null;
     doorStep = 1; doorEmail = "";
-    if (wasDemo) { restoreParkedState(); renderAll(); }
-    else renderAccount();
+    renderAccount();
     if (!window.FitAuth || !window.FitAuth.signOutUser) { toast(tr("acc.signOutFail")); return; }
     window.FitAuth.signOutUser().then(function () {
       toast(tr(okKey));
@@ -2296,8 +2569,8 @@
        2026): before entry the app shows the DOOR and nothing
        else — the settings page carries sign-up/sign-in only,
        the menu and Wally stay inside, and there is no road in
-       without an account. Entry (or the demo) lifts the class. */
-    document.body.classList.toggle("signedOut", !authUser && !demoMode);
+       without an account. Entry lifts the class. */
+    document.body.classList.toggle("signedOut", !authUser);
     if (!doorStarted) {
       box.innerHTML = (Date.now() - bootAt < 4500) ?
         '<p class="hint">' + esc(tr("set.opening")) + '</p>' :
@@ -2315,8 +2588,8 @@
          Change, the password, ONE button, and the reset
          line. No name field and no plan pick on either
          step (the guide's tour asks the name inside the
-         app). The demo stays as its own quiet entry
-         below, in its sealed Spark shape. */
+         app). There is no other road in (her 20:57 rule:
+         sign up or sign in, always). */
       var GOOGLE_G = '<svg width="22" height="22" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34.3 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34.3 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.1 5.6l6.2 5.2C36.9 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>';
       var APPLE_G = '<svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.05 12.54c-.03-2.89 2.36-4.27 2.47-4.34-1.35-1.97-3.44-2.24-4.18-2.27-1.78-.18-3.47 1.05-4.37 1.05-.9 0-2.29-1.02-3.77-1-1.94.03-3.72 1.13-4.72 2.86-2.01 3.49-.51 8.66 1.45 11.5.96 1.39 2.1 2.94 3.6 2.88 1.45-.06 2-.93 3.74-.93s2.24.93 3.77.9c1.56-.02 2.55-1.41 3.5-2.8 1.1-1.62 1.56-3.18 1.58-3.26-.03-.02-3.04-1.17-3.07-4.59zM14.16 4.06c.8-.97 1.34-2.32 1.19-3.66-1.15.05-2.55.77-3.38 1.74-.74.86-1.39 2.23-1.22 3.55 1.29.1 2.6-.65 3.41-1.63z"/></svg>';
       var ARROW = '<svg width="27" height="27" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15M13 5l7 7-7 7" stroke="#FFFFFF" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -2371,13 +2644,7 @@
         '<div class="doorOr">' + esc(tr("door.orEmail")) + '</div>' +
         '<input id="accEmail" type="email" autocomplete="email" aria-label="Email" placeholder="you@example.com">' +
         '<button class="doorNext" id="accNextBtn" aria-label="Next">' + ARROW + '</button>' +
-        '</div>' +
-        '<p class="hint">' + esc(tr("door.demoHint")) + '</p>' +
-        '<div class="row doorDemoRow"><button class="pillBtn" id="accDemoBtn">' + esc(tr("door.demoBtn")) + '</button>' +
-        '<button class="pillBtn" id="accReviewerBtn">' + esc(tr("door.reviewerBtn")) + '</button></div>' +
-        (reviewerOpen ? '<div class="grid2"><label>' + esc(tr("door.codeLabel")) + '<input id="accCode" type="text" autocomplete="off" placeholder="' + esc(tr("door.codePh")) + '"></label></div>' +
-          '<div class="row"><button class="pillBtn" id="accCodeBtn">' + esc(tr("door.codeBtn")) + '</button></div>' : "") +
-        '</div>';
+        '</div></div>';
       var emEl = $("accEmail"); if (emEl && doorEmail) emEl.value = doorEmail;
       function doorNext() {
         var em = $("accEmail").value.trim();
@@ -2392,25 +2659,6 @@
       });
       $("accAppleBtn").addEventListener("click", function () {
         doorAttempt(window.FitAuth.signInWithApple(), "acc.appleFail");
-      });
-      $("accDemoBtn").addEventListener("click", function () { enterDemo(null); });
-      $("accReviewerBtn").addEventListener("click", function () { reviewerOpen = true; renderAccount(); });
-      var codeBtn = $("accCodeBtn");
-      if (codeBtn) codeBtn.addEventListener("click", function () {
-        var code = $("accCode").value.trim();
-        if (!code) { toast(tr("acc.codeFirst")); return; }
-        sha256Hex(code).then(function (hash) {
-          if (!hash) { toast(tr("acc.codeSecure")); return; }
-          enterDemo(hash);
-        });
-      });
-      return;
-    }
-    if (demoMode) {
-      box.innerHTML = '<p class="hint">' + esc(tr("acc.demoExploring")) + '</p>' +
-        '<div class="row"><button class="pillBtn" id="accLeaveBtn">' + esc(tr("acc.leaveDemo")) + '</button></div>';
-      $("accLeaveBtn").addEventListener("click", function () {
-        signOutFlow("toast.demoClosed");
       });
       return;
     }
@@ -2465,52 +2713,6 @@
       deleteArmed = false; renderAccount();
     });
   }
-  function enterDemo(hash) {
-    if (doorBusy) return;
-    if (!window.FitAuth || !window.FitAuth.enterDemoSession) { toast(tr("acc.demoResting")); return; }
-    doorBusyOn();
-    demoPending = true; demoPendingHash = hash || null;
-    window.FitAuth.enterDemoSession().catch(function () {
-      doorBusyOff();
-      demoPending = false;
-      toast(tr("acc.demoFail"));
-    });
-  }
-  function demoPicks() {
-    var byMeal = { breakfast: [], lunch: [], dinner: [] };
-    MD.RECIPES.forEach(function (r) { if (byMeal[r.meal]) byMeal[r.meal].push(r.id); });
-    var days = [];
-    for (var i = 0; i < 7; i++) days.push({
-      breakfast: byMeal.breakfast[i % byMeal.breakfast.length],
-      lunch: byMeal.lunch[(i + 2) % byMeal.lunch.length],
-      dinner: byMeal.dinner[(i + 4) % byMeal.dinner.length] });
-    var monday = L.addDays(L.todayKey(), -((new Date().getDay() + 6) % 7));
-    var routine = L.buildRoutine("legs", 30, EX.EXERCISES);
-    return { days: days, routine: routine, mondayISO: monday, todayISO: L.todayKey(), disclaimerVersion: D.DISCLAIMER_VERSION };
-  }
-  function startDemo(user) {
-    authUser = user; demoMode = true; demoPending = false;
-    parkDeviceState();
-    try { localStorage.setItem(DEMO_MARK, "1"); } catch (e) {}
-    window.FitAuth.loadCloudState(user.uid).then(function (cloud) {
-      if (cloud && cloud.profile) {
-        state = repairKeep(cloud);
-        if (demoPendingHash) state.demoUnlock = demoPendingHash;
-      } else {
-        state = repairKeep(window.FitDemo.buildDemoState(demoPicks()));
-        state.demoUnlock = demoPendingHash;
-      }
-      demoPendingHash = null;
-      saveLocal();
-      window.FitAuth.saveCloudState(user.uid, state).catch(function () {});
-      renderAll(); settleSetupSheet();
-      toast(tr("acc.demoWelcome"));
-    }).catch(function () {
-      state = repairKeep(window.FitDemo.buildDemoState(demoPicks()));
-      state.demoUnlock = demoPendingHash; demoPendingHash = null;
-      saveLocal(); renderAll(); settleSetupSheet();
-    });
-  }
   /* Two-hat plan sync: once per session, for a real signed-in
      user. Runs only after
      a cloud round trip, so the account root exists (CS order).
@@ -2518,7 +2720,7 @@
      written by FitAuth.syncPlan under the rules gate. */
   var planSynced = false;
   function maybeSyncPlan(user) {
-    if (planSynced || demoMode || !user || user.isAnonymous || !window.FitAuth || !window.FitAuth.syncPlan) return;
+    if (planSynced || !user || user.isAnonymous || !window.FitAuth || !window.FitAuth.syncPlan) return;
     planSynced = true;
     window.FitAuth.syncPlan(user.uid, false).then(function (p) {
       if (p) { state.tier = { plan: p }; saveLocal(); renderAccount(); renderPlans(); }
@@ -2583,7 +2785,7 @@
   var tourRanThisSession = false;
   var reofferShownThisSession = false;
   function joinFollowUp() {
-    if (joinPopped || demoMode || !authUser) return;
+    if (joinPopped || !authUser) return;
     joinPopped = true;
     if (!guideOn() || (state.settings && state.settings.tourSeen)) { afterTour(); return; }
     showView("today");
@@ -2603,7 +2805,7 @@
      lives in Settings and setup; the greeting stays
      generic and a missing name blocks nothing. */
   function maybeNameReoffer() {
-    if (demoMode || !authUser || !guideOn()) return;
+    if (!authUser || !guideOn()) return;
     if (tourRanThisSession || reofferShownThisSession) return;
     if (!state.profile || state.profile.name) return;
     if (!state.settings || state.settings.nameReoffer !== "pending") return;
@@ -2728,7 +2930,6 @@
      The demo is its own tour; a resting guide is woken
      first, never overridden. */
   function replayTour() {
-    if (demoMode) { toast(tr("tour.tDemo")); return; }
     if (!guideOn()) { toast(tr("tour.tResting", { name: companionName() })); return; }
     showView("today");
     tourReplay = true;
@@ -2759,7 +2960,6 @@
   }
   function lockedTap() { toast(tr("pro.lockedTap")); showProMoment(); }
   function maySaveRoutine() {
-    if (demoMode) return true;
     if (planNow() === "pro") return true;
     if ((state.routines || []).length < FREE_ROUTINE_CAP) return true;
     lockedTap(); return false;
@@ -2772,11 +2972,10 @@
   }
   function closeProMoment() { $("proModal").classList.add("hidden"); }
   function onSignedIn(user) {
-    if (user.isAnonymous) { startDemo(user); return; }
-    /* Race fence: if a real sign-in lands while a demo is on
-       screen, the device copy is restored BEFORE the merge,
-       so demo data can never join a real account. */
-    if (demoMode) restoreParkedState();
+    /* No anonymous sessions exist any more (her 20:57 rule):
+       a stale one arriving from an old install is signed out,
+       never let in. */
+    if (user.isAnonymous) { window.FitAuth.signOutUser().then(function () { renderAccount(); }, function () { renderAccount(); }); return; }
     activateAccountStorage(user.uid);
     authUser = user;
     window.FitAuth.loadCloudState(user.uid).then(function (cloud) {
@@ -2803,8 +3002,8 @@
     window.FitAuth.watchUser(function (user) {
       if (user) onSignedIn(user);
       else {
-        var wasDemo = demoMode, previousUser = authUser;
-        if (previousUser && !previousUser.isAnonymous && !wasDemo) {
+        var previousUser = authUser;
+        if (previousUser && !previousUser.isAnonymous) {
           try { localStorage.setItem(accountStateKey(previousUser.uid), JSON.stringify(state)); } catch (e) {}
           state = repairKeep(null);
           try {
@@ -2814,11 +3013,8 @@
         }
         authUser = null;
         doorStep = 1; doorEmail = "";
-        if (wasDemo) { restoreParkedState(); renderAll(); toast(tr("toast.demoClosed")); }
-        else {
-          if (previousUser && !previousUser.isAnonymous) { saveLocal(); renderAll(); }
-          renderAccount();
-        }
+        if (previousUser && !previousUser.isAnonymous) { saveLocal(); renderAll(); }
+        renderAccount();
       }
     });
     renderAccount();
@@ -2910,25 +3106,17 @@
       "Saved. Nothing picked, so everything stays in view. Change it any time in Settings.");
   });
 
-  function renderAll() { buildSidebar(); renderToday(); renderSettings(); applySidebar(); applyAppearance();
-    var db = $("demoBanner"); if (db) db.classList.toggle("hidden", !demoMode); }
+  function renderAll() { buildSidebar(); renderToday(); renderSettings(); applySidebar(); applyAppearance(); }
   renderAll();
   initAccounts();
   setTimeout(renderAccount, 5000);
   if (!state.profile || !state.profile.setupDone) {
-    /* A returning demo session restores its fixture profile (always
-       setup-complete) a beat later — never wall it meanwhile (QA leg 7). */
-    var demoReturning = false;
-    try { demoReturning = !!localStorage.getItem(DEMO_MARK); } catch (e) {}
-    if (!demoReturning) {
-      /* DOOR FIRST (Polar device finding F1, 21 Oct 2026):
-         a cold open meets the DOOR, never the setup form.
-         The setup follows a choice made at the door: a
-         sign-in (the tour leads into it), the demo, or the
-         door's own "continue without an account" road. */
-      showView("settings");
-      setTimeout(function () { var ab = $("accountBox"); if (ab && ab.scrollIntoView) ab.scrollIntoView(); }, 60);
-    }
+    /* DOOR FIRST (Polar device finding F1, 21 Oct 2026):
+       a cold open meets the DOOR, never the setup form.
+       The setup follows a sign-in at the door (the tour
+       leads into it). There is no other road in. */
+    showView("settings");
+    setTimeout(function () { var ab = $("accountBox"); if (ab && ab.scrollIntoView) ab.scrollIntoView(); }, 60);
   }
 
   if ("serviceWorker" in navigator) {

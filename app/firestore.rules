@@ -1,0 +1,122 @@
+// Fit App — Firestore rules.
+// Shape (Security desk flag F1, decided 14 Oct 2026): the root
+// document users/{uid} holds only the small slices (profile,
+// disclaimer, meta). Every other top-level slice of the app
+// state lives in its own document at users/{uid}/slices/{slice},
+// so no single document can ever reach Firestore's 1 MiB
+// document ceiling while history grows (Never Delete law).
+// Owner-only at both levels; anything deeper falls to the
+// catch-all deny.
+// P4 delta (SPARK SHAPE demo unlock, Store Review ruling +
+// Security delta read, 14 Oct 2026): a demo session that
+// entered by access code carries unlockHash in its root doc;
+// its slices are served only while that hash matches the
+// desk-held record at demoAccess/current (created by HQ in
+// the console; no client match exists for it — only the
+// rules engine's get() reads it). Rotating the record
+// revokes code-door sessions. Sessions without unlockHash
+// (every real account; one-tap demo sessions) are untouched.
+// Compiler correction (14 Oct 2026): the gate function is a single return expression — Firestore rules functions are expression-only; semantics identical to the re-reviewed draft.
+// Project "Fit App" (fit-app-7f25f) created at P1 (14 Oct
+// 2026). Static review of the base text PASSED at the
+// Security desk 14 Oct 2026
+// (reviews/2026-10-14-fit-app-rules-static.md; base text
+// published 14:55, live battery 21/21). The P4 amended text
+// passed Security's static re-review + delta battery
+// (SEALED 34/34) 14 Oct 2026.
+// TWO-HAT AMENDMENT (14 Oct 2026, Ilse's two-hat order;
+// pattern CEO-DASHBOARD-PATTERN v2; Security static PASS
+// reviews/2026-10-14-fit-app-twohat-rules-static.md,
+// compile gate passed): three additions, nothing else
+// moves. (1) _comp/{uid}: the comp record for her user
+// account — console-written, NO client access. (2) PLAN
+// GATE: slice create/update gains planWriteOk — only the
+// "tier" slice is gated, only a "pro" claim inside it,
+// satisfied only by the _comp record (caller data can
+// trigger the requirement, never satisfy it). Entitlement
+// resolves from that record (TW-3; revocation = TW-3R, a
+// store-phase case). (3) _owner/*: the CEO dashboard
+// space — config read by the owner only, writable by NO
+// client; every other dashboard doc owner-only, checked
+// against the config record on every call (OA battery).
+// Battery correction (14 Oct 2026, Security live run): the
+// nested recursive wildcard under _owner/{doc} can match
+// zero segments and so govern the config document itself;
+// its allow now carries the same doc != "config" exclusion
+// as the parent (S3.4(h) — recursive-wildcard leak).
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function demoUnlockOk(uid) {
+      let root = get(/databases/$(database)/documents/users/$(uid)).data;
+      let rec = /databases/$(database)/documents/demoAccess/current;
+      return !("unlockHash" in root)
+        || (exists(rec) && root.unlockHash == get(rec).data.hash);
+    }
+    function compOk(uid) {
+      return exists(/databases/$(database)/documents/_comp/$(uid));
+    }
+    function planWriteOk(uid, slice, data) {
+      /* Only the "tier" slice is gated, and only a "pro"
+         claim inside it. Misshaped values are not claims;
+         the app repairs its own state on load. */
+      return slice != "tier"
+        || !("value" in data)
+        || !("plan" in data.value)
+        || data.value.plan != "pro"
+        || compOk(uid);
+    }
+    function isOwner() {
+      let cfg = /databases/$(database)/documents/_owner/config;
+      return request.auth != null
+        && exists(cfg)
+        && get(cfg).data.ownerUid == request.auth.uid;
+    }
+    match /users/{uid} {
+      /* F1 interim fence (Security word, 19 Oct 2026): the
+         free-month anchor at state.profile.firstSeenAt, once
+         stamped on the record, never changes and is never
+         dropped — a fresh device must not restart the month
+         by re-stamping it. Create admits (birth); an update
+         admits while the incoming stamp echoes the stored
+         one, or births it where the record never had one;
+         only a change or a drop is refused. Every legitimate
+         save carries the stamp forward unchanged. */
+      function anchorKept() {
+        let before = resource.data.get("state", {}).get("profile", {}).get("firstSeenAt", null);
+        let after = request.resource.data.get("state", {}).get("profile", {}).get("firstSeenAt", null);
+        return after == before || before == null;
+      }
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if request.auth != null && request.auth.uid == uid;
+      allow update: if request.auth != null && request.auth.uid == uid && anchorKept();
+      allow delete: if request.auth != null && request.auth.uid == uid;
+      match /slices/{slice} {
+        allow read: if request.auth != null && request.auth.uid == uid && demoUnlockOk(uid);
+        allow create, update: if request.auth != null && request.auth.uid == uid && demoUnlockOk(uid) && planWriteOk(uid, slice, request.resource.data);
+        allow delete: if request.auth != null && request.auth.uid == uid && demoUnlockOk(uid);
+      }
+    }
+    match /_comp/{uid} {
+      allow read, write: if false;
+    }
+    match /_owner/config {
+      allow read: if isOwner();
+      allow write: if false;
+    }
+    match /_owner/{doc} {
+      allow read, write: if isOwner() && doc != "config";
+      match /{sub=**} {
+        /* The recursive wildcard can match ZERO segments, so
+           this allow can govern the {doc} document itself —
+           the config exclusion rides here too, or the nested
+           grant would decide over config's write:false
+           (Security battery finding, 14 Oct 2026). */
+        allow read, write: if isOwner() && doc != "config";
+      }
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

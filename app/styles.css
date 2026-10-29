@@ -220,12 +220,6 @@ textarea{resize:vertical}
   .topBar h1{font-size:24px}
 }
 
-/* Demo banner (P4): a slim, kind label while a demo session
-   is open — demo sessions are labelled in-app by the ruling. */
-#demoBanner{background:var(--sage-tint);color:var(--ink);text-align:center;font-weight:600;
-  padding:8px 14px;font-size:14px}
-#demoBanner.hidden{display:none}
-
 /* Exercise animations: the card carries its OWN cream ground
    on every Law E background (QA pin 10) — fixed board colours
    here on purpose, not theme tokens. */
@@ -258,7 +252,6 @@ textarea{resize:vertical}
 .doorOr:before,.doorOr:after{content:"";flex:1;height:1px;background:var(--line)}
 .doorCol input{text-align:left}
 .doorNext{width:62px;height:62px;border-radius:50%;background:var(--sage);border:0;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;margin:18px auto 4px}
-.doorDemoRow{justify-content:center}
 .doorEmailRow{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 12px;background:var(--surface);font-weight:700;text-align:left}
 .tourDim{position:fixed;inset:0;background:rgba(20,12,4,.28);z-index:54}
 .tourCard{position:fixed;z-index:56;background:var(--surface);border:1px solid var(--line);border-radius:20px;box-shadow:0 16px 40px rgba(62,47,38,.30);padding:16px;text-align:center;width:296px;max-width:calc(100vw - 32px)}
@@ -289,3 +282,15 @@ textarea{resize:vertical}
    button + the small icon inside the calendar header button. */
 .import-src.on { background: var(--sage); color: var(--cream); border-color: var(--sage); }
 .btnIco { width: 15px; height: 15px; vertical-align: -2px; }
+
+/* Challenge card (build 17): calm dots, honest counts. */
+.chDots{display:flex;gap:5px;flex-wrap:wrap;margin:8px 0}
+.chDot{width:14px;height:14px;border-radius:50%;background:transparent;border:2px solid var(--sage-mist);box-sizing:border-box}
+.chDot.done{background:var(--sage);border-color:var(--sage)}
+.chDot.rest{background:var(--sage-tint);border-color:var(--sage-mist)}
+.chDot.today{border-color:var(--ink)}
+.chDot.missed{background:transparent;border-color:var(--sage-tint)}
+.chTask{display:flex;align-items:center;gap:8px;padding:6px 0}
+.chTask .grow{flex:1}
+.chTask .okMark{color:var(--sage);font-weight:700}
+.recipeGrid .gridHead{grid-column:1/-1;margin:10px 0 0}

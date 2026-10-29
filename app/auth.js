@@ -28,7 +28,6 @@ import {
   getAuth, initializeAuth, browserLocalPersistence, onAuthStateChanged, signOut, deleteUser,
   createUserWithEmailAndPassword, signInWithEmailAndPassword,
   sendPasswordResetEmail, EmailAuthProvider, reauthenticateWithCredential,
-  signInAnonymously,
   GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithCredential,
   reauthenticateWithPopup
 } from "./sdk/firebase-auth.js";
@@ -210,10 +209,9 @@ async function saveCloudState(uid, state) {
     else sliceData.push([k, state[k]]); /* DATA only — no calls yet */
   });
   const rootDocData = { state: rootState, updatedAt: new Date().toISOString() };
-  /* P4 demo unlock: only a real hash is written. Writing the
-     key at all when it is empty would trip the rules gate
-     (presence is the signal), so it is simply absent. */
-  if (typeof state.demoUnlock === "string" && state.demoUnlock) rootDocData.unlockHash = state.demoUnlock;
+  /* Build 17: the demo unlock is gone with the demo itself —
+     no unlockHash is ever written. A pre-17 root doc's field
+     is simply not carried forward on the next save. */
   /* ROOT FIRST — invoked AND awaited — and only then are the
      slice writes INVOKED (QA Phase 6 P4 F1, proven live
      14 Oct 2026, twice): the rules gate reads the root doc
@@ -412,23 +410,9 @@ function entitlement() {
   return entitlementDetail().plan;
 }
 
-/* The demo door may be reached before the account door is
-   wired on some paths; make sure the door exists first.
-   (Restored 15 Oct: the call stood in enterDemoSession
-   with no definition behind it.) */
-function ensureDoor() {
-  if (!app && window.FIT_ACCOUNT_CONFIG) initDoor(window.FIT_ACCOUNT_CONFIG);
-}
-
-async function enterDemoSession() {
-  ensureDoor();
-  const cred = await withDoorTimeout(signInAnonymously(auth), 20000);
-  return cred.user;
-}
-
 window.FitAuth = {
   initDoor, watchUser, signUpWithEmail, signInWithEmail, resetPassword,
-  signInWithGoogle, signInWithApple, enterDemoSession,
+  signInWithGoogle, signInWithApple,
   signOutUser, loadCloudState, saveCloudState, deleteAccount,
   syncPlan, planOf, entitlement,
   setAccountAge, resolveTier, entitlementDetail
