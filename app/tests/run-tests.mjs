@@ -544,7 +544,7 @@ check("speech boxes: every player bubble in the layer equals its track text of r
 check("FIT-L4-1: the CEO page ships door-only (no dashboard shell or numbers in the static document)", (() => { const h = require("fs").readFileSync(new URL("../owner.html", import.meta.url), "utf8"); return h.indexOf("doorBox") >= 0 && h.indexOf("dashBox") === -1 && h.indexOf("signups") === -1 && h.indexOf("ownerMount") >= 0; })());
 check("FIT-L4-1: the shell mounts only after the owner gate reads _owner/config, and leaves on sign-out", (() => { const j = require("fs").readFileSync(new URL("../owner.js", import.meta.url), "utf8"); const iCfg = j.indexOf('"_owner", "config"'); const iMount = j.indexOf("mountShell();", iCfg); return iCfg >= 0 && iMount > iCfg && j.indexOf("const SHELL") >= 0 && j.indexOf("unmountShell(); show(") >= 0; })());
 check("the legal fence: legal keys never resolve from the ordinary tables (English until human-checked)", (() => { const L = require(require("path").join(process.cwd(), "i18n.js")); return Object.keys(L.ES).every((k) => k.indexOf("legal.") !== 0) && Object.keys(L.HUMAN.es).length === 0 && L.use("es") === "es" && L.t("legal.disclaimer") === L.EN["legal.disclaimer"] && L.t("legal.disclaimer").indexOf("not a doctor") >= 0; })());
-check("the language layer ships wired (script order, boot resolution, Settings row, SW precache)", (() => { const idx = require("fs").readFileSync(new URL("../index.html", import.meta.url), "utf8"); const app = require("fs").readFileSync(new URL("../app.js", import.meta.url), "utf8"); const sw = require("fs").readFileSync(new URL("../service-worker.js", import.meta.url), "utf8"); return idx.indexOf("i18n.js") > 0 && idx.indexOf("i18n.js") < idx.indexOf("app.js") && app.indexOf("Lang.use(state.settings") >= 0 && idx.indexOf("langEsBtn") >= 0 && app.indexOf('setLang("es")') >= 0 && sw.indexOf('"i18n.js"') >= 0; })());
+check("the language layer ships wired (script order, boot resolution, Settings row, SW precache)", (() => { const idx = require("fs").readFileSync(new URL("../index.html", import.meta.url), "utf8"); const app = require("fs").readFileSync(new URL("../app.js", import.meta.url), "utf8"); const sw = require("fs").readFileSync(new URL("../service-worker.js", import.meta.url), "utf8"); return idx.indexOf("i18n.js") > 0 && idx.indexOf("i18n.js") < idx.indexOf("app.js") && app.indexOf('Lang.use(SPANISH_LIVE ? (state.settings && state.settings.lang) : "en")') >= 0 && idx.indexOf("langEsBtn") >= 0 && app.indexOf('setLang("es")') >= 0 && sw.indexOf('"i18n.js"') >= 0; })());
 check("the one email button walks both roads (sign-in, then create on a credential refusal)", (() => { const src = require("fs").readFileSync(new URL("../app.js", import.meta.url), "utf8"); const i = src.indexOf("accContinueBtn"); const j = src.indexOf("signInWithEmail", i); const k = src.indexOf("signUpWithEmail", j); return i >= 0 && j > i && k > j && src.indexOf("auth/email-already-in-use", k) > k; })());
 check("the reset path lives on the password step, behind the email step (frame shape of record)", (() => { const src = require("fs").readFileSync(new URL("../app.js", import.meta.url), "utf8"); const s2 = src.slice(src.indexOf("doorStep === 2"), src.indexOf("doorBigName")); const s1 = src.slice(src.indexOf("doorBigName"), src.indexOf("function doorNext()")); return s2.indexOf("accForgotBtn") >= 0 && src.indexOf("resetPassword") >= 0 && s1.indexOf("accForgotBtn") === -1; })());
 check("no-founder sweep: zero founder references in shipped files", (() => { const fs2 = require("fs"); const files = ["index.html","styles.css","app.js","auth.js","logic.js","data.js","wally.js","i18n.js","accounts-config.js","meals-data.js","meals-logic.js","meals-nutrition.js","exercises-data.js","anim.js","anim-data.js","anim-data-expansion.js","i18n-content.js","calendar-import.js","vendor/ical/ical.min.js","service-worker.js","manifest.webmanifest","privacy.html","owner.js","owner.html"]; const hit = files.filter(f => /ilse|placencia/i.test(fs2.readFileSync(new URL("../" + f, import.meta.url), "utf8"))); return hit.length === 0; })());
@@ -649,7 +649,7 @@ check("white theme: ink on white is AAA", ratio("#3E2F26", "#FFFFFF") >= 7);
 check("black theme: ink on ground is AAA", ratio("#F6EDDD", "#17120E") >= 7);
 check("black theme: dark text on sage accent passes AA", ratio("#221A12", "#A9BFA5") >= 4.5);
 check("image veil keeps ink readable over a black photo", (() => { const r = Math.round(0.9 * 250 + 0.1 * 0), g = Math.round(0.9 * 238 + 0.1 * 0), b = Math.round(0.9 * 214 + 0.1 * 0); const h = "#" + [r, g, b].map(x => x.toString(16).padStart(2, "0")).join(""); return ratio("#3E2F26", h) >= 7; })());
-check("service worker is fitapp-v90 with the v2 file list (build 17 fold)", (() => { const sw = fs.readFileSync(new URL("../service-worker.js", import.meta.url), "utf8"); return sw.indexOf("fitapp-v90") !== -1 && sw.indexOf("fitapp-v89") === -1 && sw.indexOf("demo-seed.js") === -1 && sw.indexOf("wally.js") !== -1 && sw.indexOf("moss.js") === -1 && sw.indexOf("ZillaSlab-700.woff2") !== -1 && sw.indexOf("wally-rest.webp") !== -1; })());
+check("service worker is fitapp-v91 with the v2 file list (readiness round 1)", (() => { const sw = fs.readFileSync(new URL("../service-worker.js", import.meta.url), "utf8"); return sw.indexOf("fitapp-v91") !== -1 && sw.indexOf("fitapp-v90") === -1 && sw.indexOf("demo-seed.js") === -1 && sw.indexOf("wally.js") !== -1 && sw.indexOf("moss.js") === -1 && sw.indexOf("ZillaSlab-700.woff2") !== -1 && sw.indexOf("wally-rest.webp") !== -1; })());
 check("FIT-001: every service worker precache entry ships in the store bundle (no excluded names, every file on disk)", (() => { const fs2 = require("fs"); const sw = fs2.readFileSync(new URL("../service-worker.js", import.meta.url), "utf8"); const m = sw.match(/var FILES = \[(.*?)\];/s); if (!m) return false; const entries = [...m[1].matchAll(/"([^"]+)"/g)].map(x => x[1]); const excluded = e => e === "privacy.html" || e === "anim-preview.html" || /(^|\/)owner\.(html|js)$/.test(e); return entries.every(e => e === "./" || (!excluded(e) && fs2.existsSync(new URL("../" + e, import.meta.url)))); })());
 check("FIT-003: every file input carries an accessible name (aria-label)", (() => { const fs3 = require("fs"); const idx = fs3.readFileSync(new URL("../index.html", import.meta.url), "utf8"); const app = fs3.readFileSync(new URL("../app.js", import.meta.url), "utf8"); const tags = (idx + app).match(/<input[^>]*type="file"[^>]*>/g) || []; return tags.length >= 5 && tags.every(t => /aria-label="[^"]+"/.test(t)); })());
 check("QA leg 7: a completed restored profile closes the setup sheet (settle helper, restore landings, unconditional door-first boot)", (() => { const app = require("fs").readFileSync(new URL("../app.js", import.meta.url), "utf8"); return app.indexOf("function settleSetupSheet()") !== -1 && (app.match(/settleSetupSheet\(\);/g) || []).length >= 2 && app.indexOf("demoReturning") === -1 && app.slice(app.lastIndexOf("initAccounts();")).indexOf('showView("settings")') !== -1; })());
@@ -767,7 +767,7 @@ check("anim: poison leg degrades calmly (pin 8)", animJsSrc.indexOf("animMissing
 check("anim: Wally in the player is the art of record file (identity rule)", animJsSrc.indexOf("assets/wally-welcome.webp") !== -1);
 check("anim: library bytes under the 300 KB pin (pin 10)", Buffer.byteLength(animJsSrc) + Buffer.byteLength(animDataSrc) < 300000);
 const swSrc2 = fs.readFileSync(new URL("../service-worker.js", import.meta.url), "utf8");
-check("anim: service worker precaches the rig + data (pin 10)", swSrc2.indexOf('"anim.js"') !== -1 && swSrc2.indexOf('"anim-data.js"') !== -1 && swSrc2.indexOf('"anim-data-expansion.js"') !== -1 && swSrc2.indexOf("fitapp-v90") !== -1);
+check("anim: service worker precaches the rig + data (pin 10)", swSrc2.indexOf('"anim.js"') !== -1 && swSrc2.indexOf('"anim-data.js"') !== -1 && swSrc2.indexOf('"anim-data-expansion.js"') !== -1 && swSrc2.indexOf("fitapp-v91") !== -1);
 check("anim: shell loads the rig before the app", (() => { const h = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8"); return h.indexOf("anim-data.js") !== -1 && h.indexOf("anim-data.js") < h.indexOf("app.js") && h.indexOf("anim.js") < h.indexOf("app.js"); })());
 check("anim: art of record untouched (identity rule)", (() => {
   const crypto = require("node:crypto");
@@ -1753,6 +1753,34 @@ check("money trust: the free list, the one-item Pro list and the yearly maths st
     a.indexOf('"A$7.99"') !== -1 && a.indexOf('"A$59.99"') !== -1 && a.indexOf('"A$149"') !== -1;
 })());
 
+check("READINESS R1: her 2 Nov switches stand (plans off, Spanish held) and the saved plans stay in the tree", (() => {
+  const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  const prices = fs.readFileSync(new URL("../prices-data.js", import.meta.url), "utf8");
+  return app.indexOf("var PLANS_LIVE = false;") >= 0 && app.indexOf("var SPANISH_LIVE = false;") >= 0 &&
+    prices.indexOf("7.99") >= 0 && prices.indexOf("59.99") >= 0 && prices.indexOf("149") >= 0 &&
+    app.indexOf("showProMoment") >= 0 && app.indexOf("FREE_ROUTINE_CAP") >= 0;
+})());
+check("READINESS R1: all free — the routine cap cannot bite and the Pro moment is fenced while PLANS_LIVE is off", (() => {
+  const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  return app.indexOf("if (!PLANS_LIVE) return true;") >= 0 && app.indexOf("if (!PLANS_LIVE) return;") >= 0 &&
+    app.indexOf("if (PLANS_LIVE) planLine +=") >= 0 && app.indexOf('var planLine = "";') >= 0;
+})());
+check("READINESS R1: Spanish held — the language row hides and English is forced over device and saved settings", (() => {
+  const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const css = fs.readFileSync(new URL("../styles.css", import.meta.url), "utf8");
+  return html.indexOf('id="langRow"') >= 0 && css.indexOf("body.esHeld #langRow{display:none}") >= 0 &&
+    app.indexOf('Lang.use(SPANISH_LIVE ?') >= 0 && app.indexOf('if (!SPANISH_LIVE && choice !== "en") return;') >= 0;
+})());
+check("READINESS R1: the reminder ask exists (one-time, at the first reminder, honest refusal kept)", (() => {
+  const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const L2 = require(require("path").join(process.cwd(), "i18n.js"));
+  return app.indexOf("remindAsked") >= 0 && app.indexOf("maybeAsk()") >= 0 &&
+    html.indexOf('id="remindAsk"') >= 0 && html.indexOf('id="remindAskYes"') >= 0 && html.indexOf('id="remindAskNo"') >= 0 &&
+    typeof L2.EN["rem.askTitle"] === "string" && typeof L2.ES["rem.askTitle"] === "string" &&
+    L2.EN["rem.askBody"].indexOf("-") === -1;
+})());
 console.log("RESULT pass=" + pass + " fail=" + fail);
 if (fail) process.exit(1);
 
