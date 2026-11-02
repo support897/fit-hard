@@ -143,3 +143,74 @@ of the packaged bytes (SW v91 + pins read from the IPA; icon
 byte-identical read from the package) · candidate discipline:
 TestFlight only, never App Review, never "finished" to Ilse ·
 the loop closes at Round 3 or not at all.
+
+## AMENDMENT, 2 Nov evening: build 18 VOID, build 19 shipped instead
+Build 18's packaged bundle was build 17's bytes (bridge carried
+its own app/ copy; the source commit never reached it). Build 18
+was removed from both TestFlight groups, never re-attached,
+never published. The corrected content shipped as BUILD 19 under
+this packet's bytes and gates: bridge census post-carry ZERO
+(1,086 files) · run 41406614462 SUCCESS · packaged verification
+ALL PASS before attach (SW v91, five pins, icon 07c57dd1) ·
+ASC build 19 VALID eb498c68, in her group […, 17, 19] + QA
+[12, 16, 17, 19] · ROUTE 1 publish-and-verify COMPLETE (served
+four-file MATCH, demo-seed.js deleted, promo + privacy
+untouched). QA door verdict on the b19 publish
+(verdict-fithard-b19-route1-doors-2026-11-02.md): Google
+sign-in Pass · Google sign-up Could not check (approval
+latency) · Apple sign-in Could not check (outcome uncertain) ·
+Apple sign-up Could not check, skipped by her choice. Full
+record: BUILD-LOG.md, Round 1 entries.
+
+# BUILD 20 GATE PACKET — Round 2 guide round (staged 2 Nov, HQ's deploy word)
+
+## Stage 0: delta pins, desk tree fit-b16/app (SW fitapp-v92)
+Shipped files changed vs build 19's verified bundle (the same
+five as Round 1's delta; everything else in app/ stands at
+b19's pins, auth.js named as the control):
+- app.js md5-8 b61f94b0 (196,930 B) — was dd8b739a
+- index.html 94f46d77 — was 3498343e
+- styles.css aba6f359 — was 35408678
+- i18n.js 07da590f — was 021acb47
+- service-worker.js 324b29f5 (fitapp-v92) — was 30c8a420
+- tests/run-tests.mjs a037e988 (not shipped)
+- auth.js 5d8f1d62 (unchanged, control)
+
+## Contents
+Round 2 guide per READINESS-PLAN's guide spec: tour slimmed
+to 3 steps · Getting Started checklist on Today (ticks read
+real state, dismissal forever) · coach marks at eight points
+of use (seen-flag map) · "Show the guide again" reset (wipes
+no user data) · empty-state Wally pass · J1 joins the guide
+(from Round 1). Fixes in the same bytes: sign-out clears the
+strip greeting at once · nav arrival re-renders Today and
+Settings fresh · the inert plansOff class dropped.
+
+## Desk evidence
+Suite 501 PASS / 0 FAIL (nine new pins: eight READINESS R2 +
+the nav freshness pin; SW pins re-cut to v92) · desk M-walk
+probe 27 steps all pass, 0 page errors (tour, checklist
+ticking from real actions, coach marks once-only, reset
+keeping data, sign-out strip proof with no reload).
+
+## Gates
+- Quality PASS (2 Nov): pins exact · suite 501/0 re-run ·
+  §6 byte-identical (bf56b907 · 07c57dd1 · 5d3829c0) · guide
+  read in code · strip cure read · plansOff zero. Limit: the
+  desk probe is desk evidence at their chair.
+- Efficiency PASS (2 Nov): pins exact · suite 501/0 re-run ·
+  delta ≈ +10.8 KB upper bound judged fair · costs early-out ·
+  waste scan clean.
+- QA candidate check (§M walk + strip leg): COMMISSIONED
+  2 Nov, verdict outstanding at staging.
+- Reality Check: LAST, on the same bytes, after QA.
+
+## Conveyor conditions (carried, none waived)
+Bridge carry FIRST, then the post-carry census of the WHOLE
+bridge app/ vs the desk tree at ZERO differing (the b18
+lesson) · CPV 19 → 20 · packaged verification on 20 BEFORE
+any group attach (SW v92 + pins + icon 07c57dd1 + 1.1 (20)) ·
+attach her group + QA lane, read back · Route 1 publish
+updated to the verified 20 bundle with the served comparison
+filed · candidate discipline: TestFlight only, NEVER App
+Review, never "finished" to Ilse.

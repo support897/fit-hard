@@ -1,6 +1,446 @@
 # BUILD LOG — Fit Hard, build 17 wave (base: branch qa-fixes-2026-10-26 @ 5de1ebd)
 
 ## READINESS LOOP (her order 2 Nov via HQ — plan: READINESS-PLAN.md)
+- SU DISPATCH ACK (2 Nov ~21:52 AEST): build 20 conveyor
+  firing. Prep state at their hand: all six pins verified at
+  the desk tree + auth control · ASC confirmed no build 20
+  standing · the branch archive for the exact commit census
+  is in flight; on its landing: branch commit → bridge carry
+  → post-carry ZERO census → CPV 20 → dispatch → packaged
+  verification before attach → groups → Route 1 update.
+  Stages reported as they land, ASC read directly at each.
+- REALITY CHECK ON BUILD 20: FIRE THE CONVEYOR NOW (2 Nov
+  ~21:52 AEST), QA's §M walk OWED onto the shipping bytes as
+  a HARD Round 3 gate — not waived, not substituted; build 20
+  is NOT finished, the loop is NOT closed. Reality's pins
+  verified at their own hand, all exact. Why fire, of record:
+  Ilse's direct word is finish + deploy, the conveyor's
+  product is a TestFlight candidate and no readiness claim is
+  made or allowed; QA's lane failure is an environment
+  failure, not evidence against these bytes; Round 3 re-walks
+  the FULL script on the shipped bytes, so the walk is
+  deferred onto better bytes, not dropped.
+  THE ACCUMULATION, named by Reality so it cannot blur: THREE
+  QA legs ride on Round 3 — (1) the §M guide walk, (2) the J1
+  driven walk, (3) the saved-login/isolation spot re-check.
+  Round 3 does not close with any of the three outstanding,
+  and the desk probe never counts as any of them. If the §M
+  walk finds a customer-facing defect on shipped 20, the fix
+  ships as the next build inside this loop; 20 is not the
+  loop's end and is never reported as its climax.
+  Conveyor conditions carried whole (packet's own): bridge
+  carry first, post-carry census ZERO, CPV 19 → 20, packaged
+  verification BEFORE attach, groups read back, Route 1
+  publish to the verified 20 bundle, TestFlight only.
+  Reality's open-legs board after 20 ships: Google sign-up +
+  twin and Apple sign-in parked for the timed sitting ·
+  Google sign-in CLOSED (Route 1 on 19 was its closer) ·
+  Apple sign-up not tested by her choice · device door pass ·
+  phone-width proof · notification firing (device residue) ·
+  the three QA legs above. DISPATCH SENT to Store Uploads
+  the same minute with the full stage order.
+- FASTEST-ROUTE SWITCH ON HQ'S "FINISH AS FAST AS POSSIBLE"
+  (Ilse via HQ, 2 Nov ~21:50 AEST): QA's §M verdict is the
+  blocker (commissioned 21:16, still outstanding; QA's own
+  chat read first per the desk-silence law — their queue is
+  loaded and their local lane has been down all day, the
+  commission is the newest turn in their chat, not a stall).
+  Faster road taken, named to HQ in one line the same minute:
+  Reality asked NOW on Quality PASS + Efficiency PASS + the
+  desk's 27-step M-walk, with QA's §M walk OWED onto the
+  shipping bytes in Round 3 (Round 1 precedent shape), and
+  Store Uploads put on prep-only standby with the packet so
+  the conveyor fires the second Reality rules. No dispatch
+  before Reality; candidate discipline unchanged.
+- HQ DEPLOY WORD FOR BUILD 20 (Ilse direct via HQ, 2 Nov
+  ~21:43 AEST): finish the current fix, deploy to GitHub and
+  TestFlight. Chain, no new scope: (1) QA walk on the build 20
+  bytes (already commissioned), then Reality Check LAST on the
+  same bytes; (2) conveyor: commit to support897 branch
+  qa-fixes-2026-10-26 with fresh read-back, then build 20 to
+  TestFlight via Store Uploads, candidate rules, TestFlight
+  only, NEVER App Review; (3) packaged verification on 20 +
+  Route 1 publish updated to the verified 20 bundle; (4) final
+  to HQ only: build number, ASC id, branch head, gate lines,
+  packaged proof, and the EXACT open-legs list (Google sign-up
+  + Apple sign-in parked for the timed sitting, device door
+  pass) — that list is the Polar handover scope. GATE-PACKET
+  now carries the BUILD 20 GATE PACKET (staged, Stage 0 pins +
+  conditions). At staging: QA verdict outstanding, Reality
+  not yet asked (it goes last, after QA, per the order).
+- ROUND 2 GATE, EFFICIENCY: PASS (2 Nov ~21:25 AEST, on the v92
+  bytes): all seven pins match the filing · suite re-ran fresh
+  at their hand 501 PASS / 0 FAIL (evidence
+  ~/workspace/efficiency/fit-r2-suite-run.txt) · shipped growth
+  vs their Round 1 recorded sizes ≈ +10.8 KB total as an upper
+  bound for Round 2 (app +6,899 · i18n +3,090 · styles +550 ·
+  index +253 · worker +0), judged a fair price for the spec
+  items and the two probe-caught cures, nothing gold-plated ·
+  costs read in code: checklist early-outs on signed-out /
+  guide-off / dismissed before any row build; coach check is
+  one seen-map read before any DOM work; nav re-render is two
+  lines scoped to the two proven-stale views · waste scan clean:
+  plansOff zero, retired tour words stand in the tables
+  unrendered at zero runtime cost (kept words are not waste),
+  guide rides the existing machinery, no new art, auth.js
+  untouched. Named limit: the M-walk probe stands as the desk's
+  driven record. QA still out.
+- ROUND 2 GATE, QUALITY: PASS (2 Nov ~21:24 AEST, on the v92
+  bytes): pins all exact incl. auth.js untouched · suite re-ran
+  at their chair 501 PASS / 0 FAIL · §6 byte-identical (icon
+  master bf56b907 · icon-512 07c57dd1 · Wally welcome 5d3829c0,
+  no art changed) · guide read in code (tour 3 steps; coach seen
+  map semantics right; guide-again resets only the three guide
+  flags, touches no user data) · strip cure stands with the b19
+  finding written at the cure · plansOff zero everywhere.
+  Named limit: the desk M-walk probe is desk evidence, their
+  lane cannot re-walk it; QA's driven walk is the next proof.
+  PASS is on these bytes only. Efficiency + QA still out.
+- ROUND 2 GUIDE BUILD AT THE TREE (desk, 2 Nov evening, on HQ's
+  "start the build work now" instruction; = build 20 candidate
+  content, SW fitapp-v92, suite 501 PASS / 0 FAIL):
+  (1) Tour slimmed 4 steps to 3: welcome + name, ONE areas line
+  (new key tour.areas), done. tour.menu / tour.day stay in the
+  word tables, unrendered.
+  (2) Getting Started checklist on Today (#gsCard): rows drawn
+  from the user's kept areas (setup when unfinished · check-in ·
+  plan today's meals · pick your water goal · first routine),
+  each row deep-links to the exact screen, ticks read REAL state
+  (checkins, today's plan entry, the new settings.waterGoalPicked
+  flag set by the goal picker, routines/sessions), dismissal is
+  forever (settings.checklistDismissed), all done shows a Wally
+  celebration state whose close removes it for good.
+  (3) Coach marks: ONE Wally bubble at the point of use for
+  eight spots (meal-plan · meal-treats · gym-routines ·
+  gym-session · gym-machine · calendar · peptides · plans),
+  per-key seen flag in settings.coachSeen, Got it = never again;
+  the machine line stays honest (a photo can help you guess,
+  always check the label on the machine itself); the peptide
+  line is records-only words.
+  (4) Settings gains "Show the guide again" (#guideAgainBtn):
+  resets tourSeen + coachSeen + checklistDismissed and replays
+  the tour; a suite pin + the probe both prove it wipes NO user
+  data (probe: routine, name, setup, 7 plan days all kept).
+  (5) Empty-state teaching pass: Wally now rides the empty cards
+  for plan day, habits, to-dos, routines, doses, plus a new
+  no-favourites teaching block in Recipes (the star on any
+  recipe is the creating action, one line says so).
+  (6) J1's reminder ask already joins the guide (Round 1), so
+  spec item 5 stands from b19.
+  FIXES IN THE SAME BYTES: (a) sign-out clears the strip
+  greeting AT ONCE (renderAccount clears #stripHi + the Today
+  title when signed out) — the b19 observation 2 cure, probed
+  live: signed-in strip read "Hi, Probe", sign-out click, strip
+  read empty with NO reload. (b) NEW PROBE FINDING, fixed:
+  arriving at Today or Settings by nav showed the LAST render,
+  not current state (checklist ticked late, food counts lagged
+  the plan); nav arrival now re-renders both views fresh.
+  (c) the inert body.plansOff class from Round 1 is dropped
+  (Efficiency's micro-note, closed).
+  DESK M-WALK (hidden_files/probe_guide_r2.py, stub harness,
+  phone 390x844, on these exact bytes): 27 steps, ZERO failed,
+  ZERO page errors — tour 3 steps, setup follows + skips,
+  checklist rows appear and tick one by one from real actions
+  (check-in tap, plan-week tap, water goal pick, routine build),
+  coach marks show once and clear on Got it with the flag saved
+  on the account record, empty states carry Wally, celebration
+  + close, guide-again reset restores tour + checklist + marks
+  with data intact, sign-out strip proof above.
+  Pins: app.js b61f94b0 (196,930 B) · index.html 94f46d77 ·
+  styles.css aba6f359 · i18n.js 07da590f · service-worker.js
+  324b29f5 · auth.js 5d8f1d62 (untouched) · tests a037e988.
+  Wally art untouched: no art file changed; §6 icon/Wally pins
+  hold from the suite (wally-welcome 5d3829c0 in the art pin).
+  Words: every new string EN shipped + ES saved, zero em/en
+  dashes (suite pin). NEXT: four gates on these bytes, then
+  the build 20 conveyor with the bridge-carry census FIRST.
+- ROUND 1 DOOR VERDICT FILED, READ IN FULL AT THIS DESK (QA,
+  2 Nov ~20:09 AEST; verdict ~/workspace/qa-tester/
+  verdict-fithard-b19-route1-doors-2026-11-02.md; lane: shared
+  browser task 09d793c9, ran 18:15–20:08 AEST, on the build 19
+  publish only, no demo surface seen):
+  Google sign-in: Pass · Google sign-up: Could not check ·
+  Apple sign-in: Could not check · Apple sign-up: Could not
+  check, skipped by Ilse's choice.
+  LEG 1 detail: session route, nothing typed, exact Settings
+  wording on file; limitation stands (lane could not set a 402px
+  phone width — verified on the handed tab, NOT proven at phone
+  width). Verdict also explains the Fit tab later showing the
+  placencia account again: the Leg 2 attempt's Google popup
+  re-signed in that session — NOT a spontaneous restore, no
+  saved-login defect read from it.
+  LEG 2 detail: as filed at 19:35 — four protected references
+  expired in transit on approval latency, no code ever typed, no
+  account created, not a Fit finding. Closing routes: approver
+  standing by before a code is requested, or Ilse typing a fresh
+  code herself in a takeover.
+  LEG 3 detail, outcome UNCERTAIN, stated exactly: prompt opened
+  19:40, held unexpired (verified 20:01 + 20:03), nothing typed
+  or resent while waiting; Ilse's fresh code reached QA via HQ
+  at 20:07, passed to the browser the same minute, entered once
+  (key-press entry, then digit by digit; Enter did not navigate,
+  showed no error, rejection, or expiry wording, prompt sat
+  unchanged with boxes empty again, Fit tab stayed at the clean
+  signed-out door). QA calls this neither a rejection nor an
+  expiry, because Apple said neither. No resend instructed.
+  Closing route: a fresh coordinated attempt with Ilse standing
+  by (resend on the waiting prompt, fresh code entered within
+  seconds by a method that triggers Apple's own submit), or
+  Ilse typing the code herself in a takeover.
+  DESK JUDGEMENTS stand as logged at 19:38 (code-read): Obs 1
+  setup dialog = expected by code (loaded profile setupDone
+  false), not a defect; Obs 2 header greeting = minor stripHi
+  finding for Round 2 (signOutFlow never re-renders renderToday).
+  STILL OWED, named in the verdict: Google sign-up + twin and
+  Apple sign-in completion on these bytes via the closing
+  routes · J1 + spot re-check behind QA's local lane (probe
+  still DOWN, heal hook still polling) · desk owner-side
+  server-record read if a future sign-up creates the
+  projects.reports account. Served pins stand as SU's filing,
+  not a QA re-hash. ROUND 1 CLOSE-OUT FINALS SENT TO HQ the
+  same hour; the loop is NOT closed (Round 3 or not at all).
+- QA LEG 3 APPLE 2FA PROMPT OPEN (QA, 2 Nov ~19:41 AEST, same
+  minute): on the build 19 publish, exact prompt "Two-Factor
+  Authentication" / "Enter the verification code sent to your
+  Apple devices.", six boxes. Browser holding there, typed
+  nothing, resent nothing, no tap or number-match. QA checked
+  Gmail: no Apple code email today, the code is on her devices
+  only, so QA routed a fresh-code request to HQ this minute.
+  Leg 3 stays open only until that prompt expires; if it expires,
+  QA reports it exactly and stops, with no resend. Desk action:
+  none — desk does not touch the browser, does not resend, does
+  not summon anyone; HQ holds the code route, as it did at 13:15
+  today. Full door verdict follows the Leg 3 outcome.
+- QA ROUTE 1 DOORS, CLOSING REPORT + LEG 3 DISPATCHED (QA, 2 Nov
+  ~19:38 AEST): Leg 1 Google sign-in PASS, on the build 19 publish
+  only, no demo surface seen. Exact Settings wording: "Signed in
+  as placenciailse@gmail.com. Your app follows you now." Header
+  "Hi, Ilse Placencia". No chooser, password wall, code prompt,
+  tap or number-match; signed-in session route, nothing typed.
+  Limitation, named: the browser lane could not set a 402px phone
+  width, so Leg 1 is verified on the handed tab, NOT proven at
+  phone width. Leg 2 Google sign-up: Could not check, confirmed,
+  reason already filed; no new account, no first-run flow, no uid
+  visible; server-record proof still owed from the desk side if a
+  future attempt creates one. Google recovery page left open,
+  untouched by QA's stop decision. Leg 3 Apple sign-in: NOT
+  attempted in that task, per the stop decision; QA has now
+  dispatched it separately to the same browser task, on the
+  publish only, standing law intact (never tap/number-match, code
+  prompt stops and asks QA). Full door verdict follows when the
+  Leg 3 report lands.
+  DESK JUDGEMENTS ON QA'S TWO OBSERVATIONS (code read at this
+  desk, app.js, before answering):
+  (1) Setup dialog after sign-in for an existing account =
+  EXPECTED BY CODE, NOT an account defect, NOT a Leg 1 failure.
+  afterTour (app.js:2835) opens setup iff the loaded profile has
+  setupDone false; settleSetupSheet closes it only if true; and
+  joinFollowUp runs AFTER the cloud load settles, so a load race
+  does not explain it. The loaded profile for this uid therefore
+  had setupDone false — consistent with her walks repeatedly
+  dismissing/skipping setup, since suSkip births a profile but
+  does NOT mark it done. Prefilled name proves nothing completed:
+  adoptSignInName (app.js:2789) fills it from the Google display
+  name; the shown goal is the first option when no saved goal
+  matches. The fresh browser profile does not reset server state
+  (state is per uid, cloud-loaded), so it does not explain the
+  dialog either way. Leg 1 Pass stands.
+  (2) Header greeting briefly surviving sign-out until a reload =
+  A REAL MINOR FINDING, filed for the Round 2 batch, NOT a G1
+  failure. Mechanism: signOutFlow (app.js:2591) sets authUser null
+  and calls renderAccount only; stripHi is written by renderToday
+  (app.js:2092), which sign-out never re-runs, so the top strip
+  keeps "Hi, Ilse Placencia" until a reload re-renders it. The
+  door itself was clean at sign-out, and G1's reload condition
+  (sign out → reload → door clean) still passes — this is the
+  narrower immediate-stale case, not the old post-reload G1. Fix
+  shape for Round 2: sign-out must clear stripHi (or re-render
+  Today) at once, so no name survives a sign-out even briefly.
+- QA ROUTE 1 DOORS, INTERIM (QA, 2 Nov ~19:37 AEST): Leg 2 STOPPED
+  BY QA DECISION, not by the app — Could not check, no further
+  resend authorized. Browser told to type nothing, resend nothing,
+  and not start Apple on its own. Reason, plain: Google sent codes
+  at 18:25, 18:49, 19:13 and 19:24; QA relayed a fresh protected
+  reference for each; each expired in transit before the browser
+  could type it, because the approval wait outlasted the reference
+  life. Google never rejected a typed code, because no code was
+  ever typed. No password typed, no tap-on-phone or number-match
+  chosen. NO new Fit account was created for
+  projects.reports.ilse@gmail.com, and no first-run flow was seen.
+  This is an environment + approval-latency limit, NOT a Fit
+  finding. What stands so far: Leg 1 Google sign-in as
+  placenciailse@gmail.com passed in the browser's own report
+  (filed verdict still pending — not claimed final until it
+  lands). Apple sign-in NOT walked in this task; QA will not
+  start it blind into the same approval loop. Full verdict
+  follows when the browser's closing report lands, with the
+  closing route for Leg 2 named there (approver standing by for
+  a fresh attempt, or Ilse typing a code herself in a takeover,
+  are the two routes that break the loop). RULE BANKED (also in
+  MEMORY.md): do not request a code until the approver is
+  standing by to approve within minutes, or use a takeover —
+  repeating resends without that condition only loops.
+- QA ROUTE 1 DOORS RUNNING (QA, 2 Nov ~18:15 AEST): commission
+  received. Local browser lane STILL DOWN (fresh probe DOWN, heal
+  hook polls all "lane still down", no retry of that lane).
+  Switch routes, not surfaces: the door legs now run on the
+  commissioned publish itself (support897.github.io/fit-hard/app/)
+  through the shared browser lane, the same lane that proved the
+  Meal Prep doors today. No walk on any other surface, no stale
+  tree. Phone view first: Google sign-in, Google sign-up + its
+  sign-in twin, then Apple sign-in, each on its own line.
+  Standing law holds in the task: no password typed by any desk,
+  never tap-on-phone or number-match; an Apple code prompt stops
+  that leg and comes to QA as a question for HQ routing (desk
+  stands ready to relay to HQ the same minute if QA pings this
+  desk; a code is never stored). OWED BEHIND THIS, named plainly:
+  J1 + saved-login/isolation spot re-check still wait on the
+  local lane healing, per the conditional — NOT waived. QA has
+  not re-hashed the served bytes itself (text-fetch cannot hash
+  fetched bytes), so the served pins stand as Store Uploads'
+  filing until the door task's own reads land. Full verdict with
+  evidence follows when the door task reports; if it stalls on an
+  Apple code, QA messages the same minute.
+- CONVEYOR: ROUTE 1 COMPLETE (SU, 2 Nov ~18:09 AEST): the web publish
+  now carries the verified build-19 bundle. The standing /app/ was
+  a pre-17 tree (SW fitapp-v87), so the publish replaced the 8
+  differing root files, added the 6 package-only files, and deleted
+  the leftover demo-seed.js (served 404 now). Served comparison,
+  all four MATCH: app.js dd8b739a · index.html 3498343e · auth.js
+  5d8f1d62 · service-worker.js 30c8a420 (fitapp-v91). Promo page
+  unchanged (md5 cb2ae559, same as baseline), privacy untouched.
+  Commits: 2279d07 (14 files) + 0306297 (deletion). Build 19 is the
+  door-walk surface: TestFlight groups her […, 17, 19] + QA [12,
+  16, 17, 19], and /app/ serves the same bytes. Build 18 stays
+  ungrouped, never re-attached, never published. FULL CONVEYOR
+  RECORD: fit-hard main @ 0306297 · bridge main @ 9fc4039 ·
+  source qa-fixes @ 5a0194a · run 41406614462 SUCCESS · ASC build
+  19 VALID (eb498c68). QA COMMISSIONED the same hour: door
+  re-walks on this verified publish (Google sign-in · Google
+  sign-up · Apple sign-in), plus J1 driven + saved-login/isolation
+  spot re-check if their lane has healed.
+- CONVEYOR: BUILD 19 PACKAGED VERIFICATION ALL PASS + ATTACHED
+  (SU, 2 Nov ~18:03 AEST, verification BEFORE attach, as ruled):
+  artefact zip sha256 136d32ac… (matches the run page digest
+  exactly) · IPA sha256 11002c78… · com.ilseplacencia.fithard ·
+  1.1 (19) · profile 4db7458a · SW fitapp-v91 · app.js dd8b739a ·
+  index.html 3498343e · styles.css 35408678 · i18n.js 021acb47 ·
+  service-worker.js 30c8a420 · auth.js 5d8f1d62 · icon-512
+  07c57dd1 — every pin exact. ATTACHED, read back: her group 204
+  (…, 17, 19) · QA lane 204 [12, 16, 17, 19]; 18 stays out of both.
+  ROUTE 1 NEXT AT SU: the standing /app/ tree is being censused
+  against the verified package so only what differs gets replaced
+  (promo page + privacy untouched), then the four-file served
+  comparison is filed. Round 1 is NOT closed by this: QA's door
+  re-walks on the verified publish are still owed after it.
+- CONVEYOR: BUILD 19 RUN SUCCESS + ASC VALID, GROUPS NOT YET
+  ATTACHED (SU, 2 Nov ~18:01 AEST): run 41406614462 finished
+  SUCCESS in 4m 24s (job 4m 19s), artefact upload + App Store
+  Connect upload steps both green. ASC already reads build 19
+  VALID (uploaded 17:34 AEST). Artefact download in flight;
+  packaged verification (SW v91 · five pins · icon 07c57dd1 ·
+  1.1 (19)) runs on it BEFORE any group attach, as ruled. Groups
+  are NOT attached yet — VALID alone is not the attach, and
+  nothing is claimed attached until that verification passes and
+  the attach reads back.
+- CONVEYOR: BUILD 19 DISPATCHED (SU, 2 Nov 17:29 AEST): bridge head
+  9fc4039 (CPV 19 both configs, MARKETING 1.1, post-carry census
+  ZERO) → workflow run 41406614462, Queued at 17:29. This round,
+  no background watcher: SU reads the run and ASC directly at each
+  step — the b18 finisher's silent stall does not repeat. Packaged
+  verification (SW v91 · five pins · icon 07c57dd1 · 1.1 (19))
+  happens BEFORE any group attach, and Route 1 stays held until
+  that verified bundle exists. Awaiting run result + custody.
+- CONVEYOR: POST-CARRY CENSUS ZERO — PASS (SU, 2 Nov ~17:25 AEST):
+  bridge app/ vs fit-b16/app, whole set: 1,086 files each, no
+  only-in-either, zero differing. Carried pins read exact: app.js
+  dd8b739a · index.html 3498343e · styles.css 35408678 · i18n.js
+  021acb47 · service-worker.js 30c8a420 (fitapp-v91) · auth.js
+  5d8f1d62 · tests/run-tests.mjs 022e2322. The pre-carry gap list
+  (six files: the five shipped + tests) is fully closed. CPV 18→19
+  is in flight; dispatch follows on its read-back, and packaged
+  verification on 19 happens before any group attach, as ruled.
+  (1,086 matches build 17's gated set count — no file gained or
+  lost in the carry.)
+- CONVEYOR: CENSUS ORDER AGREED (SU, 2 Nov ~17:21 AEST): pre-carry
+  census = gap list only, must name exactly the five shipped files
+  differing (app.js · index.html · styles.css · i18n.js ·
+  service-worker.js; auth.js unchanged, so it must not differ);
+  pass = post-carry census, zero differing across the whole bridge
+  app/ vs fit-b16/app. Sequence stands: archive download still in
+  flight → pre-carry census on landing → carry → post-carry census
+  → CPV/dispatch only after that pass. Nothing else moves.
+- CONVEYOR: RULING (1) DONE, RULING (2) UNDER WAY (SU, 2 Nov ~17:20
+  AEST): build 18 removed from both groups (204 each, read back) —
+  her group now [1, 2, 4, 6, 8, 9, 10, 12, 16, 17], QA lane [12, 16,
+  17], no 18 anywhere; the ASC build stands ungrouped, never
+  re-attached, never published, as ruled. Ruling (2) under way: a
+  full bridge-main archive is downloading so the bridge app/
+  census (whole app/ vs fit-b16/app, zero differing) runs before
+  any carry. DESK NOTE BACK TO SU, same hour: the pre-carry census
+  NAMES the gaps (it must show the five shipped files differing);
+  the gate is the SECOND census AFTER the carry, which must read
+  zero differing across the whole bridge app/ — a pre-carry census
+  is never the pass.
+- CONVEYOR: BUILD 18 VOID — PACKAGED BUNDLE IS BUILD 17'S (SU custody
+  finding, 2 Nov ~17:17 AEST, bad news first): run 41393288947 SUCCESS
+  · artefact zip sha256 56f62309… · IPA sha256 9b681da3… · identity
+  RIGHT (com.ilseplacencia.fithard · 1.1 (18) · profile 4db7458a ·
+  icon-512 md5 07c57dd1, approved master) — but the packaged web
+  bundle is byte-for-byte b17: SW fitapp-v90 (not v91) · app.js
+  cab90737 · index.html 256d304d · auth.js 5d8f1d62 · service-
+  worker.js fe40e782 — all four are b17's pins, none is b18's.
+  CAUSE, named by SU: the bridge fit-hard-build stages from its OWN
+  carried app/ copy, and the b18 delta was committed to the source
+  branch only — it was never carried into the bridge's app/. The
+  bridge bump (CPV 18) and the source commit were both right; the
+  carry between them never happened. The earlier pre-dispatch
+  census (1,151 files, EQUAL) proved branch == desk tree, NOT
+  bridge == desk tree — that is the gap. DESK RULINGS, given the
+  same hour: (1) YES — REMOVE build 18 from BOTH TestFlight groups
+  NOW, read the groups back after (her group keeps 17, QA lane back
+  to [12, 16, 17], no 18 anywhere); ASC build 18 itself cannot be
+  deleted, it simply stands in no group and is NEVER re-attached
+  and NEVER published. (2) YES — CARRY into the bridge's app/,
+  CENSUS the bridge's app/ against THIS desk tree (fit-b16/app,
+  pins re-read at this desk this hour: app.js dd8b739a · index.html
+  3498343e · styles.css 35408678 · i18n.js 021acb47 · service-
+  worker.js 30c8a420 · auth.js 5d8f1d62 unchanged · SW fitapp-v91),
+  with the census showing ZERO differing files across the WHOLE
+  bridge app/ (not just the changed files — the five shipped files
+  plus tests/run-tests.mjs if the bridge carries it), then
+  RE-DISPATCH as BUILD 19 (ASC forbids reusing 18; CPV 18→19 in
+  both configs, read back; MARKETING_VERSION stays 1.1). Packaged
+  verification on 19 happens BEFORE any group attach and must read
+  SW v91 + the five pins above + icon 07c57dd1 + 1.1 (19) from the
+  IPA. ROUTE 1 PUBLISH-AND-VERIFY STAYS HELD: publishing the b18
+  artefact to /app/ would put b17's bytes out under build 18's
+  name — it proceeds only on the verified 19 bundle. Custody note:
+  this box refuses large writes, so the b18 IPA lives only at
+  SU's browser-download coordinates (sess-3160318395,
+  fit-hard-ios-ipa-1.1-b5.zip, digests above); no local copy here,
+  and the 0-byte stub was removed. HQ told the same hour, one short
+  state message: 18 void, 19 coming, nothing of 18 reaches a tester
+  or the web publish.
+- CONVEYOR: ASC BUILD 18 VALID, GROUPS ATTACHED, FINISHER MISSED IT
+  (SU late-stage report, 2 Nov ~17:13 AEST): ASC build 18 id a2d125ee,
+  uploaded 15:28 AEST, about 10 minutes after the 15:18 dispatch —
+  VALID. SU's finisher never attached it: its process sat alive
+  with an empty log for two hours and never fired. SU found the
+  VALID build by direct ASC read, attached it itself (her group
+  204 and QA lane 204 both read back: her group […, 17, 18] · QA
+  lane [12, 16, 17, 18]), and killed the wedged finisher. The run's
+  artefact download is in flight at SU; packaged verification
+  (1.1 (18) · SW fitapp-v91 · icon-512 07c57dd1 · profile) and the
+  REQUIRED Route 1 publish-and-verify on /app/ follow on the
+  artefact. LESSON CARRIED, in SU's own words: from here, ASC state
+  gets read directly at every stage instead of trusting the watcher
+  (same class as the 22 Oct custody-watcher death). NOT YET CLAIMED
+  at this desk: no b18 artefact on disk here at 17:13 (checked:
+  store-uploads dir still ends at b17), so packaged verification,
+  publish-and-verify, and QA's Route 1 door re-walks remain open
+  and are NOT reported as done. No message to HQ on this stage:
+  finals-only rule stands.
 ROUND 1 findings so far (2 Nov):
 - Tree alive: suite re-run on fit-b16/app = 488 PASS / 0 FAIL.
 - Journey doc steps 1–2 CORRECTED (they still described the removed
@@ -85,6 +525,20 @@ ROUND 1 findings so far (2 Nov):
   documents" + document does not exist. THE FULL FOOTPRINT IS
   GONE. L3 closes for build 17 under the fleet delete law — the
   first Fit delete leg closed on an owner-side read.
+- CONVEYOR: DISPATCHED (SU, 2 Nov 15:18): bridge fit-hard-build
+  head 43c7b4a carries CPV 18 in both configs (read back:
+  CURRENT_PROJECT_VERSION = 18 · MARKETING_VERSION = 1.1) ·
+  workflow ios-ipa-upload.yml run 41393288947 fired on that head,
+  Queued at dispatch. Custody, packaged verification, ASC attach
+  and the Route 1 publish-and-verify follow as the run lands.
+- CONVEYOR: COMMIT + CENSUS LANDED (SU, 2 Nov): branch head
+  5a0194a (9 files in four commits: 774cde6 app set · 913911d
+  tests · 0c9ed9e root docs · 5a0194a BUILD-LOG after a glitched
+  first grant) · branch SW reads fitapp-v91 · PRE-DISPATCH CENSUS
+  EQUAL — 1,151 files, zero only-in-either, zero differing (hash
+  comparison run in-memory; this box is refusing large writes so
+  the archive would not extract — the equality claim is the same
+  bytes). Bridge CPV 17→18 next, then dispatch.
 - CONVEYOR STAGE 0 (SU, 2 Nov): desk tree verified at their hand —
   SW fitapp-v91 · delta pins app.js dd8b739a · index.html 3498343e ·
   styles.css 35408678 · i18n.js 021acb47 · service-worker.js
