@@ -1,5 +1,312 @@
 # BUILD LOG — Fit Hard, build 17 wave (base: branch qa-fixes-2026-10-26 @ 5de1ebd)
 
+## READINESS LOOP (her order 2 Nov via HQ — plan: READINESS-PLAN.md)
+ROUND 1 findings so far (2 Nov):
+- Tree alive: suite re-run on fit-b16/app = 488 PASS / 0 FAIL.
+- Journey doc steps 1–2 CORRECTED (they still described the removed
+  demo; now the build-17 truth: door-only, no demo anywhere).
+- Censuses clean at code level: signInAnonymously = 0 in app.js +
+  auth.js · peptide-advice word census (recommend/prescribe/you
+  should take…) = ZERO hits EN+ES · intro-offer census = ZERO.
+- Tier bodies re-read: Free/Pro/Forever promise only what build 17
+  has (logging, timer, library, 3→unlimited routines, export) —
+  the Waves 2/3 judgement in the plan rests on this read.
+- FINDING J1 (notifications): the only ask in the app is a Settings
+  toggle (#remindBtn → FitRemind.setOn → native permission). NO ask
+  fires at the moment a user first creates a reminder (dose,
+  routine, water), and FitRemind schedules NOTHING unless
+  settings.notifications === true — so a user who never opens
+  Settings is never asked and never gets a reminder. Against her
+  non-negotiable 4 ("asked, on, and actually fire") the ask is
+  buried. FIX SHAPE (Round 1 fix batch): a one-time Wally ask at
+  the first reminder-creating save, honest Not now, asked once
+  (flag in settings), Settings toggle unchanged; EN+ES, no dashes;
+  suite pins (fires once · refusal sticks · grant schedules).
+- Firing machinery read: native-only (Capacitor LocalNotifications;
+  web = no-op by design, the Settings row says so). Scheduling =
+  planReminders (dose · gym · water), cancel-then-schedule on every
+  save, ids hashed per kind/ref/day. Native FIRING observation
+  remains a device-lane leg (named in the plan).
+- Google door completion walk sent to the browser lane (signed-in
+  session route, no password typed by any desk) — result pending.
+- GOOGLE DOOR COMPLETION — PROVEN (browser lane, 2 Nov 13:09–13:11
+  AEST, runtime-measured): the live app's Google door walked to
+  COMPLETION with her signed-in session — no password, no code, no
+  device prompt at any point; landed inside (Today + tour + setup
+  skipped), account read "Signed in as placenciailse@gmail.com",
+  signed out at the end. Caveat, exact: the live Pages app is an
+  OLD desk build (its door still shows Explore the demo +
+  Reviewer access; bottom nav) — NOT build 17's bytes. The
+  completion proves the production project's Google door + the
+  auth.js machinery (the branch's auth.js is byte-identical to the
+  desk tree the live site serves). Build 17's own door + this flow
+  re-walk in QA's Round 1 lane on b17 bytes (already commissioned
+  shape). No consent sheet appeared (silent session use,
+  prompt=none) → no title evidence either way; the parked consent
+  cure stays parked, fact reported per plan.
+- APPLE DOOR COMPLETION — PROVEN (browser lane, 2 Nov 13:13–13:15
+  AEST, runtime-measured): the live app's Apple door walked to
+  COMPLETION. Chain: Apple sheet (title read verbatim: "Use your
+  Apple Account to sign in to Fit Hard" — Apple's sheet names the
+  app correctly; client com.ilseplacencia.fithard.service, scope
+  email+name) → saved-login flow filled email + password (no desk
+  typed anything) → two-factor wall ("Enter the verification code
+  sent to your Apple devices") → completed with the one-time code
+  Ilse herself supplied via HQ at that moment, passed to the lane
+  by this desk and never stored → inside: account read name
+  "Ilse Placencia", a Hide My Email relay address as the email,
+  "Connected with Apple" → signed out to the door ("Signed out.
+  Everything stays on this device."). FULL RECORD of the same
+  task (continuation handoff, ran 13:15–13:17) SUPERSEDES the
+  interim narration: the code was entered at the two-factor
+  prompt and ACCEPTED (no expiry, no resend), then "Trust this
+  browser?" → Not Now → Apple consent ("Do you want to continue
+  using Fit Hard Sign in with Apple with your Apple Account") →
+  inside. The interim report's puzzle (a specialist sub-report
+  blocked at the wall, a tab already inside) resolves to the
+  specialist's scope ending at 13:14:46, before the code landed.
+  The lane also observed, on the OLD live bytes: after sign-out +
+  reload the door showed while the header still read "Hi, Ilse
+  Placencia" — G1 evidence on the old tree; build 17's answer is
+  QA's on-bytes leg. Same bytes caveat as Google: live web build
+  is pre-17; the completion proves the production project's
+  Apple door + the auth machinery build 17 carries; under the
+  SURFACES LAW both doors re-walk on b17's bytes at QA.
+- DELETE LEG CLOSED — OWNER-SIDE READ (2 Nov 14:37–14:38 AEST,
+  console lane on her Owner session, project fit-app-7f25f,
+  READ-ONLY): for QA's deleted account (uid
+  eytSkp3X0sdOcDIfJoJi2GjPMBZ2 · qa.fitb17del@example.com ·
+  deleted in-app 2026-11-02T04:29:34Z from the packaged b17
+  bytes) the console shows, verbatim: Authentication (uid search
+  AND email search) "We couldn't find an account for …" ·
+  users/{uid} "This document does not exist. It will not appear
+  in queries or snapshots." · users/{uid}/slices "This collection
+  has no documents" · _comp/{uid} "This collection has no
+  documents" + document does not exist. THE FULL FOOTPRINT IS
+  GONE. L3 closes for build 17 under the fleet delete law — the
+  first Fit delete leg closed on an owner-side read.
+- CONVEYOR STAGE 0 (SU, 2 Nov): desk tree verified at their hand —
+  SW fitapp-v91 · delta pins app.js dd8b739a · index.html 3498343e ·
+  styles.css 35408678 · i18n.js 021acb47 · service-worker.js
+  30c8a420 · tests 022e2322 · BUILD-LOG 2f5d0522 · GATE-PACKET
+  339c505d · READINESS-PLAN decadb1c · auth.js 5d8f1d62 (unchanged
+  from b17's package, as expected). Branch commit (9 files) in
+  flight; full-tree census before dispatch. Transport note: SU's
+  direct github.io fetch is dropping bodies — if still sick at
+  publish-and-verify, the served comparison runs through the
+  browser route and the filing names the route.
+- REALITY CHECK: FIRE THE BUILD 18 CONVEYOR (2 Nov) — nothing on
+  the open list can or must close before it. Conditions (none
+  waived): publish-and-verify filed with proof · QA's two
+  could-not-check legs owed on shipping bytes when their lane
+  heals · custody re-verification from the IPA (SW v91 + icon
+  read from the package) · candidate discipline · Apple sign-up
+  wording permanent: closes only as "sign-up by her choice not
+  tested," named in every readiness claim. CONVEYOR DISPATCHED
+  to SU the same hour (commit + census → CPV 18 → dispatch →
+  packaged verification → ASC groups → REQUIRED publish-and-
+  verify). GATE-PACKET.md carries the build 18 packet.
+- QA CANDIDATE CHECK, PARTIAL (2 Nov, v91 bytes; verdict
+  ~/workspace/qa-tester/verdict-fithard-candidate-v91-2026-11-02.md):
+  §I ALL FREE — PASS (routines 1–4 by builder, the 4th with no cap
+  message; the 5th by the station path; Pro modal hidden at every
+  save; account census clean; selling-words census zero across
+  Today/Settings/Gym/Meals) · §K2 ENGLISH ONLY — PASS (no language
+  row offered — the buttons stand as hidden markup only, named;
+  Spanish-locale browser gets English at the door and inside; a
+  hand-set lang "es" renders English and does not survive) ·
+  J1 + saved-login/isolation spot re-check — COULD NOT CHECK:
+  QA's local browser lane died mid-check (every browser route on
+  their machine crashes at launch since ~14:44; environment
+  failure, not an app result; both legs re-run when the lane
+  heals, and Round 3's full walk re-covers them on shipping
+  bytes). J1 stands meanwhile on the desk probe (ask shown once,
+  Yes → granted + 7 scheduled via the plugin seam) + Quality's
+  code-level read. REALITY CHECK on the round commissioned the
+  same hour — its read gates the build 18 conveyor.
+- TEMP-PATH EPISODE CLOSED (SU end-state, 2 Nov): the stood-down
+  check publish NEVER DEPLOYED — fit-hard main holds no b17check
+  folder, head still 6609c2b (24 Oct); the window closed before
+  any commit landed; the path 404s; Stage 2 never started; live
+  baselines re-read unchanged (/app/app.js md5 d3cef4ab · / md5
+  cb2ae559). Nothing was published, nothing to remove. The
+  extracted bundle stays custodied at SU (scratch/fit-b17check/)
+  as the comparison set for build 18's publish-and-verify step.
+- DOOR-LEG ROUTE RULING (HQ, 2 Nov 14:37): the on-bytes door
+  legs close on ROUTE 1 — build 18's upload carries the newest
+  build to the web publish, served bytes verified equal to the
+  packaged bytes, QA re-walks the doors there. REQUIRED step of
+  the build 18 round, written into READINESS-PLAN.md and to be
+  named in its filings. The temporary check path commissioned
+  earlier this hour was STOOD DOWN under the ruling (SU told:
+  publish nothing, or remove + verify if already up). Route 2
+  (device door pass) remains the other closing path. HQ told
+  Ilse the same, plainly.
+- QA DELTA VERDICT COMPLETE (2 Nov, packaged b17 bytes; verdict
+  ~/workspace/qa-tester/verdict-fithard-b17-r1delta-2026-11-02.md):
+  G1 Pass · kill×3 Pass · delete Pass · notifications bounded
+  (pending/firing Could not check from any browser lane — device
+  residue). DOORS ON-BYTES: Google in/up + Apple in = COULD NOT
+  CHECK at QA — their chair cannot serve the packaged bundle to
+  the session-holding browser (shared browser rejects localhost;
+  their ports refuse its network; verified host-side). CLOSING
+  ROUTE COMMISSIONED the same hour: SU publishes the packaged
+  bundle at a temporary check path on the Pages origin
+  (support897.github.io — the Firebase-authorized domain),
+  served bytes hash-verified vs the IPA bundle, the browser lane
+  walks the three door legs on those bytes, path removed after.
+  Apple sign-up stands Could not check (her choice). QA's v91
+  candidate check started next at their chair.
+- QA DELTA HEADLINES, packaged bytes (2 Nov): G1 PASS — named
+  account signed in, greeted by name, signed out, reloaded: the
+  door screenshot is CLEAN (no greeting, no name) on build 17;
+  the old live tree's stale-greeting observation does not exist
+  on b17. Kill-and-reopen ×3 PASS. Notifications: re-censused on
+  the packaged bytes — toggle hidden on web, permission never
+  asked (web lane), scheduling plugin-side; pending/firing could
+  not check from a browser lane (device-lane residue stands, as
+  named). Delete leg keys received (uid
+  eytSkp3X0sdOcDIfJoJi2GjPMBZ2 · qa.fitb17del@example.com ·
+  deleted 2026-11-02T04:29:34Z, stocked profile + settings read
+  back before deletion; the check-in tap did not land on that
+  run — QA named it, not glossed); the owner-side footprint read
+  (Auth + root + slices + _comp at 404) is RUNNING from this desk
+  in the console lane. Full delta verdict files when the door
+  legs land.
+- QA DELTA, packaged bytes (2 Nov, QA's reports): legs 2–5 DONE —
+  G1 Pass · kill-and-reopen ×3 Pass · delete full flow Pass (uid +
+  timestamp exist; requested from QA for the owner-side read) ·
+  notifications census bounded honestly. Leg 1 (Google + Apple on
+  the packaged bytes) in the browser lane. GOOGLE SIGN-UP folded
+  into that lane in flight: after the sign-in arm, the lane signs
+  out and returns to the door for projects.reports.ilse@gmail.com
+  — completes the sign-up if the identity is reachable without a
+  password (QA's own chair holds no Google sessions; fresh Firefox
+  profiles), the wall's exact words + Could not check if not.
+  APPLE SIGN-UP: QA concurs — Could not check (one Apple ID, one
+  account; no second Apple ID in any lane) + her NOT NOW on top.
+  Corrected delta verdict files when leg 1 lands; then the v91
+  candidate check starts (fresh plus-tags).
+- QA SURFACE CORRECTION (2 Nov, QA's own catch): this morning's
+  delta legs (G1, kill×3, two deletes, notifications census) ran
+  on this desk's WORKING TREE (batch bytes, SW v91) — VOID for
+  build 17, withdrawn by QA before filing. Proof from QA's hand:
+  the custody IPA's bundle reads SW fitapp-v90 and its app.js +
+  index.html differ from the working tree (auth.js identical).
+  QA is re-walking every leg on the PACKAGED BUNDLE extracted
+  from App-b17-artifact.ipa — byte-equal to build 17 by
+  construction, now the on-bytes surface of record for the delta.
+  (The withdrawn walks touched the batch bytes; they count for
+  nothing in either direction — the batch's own QA check remains
+  its own commissioned leg.)
+- SIGN-UP CLARIFICATIONS FOLDED (Ilse via HQ, 2 Nov): (1) sign up
+  and sign in are different tests IN METHOD — sign-up proof = new
+  server record + first-ever entry + first-run welcome flow; a
+  sign-in never counts as a sign-up (plan §A gains the A5u/A6u
+  twins; QA's Google sign-up commission tightened to name all
+  three). (2) The doors never shrink the rest of the testing —
+  the full script continues in full. (3) APPLE SIGN-UP = NOT NOW
+  by her word: skipped by her choice, stands Could not check,
+  never a pass; no test Apple ID is created (the route-hunt
+  invitation in my earlier QA commission is rescinded).
+- SIGN-UP ORDER (Ilse direct, via HQ, 2 Nov): test Google, Apple
+  AND email SIGN UP as well as sign in, now, this round — newest
+  build's bytes, phone view first, both her Gmails + plus-tags,
+  codes via HQ, never parked while a route exists. Six-leg board
+  as it stands: EMAIL SIGN-UP Pass + EMAIL SIGN-IN Pass (QA's
+  29 Oct verdict, on b17 bytes) · GOOGLE SIGN-IN project Pass,
+  on-bytes re-walk in QA's queue · GOOGLE SIGN-UP commissioned
+  to QA now (projects.reports.ilse@gmail.com as the new Google
+  identity, never in Fit) · APPLE SIGN-IN project Pass, on-bytes
+  re-walk in QA's queue · APPLE SIGN-UP Could not check — one
+  Apple identity only and it already holds the account (~21 Oct
+  anchor); one Apple ID maps to one app account, so no fresh
+  sign-up exists without a second Apple ID. Board reported to HQ
+  per-door as ordered; updates land as QA's legs return.
+- EFFICIENCY PASS — Round 1 fix batch (2 Nov, same bytes): delta
+  census tight (~2.8 KB across five files, no new files, nothing
+  deleted; auth.js + logic.js untouched at b17 sizes) · suite
+  re-run 492/0 · switches judged the smallest honest mechanism
+  (single declarations, every consumer reads the same two words,
+  reachability traced — no unfenced side door to the Plans
+  surfaces). ONE MICRO-NOTE, not a condition: body.plansOff is
+  set at app.js:55 with no consumer (its sibling esHeld has its
+  CSS rule). Disposition: the inert line drops in Round 2's bytes
+  (re-gated there anyway); today's gated bytes stay untouched.
+  Named limit: §I behavioural legs are QA's driven walks.
+- QUALITY PASS — Round 1 fix batch (2 Nov, on the batch bytes, SW
+  fitapp-v91): suite re-run independently 492/0 · both switches
+  read in source (app.js:14-15) · cap + account fences verified ·
+  Lang force + setLang fence + esHeld row verified · J1 ask
+  verified (fires only when off + never asked; refusal kept) ·
+  §6 byte-identical (icon master bf56b907 · icon-512 07c57dd1 ·
+  Wally welcome 5d3829c0). Named limits: desk probes not re-probed
+  at Quality's chair (suite legs cover; QA re-probes) · native
+  firing stays device-lane. Efficiency + QA delta still awaited;
+  any byte change loops back through Quality before shipping.
+- SURFACES LAW FOLDED (her correction 2 Nov, via HQ: "Why are you
+  testing on older built? All must be in newest version in
+  TestFlight."): READINESS-PLAN.md gains the SURFACES LAW block —
+  every leg runs on the newest TestFlight build's certified tree
+  (b17 = branch @ 186ca1b); the stale web publish is not a test
+  surface; Google + Apple completions stand as PROJECT-level
+  proof only (as this desk's own caveat already recorded); both
+  doors re-walk on b17's bytes at QA as the REQUIRED path. QA
+  addendum sent the same hour: APPLE added explicitly to their
+  leg 1, all delta legs on branch bytes, and a warning that this
+  desk's working tree now carries the unshipped batch and is NOT
+  build 17's surface. Round uploads must also carry the newest
+  build to the web publish with served-bytes verification.
+- ROUND 1 FIX BATCH BUILT at this desk (2 Nov, tree = build 18
+  candidate): PLANS_LIVE=false + SPANISH_LIVE=false switches in
+  app.js · cap returns true + Pro moment fenced + account page
+  renders no plan line/buttons while off · Settings language row
+  hidden (body.esHeld) + Lang forced to "en" over device + saved
+  settings + setLang fenced · J1 FIXED: the one-time Wally ask
+  (remindAsk modal, rem.ask* words EN + saved ES) fires at the
+  first reminder-bearing save while notifications are off; Yes
+  runs the same grant flow as the Settings toggle, No sets
+  remindAsked and is never re-asked; Settings toggle unchanged.
+  Pins: four new READINESS R1 pins + the boot-resolution pin and
+  two SW pins re-cut to the new shapes. Suite 492 PASS / 0 FAIL,
+  SW fitapp-v91. DESK PROBES on the batch bytes: seeded 5 routines
+  → station build saved the 6th, no Pro modal · account census
+  zero selling surfaces · Spanish device + saved "es" → English
+  everywhere, language row display:none · water tap with a set
+  reminder → ask shown → Yes → notifications true, remindAsked
+  true, 7 notifications handed to the (fake) plugin scheduler.
+  (Probe-harness note: two earlier probe runs read empty states
+  because their seed init scripts were bare arrow functions,
+  which Playwright evaluates but never calls; IIFE-wrapped seeds
+  are the working shape, re-proven.) NOT committed yet: QA's
+  Round 1 delta verdict lands first; any defect it finds folds
+  into these same bytes before the four checks.
+- FINDING W1 (web publish stale): support897.github.io/fit-hard/
+  app/ serves a pre-17 build. The web app is a customer surface;
+  Round 1's upload step must carry the new build to the Pages
+  branch or the staleness gets named to HQ as its own ruling.
+  Asked of SU at dispatch time (which branch Pages serves).
+- FINDING G1 (name after sign-out — OPEN, narrowed): the old live
+  tree showed a stale "Hi, Ilse Placencia" in the top bar after a
+  real sign-out + reload. On b17 bytes at this desk: cold signed-
+  out door = clean (screenshot: no greeting, door card only);
+  stub-lane sign-out reads are polluted by tour/stub artifacts
+  and settle nothing. QA's Round 1 commission carries the exact
+  leg: real backend, sign out → reload → door screenshot, the
+  greeting must be gone.
+- AMENDMENT (her order 2 Nov, mid-loop): ALL FREE FOR NOW (no
+  paywall, no plan gates; plans/prices/billing SAVED in the tree,
+  switched off) + SPANISH HELD BACK (shipped app English only, no
+  language switch shown; ES tables SAVED unshipped). Folded into
+  READINESS-PLAN.md the same hour (§AMENDMENT + §I rewritten +
+  §K2 rewritten + guide words EN-only). Switch design, read from
+  the code: PLANS_LIVE=false + SPANISH_LIVE=false at the head of
+  app.js — maySaveRoutine returns true before the cap · account
+  page renders no plan line/buttons · showProMoment fenced ·
+  Settings language row hidden · the Lang resolver forces "en"
+  over device + saved settings. Both land in the Round 1 fix
+  batch (build 18) BEFORE any upload; proofs = plan §I1–I4 + §K2.
+
 ## BASE OF RECORD (verified 29 Oct 2026, two hands)
 - support897/fit-hard branch qa-fixes-2026-10-26 @ 5de1ebd = Polar's build-16 source.
   SU sweep read the markers from the branch tree; SU downloaded the archive via the
@@ -169,6 +476,25 @@ their own hands on these exact bytes (suite re-run 488/0 at both
 chairs; Quality's asset check: icon byte-identical to the approved
 master's export, Wally art byte-identical to the pack master). QA
 commissioned with the device-door lane + live-fire barcode named.
+CANDIDATE CONVEYOR COMPLETE (29 Oct 23:56, SU's reads): repo
+support897/fit-hard qa-fixes-2026-10-26 @ 186ca1b (delta whole:
+7 changed + 58 new, demo-seed.js DELETED, packet + log at root) ·
+bridge fit-hard-build @ 28d0a3f, CPV 13→17 read back · PRE-DISPATCH
+CENSUS: fresh bridge download vs the gated tree = 1,086 files,
+ZERO differing paths — committed == gated proven before the click ·
+run 40884255501 SUCCESS · IPA sha256 c8f58e5f, 56,544,315 B, filed
+~/workspace/store-uploads/builds/fit-hard/App-b17-artifact.ipa ·
+packaged reads: Fit Hard · com.ilseplacencia.fithard · 1.1 (17) ·
+SW fitapp-v90 · packaged census = gated set + Capacitor cordova
+pair − privacy.html (the workflow's own packaging rule) · AppIcons
+byte-identical to build 12's packaged icons · ASC build 17 VALID
+(3c4cb348), in Review Recordings [1,2,4,6,8,9,10,12,16,17] + QA
+lane [12,16,17]. CANDIDATE stands on Reality's terms: TestFlight
+only, never App Review, never "finished". Owed on these packaged
+bytes, unchanged: device door pass · Google + Apple completions
+(test identities first) · phone kill-and-reopen · owner-side
+delete read · water reminder firing observed.
+
 REALITY CHECK 🔴 FAIL — NOT FINISHED (29 Oct 23:11), judged from
 this desk's whole conversation + packet + QA's verdict + the tree
 at Reality's own hand. Bad news, theirs: (1) Google + Apple door
