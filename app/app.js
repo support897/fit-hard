@@ -6,6 +6,13 @@
   var L = window.FitLogic, D = window.FIT_DATA;
   var KEY = "fit-app-v1";
   var OWNER_KEY = KEY + "-owner";
+  /* Her rulings, 2 Nov 2026: ALL FREE FOR NOW + SPANISH HELD BACK.
+     The plans, prices and billing code stay in the tree, switched
+     off by PLANS_LIVE; the Spanish tables stay in i18n.js, saved
+     and unshipped, behind SPANISH_LIVE. One word brings either
+     back; nothing was deleted to build this state. */
+  var PLANS_LIVE = false;
+  var SPANISH_LIVE = false;
   function accountStateKey(uid) { return KEY + "-account-" + encodeURIComponent(String(uid)); }
   var state;
   /* ACCOUNT AGE (Tranche B): firstSeenAt on the profile is
@@ -44,7 +51,8 @@
     state = repairKeep(JSON.parse(bootRaw || "null"));
   }
   catch (e) { state = L.emptyState(); }
-  if (window.Lang) Lang.use(state.settings && state.settings.lang);
+  if (window.Lang) Lang.use(SPANISH_LIVE ? (state.settings && state.settings.lang) : "en");
+  try { if (!SPANISH_LIVE) document.body.classList.add("esHeld"); if (!PLANS_LIVE) document.body.classList.add("plansOff"); } catch (e) {}
   var currentArea = null, currentSub = null;
 
   function $(id) { return document.getElementById(id); }
@@ -143,6 +151,7 @@
         if (old.length) P.cancel({ notifications: old.map(function (id) { return { id: id }; }) }).catch(function () {});
         if (!state.settings || state.settings.notifications !== true) {
           try { localStorage.setItem("fit-remind-ids", "[]"); } catch (e) {}
+          maybeAsk();
           return;
         }
         var plan = L.planReminders(state, L.todayKey(), { now: Date.now() });
@@ -153,6 +162,21 @@
         });
         try { localStorage.setItem("fit-remind-ids", JSON.stringify(notes.map(function (n) { return n.id; }))); } catch (e) {}
         if (notes.length) P.schedule({ notifications: notes }).catch(function () {});
+      } catch (e) {}
+    }
+    var askShown = false;
+    function maybeAsk() {
+      if (askShown) return;
+      try {
+        if (!state.settings || state.settings.notifications === true || state.settings.remindAsked) return;
+        if (document.body.classList.contains("signedOut")) return;
+        var plan = L.planReminders(state, L.todayKey(), { now: Date.now() });
+        if (!plan.length) return;
+        var m = $("remindAsk"); if (!m) return;
+        askShown = true;
+        var w = $("remindAskWally");
+        if (w) w.innerHTML = guideOn() && window.Wally ? wallyWrap("welcome", tr("rem.askBody"), 64) : "";
+        m.classList.remove("hidden");
       } catch (e) {}
     }
     function setOn(on) {
@@ -2299,6 +2323,18 @@
     toast(state.settings.wallyOff ? companionName() + " is resting." : companionName() + " is back.");
   });
   $("tourReplayBtn").addEventListener("click", replayTour);
+  $("remindAskYes").addEventListener("click", function () {
+    state.settings = state.settings || {};
+    state.settings.remindAsked = true;
+    $("remindAsk").classList.add("hidden");
+    FitRemind.setOn(true).then(function (ok) { save(); renderSettings(); if (!ok) toast(tr("rem.notAllowed")); });
+  });
+  $("remindAskNo").addEventListener("click", function () {
+    state.settings = state.settings || {};
+    state.settings.remindAsked = true;
+    save();
+    $("remindAsk").classList.add("hidden");
+  });
   $("remindBtn").addEventListener("click", function () {
     var on = !!(state.settings && state.settings.notifications === true);
     FitRemind.setOn(!on).then(function (ok) {
@@ -2330,6 +2366,7 @@
      the device; a named language pins it. The choice is
      the user's setting, saved like every other. */
   function setLang(choice) {
+    if (!SPANISH_LIVE && choice !== "en") return;
     state.settings = state.settings || {};
     state.settings.lang = choice;
     save();
@@ -2663,14 +2700,14 @@
       return;
     }
     var detail = tierDetail();
-    var planLine;
-    if (detail.plan === "pro" && detail.reason === "freemonth")
+    var planLine = "";
+    if (PLANS_LIVE && detail.plan === "pro" && detail.reason === "freemonth")
       planLine = '<p class="hint">' + esc(tr("acc.planFreeMonth", { days: detail.daysLeft })) + '</p>';
-    else if (detail.plan === "pro")
+    else if (PLANS_LIVE && detail.plan === "pro")
       planLine = '<p class="hint">' + esc(tr("acc.planPro")) + '</p>';
-    else
+    else if (PLANS_LIVE)
       planLine = '<div class="row"><span class="hint">' + esc(tr("acc.planFree")) + '</span><button class="miniBtn" id="accProBtn">' + esc(tr("pro.seeAdds")) + '</button></div>';
-    planLine += '<div class="row"><button class="pillBtn" id="accPlansBtn">' + esc(tr("acc.plansBtn")) + '</button></div>';
+    if (PLANS_LIVE) planLine += '<div class="row"><button class="pillBtn" id="accPlansBtn">' + esc(tr("acc.plansBtn")) + '</button></div>';
     var warn = cloudWarnings.length ? '<p class="hint">' + esc(tr("acc.warnLarge")) + '</p>' : "";
     var note = mirrorNote ? '<p class="hint">' + esc(mirrorNote) + "</p>" : "";
     box.innerHTML = '<p class="hint">' + esc(tr("acc.signedIn", { email: authUser.email || tr("acc.yourAccount") })) + "</p>" + planLine + warn + note +
@@ -2960,11 +2997,13 @@
   }
   function lockedTap() { toast(tr("pro.lockedTap")); showProMoment(); }
   function maySaveRoutine() {
+    if (!PLANS_LIVE) return true;
     if (planNow() === "pro") return true;
     if ((state.routines || []).length < FREE_ROUTINE_CAP) return true;
     lockedTap(); return false;
   }
   function showProMoment() {
+    if (!PLANS_LIVE) return;
     var w = $("proWally");
     if (w) w.innerHTML = guideOn() && window.Wally ? wallyWrap("welcome", tr("pro.bubble"), 64) : "";
     refreshProModal();

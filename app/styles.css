@@ -48,6 +48,7 @@ html,body{margin:0;padding:0;touch-action:manipulation}
 body.signedOut #sidebar,body.signedOut #wallyFloat{display:none}
 body.signedOut #view-settings .card:not(#accountCard){display:none}
 body.signedOut #guideControls{display:none}
+body.esHeld #langRow{display:none}
 /* D-B: while a door attempt flies, the door's buttons rest —
    visibly busy, and a second tap lands nowhere. */
 #accountBox.doorBusy button{opacity:.55;pointer-events:none}

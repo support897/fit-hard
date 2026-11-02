@@ -130,7 +130,7 @@
           <input type="file" id="apprFile" accept="image/*" class="hidden" aria-label="Add your own background photo">
         </div>
         <p class="hint" id="apprNote"></p>
-        <div class="row"><span class="hint" data-i18n="settings.langLabel">Language</span>
+        <div class="row" id="langRow"><span class="hint" data-i18n="settings.langLabel">Language</span>
           <button class="pillBtn" id="langAutoBtn" data-i18n="settings.langAuto">Auto</button>
           <button class="pillBtn" id="langEnBtn">English</button>
           <button class="pillBtn" id="langEsBtn">Español</button></div>
@@ -237,6 +237,14 @@
     <p class="hint" id="proStateLine"></p>
     <div id="proRenew"></div>
     <div class="row"><button id="proGo" class="primaryBtn" data-i18n="pro.goBtn">See Pro plans</button><button id="proNotNow" class="pillBtn" data-i18n="setup.notNow">Not now</button></div>
+  </div>
+</div>
+
+<div id="remindAsk" class="modal hidden">
+  <div class="modalCard">
+    <div id="remindAskWally"></div>
+    <h2 data-i18n="rem.askTitle">Want a gentle nudge?</h2>
+    <div class="row"><button id="remindAskYes" class="primaryBtn" data-i18n="rem.askYes">Yes, remind me</button><button id="remindAskNo" class="pillBtn" data-i18n="rem.askNo">Not now</button></div>
   </div>
 </div>
 
