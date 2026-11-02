@@ -649,7 +649,7 @@ check("white theme: ink on white is AAA", ratio("#3E2F26", "#FFFFFF") >= 7);
 check("black theme: ink on ground is AAA", ratio("#F6EDDD", "#17120E") >= 7);
 check("black theme: dark text on sage accent passes AA", ratio("#221A12", "#A9BFA5") >= 4.5);
 check("image veil keeps ink readable over a black photo", (() => { const r = Math.round(0.9 * 250 + 0.1 * 0), g = Math.round(0.9 * 238 + 0.1 * 0), b = Math.round(0.9 * 214 + 0.1 * 0); const h = "#" + [r, g, b].map(x => x.toString(16).padStart(2, "0")).join(""); return ratio("#3E2F26", h) >= 7; })());
-check("service worker is fitapp-v91 with the v2 file list (readiness round 1)", (() => { const sw = fs.readFileSync(new URL("../service-worker.js", import.meta.url), "utf8"); return sw.indexOf("fitapp-v91") !== -1 && sw.indexOf("fitapp-v90") === -1 && sw.indexOf("demo-seed.js") === -1 && sw.indexOf("wally.js") !== -1 && sw.indexOf("moss.js") === -1 && sw.indexOf("ZillaSlab-700.woff2") !== -1 && sw.indexOf("wally-rest.webp") !== -1; })());
+check("service worker is fitapp-v92 with the v2 file list (readiness round 2)", (() => { const sw = fs.readFileSync(new URL("../service-worker.js", import.meta.url), "utf8"); return sw.indexOf("fitapp-v92") !== -1 && sw.indexOf("fitapp-v91") === -1 && sw.indexOf("demo-seed.js") === -1 && sw.indexOf("wally.js") !== -1 && sw.indexOf("moss.js") === -1 && sw.indexOf("ZillaSlab-700.woff2") !== -1 && sw.indexOf("wally-rest.webp") !== -1; })());
 check("FIT-001: every service worker precache entry ships in the store bundle (no excluded names, every file on disk)", (() => { const fs2 = require("fs"); const sw = fs2.readFileSync(new URL("../service-worker.js", import.meta.url), "utf8"); const m = sw.match(/var FILES = \[(.*?)\];/s); if (!m) return false; const entries = [...m[1].matchAll(/"([^"]+)"/g)].map(x => x[1]); const excluded = e => e === "privacy.html" || e === "anim-preview.html" || /(^|\/)owner\.(html|js)$/.test(e); return entries.every(e => e === "./" || (!excluded(e) && fs2.existsSync(new URL("../" + e, import.meta.url)))); })());
 check("FIT-003: every file input carries an accessible name (aria-label)", (() => { const fs3 = require("fs"); const idx = fs3.readFileSync(new URL("../index.html", import.meta.url), "utf8"); const app = fs3.readFileSync(new URL("../app.js", import.meta.url), "utf8"); const tags = (idx + app).match(/<input[^>]*type="file"[^>]*>/g) || []; return tags.length >= 5 && tags.every(t => /aria-label="[^"]+"/.test(t)); })());
 check("QA leg 7: a completed restored profile closes the setup sheet (settle helper, restore landings, unconditional door-first boot)", (() => { const app = require("fs").readFileSync(new URL("../app.js", import.meta.url), "utf8"); return app.indexOf("function settleSetupSheet()") !== -1 && (app.match(/settleSetupSheet\(\);/g) || []).length >= 2 && app.indexOf("demoReturning") === -1 && app.slice(app.lastIndexOf("initAccounts();")).indexOf('showView("settings")') !== -1; })());
@@ -767,7 +767,7 @@ check("anim: poison leg degrades calmly (pin 8)", animJsSrc.indexOf("animMissing
 check("anim: Wally in the player is the art of record file (identity rule)", animJsSrc.indexOf("assets/wally-welcome.webp") !== -1);
 check("anim: library bytes under the 300 KB pin (pin 10)", Buffer.byteLength(animJsSrc) + Buffer.byteLength(animDataSrc) < 300000);
 const swSrc2 = fs.readFileSync(new URL("../service-worker.js", import.meta.url), "utf8");
-check("anim: service worker precaches the rig + data (pin 10)", swSrc2.indexOf('"anim.js"') !== -1 && swSrc2.indexOf('"anim-data.js"') !== -1 && swSrc2.indexOf('"anim-data-expansion.js"') !== -1 && swSrc2.indexOf("fitapp-v91") !== -1);
+check("anim: service worker precaches the rig + data (pin 10)", swSrc2.indexOf('"anim.js"') !== -1 && swSrc2.indexOf('"anim-data.js"') !== -1 && swSrc2.indexOf('"anim-data-expansion.js"') !== -1 && swSrc2.indexOf("fitapp-v92") !== -1);
 check("anim: shell loads the rig before the app", (() => { const h = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8"); return h.indexOf("anim-data.js") !== -1 && h.indexOf("anim-data.js") < h.indexOf("app.js") && h.indexOf("anim.js") < h.indexOf("app.js"); })());
 check("anim: art of record untouched (identity rule)", (() => {
   const crypto = require("node:crypto");
@@ -1780,6 +1780,64 @@ check("READINESS R1: the reminder ask exists (one-time, at the first reminder, h
     html.indexOf('id="remindAsk"') >= 0 && html.indexOf('id="remindAskYes"') >= 0 && html.indexOf('id="remindAskNo"') >= 0 &&
     typeof L2.EN["rem.askTitle"] === "string" && typeof L2.ES["rem.askTitle"] === "string" &&
     L2.EN["rem.askBody"].indexOf("-") === -1;
+})());
+check("READINESS R2: the Getting Started checklist lives on Today and its ticks read real state", (() => {
+  const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  return html.indexOf('id="gsCard"') >= 0 && app.indexOf("function renderChecklist()") >= 0 && app.indexOf("function gsRows()") >= 0 &&
+    app.indexOf("(state.checkins || {})[today]") >= 0 && app.indexOf("entry.breakfast || entry.lunch || entry.dinner") >= 0 &&
+    app.indexOf("waterGoalPicked") >= 0 && app.indexOf("(state.routines || []).length") >= 0 &&
+    app.indexOf("renderChecklist();") >= 0;
+})());
+check("READINESS R2: checklist dismissal is forever (dismiss and celebration close both set the one flag, the flag hides the card)", (() => {
+  const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  const rc = app.slice(app.indexOf("function renderChecklist()"), app.indexOf("function showGuideAgain()"));
+  return rc.indexOf("state.settings.checklistDismissed") >= 0 && rc.indexOf('id="gsDismiss"') >= 0 && rc.indexOf('id="gsDoneClose"') >= 0 &&
+    (app.match(/checklistDismissed = true/g) || []).length >= 2 && app.indexOf('tr("gs.done")') >= 0;
+})());
+check("READINESS R2: coach marks fire once per point of use (seen flag per key, Got it sets it, eight points of use)", (() => {
+  const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const L2 = require(require("path").join(process.cwd(), "i18n.js"));
+  const keys = ["meal-plan", "meal-treats", "gym-routines", "gym-session", "gym-machine", "calendar", "peptides", "plans"];
+  return html.indexOf('id="coachSpot"') >= 0 && html.indexOf('id="coachSpotPlans"') >= 0 &&
+    app.indexOf("function renderCoachMark(") >= 0 && app.indexOf("function coachKeyFor(") >= 0 &&
+    app.indexOf("coachSeenMap()[key] = true") >= 0 && app.indexOf("renderCoachMark(coachKeyFor(areaId, sub.id))") >= 0 &&
+    app.indexOf('renderCoachMark("plans", "coachSpotPlans")') >= 0 &&
+    keys.every(function (k) { return typeof L2.EN["coach." + k] === "string" && typeof L2.ES["coach." + k] === "string"; });
+})());
+check("READINESS R2: Show the guide again resets tour + marks + checklist and wipes no user data", (() => {
+  const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const sg = app.slice(app.indexOf("function showGuideAgain()"), app.indexOf("function renderCheckin()"));
+  return html.indexOf('id="guideAgainBtn"') >= 0 && sg.indexOf("tourSeen = false") >= 0 && sg.indexOf("coachSeen = {}") >= 0 &&
+    sg.indexOf("checklistDismissed = false") >= 0 && sg.indexOf("replayTour()") >= 0 &&
+    sg.indexOf("state.routines") === -1 && sg.indexOf("state.plan") === -1 && sg.indexOf("state.profile =") === -1 && sg.indexOf("checkins") === -1;
+})());
+check("READINESS R2: the tour is slimmed to three steps (welcome + name, one areas line, done; no geography lecture rendered)", (() => {
+  const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  return app.indexOf("return [1, 2, 3].map") >= 0 && app.indexOf('tr("tour.areas")') >= 0 &&
+    app.indexOf('tr("tour.menu")') === -1 && app.indexOf('tr("tour.day")') === -1;
+})());
+check("READINESS R2: sign-out clears the strip greeting at once (the b19 observation 2 cure)", (() => {
+  const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  const ra = app.slice(app.indexOf("function renderAccount()"), app.indexOf("function renderAccount()") + 1600);
+  return ra.indexOf('sh.textContent = "";') >= 0 && ra.indexOf('if (!authUser)') >= 0;
+})());
+check("READINESS R2: empty states teach (Wally rides the empty cards and the no-favourites block)", (() => {
+  const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  return (app.match(/guideOn\(\) \? wallyWrap\("welcome", null, 56\)/g) || []).length >= 6 && app.indexOf('tr("meal.noFavsLine")') >= 0;
+})());
+check("READINESS R2: arriving at Today or Settings by nav re-renders fresh (ticks and counts never lag the state)", (() => {
+  const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  return app.indexOf('if (n === "today") renderToday();') >= 0 && app.indexOf('if (n === "settings") renderSettings();') >= 0;
+})());
+check("READINESS R2: the inert plansOff class is gone and the new guide words carry no em or en dash, EN and ES alike", (() => {
+  const app = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
+  const L2 = require(require("path").join(process.cwd(), "i18n.js"));
+  const keys = ["tour.areas", "guide.againBtn", "gs.title", "gs.sub", "gs.setup", "gs.checkin", "gs.meals", "gs.gym", "gs.water", "gs.done", "coach.got", "meal.noFavsLine"];
+  const noDash = function (o) { return keys.every(function (k) { return typeof o[k] === "string" && o[k].indexOf("—") === -1 && o[k].indexOf("–") === -1; }); };
+  return app.indexOf("plansOff") === -1 && noDash(L2.EN) && noDash(L2.ES);
 })());
 console.log("RESULT pass=" + pass + " fail=" + fail);
 if (fail) process.exit(1);
