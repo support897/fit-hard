@@ -91,3 +91,55 @@ never App Review.
   GONE — the bundle list must not expect it. SW is fitapp-v90.
   owner.js is RESTORED in app/ (the branch's owner.html loads
   it; the branch never carried the file — suite FIT-L4-1).
+
+---
+
+# Fit Hard — BUILD 18 GATE PACKET (Readiness Round 1, 2 Nov 2026)
+
+## What build 18 is
+Build 17 + the Round 1 fix batch, nothing else: (1) ALL FREE —
+PLANS_LIVE=false (cap open, Pro moment fenced, no plan lines or
+buttons on the account page; plans/prices/billing saved in tree,
+off) · (2) SPANISH HELD — SPANISH_LIVE=false (language row
+hidden, English forced; ES tables saved, unshipped) · (3) J1 FIX —
+the one-time Wally reminder ask at the first reminder-bearing
+save (Yes = the Settings grant flow; No kept forever). SW
+fitapp-v91. Suite 492 PASS / 0 FAIL.
+
+## Gates on these bytes
+- Quality PASS (2 Nov): suite re-run 492/0, switches read in
+  source, §6 byte-identical (icon master bf56b907 · icon-512
+  07c57dd1 · Wally welcome 5d3829c0).
+- Efficiency PASS (2 Nov): delta ~2.8 KB across five files, no
+  new files, nothing deleted; one micro-note (inert plansOff
+  class) deferred to Round 2 bytes.
+- QA candidate check (2 Nov): §I all-free PASS · §K2 English-only
+  PASS · J1 driven walk + saved-login/isolation spot re-check
+  COULD NOT CHECK (their browser lane died mid-check; re-runs
+  owed on the shipping bytes; J1 stands meanwhile on the desk
+  probe + Quality's read).
+- Reality Check (2 Nov): FIRE THE CONVEYOR, conditions below.
+
+## Closed this round (build 17 bytes)
+QA delta on the packaged b17 bytes: G1 PASS · kill×3 PASS ·
+delete PASS + owner-side console read — DELETE LEG CLOSED
+(Auth + root + slices + _comp all gone, verbatim on file) ·
+email sign-up/sign-in PASS (29 Oct) · notifications bounded
+(pending/firing could not check from any browser lane).
+
+## Open legs carried into build 18 (named, not waived)
+- Google sign-in · Google sign-up · Apple sign-in ON THE NEWEST
+  BYTES: close on Route 1 — this build's REQUIRED publish-and-
+  verify step, then QA's re-walk on the published surface.
+- QA's J1 driven walk + spot re-check: owed on shipping bytes
+  when their lane heals.
+- Notification firing + all phone legs: device-lane residue.
+- Apple sign-up: Could not check, skipped by her choice (not
+  now) — named in every readiness claim, never absorbed.
+
+## Conveyor conditions (Reality, none waived)
+Publish-and-verify filed with proof · custody re-verification
+of the packaged bytes (SW v91 + pins read from the IPA; icon
+byte-identical read from the package) · candidate discipline:
+TestFlight only, never App Review, never "finished" to Ilse ·
+the loop closes at Round 3 or not at all.
