@@ -121,6 +121,113 @@ function streakInfo(days, today) {
   return { current: cur, last7: last7 };
 }
 
+/* --- Challenge (build 17, Wave 1): three modes on one engine.
+   A challenge frames the user's own days: a list of daily
+   tasks, a start, a length. A day is DONE when every task is
+   satisfied that day. Task satisfaction reads real signals
+   where the app has them (a finished session, a habit's own
+   tick, the water goal, a check-in, doses logged that day)
+   and the user's own tick where it does not (meals, custom).
+   A missed day is a calm gap: it never erases progress and
+   never deletes anything. Only a Hard challenge whose owner
+   chose the strict restart counts from a restart line, and
+   even then the days stay on the record. --- */
+var CHALLENGE_KINDS = ["workout", "meals", "water", "checkin", "peptide", "habit", "custom"];
+function isoOk(k) { return typeof k === "string" && /^\d{4}-\d{2}-\d{2}$/.test(k) && !isNaN(parseKey(k).getTime()); }
+function challengeTaskKey(t) { return t.kind + (t.id ? ":" + t.id : "") + (t.kind === "custom" && t.label ? ":" + t.label : ""); }
+function repairChallenge(raw) {
+  if (!isObj(raw) || !isoOk(raw.startISO)) return null;
+  var mode = raw.mode === "hard" || raw.mode === "steady" || raw.mode === "custom" ? raw.mode : "custom";
+  var len = Math.round(Number(raw.lengthDays) || 75);
+  len = Math.max(7, Math.min(365, len));
+  var tasks = [], seen = {};
+  (Array.isArray(raw.tasks) ? raw.tasks : []).forEach(function (t) {
+    if (!isObj(t) || CHALLENGE_KINDS.indexOf(t.kind) === -1) return;
+    var task = { kind: t.kind,
+      id: t.kind === "habit" && typeof t.id === "string" && t.id ? t.id : null,
+      label: t.kind === "custom" && typeof t.label === "string" && t.label ? t.label.slice(0, 60) : null };
+    if (task.kind === "habit" && !task.id) return;
+    if (task.kind === "custom" && !task.label) return;
+    var k = challengeTaskKey(task);
+    if (seen[k]) return;
+    seen[k] = true;
+    if (tasks.length < 8) tasks.push(task);
+  });
+  if (!tasks.length) return null;
+  function dayMap(v) { var o = {}; if (isObj(v)) Object.keys(v).forEach(function (k) { if (isoOk(k) && v[k]) o[k] = true; }); return o; }
+  var ticks = {};
+  if (isObj(raw.ticks)) Object.keys(raw.ticks).forEach(function (iso) {
+    if (!isoOk(iso) || !isObj(raw.ticks[iso])) return;
+    var m = {}; Object.keys(raw.ticks[iso]).forEach(function (tk) { if (raw.ticks[iso][tk]) m[tk] = true; });
+    if (Object.keys(m).length) ticks[iso] = m;
+  });
+  return { id: typeof raw.id === "string" && raw.id ? raw.id : "ch." + raw.startISO + "." + mode,
+    mode: mode, startISO: raw.startISO, lengthDays: len, tasks: tasks,
+    restDays: dayMap(raw.restDays), ticks: ticks,
+    strict: raw.strict === true, countFrom: isoOk(raw.countFrom) ? raw.countFrom : null,
+    endedISO: isoOk(raw.endedISO) ? raw.endedISO : null };
+}
+/* Recent meals (build 17): the recipes the user actually
+   planned in the last two weeks, newest first. Reads the
+   plan map in its own dot-key format. */
+function recentRecipeIds(state, todayISO) {
+  var plan = (state && state.plan) || {};
+  var out = [], seen = {};
+  for (var back = 0; back < 14 && out.length < 8; back++) {
+    var entry = plan[addDays(todayISO, -back).replace(/-/g, ".")];
+    if (!entry) continue;
+    ["breakfast", "lunch", "dinner"].forEach(function (m) {
+      var id = entry[m];
+      if (typeof id === "string" && id && !seen[id] && out.length < 8) { seen[id] = true; out.push(id); }
+    });
+  }
+  return out;
+}
+function waterGoalMl(state) {
+  var g = state && state.settings ? Number(state.settings.waterGoalMl) : NaN;
+  return isFinite(g) && g >= 250 && g <= 10000 ? Math.round(g) : 2000;
+}
+function challengeTaskState(state, ch, task, iso) {
+  var key = challengeTaskKey(task);
+  var ticked = !!(ch.ticks && ch.ticks[iso] && ch.ticks[iso][key]);
+  var auto = false;
+  if (task.kind === "workout") auto = (state.sessions || []).some(function (s) { return s.dateKey === iso && s.status === "done"; });
+  else if (task.kind === "habit") { var h = (state.habits || []).filter(function (x) { return x.id === task.id; })[0]; auto = !!(h && h.days && h.days[iso]); }
+  else if (task.kind === "water") auto = ((state.water || {})[iso] || 0) >= waterGoalMl(state);
+  else if (task.kind === "checkin") auto = !!(state.checkins || {})[iso];
+  else if (task.kind === "peptide") {
+    var owed = (state.peptides || []).filter(function (p) { return nextDoseKey(p, iso) === iso; });
+    auto = owed.every(function (p) { return (p.log || []).some(function (l) { return l.dateKey === iso; }); });
+  }
+  return { key: key, kind: task.kind, id: task.id, label: task.label, satisfied: auto || ticked, auto: auto, ticked: ticked };
+}
+function challengeDay(state, iso) {
+  var ch = state && state.challenge;
+  if (!ch || !isoOk(iso)) return null;
+  var end = addDays(ch.startISO, ch.lengthDays - 1);
+  if (iso < ch.startISO || iso > end) return null;
+  var tasks = ch.tasks.map(function (t) { return challengeTaskState(state, ch, t, iso); });
+  var rest = !!ch.restDays[iso];
+  return { iso: iso, rest: rest, tasks: tasks,
+    done: !rest && tasks.length > 0 && tasks.every(function (t) { return t.satisfied; }) };
+}
+function challengeProgress(state, today) {
+  var ch = state && state.challenge;
+  if (!ch || !isoOk(today)) return null;
+  var end = addDays(ch.startISO, ch.lengthDays - 1);
+  var from = ch.mode === "hard" && ch.strict && ch.countFrom && ch.countFrom > ch.startISO ? ch.countFrom : ch.startISO;
+  var days = [], daysDone = 0, upto = today < end ? today : end;
+  for (var iso = ch.startISO; iso <= end; iso = addDays(iso, 1)) {
+    var d = challengeDay(state, iso);
+    var st = iso > today ? "future" : d.rest ? "rest" : d.done ? "done" : iso === today ? "today" : "missed";
+    if (d.done && iso >= from && iso <= upto) daysDone++;
+    days.push({ iso: iso, state: st });
+  }
+  var dayIndex = today < ch.startISO ? 0 : Math.min(ch.lengthDays, Math.round((parseKey(today) - parseKey(ch.startISO)) / 86400000) + 1);
+  return { mode: ch.mode, startISO: ch.startISO, endISO: end, lengthDays: ch.lengthDays,
+    dayIndex: dayIndex, daysDone: daysDone, countFrom: from, days: days, finished: today > end };
+}
+
 /* --- Messy-note parser, ported from Pace ----------------------------
    Turns "gym tomorrow at 6pm, take dose friday" into tidy items.
    Used by to-dos first; meals and quick-add ride it later. */
@@ -181,6 +288,7 @@ function safeList(x, fix) {
 function emptyState() {
   return { profile: null, checkins: {}, plan: {}, customRecipes: [], treats: [],
     pantry: [], extras: [], routines: [], sessions: [], peptides: [], habits: [], todos: [], imports: [],
+    challenge: null, challengePast: [], water: {}, waterTaps: {}, favRecipes: [],
     disclaimer: null, settings: { notifications: false }, demoUnlock: null };
 }
 /* Routine and session items, normalised slot by slot (QA
@@ -238,6 +346,24 @@ function repairState(raw) {
   });
   if (isObj(raw.plan)) out.plan = raw.plan;
   if (isObj(raw.tier)) out.tier = { plan: raw.tier.plan === "pro" ? "pro" : "free" };
+  out.favRecipes = Array.isArray(raw.favRecipes) ? raw.favRecipes.filter(function (id) { return typeof id === "string" && !!id; }).slice(0, 200) : [];
+  out.challenge = repairChallenge(raw.challenge);
+  out.challengePast = safeList(raw.challengePast, function (c) { return repairChallenge(c); }).filter(function (c) { return !!c; });
+  out.water = {};
+  if (isObj(raw.water)) Object.keys(raw.water).forEach(function (k) {
+    var v = Number(raw.water[k]);
+    if (isoOk(k) && isFinite(v) && v > 0) out.water[k] = Math.min(20000, Math.floor(v));
+  });
+  out.waterTaps = {};
+  if (isObj(raw.waterTaps)) Object.keys(raw.waterTaps).forEach(function (k) {
+    if (!isoOk(k) || !Array.isArray(raw.waterTaps[k])) return;
+    var taps = raw.waterTaps[k].map(Number).filter(function (v) { return isFinite(v) && v >= 25 && v <= 5000; }).slice(0, 40).map(function (v) { return Math.floor(v); });
+    if (taps.length) out.waterTaps[k] = taps;
+  });
+  Object.keys(out.waterTaps).forEach(function (k) {
+    var sum = out.waterTaps[k].reduce(function (a, b) { return a + b; }, 0);
+    if (sum > (out.water[k] || 0)) out.water[k] = sum;
+  });
   out.customRecipes = safeList(raw.customRecipes, function (r, i) {
     return Object.assign({}, r, { id: typeof r.id === "string" && r.id ? r.id : "custom." + i,
       name: typeof r.name === "string" && r.name ? r.name : "My recipe" });
@@ -816,6 +942,18 @@ function planReminders(st, fromKey, opts) {
       cursor = addDays(k, 1);
     }
   });
+  /* Water reminder (build 17): one gentle nudge a day at the
+     user's chosen time, a week ahead; today only while the
+     goal is still open. The name is filled in by the app
+     (words live in the language layer, not here). */
+  var wr = st.settings && st.settings.waterReminder;
+  if (typeof wr === "string" && /^\d{2}:\d{2}$/.test(wr)) {
+    for (var wi = 0; wi < 7; wi++) {
+      var wk = addDays(fromKey, wi);
+      if (wi === 0 && ((st.water || {})[wk] || 0) >= waterGoalMl(st)) continue;
+      push("water", "water", "", wk, wr);
+    }
+  }
   (st.routines || []).forEach(function (r) {
     if (!r.time || !r.days || !r.days.length) return;
     var found = 0;
@@ -881,9 +1019,43 @@ function mergeStates(cloud, local) {
     out.profile = Object.assign({}, out.profile, { firstSeenAt: cp.firstSeenAt });
   }
   out.checkins = unionMap(cloud.checkins, local.checkins);
+  /* Challenge merge: the later start wins (a restarted or
+     re-picked challenge is the live one); a challenge either
+     side has already ended stays ended when it also stands in
+     the other side's past. Water merges by the fuller day. */
+  var cc = repairChallenge(cloud.challenge), lc = repairChallenge(local.challenge);
+  out.challenge = cc && lc ? (lc.startISO > cc.startISO ? lc : cc) : (cc || lc || null);
+  out.challengePast = unionList(cloud.challengePast, local.challengePast);
+  if (out.challenge && out.challengePast.some(function (c) { return c.id === out.challenge.id; })) out.challenge = null;
+  out.water = {};
+  [local.water, cloud.water].forEach(function (w) {
+    if (isObj(w)) Object.keys(w).forEach(function (k) {
+      var v = Number(w[k]);
+      if (isFinite(v) && v > (out.water[k] || 0)) out.water[k] = v;
+    });
+  });
+  out.waterTaps = {};
+  [local.waterTaps, cloud.waterTaps].forEach(function (w) {
+    if (isObj(w)) Object.keys(w).forEach(function (k) {
+      var taps = Array.isArray(w[k]) ? w[k] : [];
+      var sum = taps.reduce(function (a, b) { return a + (Number(b) || 0); }, 0);
+      var cur = (out.waterTaps[k] || []).reduce(function (a, b) { return a + b; }, 0);
+      if (sum > cur) out.waterTaps[k] = taps.slice();
+    });
+  });
+  Object.keys(out.waterTaps).forEach(function (k) {
+    var sum = out.waterTaps[k].reduce(function (a, b) { return a + b; }, 0);
+    if (sum > (out.water[k] || 0)) out.water[k] = sum;
+  });
   out.plan = unionMap(cloud.plan, local.plan);
   out.customRecipes = unionList(cloud.customRecipes, local.customRecipes);
   out.treats = unionList(cloud.treats, local.treats);
+  out.favRecipes = [];
+  [cloud.favRecipes, local.favRecipes].forEach(function (f) {
+    (Array.isArray(f) ? f : []).forEach(function (id) {
+      if (typeof id === "string" && id && out.favRecipes.indexOf(id) === -1 && out.favRecipes.length < 200) out.favRecipes.push(id);
+    });
+  });
   out.pantry = unionList(cloud.pantry, local.pantry);
   out.extras = unionList(cloud.extras, local.extras);
   out.routines = unionList(cloud.routines, local.routines);
@@ -956,6 +1128,8 @@ var api = { pad: pad, toKey: toKey, parseKey: parseKey, addDays: addDays, todayK
   estimateBudget: estimateBudget, adaptForCheckin: adaptForCheckin,
   mealBudgetFor: mealBudgetFor, areasForNeeds: areasForNeeds, nextColor: nextColor,
   nextDoseKey: nextDoseKey, planReminders: planReminders, disclaimerAgreed: disclaimerAgreed, streakInfo: streakInfo,
+  repairChallenge: repairChallenge, challengeDay: challengeDay, challengeProgress: challengeProgress,
+  challengeTaskKey: challengeTaskKey, waterGoalMl: waterGoalMl, recentRecipeIds: recentRecipeIds,
   parseQuickNote: parseQuickNote, parseQuickDump: parseQuickDump,
   emptyState: emptyState, repairState: repairState };
 if (typeof module !== "undefined" && module.exports) module.exports = api;

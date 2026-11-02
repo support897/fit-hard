@@ -1,0 +1,82 @@
+// Fit Hard — Firestore rules, TWO-HAT DELTA (DRAFT for
+// Security static review, 14 Oct 2026 — NOT the live text;
+// the live text is firestore.rules, published by HQ).
+// Delta on the sealed base + P4 text:
+// (1) _comp/{uid}: her user account's comp record —
+//     console-written, NO client access, the same family
+//     as demoAccess/current and _owner/config.
+// (2) PLAN GATE: the slices match gains a create/update
+//     condition — a write to the "tier" slice claiming
+//     plan "pro" is accepted only when the caller's _comp
+//     record exists (engine get()). Every other slice
+//     write is byte-for-byte the sealed condition. This is
+//     TW-3's fence: no client can set its own comp — not
+//     by a direct plan write, not by any other shape,
+//     because entitlement reads ONLY this slice and this
+//     slice's "pro" value cannot land without the record.
+// (3) _owner/*: the CEO dashboard space. config is read
+//     by the owner only and writable by NO client (the
+//     self-promotion attack fails on the write:false).
+//     Every other dashboard doc (aggregates, feeds) is
+//     read/write for the owner identity alone, checked
+//     against the config record on every call.
+// Project: fit-app-7f25f.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function demoUnlockOk(uid) {
+      let root = get(/databases/$(database)/documents/users/$(uid)).data;
+      let rec = /databases/$(database)/documents/demoAccess/current;
+      return !("unlockHash" in root)
+        || (exists(rec) && root.unlockHash == get(rec).data.hash);
+    }
+    function compOk(uid) {
+      return exists(/databases/$(database)/documents/_comp/$(uid));
+    }
+    function planWriteOk(uid, slice, data) {
+      /* Only the "tier" slice is gated, and only a "pro"
+         claim inside it. Misshaped values are not claims;
+         the app repairs its own state on load. */
+      return slice != "tier"
+        || !("value" in data)
+        || !("plan" in data.value)
+        || data.value.plan != "pro"
+        || compOk(uid);
+    }
+    function isOwner() {
+      let cfg = /databases/$(database)/documents/_owner/config;
+      return request.auth != null
+        && exists(cfg)
+        && get(cfg).data.ownerUid == request.auth.uid;
+    }
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+      match /slices/{slice} {
+        allow read: if request.auth != null && request.auth.uid == uid && demoUnlockOk(uid);
+        allow create, update: if request.auth != null && request.auth.uid == uid && demoUnlockOk(uid) && planWriteOk(uid, slice, request.resource.data);
+        allow delete: if request.auth != null && request.auth.uid == uid && demoUnlockOk(uid);
+      }
+    }
+    match /_comp/{uid} {
+      allow read, write: if false;
+    }
+    match /_owner/config {
+      allow read: if isOwner();
+      allow write: if false;
+    }
+    match /_owner/{doc} {
+      allow read, write: if isOwner() && doc != "config";
+      match /{sub=**} {
+        /* The recursive wildcard can match ZERO segments, so
+           this allow can govern the {doc} document itself —
+           the config exclusion rides here too, or the nested
+           grant would decide over config's write:false
+           (Security battery finding, 14 Oct 2026). */
+        allow read, write: if isOwner() && doc != "config";
+      }
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
