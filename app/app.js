@@ -52,7 +52,7 @@
   }
   catch (e) { state = L.emptyState(); }
   if (window.Lang) Lang.use(SPANISH_LIVE ? (state.settings && state.settings.lang) : "en");
-  try { if (!SPANISH_LIVE) document.body.classList.add("esHeld"); if (!PLANS_LIVE) document.body.classList.add("plansOff"); } catch (e) {}
+  try { if (!SPANISH_LIVE) document.body.classList.add("esHeld"); } catch (e) {}
   var currentArea = null, currentSub = null;
 
   function $(id) { return document.getElementById(id); }
@@ -319,7 +319,7 @@
     }
     return { init: init, purchasable: purchasable, buy: buy, restore: restore };
   })();
-  function openPlans() { FitShop.init(); showView("plans"); renderPlans(); }
+  function openPlans() { FitShop.init(); showView("plans"); renderPlans(); renderCoachMark("plans", "coachSpotPlans"); }
   function tierStateLine() {
     var d = tierDetail();
     if (d.plan === "pro" && d.reason === "freemonth") return tr("acc.planFreeMonth", { days: d.daysLeft });
@@ -461,7 +461,17 @@
     if (window.scrollTo) window.scrollTo(0, 0);
   }
   document.querySelectorAll("[data-view]").forEach(function (b) {
-    b.addEventListener("click", function () { showView(b.getAttribute("data-view")); });
+    b.addEventListener("click", function () {
+      var n = b.getAttribute("data-view");
+      showView(n);
+      /* ARRIVING RE-RENDERS (Round 2 probe finding): Today and
+         Settings showed their last render, not the current
+         state, when reached by nav — the Getting Started
+         checklist ticked late and the food counts lagged the
+         plan. A nav arrival now renders fresh, every time. */
+      if (n === "today") renderToday();
+      if (n === "settings") renderSettings();
+    });
   });
 
   var EMPTY = {
@@ -477,6 +487,7 @@
     showView("area");
     $("areaTitle").textContent = tr("nav." + a.id, null, a.label);
     $("areaSub").textContent = tr("sub." + sub.id, null, sub.label) + ".";
+    renderCoachMark(coachKeyFor(areaId, sub.id));
     document.querySelectorAll(".subBtn").forEach(function (b) {
       b.classList.toggle("active", b.getAttribute("data-area") === areaId && b.getAttribute("data-sub") === sub.id); });
     if (areaId === "meals") {
@@ -621,6 +632,7 @@
     if (goalSel) goalSel.addEventListener("change", function () {
       state.settings = state.settings || {};
       state.settings.waterGoalMl = Number(goalSel.value) || 2000;
+      state.settings.waterGoalPicked = true;
       save(); renderPlan(); renderChallenge();
     });
     var bBtn = $("waterBottleBtn");
@@ -657,7 +669,7 @@
       '<div class="row"><button class="pillBtn" id="mealNoteBtn">' + esc(tr("meal.sortBtn")) + '</button><button class="pillBtn" id="mealNoteMic">' + esc(tr("meal.voiceBtn")) + '</button></div>' +
       '<p class="hint" id="mealNoteMsg"></p></div>';
     var has = Object.keys(state.plan).length > 0;
-    if (!has) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-meal"/></svg><p>' + esc(tr("meal.nonePlanned")) + '</p><p class="hint">' + esc(tr("meal.nonePlannedHint")) + '</p></div>';
+    if (!has) html += '<div class="card emptyCard">' + (guideOn() ? wallyWrap("welcome", null, 56) : "") + '<svg class="ic icBig"><use href="#i-meal"/></svg><p>' + esc(tr("meal.nonePlanned")) + '</p><p class="hint">' + esc(tr("meal.nonePlannedHint")) + '</p></div>';
     for (var i = 0; i < 7; i++) {
       var iso = L.addDays(L.todayKey(), i), entry = state.plan[mpKey(iso)] || {};
       if (!has && !entry.breakfast) continue;
@@ -841,6 +853,7 @@
         var favs = (state.favRecipes || []).map(function (id) { return byId[id]; }).filter(Boolean);
         var recents = L.recentRecipeIds(state, L.todayKey()).map(function (id) { return byId[id]; }).filter(Boolean);
         if (favs.length) html += '<h3 class="gridHead">' + esc(tr("meal.favsHead")) + "</h3>" + favs.map(card).join("");
+        else html += '<div class="card emptyCard">' + (guideOn() ? wallyWrap("welcome", null, 56) : "") + "<p>" + esc(tr("meal.noFavsLine")) + "</p></div>";
         if (recents.length) html += '<h3 class="gridHead">' + esc(tr("meal.recentsHead")) + "</h3>" + recents.map(card).join("");
         if (html) html += '<h3 class="gridHead">' + esc(tr("meal.allRecipes")) + "</h3>";
       }
@@ -1213,7 +1226,7 @@
       '<div class="row"><button class="primaryBtn" id="hbAdd">' + esc(tr("cal.addHabitBtn")) + '</button></div>' +
       '<p class="hint">' + esc(tr("cal.startersHint")) + '</p><div class="chipRow">' +
       '<button class="chip" id="hbStartGym">' + esc(tr("cal.gymDays")) + '</button><button class="chip" id="hbStartEat">' + esc(tr("cal.eatDays")) + '</button></div></div>';
-    if (!(state.habits || []).length) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-cal"/></svg><p>' + esc(tr("cal.noHabits")) + '</p><p class="hint">' + esc(tr("cal.habitHint")) + '</p></div>';
+    if (!(state.habits || []).length) html += '<div class="card emptyCard">' + (guideOn() ? wallyWrap("welcome", null, 56) : "") + '<svg class="ic icBig"><use href="#i-cal"/></svg><p>' + esc(tr("cal.noHabits")) + '</p><p class="hint">' + esc(tr("cal.habitHint")) + '</p></div>';
     (state.habits || []).forEach(function (h) {
       var st = L.streakInfo(h.days || {}, today);
       html += '<div class="habitRow"><h3><span class="mealDot" style="background:' + esc(h.color || "#7A8B6F") + ';display:inline-block"></span> ' + esc(h.name) + "</h3>" +
@@ -1278,7 +1291,7 @@
           '<span class="kcalChip">' + t.durationMin + ' min</span><button class="miniBtn" data-del="' + t.id + '">' + esc(tr("common.remove")) + '</button></div>';
       }).join("") + waitingNote + "</div>";
     });
-    if (!(state.todos || []).length) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-list"/></svg><p>' + esc(tr("cal.listEmpty")) + '</p><p class="hint">' + esc(tr("cal.dumpHint")) + '</p></div>';
+    if (!(state.todos || []).length) html += '<div class="card emptyCard">' + (guideOn() ? wallyWrap("welcome", null, 56) : "") + '<svg class="ic icBig"><use href="#i-list"/></svg><p>' + esc(tr("cal.listEmpty")) + '</p><p class="hint">' + esc(tr("cal.dumpHint")) + '</p></div>';
     el.innerHTML = html;
     $("tdSort").addEventListener("click", function () {
       var parsed = L.parseQuickDump($("tdDump").value, today);
@@ -1380,7 +1393,7 @@
         return '<button class="chip" data-gyday="' + dayVals[i] + '">' + d + "</button>"; }).join("") + "</div>" +
       '<div class="row"><button class="primaryBtn" id="gyBuild">' + esc(tr("gym.buildBtn")) + '</button></div>' +
       '<p class="hint">' + esc(tr("gym.routineHint")) + '</p></div>';
-    if (!(state.routines || []).length) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-gym"/></svg><p>' + esc(tr("gym.noRoutines")) + '</p><p class="hint">' + esc(tr("gym.noRoutinesHint")) + '</p></div>';
+    if (!(state.routines || []).length) html += '<div class="card emptyCard">' + (guideOn() ? wallyWrap("welcome", null, 56) : "") + '<svg class="ic icBig"><use href="#i-gym"/></svg><p>' + esc(tr("gym.noRoutines")) + '</p><p class="hint">' + esc(tr("gym.noRoutinesHint")) + '</p></div>';
     (state.routines || []).forEach(function (r) { html += routineCard(r); });
     el.innerHTML = html;
     el.querySelectorAll("[data-gyday]").forEach(function (b) { b.addEventListener("click", function () { b.classList.toggle("on"); }); });
@@ -1900,7 +1913,7 @@
       '<div id="ppIntBox" class="hidden"><div class="grid2"><label>' + esc(tr("pep.everyHowMany")) + '<input id="ppInterval" type="number" min="1" value="7"></label>' +
       '<label>' + esc(tr("pep.startingOn")) + '<input id="ppStart" type="date" value="' + L.todayKey() + '"></label></div></div>' +
       '<div class="row"><button class="primaryBtn" id="ppAdd">' + esc(tr("pep.saveBtn")) + '</button></div></div>';
-    if (!(state.peptides || []).length) html += '<div class="card emptyCard"><svg class="ic icBig"><use href="#i-pep"/></svg><p>' + esc(tr("pep.nothingTracked")) + '</p><p class="hint">' + esc(tr("pep.nothingHint")) + '</p></div>';
+    if (!(state.peptides || []).length) html += '<div class="card emptyCard">' + (guideOn() ? wallyWrap("welcome", null, 56) : "") + '<svg class="ic icBig"><use href="#i-pep"/></svg><p>' + esc(tr("pep.nothingTracked")) + '</p><p class="hint">' + esc(tr("pep.nothingHint")) + '</p></div>';
     (state.peptides || []).forEach(function (p) {
       html += '<div class="card"><h2><span class="mealDot" style="background:' + esc(p.color) + ';display:inline-block"></span> ' + esc(p.name) + "</h2>" +
         '<p class="hint">' + esc(tr("pep.youTake", { amount: p.amount, unit: tr("pep.unit" + p.unit.charAt(0).toUpperCase() + p.unit.slice(1), null, p.unit) })) + " · " + scheduleText(p) + (p.time ? " · " + esc(p.time) : "") + "</p>" +
@@ -2063,6 +2076,95 @@
     wallyFloatTimer = setTimeout(function () { box.classList.add("hidden"); }, 7000);
   }
 
+  /* --- THE GUIDE, ROUND 2 (readiness loop, spec of record):
+     guidance just in time, one callout at a time, never
+     stacked. Three parts, all riding the existing Wally
+     machinery and art: the Getting Started checklist on Today
+     (ticks read real state, dismissal is forever), one coach
+     mark per point of use (a per-area seen flag in settings),
+     and "Show the guide again" in Settings, which resets the
+     tour, the marks and the checklist for a fresh walk. The
+     guide NEVER writes user data: its flags live in settings
+     beside tourSeen, and replaying it deletes nothing the
+     user entered. Words EN only while the Spanish hold
+     stands (the ES tables carry the same keys, saved). --- */
+  function coachSeenMap() {
+    state.settings = state.settings || {};
+    if (!state.settings.coachSeen || typeof state.settings.coachSeen !== "object") state.settings.coachSeen = {};
+    return state.settings.coachSeen;
+  }
+  var COACH_LINES = { "meal-plan": "coach.meal-plan", "meal-treats": "coach.meal-treats",
+    "gym-routines": "coach.gym-routines", "gym-session": "coach.gym-session",
+    "gym-machine": "coach.gym-machine", "calendar": "coach.calendar",
+    "peptides": "coach.peptides", "plans": "coach.plans" };
+  function coachKeyFor(areaId, subId) {
+    if (areaId === "meals") return subId === "meal-plan" ? "meal-plan" : (subId === "meal-treats" ? "meal-treats" : null);
+    if (areaId === "gym") return (subId === "gym-routines" || subId === "gym-session" || subId === "gym-machine") ? subId : null;
+    if (areaId === "calendar") return "calendar";
+    if (areaId === "peptides") return "peptides";
+    return null;
+  }
+  function renderCoachMark(key, spotId) {
+    var spot = $(spotId || "coachSpot"); if (!spot) return;
+    spot.innerHTML = "";
+    if (!key || !authUser || !guideOn() || !window.Wally) return;
+    if (coachSeenMap()[key]) return;
+    spot.innerHTML = '<div class="card coachCard">' + wallyWrap("welcome", tr(COACH_LINES[key]), 56) +
+      '<div class="row"><button class="primaryBtn" id="coachGot">' + esc(tr("coach.got")) + "</button></div></div>";
+    var b = $("coachGot");
+    if (b) b.addEventListener("click", function () { coachSeenMap()[key] = true; save(); spot.innerHTML = ""; });
+  }
+  function gsRows() {
+    var today = L.todayKey();
+    var p = state.profile || {};
+    var split = L.areasForNeeds(p.setupDone ? (p.needs || []) : []);
+    var rows = [];
+    if (!p.setupDone) rows.push({ id: "setup", label: tr("gs.setup"), done: false });
+    rows.push({ id: "checkin", label: tr("gs.checkin"), done: !!((state.checkins || {})[today]) });
+    if (split.active.indexOf("meals") !== -1) {
+      var entry = (state.plan || {})[mpKey(today)] || {};
+      rows.push({ id: "meals", label: tr("gs.meals"), done: !!(entry.breakfast || entry.lunch || entry.dinner) });
+      rows.push({ id: "water", label: tr("gs.water"), done: !!((state.settings || {}).waterGoalPicked) });
+    }
+    if (split.active.indexOf("gym") !== -1) rows.push({ id: "gym", label: tr("gs.gym"), done: !!(((state.routines || []).length) || ((state.sessions || []).length)) });
+    return rows;
+  }
+  function gsAction(id) {
+    if (id === "setup") { openSetup(); return; }
+    if (id === "checkin") { var c = $("checkinCard"); if (c && c.scrollIntoView) c.scrollIntoView(); return; }
+    if (id === "meals" || id === "water") { openArea("meals", "meal-plan"); return; }
+    if (id === "gym") { openArea("gym", "gym-routines"); return; }
+  }
+  function renderChecklist() {
+    var card = $("gsCard"); if (!card) return;
+    if (!authUser || !guideOn() || (state.settings && state.settings.checklistDismissed)) { card.hidden = true; card.innerHTML = ""; return; }
+    var rows = gsRows();
+    var allDone = rows.length > 0 && rows.every(function (r) { return r.done; });
+    card.hidden = false;
+    if (allDone) {
+      card.innerHTML = (window.Wally ? wallyWrap("celebrate", tr("gs.done"), 56) : "<p>" + esc(tr("gs.done")) + "</p>") +
+        '<div class="row"><button class="primaryBtn" id="gsDoneClose">' + esc(tr("tour.doneBtn")) + "</button></div>";
+      var dc = $("gsDoneClose");
+      if (dc) dc.addEventListener("click", function () { state.settings = state.settings || {}; state.settings.checklistDismissed = true; save(); renderChecklist(); });
+      return;
+    }
+    card.innerHTML = '<div class="gsHead">' + (window.Wally ? window.Wally.img("welcome", 48) : "") + "<div><h2>" + esc(tr("gs.title")) + '</h2><p class="hint">' + esc(tr("gs.sub")) + "</p></div>" +
+      '<button class="reofferXBtn" id="gsDismiss" aria-label="Close">✕</button></div>' +
+      rows.map(function (r) { return '<button class="gsRow' + (r.done ? " done" : "") + '" data-gs="' + r.id + '"' + (r.done ? " disabled" : "") + '><span class="gsTick">' + (r.done ? "✓" : "○") + '</span><span class="grow">' + esc(r.label) + "</span></button>"; }).join("");
+    var dx = $("gsDismiss");
+    if (dx) dx.addEventListener("click", function () { state.settings = state.settings || {}; state.settings.checklistDismissed = true; save(); renderChecklist(); });
+    card.querySelectorAll("[data-gs]").forEach(function (b) { b.addEventListener("click", function () { gsAction(b.getAttribute("data-gs")); }); });
+  }
+  function showGuideAgain() {
+    if (!guideOn()) { toast(tr("tour.tResting", { name: companionName() })); return; }
+    state.settings = state.settings || {};
+    state.settings.tourSeen = false;
+    state.settings.coachSeen = {};
+    state.settings.checklistDismissed = false;
+    save();
+    replayTour();
+  }
+
   function renderCheckin() {
     var today = L.todayKey();
     var level = state.checkins[today];
@@ -2092,6 +2194,7 @@
     $("stripHi").textContent = p && p.name ? tr("today.hiPlain", { name: p.name }) : "";
     $("todayTitle").textContent = p && p.name ? tr("today.hiPlain", { name: p.name }) : tr("nav.today");
     renderCheckin();
+    renderChecklist();
     var budget = L.estimateBudget(p || {});
     var level = state.checkins[L.todayKey()] || "ok";
     if (budget) {
@@ -2323,6 +2426,7 @@
     toast(state.settings.wallyOff ? companionName() + " is resting." : companionName() + " is back.");
   });
   $("tourReplayBtn").addEventListener("click", replayTour);
+  $("guideAgainBtn").addEventListener("click", showGuideAgain);
   $("remindAskYes").addEventListener("click", function () {
     state.settings = state.settings || {};
     state.settings.remindAsked = true;
@@ -2608,6 +2712,15 @@
        the menu and Wally stay inside, and there is no road in
        without an account. Entry lifts the class. */
     document.body.classList.toggle("signedOut", !authUser);
+    /* SIGN-OUT CLEARS THE GREETING AT ONCE (Round 2 finding,
+       QA b19 Leg 1 observation 2): the top strip and the Today
+       title are written by renderToday, which sign-out never
+       re-runs, so a name used to survive in the strip until a
+       reload. Signed out means cleared NOW, not on reload. */
+    if (!authUser) {
+      var sh = $("stripHi"); if (sh) sh.textContent = "";
+      var tt = $("todayTitle"); if (tt) tt.textContent = tr("nav.today");
+    }
     if (!doorStarted) {
       box.innerHTML = (Date.now() - bootAt < 4500) ?
         '<p class="hint">' + esc(tr("set.opening")) + '</p>' :
@@ -2855,7 +2968,7 @@
     card.hidden = false;
   }
   function tourDots() {
-    return [1, 2, 3, 4].map(function (i) { return i === tourStep ? "●" : "○"; }).join(" ");
+    return [1, 2, 3].map(function (i) { return i === tourStep ? "●" : "○"; }).join(" ");
   }
   function renderTour() {
     var root = $("tourRoot"), card = $("tourCard"), dim = $("tourDim");
@@ -2881,19 +2994,15 @@
         '<div class="tourDots">' + tourDots() + '</div>';
       var inp = $("tourName"); if (inp) setTimeout(function () { inp.focus(); }, 60);
     } else if (tourStep === 2) {
-      dim.classList.add("hidden");
-      sbOpen = true; applySidebar();
-      card.className = "tourCard tourMenu";
-      card.innerHTML = x +
-        '<p class="tourLine">' + esc(tr("tour.menu")) + '</p>' +
-        '<div class="tourRow">' + skip + '<button class="primaryBtn tourNext" id="tourNext">' + esc(tr("tour.next")) + ' →</button></div>' +
-        '<div class="tourDots">' + tourDots() + '</div>';
-    } else if (tourStep === 3) {
-      dim.classList.add("hidden");
-      sbOpen = false; applySidebar();
-      card.className = "tourCard tourBottom";
-      card.innerHTML = x +
-        '<p class="tourLine">' + esc(tr("tour.day")) + '</p>' +
+      /* SLIMMED (Round 2 guide spec): no geography lecture.
+         One centred step, one line on the four areas, and the
+         checklist + coach marks teach the rest at the point
+         of use. tour.menu / tour.day stay in the word tables,
+         unrendered, in case a later round wants them back. */
+      dim.classList.remove("hidden");
+      card.className = "tourCard tourCenter";
+      card.innerHTML = x + face +
+        '<p class="tourLine">' + esc(tr("tour.areas")) + '</p>' +
         '<div class="tourRow">' + skip + '<button class="primaryBtn tourNext" id="tourNext">' + esc(tr("tour.next")) + ' →</button></div>' +
         '<div class="tourDots">' + tourDots() + '</div>';
     } else {

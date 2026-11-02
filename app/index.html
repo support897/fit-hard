@@ -76,6 +76,8 @@
         </div>
       </div>
 
+      <div class="card" id="gsCard" hidden></div>
+
       <div class="card" id="budgetCard" hidden>
         <h2><svg class="ic icInline"><use href="#i-meal"/></svg> Food today</h2>
         <p class="big" id="budgetLine"></p>
@@ -105,6 +107,7 @@
         <p id="areaEmptyLine" data-i18n="area.empty">Nothing here yet.</p>
         <button class="primaryBtn" id="areaEmptyBtn" data-i18n="area.start">Start</button>
       </div>
+      <div id="coachSpot"></div>
       <div id="areaBody"></div>
     </section>
 
@@ -143,6 +146,7 @@
         <div id="guideRestSpot"></div>
         <div class="row"><button class="pillBtn" id="guideToggleBtn" data-i18n="set.wallyRest">Wally rests for a while</button></div>
         <div class="row"><button class="pillBtn" id="tourReplayBtn" data-i18n="tour.replayBtn">See the tour again</button></div>
+        <div class="row"><button class="pillBtn" id="guideAgainBtn" data-i18n="guide.againBtn">Show the guide again</button></div>
         <label><span data-i18n="set.hisName">His name</span><input id="guideNameInput" type="text" placeholder="Wally" autocomplete="off"></label>
         <div class="row"><button class="pillBtn" id="guideNameSave" data-i18n="set.saveName">Save his name</button></div>
         <p class="hint" data-i18n="set.blanket">His blanket colour</p>
@@ -183,6 +187,7 @@
 
     <section id="view-plans" class="view">
       <header class="topBar"><div><h1 data-i18n="plan.title">Plans</h1><p class="sub" data-i18n="plan.sub">Pick the shelf that fits. You can change or cancel any time.</p></div></header>
+      <div id="coachSpotPlans"></div>
       <div id="plansBox"></div>
     </section>
   </main>

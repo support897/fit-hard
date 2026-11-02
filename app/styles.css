@@ -295,3 +295,12 @@ textarea{resize:vertical}
 .chTask .grow{flex:1}
 .chTask .okMark{color:var(--sage);font-weight:700}
 .recipeGrid .gridHead{grid-column:1/-1;margin:10px 0 0}
+/* Round 2 guide: Getting Started checklist + coach marks */
+.gsHead{display:flex;gap:10px;align-items:flex-start}
+.gsHead h2{margin:0}
+.gsHead .reofferXBtn{margin-left:auto}
+.gsRow{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:var(--blush);border:2px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:8px;font-weight:700;color:var(--ink);cursor:pointer}
+.gsRow .grow{flex:1}
+.gsRow.done{opacity:.65;cursor:default}
+.gsTick{color:var(--sage);font-weight:700}
+.coachCard{border-color:var(--sage-mist)}
