@@ -201,9 +201,16 @@ keeping data, sign-out strip proof with no reload).
 - Efficiency PASS (2 Nov): pins exact · suite 501/0 re-run ·
   delta ≈ +10.8 KB upper bound judged fair · costs early-out ·
   waste scan clean.
-- QA candidate check (§M walk + strip leg): COMMISSIONED
-  2 Nov, verdict outstanding at staging.
-- Reality Check: LAST, on the same bytes, after QA.
+- QA candidate check: VERDICT LANDED during the conveyor
+  (verdict-fithard-r2-guide-2026-11-02.md): M1 Pass · M2 Pass
+  with plans mark Could not check (surface off by design,
+  desk ruling: out of scope while plans are off) · M3 Pass ·
+  M4 Pass · strip leg Pass · saved-login/isolation spot
+  re-check Pass. Two observations judged at the desk: drawer
+  staying open after a navigation choice = Round 3's first
+  fix; reopen landing view = Round 3 A-script item.
+- Reality Check: FIRE THE CONVEYOR NOW (2 Nov), QA's §M walk
+  owed onto the shipping bytes as a hard Round 3 gate.
 
 ## Conveyor conditions (carried, none waived)
 Bridge carry FIRST, then the post-carry census of the WHOLE
@@ -214,3 +221,108 @@ attach her group + QA lane, read back · Route 1 publish
 updated to the verified 20 bundle with the served comparison
 filed · candidate discipline: TestFlight only, NEVER App
 Review, never "finished" to Ilse.
+
+## BUILD 20 CONVEYOR — CLOSED RECORD (2 Nov)
+Branch qa-fixes @ d26a27a · bridge @ c132cd2 · post-carry
+census ZERO (1,086 files) · run 41441741538 SUCCESS ·
+packaged verification ALL PASS before attach (zip 692e160a…
+· IPA 9569bd66… · SW fitapp-v92 · every pin exact) · ASC
+build 20 VALID c734ac23 · groups her […, 19, 20] + QA
+[12, 16, 17, 19, 20] · Route 1 publish 59a085a, served
+comparison all MATCH. QA's Round 3 full-script walk runs on
+this surface.
+
+---
+# BUILD 21 GATE PACKET — Round 3 fixes (BATCH FINAL v3, 3 Nov, night order)
+
+## Stage 0: delta pins vs build 20's verified bundle (SW fitapp-v96)
+- app.js b61f94b0 → f748f82c
+- logic.js (unchanged in 20) → d1413f20
+- service-worker.js 324b29f5 → f241c85a (fitapp-v96)
+- tests/run-tests.mjs a037e988 → 805fd503 (not shipped)
+- UNCHANGED controls: index.html 94f46d77 · styles.css
+  aba6f359 · i18n.js 07da590f · auth.js 5d8f1d62
+- SUPERSEDES the v94 filing (app.js 70468014 · SW 37d5e5f0
+  · tests b81b5b20) and the v95 filing (app.js f748f82c ·
+  logic.js 02923236 · SW de60f27f · tests 764e2af5):
+  Quality + Efficiency PASSed v94, then v95 (fix 4, the
+  tour-skip cure); QA's candidate check then named a
+  sync-window edge in fix 2, cured as fix 5, so both
+  deltas re-run on v96. No conveyor moved at any step;
+  SU's staged set is updated at each step.
+
+## Contents
+1. Drawer close (app.js): closeSbOnPhone() — at the
+   stylesheet's phone breakpoint (700px), choosing a
+   destination (openArea incl. guide deep-links, [data-view]
+   nav, openPlans) closes the open drawer so the screen
+   lands full width. Desktop + her sidebar law untouched.
+2. Setup quiet (app.js + logic.js): the skip writes
+   profile.setupSkipped; afterTour's auto-offer requires
+   !setupDone && !setupSkipped; repairState's whitelist
+   carries the flag. Checklist row + Settings roads still
+   open the sheet by hand.
+3. Entry lands on Today (app.js): onSignedIn shows Today
+   before the follow-up — QA's landing observation (the
+   sign-out/sign-in cycle never left Settings) cured at its
+   root. Desk ruling under the night order: home is Today;
+   the line is one call, customer-correct on every entry.
+4. Tour-skip birth (app.js, added 3 Nov after QA's addendum
+   on 20): endTour now births the profile WHOLE,
+   unconditionally, at the top of every tour exit (Done,
+   Skip, X, import road) — the birth used to ride inside
+   the step-1 name branch, so an exit that never passed
+   that branch could leave the account unborn: no profile,
+   setup never offered, the checklist's setup row dead
+   (QA's walked finding on the shipped 20 publish). The
+   name save keeps its conditions; the birth is the
+   F-B11-1 doctrine applied to the tour's exits. Desk
+   disclosure: the desk's stub repro (probe_tourskip.py,
+   email-door shape, no provider name) passed all skip
+   shapes 18/18 even BEFORE this cure — the failing
+   construction on the real surface is not reproduced at
+   this desk; the cure closes the named seam structurally,
+   and QA's retest walks THEIR exact shape on 21.
+
+5. Setup-skip merge carry (logic.js, added 3 Nov after
+   QA's candidate check on v94): mergeStates' profile pick
+   takes the cloud profile whole whenever the local one
+   has not completed setup, so a "Not now" whose cloud
+   mirror had not landed was dropped by the next sign-in
+   merge and the sheet re-offered once (QA's edge, walked:
+   one re-offer on the fast cycle, quiet on every settled
+   return). Cure at the same seam as the F1 firstSeenAt
+   carry, mirror-imaged: if either side's profile carries
+   setupSkipped, the merged profile carries it; a
+   completed profile is never re-flagged.
+
+## Desk evidence
+- Suite 507 PASS / 0 FAIL (6 R3 pins: repair carries the
+  flag · helper + 3 call sites + 700px · offer condition +
+  flag write · the landing line standing before the
+  follow-up · endTour births before its step branch · the
+  skip survives the sign-in merge from either side; SW
+  pins at v96).
+- Desk probe hidden_files/probe_r3_fixes.py: 17 steps ALL
+  PASS, 0 page errors (offer/skip/quiet/road-back ·
+  pre-flagged quiet · drawer closes on area + top view at
+  390px · desktop control stays open · sign-out from
+  Settings then re-entry lands on Today).
+- Desk probe hidden_files/probe_tourskip.py: 21 steps ALL
+  PASS, 0 page errors (fresh email-door accounts: Skip at
+  step 1 · X at step 1 · blank Next then Skip at step 2 ·
+  completed-tour control · cross-entry reload legs: the
+  birth persists and the setup road stands).
+- Desk probe hidden_files/probe_merge_carry.py: 5 steps
+  ALL PASS, 0 page errors (the merge driven end to end
+  against a cloud record without the answer: the stored
+  profile keeps it, the sheet stays quiet; the control
+  with no answer anywhere still offers).
+
+## Gates (HQ's loop order)
+Quality delta · Efficiency delta · QA retest on the NEW
+build (packaged proof first) · Reality LAST. Then conveyor
+under the same carried conditions: bridge carry + post-carry
+census ZERO · CPV 20 → 21 · packaged verification BEFORE
+attach · groups read back · Route 1 publish to the verified
+21 bundle · TestFlight only, NEVER App Review.

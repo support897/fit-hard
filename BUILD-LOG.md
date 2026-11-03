@@ -1,6 +1,909 @@
 # BUILD LOG — Fit Hard, build 17 wave (base: branch qa-fixes-2026-10-26 @ 5de1ebd)
 
 ## READINESS LOOP (her order 2 Nov via HQ — plan: READINESS-PLAN.md)
+- CONVEYOR FIRED — STAGE 1 MOVING (3 Nov, SU): all nine
+  files verified at SU's hand on the desk tree before
+  firing (app pins as staged · BUILD-LOG.md 65355281 ·
+  GATE-PACKET.md b2407482 · probes 25b29f3a / 2ff8e551 /
+  14ab6d24; tests at app/tests/run-tests.mjs, its tree
+  home; __pycache__ exclusion stands). Order from here:
+  commit + fresh-ZIP read-back → bridge carry (4 files) +
+  post-carry census ZERO → CPV 20→21 → dispatch →
+  packaged verification BEFORE attach → groups + read-back
+  → Route 1 publish + served comparison; the doorcheck
+  Pages-disable is already in flight on the desk's word,
+  its read-back filed with the receipts.
+- REALITY RULING: FIRE (3 Nov, Reality Check b2bea5c4):
+  last in the chain, judged on the frozen bytes — both
+  QA verdict files read whole, pins verified at Reality's
+  own hand, all exact. The ruling is on the CONVEYOR only;
+  build 21 is not a finished-app claim and does not exist
+  until the conveyor lands it. Why it fires, in their
+  words: every fix answers a QA-filed Not pass on shipped
+  20 and every one is now QA-passed on these bytes; gates
+  stand on the same pins (507/0 both chairs); the trap
+  readings invert completely between v94 and the cure
+  (profile born with 5 keys · offered · rows standing,
+  against none/none/dead). THE GRAINS RIDE AS OWED LEGS,
+  none smoothed, none waived: (1) the virgin single-entry
+  trap repeat is still owed — the shipped-21 full script
+  re-walks it and that re-walk is a Round 3 CLOSER, not a
+  formality; (2) the fast-cycle's contaminated first pass
+  discarded, the clean repeat governs; (3) the M1 tour
+  texts re-read on shipped bytes in the full script.
+  CONDITIONS carried whole into the dispatch: commit with
+  read-back → bridge carry → post-carry census ZERO →
+  CPV 21 → packaged verification BEFORE attach → Route 1
+  publish to the verified 21 bundle with served comparison
+  filed → QA full-script A–M retest on shipped 21 → Round
+  3 finals to HQ only; any Not pass loops to build 22.
+  The doorcheck removal read-back (path 404s) is a
+  conveyor receipt. CONVEYOR DISPATCHED at SU on these
+  conditions. TestFlight only, never App Review.
+- QA FAST-CYCLE: PASS — CANDIDATE RE-CHECK COMPLETE
+  (3 Nov, verdict-fithard-b21-fastcycle-2026-11-03.md):
+  the governing run is the clean repeat, one account
+  throughout (fitfast2): tour completed → sheet presented
+  → "Not now" → sign-out and sign-in IMMEDIATELY, inside
+  the sync window → first return: no sheet · reload,
+  settled return: no sheet. The v94 edge does NOT
+  reproduce; fix 5's merge carry holds in the walked
+  shape. Grains as filed: the first pass ran on a wrong
+  standing account (the lane auto-restored a saved fitj1a
+  session; the walker caught it and repeated cleanly —
+  the first pass is not evidence); one observation rides
+  to the shipped retest (the tour's later step texts
+  differ from the v92-era M1 texts; the full script
+  re-reads M1 on shipped bytes regardless).
+  THE v96 CANDIDATE RE-CHECK IS COMPLETE AT QA: drawer
+  Pass · landing Pass · setup quiet Pass in BOTH shapes ·
+  tour-skip trap Pass on the cure bytes. QA's walks on
+  the doorcheck path are DONE → removal word given to SU.
+  REALITY ASKED, last in the chain, with the full board
+  and every grain + parked line named; the conveyor waits
+  for their ruling. One line to HQ.
+- CHECK PATH LIVE + CENSUS CONFIRMED AT TWO HANDS
+  (3 Nov): https://support897.github.io/fit-doorcheck-v96/
+  (repo head 796f9fa). SU's served census: 1,035/1,035
+  MATCH, 0 problems (two legs — a runtime restart killed
+  the first run at 800 checked, 0 bad at every checkpoint;
+  the completing run covered 801–1,035, 235/235); all
+  seven pins equal served vs tree. DESK SPOT-CHECK at its
+  own hand: served app.js f748f82c · service-worker.js
+  f241c85a · index.html 94f46d77, each equal to the frozen
+  tree pin computed locally; the commissioned /app/
+  surface still serves fitapp-v92 (build 20), untouched.
+  QA released to walk the fast-cycle on it; the path holds
+  until QA's walks-done word reaches this desk, removal on
+  the desk's word to SU. One line to HQ.
+- ROAD 2 IN FLIGHT AT SU (3 Nov): repo fit-doorcheck-v96
+  being created; public set = 51 code files + 984 asset
+  stills (brand/, tests/, hidden_files/ excluded on the
+  standing call); /app/ untouched on build 20's bundle.
+  On landing SU files the served census (full set
+  byte-equal, the seven pins named) to QA + desk; the
+  path holds until QA's walks-done word, then removal +
+  confirmation to both chairs. Conveyor prep-only.
+- ROAD 2 FIRED (3 Nov, desk's word): the shared-lane drive
+  stopped at Stage 1 — that lane refuses LOOPBACK
+  navigation outright (invalid_request; the page never
+  loaded, no account created), and the 8953 surface is
+  reachable only from lanes on this box, QA's being down.
+  The remaining road is the one armed at SU this morning:
+  SU is publishing the FROZEN v96 bundle to a dedicated
+  temporary public check path (mp-doorcheck shape; its own
+  path, separate from the commissioned surfaces; /app/
+  stays on build 20's verified bundle), served census to
+  QA + desk on landing, held until QA calls the walks
+  done, then removed. QA's fast-cycle runs on the census.
+  Conveyor unchanged (prep-only). One line to HQ.
+- SHAPE CONFIRMED (3 Nov, crossed messages tidied): the
+  candidate board closes on the FAST-CYCLE VERDICT ALONE;
+  the trap's cache-name read rides the SHIPPED-21 full
+  script (ASK 2), not a separate candidate drive — agreed
+  identically at both chairs.
+- ROAD SWITCH: THE FAST-CYCLE IS WALKING (3 Nov): HQ
+  ordered the switch off QA's dead lane; QA is driving
+  the fast-cycle NOW on the shared browser lane against
+  this desk's 8953 surface (the frozen tree itself; served
+  pins verified at QA's hand first: f748f82c · d1413f20 ·
+  fitapp-v96). Shape: fresh account, Not now, sign out and
+  back in seconds later, sheet read on the FIRST return,
+  then a settled return. Verdict files the minute the
+  walk lands. The leg is no longer parked; the tree stays
+  frozen and the surface stays up from this side.
+- SERVER READ ON fitb21c: THE DOCUMENT DOES NOT EXIST
+  (3 Nov, owner-side console read, fit-app-7f25f, read-only,
+  on her Owner session): users/dEsU9RGAWdeCi64lm2nhx2FPmx63
+  — console verbatim "This document does not exist." No
+  fields, no state, no slices subcollection. READ, stated
+  carefully to QA: a THIRD answer, not either fork branch.
+  The doc is created by the sign-in mirror every fresh
+  account makes, before any tour or skip — so NO cloud
+  write from F's session ever landed at all. That
+  corroborates "the birth never landed anywhere" (the
+  local census stays the primary evidence: no-profile,
+  246 B record) but CANNOT prove the negative alone: a
+  session whose Firestore writes failed wholesale would
+  leave the same empty server. Standing picture: F (v94,
+  fresh profile, QA's shape) = no birth locally, no trace
+  on the server; H (v96, fresh profile, same shape) =
+  birth, offer, rows. The bytes remain the only measured
+  difference between the walks; the cache-name read at
+  the head of QA's trap re-run seals the executed bytes.
+  One line to HQ.
+- FREEZE VERIFIED AT QA'S HAND; LANE BREAK NAMED BELOW
+  THE HARNESS (3 Nov): QA read all seven frozen pins
+  exactly as named (f748f82c · d1413f20 · f241c85a ·
+  94f46d77 · aba6f359 · 07da590f · 5d8f1d62) — the freeze
+  holds at the walking chair. The legs cannot start:
+  BLOCKER, QA's one line — the browser layer on their box
+  is broken BELOW the harness (the Firefox binary itself
+  dies headless outside Playwright too, GFX crash at
+  launch; every route tried). On the lane's return, QA's
+  named drives, in order: (1) setup quiet, fast-cycle
+  shape; (2) the trap re-run WITH the cache-name read at
+  its head (fitapp-v96 expected in page context) — the
+  executed-bytes seal on the leg that already reads PASS.
+  Desk position unchanged: no substitute evidence, tree
+  frozen, chain waits. (The desk's owner-side server read
+  on fitb21c is separately in flight.)
+- STALE-CACHE HYPOTHESIS DEAD BY PROVENANCE + SERVER
+  READ DISPATCHED (3 Nov): QA answered from the walks'
+  provenance: account F's trap walk ran on a FRESH profile
+  (profB21F) at http://localhost:9288, an origin+port never
+  used before that morning — the only worker that could
+  register there was v94's own, caching v94's own bundle;
+  account C's b20 walk likewise on a fresh profile whose
+  first publish-origin load came after build 20 published.
+  No earlier tree existed in either profile: the desk's
+  stale-cache hypothesis is DEAD for both walks, recorded
+  as such to QA (their provenance is the better evidence;
+  QA names honestly that no executed-bundle hash was read
+  in-page — the b19 caution cuts at them too). The
+  cache-name decisive read stands accepted into BOTH the
+  re-check spec and the shipped retest. Consequence
+  already visible: F (v94) failing and H (v96) passing ran
+  the same real-door shape on fresh profiles — the
+  difference is the bytes; the mechanism inside the real
+  construction is still the desk's to name. THE OTHER
+  HALF: fitb21c's uid = dEsU9RGAWdeCi64lm2nhx2FPmx63,
+  supplied by QA from the untouched profile's own disk
+  storage (no session launched since the trap walk; its
+  stored account record stands 246 B whole, consistent
+  with no-profile). Owner-side server read DISPATCHED
+  (read-only console task on fit-app-7f25f, users/{uid}:
+  existence · state.profile verbatim · updatedAt · slices
+  count). The fork: born profile on the server = the birth
+  ran and the loss was local (QA's v94 Not pass then gets
+  re-read in that light at this desk); null/absent = the
+  birth never ran on the executed bytes.
+- CANDIDATE BOARD DOWN TO ONE LEG — PARKED ON QA'S LANE
+  (3 Nov): QA confirms the trap leg is verdicted PASS on
+  the FINAL v96 pins at their chair (no re-drive needed)
+  and the executing-bytes question closed behaviourally.
+  Drawer + landing stand closed (v94 check PASS + the
+  gates' code-unchanged delta reads). THE ONE OUTSTANDING
+  CANDIDATE LEG: setup quiet, fast-cycle shape. BLOCKER,
+  QA's one line: their box's browser lane is dead — every
+  browser binary segfaults at launch (two Firefox builds,
+  Chromium, persistent and plain, software-GL tried) — so
+  no walk runs at their chair until the lane heals; their
+  chair does not verdict a leg it has not walked, and the
+  desk offers no substitute (the desk probe covering the
+  merge shape stands as a desk probe, nothing more — the
+  round's discipline). QA's word: the fast-cycle is the
+  FIRST drive when the lane returns (fresh account, Not
+  now, sign out and back in seconds later, sheet read on
+  the first return). Tree stays FROZEN at v96 meanwhile;
+  Reality + conveyor wait for this leg. One line to HQ.
+- QA TRAP RE-WALK: PASS ON THE CURE (3 Nov,
+  verdict-fithard-b21-trap-rewalk-2026-11-03.md): QA
+  confirms the original leg walked v94. On the cure bytes
+  (app.js f748f82c read at their hand; logic.js d1413f20 ·
+  SW f241c85a self-naming v96; the cure file byte-identical)
+  their exact shape reads: profile BORN · sheet OFFERED ·
+  all five checklist rows STAND. LEG 4 = PASS at candidate
+  level. Two grains filed by QA and accepted as filed:
+  (1) the skip rode the account's SECOND entry (the first
+  was a diagnostic that took no exit); (2) a virgin
+  single-entry repeat is BLOCKED — their box's browser
+  lane died mid-work, binaries segfaulting at launch
+  (environment, not bytes; the shipped-21 full script
+  re-walks the shape anyway). Desk note: same lane, same
+  shape, opposite result on the new bytes is itself the
+  behavioural answer to the executing-bytes question — a
+  stale pre-cure cache would have failed identically.
+  Legs 1–3: QA's filing said they still wait on the freeze
+  word (messages crossed — the word had been sent twice);
+  re-confirmed plainly to QA: legs 1–3 are theirs to start
+  now on the frozen bytes. One line to HQ.
+- TREE FROZEN AT v96 FOR QA'S WALK (3 Nov, on QA's stop):
+  QA read the tree at their hand, found it past the named
+  v95 (logic.js d1413f20 · SW f241c85a fitapp-v96), and
+  refused — rightly — to walk a moving tree under a v95
+  commission. Desk word given: v96 IS the candidate of
+  record and the tree is FROZEN at the v96 pins (app.js
+  f748f82c · logic.js d1413f20 · SW f241c85a · tests
+  805fd503 · controls 94f46d77 / aba6f359 / 07da590f /
+  5d8f1d62) until QA's re-check verdict lands; no desk
+  edits to fit-b16/app in between; any new fix waits for
+  a named re-freeze. Quality + Efficiency PASSes stand on
+  exactly these pins. One line to HQ.
+- TRAP SHAPE RECEIVED + DIVERGENCE HUNT (3 Nov): QA's
+  exact shape, from their drive record (both walks): EMAIL
+  door, real sign-up through the door UI (b20 publish:
+  +fitr3c · candidate local server: +fitb21c) · control =
+  #tourSkip, never the X · step 1, name never typed, tour
+  untouched · first entry, first tour presentation ·
+  census = the local fit-app-v1-account-<uid> record in
+  page context: profile null (b20) / hasProfile false
+  (v94 candidate); NO server-side read taken. Corroboration:
+  the same b20 account, tour completed via "Show the guide
+  again", held a profile, got the offer, row worked.
+  DESK READ: the shape matches probe_tourskip's S1 shape
+  FOR SHAPE, and S1 passes at this desk on uncured AND
+  cured bytes — saveLocal writes the account record on
+  every save (app.js:110, read this hunt), so a
+  stale-snapshot read is excluded too. Every in-app path
+  re-read this hunt births on that shape. The one surface
+  NEITHER chair has read: the bytes the page EXECUTED.
+  QA's lane is a long-lived persistent profile that has
+  hosted many candidate trees on local origins + the
+  publish origin; a service worker registered by an
+  earlier tree serves its cached bundle across a whole
+  walk while file hashes read current — a stale-cache
+  execution reproduces the trap exactly (pre-b12 tour
+  exits did not birth) AND the corroboration (the Done
+  road births even on those bytes). HYPOTHESIS, named as
+  such to QA, not a verdict on their walk. DECISIVE READ
+  designed into the re-check: in page context, the active
+  SW cache name must read fitapp-v96 before the trap leg
+  runs; anything else means the leg walks the cache, not
+  the build. If the trap reproduces on PROVEN-v96
+  executing bytes, the hunt reopens at this desk the same
+  hour. Second half offered by QA themselves: the server
+  records of the two accounts (the desk reads owner-side)
+  — fitr3c's is contaminated by its corroboration walk;
+  fitb21c's uid + untouched-since answer requested from
+  QA before the console read is spent. One line to HQ.
+  Also corrected to QA: the re-check walks v96, not v95
+  (superseded by fix 5 — same correction as v94).
+- EFFICIENCY DELTA ON v96: PASS (3 Nov): pins verified at
+  their hand (logic.js d1413f20 · SW f241c85a · tests
+  805fd503 · app.js + controls at the v95-passed pins) ·
+  suite re-run fresh 507/0, exactly one pin over v95
+  (evidence ~/workspace/efficiency/fit-b21v3-suite-run.txt)
+  · the carry read in code verbatim at its seam (one
+  condition + one Object.assign; sets only, never clears;
+  the !setupDone guard; fires once per merge, zero standing
+  cost) · priced +823 B in logic.js, three lines of it code,
+  the rest the ruling comment · waste scan clean. GATE SET
+  ON v96 COMPLETE AT THE DELTA CHAIRS: Quality PASS +
+  Efficiency PASS. Remaining before Reality, under HQ's
+  hold: QA's pin confirmation to HQ + their two-leg
+  re-check on the v96 bytes.
+- QUALITY DELTA ON v96: PASS (3 Nov): pins all exact ·
+  app.js at the passed pin · controls unchanged · §6
+  unchanged · suite re-run at their chair 507/0 · the
+  carry read in code at its seam beside the firstSeenAt
+  carry, both directions + the completed-profile guard as
+  specified. Quality names the batch FINAL at their chair:
+  the three v94 fixes + the tour-skip birth + the merge
+  carry, each answering its QA-filed line. Outstanding on
+  v96: Efficiency's delta · QA's pin confirmation to HQ +
+  their two-leg re-check.
+- SU STAGED SET VERIFIED ON v96 (3 Nov): all pins exact at
+  SU's hand (app.js f748f82c standing · logic.js d1413f20 ·
+  SW f241c85a fitapp-v96 · tests 805fd503 · controls exact ·
+  probe_merge_carry.py present) · commit set now 9 · bridge
+  carry shape unchanged, census ZERO, CPV 20→21 as filed.
+  SU staged-ready on v96, road 2 still armed, awaiting
+  Reality's ruling — which itself waits on QA's pin
+  confirmation + the v96 re-check under HQ's hold.
+- HQ HOLD + PIN ANSWER GIVEN (3 Nov): HQ asked QA which
+  pins the trap leg walked (v94 vs v95) before the Not
+  pass stands, and ordered the conveyor held until the
+  answer lands. This desk's answer to HQ, from QA's own
+  filing: the pins QA verified were v94 (70468014 ·
+  02923236 · 37d5e5f0) — pre-cure bytes; the Not pass does
+  not stand against the cure. The hold is confirmed in
+  force (nothing dispatched, Reality not asked; the chain
+  waits for QA's pin confirmation + the v96 re-check).
+  HQ also told: fix 5 already cured the setup edge in
+  their summary; the trap closes on QA's walk of the cured
+  bytes or not at all.
+- QA CANDIDATE CHECK ON v94 + FIX 5 BUILT (3 Nov): QA's
+  check verified the v94 pins at their hand (the batch had
+  already moved to v95 — crossed filings) and verdicted:
+  drawer Pass (both roads; desktop control stands) ·
+  landing Pass · setup quiet Pass WITH ONE EDGE NAMED ·
+  tour-skip Not pass ON V94 (bytes that predate the cure —
+  not a verdict on any cured batch; the leg re-walks on
+  the final bytes). THE EDGE: on the other account's first
+  reopen, seconds after the "Not now" tap, before the
+  flag's sync settled, the sheet re-offered ONCE; every
+  settled return quiet. MECHANISM READ AT THIS DESK in
+  mergeStates (logic.js): the profile pick takes the cloud
+  profile WHOLE whenever the local one lacks setupDone —
+  so a skip whose cloud mirror had not landed was dropped
+  by the merge itself, not merely raced. WEIGHED AND
+  CURED, not accepted (the fix's whole point is that the
+  answer stands): FIX 5, the setup-skip merge carry — if
+  either side's profile carries setupSkipped, the merged
+  profile carries it; a completed profile is never
+  re-flagged (the F1 firstSeenAt carry's mirror image, at
+  the same seam). BATCH FINAL v3, SW fitapp-v96: logic.js
+  d1413f20 · SW f241c85a · tests 805fd503 · app.js f748f82c
+  unchanged · controls unchanged. Evidence: suite 507/0
+  (new pin: the skip survives the merge from either side,
+  with neither-side and completed-profile controls) ·
+  probe_merge_carry.py 5/5 (the merge driven end to end:
+  carry + offer control) · probe_r3_fixes 17/17 ·
+  probe_tourskip 21/21. Quality + Efficiency deltas
+  re-fired on v96; QA's candidate re-check scoped to the
+  two legs whose machinery moved (setup quiet incl. the
+  fast-cycle shape · tour-skip in their shape) — drawer +
+  landing PASSes stand, their code untouched since v94
+  per both gates' delta reads; the full-script retest on
+  shipped 21 re-drives everything regardless. SU staged
+  set updated (commit set now 9, + probe_merge_carry.py).
+- SU RULING REGISTERED (3 Nov): the tree-at-v95 surface
+  ruling stands at SU's chair in the same words (v94
+  wording superseded, noted) · road 2 ARMED at SU, fired
+  only on the desk's word if QA's lane refuses the tree ·
+  conveyor prep-only as staged · /app/ keeps 20's verified
+  bundle until 21's package replaces it. The coordination
+  thread is closed at all three chairs.
+- EFFICIENCY DELTA ON v95: PASS (3 Nov): pins verified at
+  their hand (the three moved files + logic.js + the four
+  controls at the v94-passed pins) · suite re-run fresh
+  506/0, exactly one pin over v94 (evidence
+  ~/workspace/efficiency/fit-b21v2-suite-run.txt) · the
+  moved call read in code at app.js:3065: endTour opens
+  with the unconditional birth, the conditional duplicate
+  inside its step branch verified ABSENT · their precision
+  stands on the record: tourAdvance's step-1 call is a
+  different road (the walk-through's Next), correctly
+  standing, and no path can double-birth (ensureFullProfile
+  is fill-if-missing only) · priced: net one seam, +711 B
+  over v94 is the ruling comment; the code delta is one
+  line moved · waste scan clean. GATE SET ON v95 NOW:
+  Quality PASS + Efficiency PASS — QA's four candidate
+  legs are the only gate left before Reality.
+- QUALITY DELTA ON v95: PASS (3 Nov): pins all exact,
+  logic + the four controls at the passed pins · §6
+  unchanged · suite re-run at their chair 506/0 · the cure
+  read in code (the birth unconditional at the top of
+  endTour, the name branch keeping its conditions below
+  it). The desk's disclosure stands IN Quality's filed
+  verdict: the stub passed the skip shapes before the cure,
+  so this closes the seam structurally — the behavioural
+  proof is QA's retest of their exact walked shape on the
+  shipped build. GATE SET ON v95 NOW: Quality PASS ·
+  Efficiency delta outstanding · QA's four candidate legs
+  outstanding (surface landed at their chair).
+- SU STAGED SET VERIFIED ON v95 (3 Nov): all pins exact at
+  SU's hand (app.js f748f82c · SW de60f27f fitapp-v95 ·
+  tests 764e2af5 · logic.js 02923236 standing · controls
+  exact) · commit set now 8 (four app files + BUILD-LOG +
+  GATE-PACKET + both probes; __pycache__ exclusion stands)
+  · bridge carry shape unchanged, census ZERO, CPV 20→21.
+  The surface call was repeated to SU (crossed messages):
+  the call is MADE — tree surface, filed to QA + HQ; the
+  doorcheck road stays armed on standby at SU, fired only
+  on my word if QA's lane refuses the tree. SU's live
+  trigger remains Reality's ruling → dispatch.
+- QA CONSOLIDATED LINES + ASK 2 ACCEPTED (3 Nov): QA
+  re-sent the Round 3 lines in full in chat (their read:
+  the desk's file read errored — for the record, this desk
+  DID read verdict-fithard-b20-r3-2026-11-03.md in full
+  before logging it; the in-chat copy now removes all
+  doubt at both chairs). Lines as they stand in the record
+  above: script PASS · drawer Not pass (deep-link road not
+  separately verdicted; retest drives both) · setup
+  re-offer Not pass · landing Not pass judged (cure agreed)
+  · tour-skip trap Not pass. ASK 2 FORMALLY ACCEPTED BY QA:
+  full script A–M on build 21's shipped bytes, packaged
+  proof first, the minute the publish + census reach their
+  chair. Parked legs stand as filed.
+- SU COORDINATION ASK ANSWERED (3 Nov, crossed with the
+  surface ruling): SU offered three roads for QA's blocked
+  candidate check (wait for conveyor · temporary doorcheck
+  surface · accelerate Reality). Ruling given to SU: the
+  tree surface already discharged the block (HQ's own
+  alternative, filed minutes earlier), so neither waiting
+  nor accelerating; the doorcheck road stays ARMED, not
+  fired — it executes on my word the hour QA says their
+  lane cannot take the tree / local URL. SU's conveyor
+  stays prep-only; Route 1's law untouched; the v95 (not
+  v94) correction repeated to SU for their staged record.
+- CANDIDATE SURFACE NAMED + COMPARISON FILED (3 Nov, on
+  HQ's order after QA's status named the missing hand-off
+  as the blocker): the build 21 candidate check's surface
+  is THE TREE (~/workspace/fit-b16/app, the Round 2 shape) —
+  the public /app/ publish deliberately stays build 20's
+  verified bundle until the conveyor replaces it with 21's
+  verified package; candidate bytes never ride the public
+  surface ungated. Served comparison run at this desk
+  against the local walk URL (127.0.0.1:8953, serving the
+  tree directory; localhost bypassed in QA's healed lane):
+  all five files MATCH the tree pins (app.js f748f82c ·
+  logic.js 02923236 · service-worker de60f27f fitapp-v95 ·
+  index 94f46d77 · auth.js 5d8f1d62). Filed to QA's chat +
+  one line to HQ, including the correction that the
+  candidate is v95 (fix 4 superseded v94 after its PASSes).
+  QA's four candidate legs can start now.
+- CROSSING CLOSED WITH QA (3 Nov): QA flagged that the
+  packet's three items did not name the tour-skip trap and
+  asked it join the batch or be ruled out on the record.
+  It already stands as item 4 of the BATCH FINAL v2 packet
+  (the messages crossed); confirmed back to QA with the
+  item name + pins. The sheet-skip / tour-skip distinction
+  is QA's own framing and the record keeps it: fix 2 covers
+  skipping the SHEET, fix 4 covers skipping the TOUR, one
+  step earlier. QA's retest drives the trap either way.
+- QA PRECISION + CONCURRENCE (3 Nov, on the crossed
+  messages): (1) the landing item is Not pass AT QA'S OWN
+  JUDGEMENT too — "Not pass as a home (last-used view wins
+  over Today)" — two chairs, independently, same ruling;
+  the fix stands in the batch on the desk's shape. (2) The
+  drawer Not pass rests on the menu-tap proof (geometry +
+  screenshot r3-11 on the shipped bytes) + Round 2's
+  row-follow proof on identical pins; QA's two Round 3
+  spot drives of the deep-link road itself were
+  inconsistent, so that road is NOT separately verdicted —
+  the retest on 21 drives BOTH roads (menu tap + checklist
+  deep-link). Desk note: both roads run through the single
+  openArea seam the cure is wired at, so the candidate
+  legs + retest cover them by construction. QA stands
+  ready on the new build: packaged proof first, then the
+  four lines.
+- QA ADDENDUM ON 20 + FIX 4 BUILT (3 Nov): QA walked the
+  three queued items on the shipped publish — all Not pass,
+  as those bytes stand (drawer stays open over a 12px strip
+  · setup re-offers after "Not now" · reopens on last view;
+  the landing item filed as facts, desk ruling already made:
+  home is Today). The Round 3 PASS for the script legs
+  stands as filed. FOURTH ITEM, new: THE TOUR-SKIP TRAP —
+  Not pass: skip the tour and the account gets no profile,
+  the setup sheet never offers, the checklist's setup row
+  is dead until the tour is completed from "Show the guide
+  again".
+  DESK HUNT (Investigate First): every tour exit runs
+  endTour; its profile birth rode inside the step-1 name
+  branch (only when the name input stood), so an exit that
+  never passed that branch could leave the account unborn.
+  The desk's stub repro (probe_tourskip.py, email-door
+  shape, no provider name, fresh state) passed all skip
+  shapes 18/18 even on the uncured bytes — the real-surface
+  construction is NOT reproduced at this desk, disclosed
+  plainly to QA with a request for their exact shape
+  (door · control · step · entry, and where their census
+  read). CURE at the named seam regardless: endTour births
+  the profile whole, unconditionally, before its step
+  branch (the F-B11-1 doctrine: every road out of the tour
+  is a birth site); the name save keeps its conditions.
+  BATCH GROWS TO FOUR FIXES, SW fitapp-v95: app.js f748f82c
+  · service-worker de60f27f · tests 764e2af5 · logic.js
+  02923236 unchanged · controls unchanged. Evidence: suite
+  506/0 (new pin: endTour births before its step branch) ·
+  probe_tourskip 21/21 (cross-entry reload legs added) ·
+  probe_r3_fixes 17/17 (no regression). Quality +
+  Efficiency deltas RE-FIRED on v95 (their v94 PASSes do
+  not carry to changed bytes); QA's candidate check grows
+  to four legs incl. the trap in their own shape; SU's
+  staged set updated (commit set + probe_tourskip.py).
+- QA ROUND 3 VERDICT ON BUILD 20: PASS (3 Nov, read in full
+  at this desk; verdict-fithard-b20-r3-2026-11-03.md,
+  evidence fitb20-evidence/ r3-01..r3-10): the stall named
+  in the morning report is CLEARED. Surface: the Route 1
+  publish, served bytes verified at QA's own hand (all four
+  MATCH the packaged pins). Fresh accounts fitr3a / fitr3b.
+  BOARD, every web-surface leg Pass: email sign-up (fresh
+  account, first-run flow, new record) · M1 tour (name by
+  real tap, exact texts, dots, stays gone) · setup through
+  the checklist (row opens the sheet, Start completes, row
+  ticks off) · M2 (meal-plan + gym-routines re-driven on the
+  shipping bytes; the seven-mark board stands from Round 2
+  on identical pins; plans mark Could not check, no road in
+  the all-free build) · M3 (routines empty state re-proven;
+  six stand from Round 2) · M4 replay · strip (no-reload
+  clean) · saved login · isolation cycle BOTH directions.
+  J1 web legs: the ask stays hidden on web, the same proven
+  mechanism — not a new failure; closes on the device pass.
+  PARKED BY NAME (QA's list): Google sign-up, Google
+  sign-in, Apple sign-in (the timed sitting — the door
+  completions; her account's Google sign-in stands closed
+  since Route 1 on 19 per Reality's board) · Apple sign-up
+  Could not check, skipped by her choice · J1 ask + firing
+  on device · saved-login phone proof (device). Walker
+  notes are lane traits, named as such by QA.
+  REMAINING GATE for build 21: QA's candidate check on the
+  v94 bytes (the three fix legs) — commissioned, sequencing
+  ask sent. On its lines: Reality ask, then SU dispatch.
+  One-line state update sent to HQ (the morning report's
+  stall line corrected the same day, per the Reality Law).
+- QA ROUND 3 WALK ON BUILD 20 STARTED (QA, 3 Nov ~10:58
+  AEST): the publish comparison is received AND verified at
+  QA's own hand — they fetched the four served files and
+  hashed them: app.js b61f94b0 · index 94f46d77 · auth.js
+  5d8f1d62 · service-worker 324b29f5 (fitapp-v92), all MATCH
+  the packaged pins (an independent served-byte proof, not
+  SU's filing relayed). The walk runs NOW on the served
+  surface, fresh accounts: §M in full · J1 web legs · saved
+  login · isolation cycle. Code legs parked as agreed.
+  Verdict to this desk + HQ the minute it closes. Desk
+  sequencing ask back: run the three-leg v94 CANDIDATE check
+  FIRST (it is the conveyor's gate, Quality + Efficiency
+  both PASS, SU staged-ready), then the 20 walk continues —
+  the night order's speed, with no walk cancelled.
+- SU BUILD 21 STAGED-READY (3 Nov, prep report): pins
+  verified at their hand on the desk tree (all four moved
+  files + the four controls exact) · ASC read: no build 21
+  standing, the number is free · commit census vs branch
+  head d26a27a: the GO set is 7 files (app.js · logic.js ·
+  service-worker.js · tests + BUILD-LOG.md + GATE-PACKET.md
+  + hidden_files/probe_r3_fixes.py, new) with ONE exclusion
+  named — the __pycache__ .pyc is a compiled cache file, not
+  source, and does not ride · bridge carry set named (the
+  four app files), then whole-app census ZERO, CPV 20 → 21,
+  dispatch. Nothing committed or dispatched; SU stands by
+  for Reality's ruling. QA's candidate check is the one
+  gate still out.
+- EFFICIENCY DELTA ON BUILD 21: PASS (3 Nov): all eight pins
+  verified at their hand (the three moved files + tests +
+  the four controls at the Round 2 verified pins) · suite
+  re-run fresh 505/0 (evidence
+  ~/workspace/efficiency/fit-b21-suite-run.txt) · growth
+  priced: app.js +1,533 B, logic.js +211 B, ~1.7 KB total
+  for three fixes + their ruling comments, no new words, no
+  new files, no art · shapes read in code (the helper at
+  app.js:405 borrowing the stylesheet's own 700px; the
+  flag's three one-line touches, the logic.js carry named as
+  the line that makes the other two real; the landing call
+  at the exact seam) · waste scan clean. GATE SET NOW:
+  Quality PASS + Efficiency PASS; QA's candidate check on
+  the v94 bytes is the remaining gate before Reality.
+- QUALITY DELTA ON BUILD 21: PASS (3 Nov): pins all exact,
+  sizes as filed, controls unchanged · §6 unchanged at their
+  hand (master bf56b907 · icon-512 07c57dd1 · Wally welcome
+  5d3829c0) · suite re-run at their chair 505/0 · the three
+  fixes read in code, each answering its QA-filed line.
+  Chain as Quality states it: QA retest on the shipped build
+  → Reality last → conveyor. Desk fired QA's CANDIDATE check
+  on the v94 tree bytes the same minute (the three fix legs),
+  so the gate set completes before the conveyor and the
+  shipped-bytes retest keeps its finish-line role.
+  Efficiency delta still outstanding at this entry.
+- MORNING REPORT SENT TO HQ (3 Nov, on HQ's check): Round 3
+  state as it stands — §M + J1 verdicts filed on 20's bytes;
+  the FULL A–M verdict on shipped 20 never filed (QA's walk
+  in flight overnight, their newest turn errored, no file
+  stands — stall named as QA's chair); both fixes + the
+  landing cure built and proven at the tree (v94, 505/0,
+  probe 17/17); build 21 does NOT exist yet — Quality +
+  Efficiency delta verdicts still out at report time, the
+  chain waits on the gates. Faster road restated to HQ.
+  SU given the build 21 PREP note the same hour (packet
+  pins + conveyor shape, no dispatch until Reality rules).
+- NIGHT ORDER EXECUTION (Ilse 22:31 direct, via HQ 3 Nov):
+  do not stop until done, tested, living on GitHub +
+  TestFlight. Desk state at the order: QA's Round 3 verdict
+  on 20 NOT filed (their chat read first: their walk was in
+  flight, their newest turn errored, no verdict file
+  stands). Switch-roads call at this desk: the batch does
+  not wait — QA's two observations are their own filed words
+  (the fixes answer them), and the finish line is every
+  testable line Pass on the SHIPPED build, which becomes
+  21. QA is asked for any completed on-20 lines in parallel
+  and holds the full-script retest on 21.
+  LANDING VIEW: judged AT THE DESK under the night order
+  (QA filed it as an observation, unjudged): Not pass —
+  after a sign-out/sign-in cycle the app stood on Settings,
+  the door's home, because nothing at entry chooses a view
+  (joinFollowUp's follow-up runs once per page load and the
+  tour is its only branch that shows Today). FIX 3 BUILT:
+  onSignedIn shows Today before the follow-up — one call,
+  at the root every entry passes through; cold opens
+  already start there, the tour shows Today itself.
+  BATCH FINAL: three fixes, SW fitapp-v94, suite 505/0
+  (landing pin added), probe EXTENDED to 17 steps ALL PASS
+  (new leg E: stand on Settings, watcher sign-out, watcher
+  re-entry → lands on Today; 0 page errors).
+  FINAL PINS: app.js 70468014 (198,463 B) · logic.js
+  02923236 · service-worker.js 37d5e5f0 (fitapp-v94) ·
+  tests b81b5b20 · controls unchanged (index 94f46d77 ·
+  styles aba6f359 · i18n 07da590f · auth 5d8f1d62).
+  Quality + Efficiency deltas fired on these bytes; packet
+  updated (BUILD 21, BATCH FINAL).
+- ROUND 3 FIXES BUILT AT THE TREE (desk, 2 Nov night, in
+  parallel with QA's walk on 20 — build 21 candidate bytes,
+  SW fitapp-v93, suite 504 PASS / 0 FAIL):
+  FIX 1, DRAWER (app.js): a new closeSbOnPhone() helper —
+  when the drawer is open and the viewport is at the
+  stylesheet's own phone breakpoint (max-width 700px),
+  choosing a destination closes the drawer so the screen
+  lands full width. Wired at the three tap roads: openArea
+  (sidebar subs + every guide deep-link), the [data-view]
+  nav handler (Today / Settings), openPlans. Desktop keeps
+  the drawer beside the content; her sidebar law (hidden on
+  load, session toggle, open-state layout) untouched.
+  FIX 2, SETUP QUIET (app.js + logic.js): the skip writes
+  profile.setupSkipped = true (both the birth path and a
+  standing profile); afterTour's auto-offer now requires
+  !setupDone && !setupSkipped; repairState's profile
+  whitelist carries setupSkipped (a repair that stripped it
+  would resurrect the re-offer). The checklist's setup row
+  and the Settings roads still open the sheet by hand —
+  skipping never strands anyone; a new account is still
+  offered setup exactly once, in full. suDone's profile
+  rebuild is unchanged (setupDone governs there).
+  SUITE: 504/0 — three new pins (repair carries the flag ·
+  the helper + its three call sites + the 700px test · the
+  offer condition + the flag write) and the two SW pins
+  moved v92 → v93.
+  DESK PROBE (hidden_files/probe_r3_fixes.py, stub harness,
+  phone 390×844 + desktop control): 14 steps, ALL PASS, 0
+  page errors — never-skipped account IS offered · skip
+  writes the flag · next entry quiet · checklist row stands
+  and opens the sheet by hand · pre-flagged account never
+  offered · drawer opens at phone width · choosing an area
+  closes it and the area lands · choosing a top view closes
+  it · at 1280px the drawer STAYS open beside the area.
+  PROBE HARNESS LESSONS (banked the hard way, three runs):
+  a per-account seed must (a) be an IIFE, (b) pass the state
+  through JSON.stringify — a bare JSON object literal in
+  setItem stores "[object Object]", whose JSON.parse throw
+  silently lands the app on its fresh-state catch path —
+  and (c) WRITE ONCE, because an init script re-runs on
+  every navigation and an unconditional seed wipes the
+  account's own saves on reload (it ate the skip flag).
+  PINS (md5-8): app.js 46863d7e (198,065 B) · logic.js
+  02923236 (59,266 B) · service-worker.js a56dab53
+  (fitapp-v93) · tests 330846af · UNCHANGED from build 20's
+  verified bundle: index.html 94f46d77 · styles.css
+  aba6f359 · i18n.js 07da590f · auth.js 5d8f1d62.
+  STATE: staged, NOT gated — the batch finalises when QA's
+  Round 3 verdict on build 20 lands (any further Not pass
+  lines, and the landing-view fix if judged Not pass, join
+  before Quality + Efficiency deltas → QA retest on the new
+  build → Reality last → conveyor, per HQ's loop).
+- POLAR HANDOVER CANCELLED — HQ EXECUTES THE PROMPT ITSELF
+  (Ilse direct via HQ, 2 Nov 22:29 AEST). Do not wait for
+  Polar on anything. FIT EXECUTION, starting now on shipped
+  build 20:
+  (1) Round 3: the FULL script A to M re-walked on shipped
+  build 20 (QA starting on the Route 1 publish); every line
+  Pass / Not pass / Could not check with its reason.
+  (2) The two queued fixes are IN this round, judged on the
+  walk: drawer closes when a destination is chosen at phone
+  width · setup's "Not now" quiets the re-offer · the landing
+  view after entry judged in the same round.
+  (3) Anything Not pass loops: fix → gates (Quality +
+  Efficiency deltas, QA, Reality last) → commit to
+  qa-fixes-2026-10-26 → new build to TestFlight with packaged
+  proof → retest on the new build. Loop until every testable
+  line reads Pass on ONE build.
+  (4) Parked by name, never dressed as passes: Google sign
+  up + Apple sign in (timed sitting) · Apple sign up (her
+  choice) · device door pass · phone width Google proof ·
+  notification firing + the J1 ask closure (device).
+  Finals to HQ only, per app round, in the prompt's report
+  shape.
+  DESK EXECUTION SHAPE (fastest): QA's walk on 20 runs now;
+  the two DECIDED fixes are built at the tree in parallel
+  (they are known Not pass lines on 20; the walk judges them,
+  the retest on the next build proves them) so gates +
+  conveyor have no dead time when the verdict lands. The
+  landing view stays a judgement item — its fix, if judged
+  Not pass, joins the same batch before gates.
+- ROUTE 1 COMPLETE FOR BUILD 20 — CONVEYOR RECORD CLOSED
+  (SU, 2 Nov ~22:18 AEST): /app/ now serves the verified 20
+  bundle, publish commit 59a085a (the five shipped files).
+  Served comparison, all four MATCH: app.js b61f94b0 ·
+  index.html 94f46d77 · auth.js 5d8f1d62 · service-worker.js
+  324b29f5 (fitapp-v92). Promo unchanged (cb2ae559), privacy
+  untouched. The comparison went to QA's chair the same
+  minute; HQ got the one-line completion.
+  FULL CONVEYOR RECORD, BUILD 20: source branch qa-fixes @
+  d26a27a · bridge main @ c132cd2 · post-carry census ZERO
+  (1,086 files) · run 41441741538 SUCCESS · packaged
+  verification ALL PASS before attach (zip 692e160a… · IPA
+  9569bd66…) · ASC build 20 VALID c734ac23 · groups her
+  […, 19, 20] + QA [12, 16, 17, 19, 20] · /app/ on the same
+  bytes. THE ROUND 3 WALK SURFACE IS READY; QA's full-script
+  walk on the shipped bytes starts on this surface.
+- BUILD 20 PACKAGED VERIFICATION: ALL PASS, BEFORE ANY
+  ATTACH (SU, 2 Nov ~22:16 AEST): artefact zip sha256
+  692e160a… (matches the run page digest exactly) · IPA
+  sha256 9569bd66… · run 41441741538 SUCCESS (8m 42s) ·
+  com.ilseplacencia.fithard · 1.1 (20) · profile 4db7458a ·
+  SW fitapp-v92 · app.js b61f94b0 · index.html 94f46d77 ·
+  styles.css aba6f359 · i18n.js 07da590f · service-worker.js
+  324b29f5 · auth.js 5d8f1d62 · icon-512 07c57dd1 — every pin
+  exact. ASC BUILD 20 VALID, id
+  c734ac23-3bec-4679-969f-d10eb965cd7e, attached and read
+  back: her group 204 […, 19, 20] · QA lane 204
+  [12, 16, 17, 19, 20]. Route 1 publish update in flight
+  (the five shipped files onto /app/); the served comparison
+  files next and goes to QA's chair the same minute.
+  FINISH WORD SENT TO HQ on this proof (build · ASC id ·
+  branch head d26a27a · gates · packaged proof · exact open
+  legs), publish named as the in-flight last stage.
+- SU RUN STATE (2 Nov ~22:12 AEST): the publish-to-QA timing
+  note is registered — the Route 1 comparison goes to QA's
+  chair the same minute it is filed. Run 41441741538 still
+  in progress (Archive step at the last read), ASC read
+  directly at each stage; on packaged verification: groups
+  attach, then publish + comparison to this desk and QA
+  together.
+- QA ROUND 3 READINESS CONFIRMED (QA, 2 Nov ~22:10 AEST):
+  QA stands ready for the build 20 walk on the shipping
+  bytes — full script (§M in full · J1's web-walkable legs,
+  the ask itself closing on device · saved login · isolation
+  cycle, fresh accounts). What lands it: SU's build 20 Route
+  1 publish with the served census byte-equal to the packaged
+  build. Desk confirmed to QA + nudged SU on timing: the
+  publish + census go to QA the moment they exist, the walk
+  starts that hour, verdict to this desk and HQ. Code legs
+  stay parked for the timed sitting.
+- QA J1 VERDICT LANDED, READ IN FULL AT THIS DESK (QA, 2 Nov
+  ~22:08 AEST; verdict-fithard-j1-2026-11-02.md, supersedes
+  the partial candidate verdict's J1 lines): J1 ask — NOT
+  PASS ON WEB (closes on device) · Not-now arm — Could not
+  check on web · Yes arm — Could not check on web · Settings
+  toggle on web — by design, honest line stands · saved-login
+  spot re-check — Pass · isolation spot re-check — Pass on
+  the local control (shared lane's one loss NOT reproduced
+  and not adopted).
+  J1 EVIDENCE: three fresh-account walks, two lanes, two save
+  types (water time, peptide dose) — the ask never appeared
+  once. Locally the ask element stands populated in the page
+  ("Want a gentle nudge?" / "Yes, remind me" / "Not now") but
+  never becomes visible; remindAsked stays unset. QA's code
+  read names the mechanism, structural not timing: maybeAsk's
+  only caller is run(), reached only from sync(), and sync()
+  returns at once when the Capacitor LocalNotifications
+  plugin is absent — on any web surface the plugin is absent
+  by definition. The desk's R1 probe passed because its stub
+  supplies a fake plugin. In the store wrap the plugin
+  stands and the path is open.
+  DESK RULING ON J1: QA's line stands exactly as filed, no
+  code fix. The ask exists to turn on PHONE notifications;
+  on web there is nothing to turn on, the Settings toggle is
+  hidden by design and the honest web line stands in its
+  place (read in full by QA). Making the ask fire on web
+  would ask users for a permission their surface cannot
+  grant. The leg's closure surface is the device/store-wrap
+  leg — J1 now joins the DEVICE RESIDUE list (with J3 firing
+  and the device door pass, HQ's device lane programme) and
+  is no longer a QA-lane-owed leg. Board wording for every
+  final: "J1 ask — Not pass on web (by construction: the ask
+  rides the native notification engine); closes on the
+  device leg."
+  ISOLATION: QA's non-adoption of the shared-lane loss is
+  accepted at this desk — that lane's cycle ran under
+  repeated "could not reach your account" lines and its B
+  profile demonstrably carried A's device state (name +
+  water time), so its accounts were fresh at the door but
+  not on the device; the exact cycle on QA's local lane
+  (one profile, v92 bytes) holds BOTH directions on screen.
+  Caveat banked for Round 3: fresh-account legs on the
+  shared lane inherit its cross-account device state; fresh
+  local profiles are the clean instrument. Round 3 re-runs
+  the cycle on the shipped build.
+  SETUP RE-OFFER OBSERVATION (QA, repeated on local lane):
+  an account answering "Not now" to setup gets the sheet
+  again on the next entry. Longstanding shape of record
+  (suSkip births the profile without setupDone; this desk
+  named it in the b19 judgement). DESK RULING: queued as
+  ROUND 3 FIX ITEM 2, decided shape — the first "Not now"
+  quiets the auto-offer (a setupSkipped flag on the profile;
+  afterTour offers setup only when neither done nor
+  skipped), while the checklist's setup row remains the
+  standing road back (openSetup by tap), and completing
+  setup anywhere clears the need. Nothing about first-run
+  changes: a new account is still offered setup once, in
+  full. Built with Round 3's fixes, suite-pinned.
+  NET QA BOARD for the loop now: §M walked + passed at
+  candidate level · spot re-checks passed twice over · J1
+  run, Not pass on web by construction, device closure
+  parked by name. Round 3's hard gates stand (full script
+  on shipped bytes), with the drawer fix as item 1 and the
+  setup-quiet fix as item 2.
+- SU STAGE 3 LANDED (2 Nov ~22:04 AEST): CPV 20 read back on
+  both configs (bridge head c132cd2, MARKETING_VERSION 1.1)
+  and the workflow is DISPATCHED: run 41441741538, Queued on
+  main @ c132cd2. SU reads the run and ASC directly from
+  here — packaged verification on 20 before any group
+  attach, as ruled.
+- QA ROUND 2 VERDICT LANDED DURING THE CONVEYOR, READ IN
+  FULL AT THIS DESK (QA, 2 Nov ~22:00 AEST; verdict
+  ~/workspace/qa-tester/verdict-fithard-r2-guide-2026-11-02.md,
+  evidence fitr2-evidence/ r2-00..r2-51): QA's LOCAL LANE
+  HEALED (29-Oct shape: Firefox persistent context, no-auth
+  egress proxy; the heal hook's polls were reading a dead
+  port and QA stood the hook down), so the walk ran IN FULL
+  on the tree bytes at 402px phone width with real taps and
+  two fresh real accounts (placenciailse+fitr2a / +fitr2b).
+  Pins at QA's hand before the first leg: all six exact.
+  BOARD: M1 Pass · M2 Pass with plans mark Could not check ·
+  M3 Pass · M4 Pass · sign-out strip leg Pass ·
+  saved-login/isolation spot re-check Pass.
+  M1 detail: tour 3 steps, name typed by real tap and kept,
+  no re-fire on reopen; setup presents, chips picked, setup
+  row leaves on completion; every row deep-linked and ticked
+  from a real action; celebration + Done removes it, reload
+  keeps it gone; dismiss arm on the second account stays gone
+  after reload and full reopen.
+  M2 detail: seven marks each exactly one card, Got it,
+  revisit none. PLANS MARK could not be walked: no user road
+  to the Plans surface stands while PLANS_LIVE is off (both
+  account buttons absent, read live). DESK RULING: the plans
+  mark is OUT OF SCOPE while plans are off — the surface is
+  unreachable by her all-free ruling, the mark and its words
+  stand in code and fire the moment a Plans road exists. M2
+  stands "Pass with plans Could not check (surface off by
+  design)", not a defect.
+  M4 detail: reset proven on screen (meal-plan mark fired
+  again), stored guide state resets exactly, data identical
+  before and after. Replay artifact judged by the desk: the
+  replayed tour shows the name step with the field PRE-FILLED
+  and the ask line standing — that is the designed replay
+  shape of record (edit if you like, skip never erases; QA's
+  own read confirms the stored name survives a skip). Stands
+  as designed, no fix queued.
+  SPOT RE-CHECK PASS closes that owed leg at candidate level
+  (saved login reopened inside repeatedly, no door; B's
+  record empty where A's is full, nothing crossed; named
+  limit: B's empty render not separately captured, stored
+  state compared). Round 3 still re-verifies on shipped
+  bytes, per Reality. J1 driven walk remains owed (not in
+  this verdict; QA's lane healing makes it runnable in
+  Round 3).
+  OBSERVATION 1 (QA, not a failure): at phone width, with
+  the drawer open, content squeezes into a narrow strip
+  (letter-by-letter wrap, r2-23/r2-24); following a
+  checklist row leaves the drawer open over the area it
+  opened. Every action still completed by real taps. DESK
+  JUDGEMENT: real first-minute feel defect against the
+  guide's own deep-links. The open-state layout itself is
+  her sidebar law (menu takes most of the screen, content a
+  sliver) and stands; what is wrong is that CHOOSING a
+  destination does not close the drawer. Queued as ROUND
+  3'S FIRST FIX: navigation choices (menu taps and guide
+  deep-links) close the drawer at phone width; desktop
+  beside-content behaviour unchanged. Build 20 ships as
+  ruled (Reality: a defect found rides the next build in
+  the loop); the observation is named in the finish final,
+  not hidden.
+  OBSERVATION 2 (QA): the app reopens on Settings rather
+  than Today after a sign-out/sign-in cycle (the view is
+  never reset to Today on entry). Pre-existing, not a guide
+  defect; logged as a Round 3 A-script judgement item
+  (landing view after entry), not pre-decided.
+  NET EFFECT on Reality's accumulation: of the three QA
+  legs that rode on Round 3, two now stand walked-and-passed
+  at candidate level on the exact shipping bytes (§M,
+  spot re-check); J1 driven walk remains open. Round 3's
+  hard gates stand as Reality wrote them (full script
+  re-walk on the shipped build; Round 3 does not close
+  with J1 outstanding).
+- SU STAGE 2 LANDED (2 Nov ~21:59 AEST): bridge carry
+  complete, bridge head 337fb5c, SW read-back fitapp-v92, and
+  the POST-CARRY CENSUS reads ZERO — PASS: bridge app/ vs
+  fit-b16/app, 1,086 files each, no only-in-either, zero
+  differing (the b18 checkpoint, passed the right way this
+  time). CPV 19 → 20 in flight; dispatch follows on its
+  read-back.
+- SU STAGE 1 LANDED (2 Nov ~21:56 AEST): branch commit on
+  qa-fixes-2026-10-26, head d26a27a — 9 files (the six app
+  files at the packet pins + BUILD-LOG.md + GATE-PACKET.md +
+  hidden_files/probe_guide_r2.py), read back on the branch,
+  service-worker.js reads fitapp-v92. Bridge carry in flight;
+  the post-carry whole-app census must read ZERO before CPV
+  or dispatch.
 - SU DISPATCH ACK (2 Nov ~21:52 AEST): build 20 conveyor
   firing. Prep state at their hand: all six pins verified at
   the desk tree + auth control · ASC confirmed no build 20
