@@ -649,7 +649,7 @@ check("white theme: ink on white is AAA", ratio("#3E2F26", "#FFFFFF") >= 7);
 check("black theme: ink on ground is AAA", ratio("#F6EDDD", "#17120E") >= 7);
 check("black theme: dark text on sage accent passes AA", ratio("#221A12", "#A9BFA5") >= 4.5);
 check("image veil keeps ink readable over a black photo", (() => { const r = Math.round(0.9 * 250 + 0.1 * 0), g = Math.round(0.9 * 238 + 0.1 * 0), b = Math.round(0.9 * 214 + 0.1 * 0); const h = "#" + [r, g, b].map(x => x.toString(16).padStart(2, "0")).join(""); return ratio("#3E2F26", h) >= 7; })());
-check("service worker is fitapp-v92 with the v2 file list (readiness round 2)", (() => { const sw = fs.readFileSync(new URL("../service-worker.js", import.meta.url), "utf8"); return sw.indexOf("fitapp-v92") !== -1 && sw.indexOf("fitapp-v91") === -1 && sw.indexOf("demo-seed.js") === -1 && sw.indexOf("wally.js") !== -1 && sw.indexOf("moss.js") === -1 && sw.indexOf("ZillaSlab-700.woff2") !== -1 && sw.indexOf("wally-rest.webp") !== -1; })());
+check("service worker is fitapp-v96 with the v2 file list (readiness round 3)", (() => { const sw = fs.readFileSync(new URL("../service-worker.js", import.meta.url), "utf8"); return sw.indexOf("fitapp-v96") !== -1 && sw.indexOf("fitapp-v95") === -1 && sw.indexOf("demo-seed.js") === -1 && sw.indexOf("wally.js") !== -1 && sw.indexOf("moss.js") === -1 && sw.indexOf("ZillaSlab-700.woff2") !== -1 && sw.indexOf("wally-rest.webp") !== -1; })());
 check("FIT-001: every service worker precache entry ships in the store bundle (no excluded names, every file on disk)", (() => { const fs2 = require("fs"); const sw = fs2.readFileSync(new URL("../service-worker.js", import.meta.url), "utf8"); const m = sw.match(/var FILES = \[(.*?)\];/s); if (!m) return false; const entries = [...m[1].matchAll(/"([^"]+)"/g)].map(x => x[1]); const excluded = e => e === "privacy.html" || e === "anim-preview.html" || /(^|\/)owner\.(html|js)$/.test(e); return entries.every(e => e === "./" || (!excluded(e) && fs2.existsSync(new URL("../" + e, import.meta.url)))); })());
 check("FIT-003: every file input carries an accessible name (aria-label)", (() => { const fs3 = require("fs"); const idx = fs3.readFileSync(new URL("../index.html", import.meta.url), "utf8"); const app = fs3.readFileSync(new URL("../app.js", import.meta.url), "utf8"); const tags = (idx + app).match(/<input[^>]*type="file"[^>]*>/g) || []; return tags.length >= 5 && tags.every(t => /aria-label="[^"]+"/.test(t)); })());
 check("QA leg 7: a completed restored profile closes the setup sheet (settle helper, restore landings, unconditional door-first boot)", (() => { const app = require("fs").readFileSync(new URL("../app.js", import.meta.url), "utf8"); return app.indexOf("function settleSetupSheet()") !== -1 && (app.match(/settleSetupSheet\(\);/g) || []).length >= 2 && app.indexOf("demoReturning") === -1 && app.slice(app.lastIndexOf("initAccounts();")).indexOf('showView("settings")') !== -1; })());
@@ -767,7 +767,7 @@ check("anim: poison leg degrades calmly (pin 8)", animJsSrc.indexOf("animMissing
 check("anim: Wally in the player is the art of record file (identity rule)", animJsSrc.indexOf("assets/wally-welcome.webp") !== -1);
 check("anim: library bytes under the 300 KB pin (pin 10)", Buffer.byteLength(animJsSrc) + Buffer.byteLength(animDataSrc) < 300000);
 const swSrc2 = fs.readFileSync(new URL("../service-worker.js", import.meta.url), "utf8");
-check("anim: service worker precaches the rig + data (pin 10)", swSrc2.indexOf('"anim.js"') !== -1 && swSrc2.indexOf('"anim-data.js"') !== -1 && swSrc2.indexOf('"anim-data-expansion.js"') !== -1 && swSrc2.indexOf("fitapp-v92") !== -1);
+check("anim: service worker precaches the rig + data (pin 10)", swSrc2.indexOf('"anim.js"') !== -1 && swSrc2.indexOf('"anim-data.js"') !== -1 && swSrc2.indexOf('"anim-data-expansion.js"') !== -1 && swSrc2.indexOf("fitapp-v96") !== -1);
 check("anim: shell loads the rig before the app", (() => { const h = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8"); return h.indexOf("anim-data.js") !== -1 && h.indexOf("anim-data.js") < h.indexOf("app.js") && h.indexOf("anim.js") < h.indexOf("app.js"); })());
 check("anim: art of record untouched (identity rule)", (() => {
   const crypto = require("node:crypto");
@@ -1838,6 +1838,52 @@ check("READINESS R2: the inert plansOff class is gone and the new guide words ca
   const keys = ["tour.areas", "guide.againBtn", "gs.title", "gs.sub", "gs.setup", "gs.checkin", "gs.meals", "gs.gym", "gs.water", "gs.done", "coach.got", "meal.noFavsLine"];
   const noDash = function (o) { return keys.every(function (k) { return typeof o[k] === "string" && o[k].indexOf("—") === -1 && o[k].indexOf("–") === -1; }); };
   return app.indexOf("plansOff") === -1 && noDash(L2.EN) && noDash(L2.ES);
+})());
+/* === READINESS ROUND 3: the drawer close + the setup quiet ===
+   QA's two build-20 observations, fixed at the desk. The
+   drawer half is source-pinned here and driven in the desk
+   probe; the setup half is pinned at BOTH layers: the flag
+   the skip writes, the offer condition that reads it, and
+   the repair whitelist that must carry it across loads. */
+check("r3: repair keeps profile.setupSkipped across loads (never dropped)", (() => {
+  const on = L.repairState({ profile: { name: "A", setupSkipped: true } }).profile;
+  const off = L.repairState({ profile: { name: "B" } }).profile;
+  return on.setupSkipped === true && !off.setupSkipped && on.setupDone === false;
+})());
+check("r3: choosing a destination closes the drawer at phone width (helper + its three tap roads)", (() => {
+  return appSrc.indexOf("function closeSbOnPhone()") !== -1 &&
+    (appSrc.match(/closeSbOnPhone\(\);/g) || []).length === 3 &&
+    appSrc.indexOf("window.innerWidth <= 700") !== -1;
+})());
+check("r3: the entry auto-offer respects a skip, and the skip writes the flag", (() => {
+  return appSrc.indexOf("!state.profile.setupDone && !state.profile.setupSkipped") !== -1 &&
+    appSrc.indexOf("state.profile.setupSkipped = true;") !== -1;
+})());
+check("r3: a completed sign-in lands on Today (the entry landing line stands before the follow-up)", (() => {
+  const i = appSrc.indexOf("ENTRY LANDS ON TODAY");
+  return i !== -1 && appSrc.indexOf('showView("today");', i) !== -1 &&
+    appSrc.indexOf('showView("today");', i) < appSrc.indexOf("joinFollowUp();", i);
+})());
+check("r3: every tour exit births the profile whole (endTour births before its step branch, QA's tour-skip trap)", (() => {
+  const i = appSrc.indexOf("function endTour()");
+  if (i === -1) return false;
+  const body = appSrc.slice(i, i + 2400);
+  const birth = body.indexOf("ensureFullProfile();");
+  const branch = body.indexOf("if (tourStep === 1)");
+  return birth !== -1 && branch !== -1 && birth < branch && body.indexOf("afterTour();") !== -1;
+})());
+check("r3: a setup skip survives the sign-in merge from either side (QA's sync-window edge)", (() => {
+  const cloudPlain = { profile: { name: "A", setupDone: false }, settings: {} };
+  const localSkip = { profile: { name: "A", setupDone: false, setupSkipped: true }, settings: {} };
+  const localPlain = { profile: { name: "A", setupDone: false }, settings: {} };
+  const cloudSkip = { profile: { name: "A", setupDone: false, setupSkipped: true }, settings: {} };
+  const fromLocal = L.mergeStates(cloudPlain, localSkip).profile;
+  const fromCloud = L.mergeStates(cloudSkip, localPlain).profile;
+  const neither = L.mergeStates(cloudPlain, localPlain).profile;
+  const doneLocal = { profile: { name: "A", setupDone: true }, settings: {} };
+  const doneMerged = L.mergeStates(cloudSkip, doneLocal).profile;
+  return fromLocal.setupSkipped === true && fromCloud.setupSkipped === true &&
+    !neither.setupSkipped && doneMerged.setupDone === true && !doneMerged.setupSkipped;
 })());
 console.log("RESULT pass=" + pass + " fail=" + fail);
 if (fail) process.exit(1);
