@@ -319,7 +319,7 @@
     }
     return { init: init, purchasable: purchasable, buy: buy, restore: restore };
   })();
-  function openPlans() { FitShop.init(); showView("plans"); renderPlans(); renderCoachMark("plans", "coachSpotPlans"); }
+  function openPlans() { closeSbOnPhone(); FitShop.init(); showView("plans"); renderPlans(); renderCoachMark("plans", "coachSpotPlans"); }
   function tierStateLine() {
     var d = tierDetail();
     if (d.plan === "pro" && d.reason === "freemonth") return tr("acc.planFreeMonth", { days: d.daysLeft });
@@ -395,6 +395,16 @@
     document.body.classList.toggle("sbHidden", !sbOpen);
     $("sidebarToggle").setAttribute("aria-pressed", sbOpen ? "false" : "true");
   }
+  /* ROUND 3 (QA's drawer observation on build 20): at PHONE
+     width the open drawer leaves the content squeezed into
+     a sliver (her sidebar law's open state), so CHOOSING a
+     destination closes the drawer and the chosen screen
+     lands full width. Wider screens keep the drawer beside
+     the content, exactly as the law stands. 700px is the
+     stylesheet's own phone breakpoint. */
+  function closeSbOnPhone() {
+    if (sbOpen && window.innerWidth <= 700) { sbOpen = false; applySidebar(); }
+  }
   $("sidebarToggle").addEventListener("click", function () { sbOpen = !sbOpen; applySidebar(); });
   /* Tapping the content sliver closes the menu (her nav
      ruling, 15 Oct 2026 — the Muse-app shape). */
@@ -464,6 +474,7 @@
     b.addEventListener("click", function () {
       var n = b.getAttribute("data-view");
       showView(n);
+      closeSbOnPhone();
       /* ARRIVING RE-RENDERS (Round 2 probe finding): Today and
          Settings showed their last render, not the current
          state, when reached by nav — the Getting Started
@@ -483,6 +494,7 @@
   function openArea(areaId, subId) {
     currentArea = areaId; currentSub = subId;
     var a = areaById(areaId); if (!a) return;
+    closeSbOnPhone();
     var sub = a.subs.filter(function (s) { return s.id === subId; })[0] || a.subs[0];
     showView("area");
     $("areaTitle").textContent = tr("nav." + a.id, null, a.label);
@@ -2945,7 +2957,13 @@
   }
   function afterTour() {
     maybeNameReoffer();
-    if (authUser && state.profile && !state.profile.setupDone) openSetup();
+    /* ROUND 3 (QA's setup observation on build 20): the
+       auto-offer stands down for good once the user has
+       answered "Not now" (setupSkipped, set by the skip
+       itself). The checklist's setup row and the Settings
+       roads still open the sheet by hand, so skipping
+       never strands anyone. */
+    if (authUser && state.profile && !state.profile.setupDone && !state.profile.setupSkipped) openSetup();
   }
   /* THE NAME RE-OFFER (HQ ruling 15 Oct 2026): if the
      tour's name step was closed or skipped UNANSWERED,
@@ -3045,11 +3063,24 @@
     renderTour();
   }
   function endTour() {
+    /* EVERY tour exit births the profile whole (Round 3,
+       QA's tour-skip trap on build 20): the birth used to
+       ride inside the step-1 name branch, so an exit that
+       never passed that branch left the account unborn —
+       no profile, the setup sheet never offered, and the
+       checklist's setup row dead until a replay completed
+       the tour. Skip and the X are offered choices; they
+       cost nothing. The name save below keeps its own
+       conditions (a typed name saves, a blank never
+       erases); the birth itself is unconditional, the
+       F-B11-1 doctrine: any site that creates the profile
+       creates it whole, and every road out of the tour is
+       such a site. */
+    ensureFullProfile();
     if (tourStep === 1) {
       var inp = $("tourName");
       if (inp) {
         var v = inp.value.trim().slice(0, 60);
-        ensureFullProfile();
         if (v && (tourReplay || !state.profile.name)) { state.profile.name = v; renderAll(); }
       }
     }
@@ -3140,6 +3171,14 @@
         renderAll(); settleSetupSheet();
       }
       renderAccount();
+      /* ENTRY LANDS ON TODAY (Round 3, QA's landing
+         observation on build 20): a sign-in completing
+         while another view stands — the sign-out and
+         sign-in cycle never leaves Settings, the door's
+         own home — now lands on Today, the app's home.
+         A cold open already starts there, and the tour
+         path shows Today itself. */
+      showView("today");
       joinFollowUp();
     }).catch(function () { renderAccount(); });
   }
@@ -3230,6 +3269,10 @@
        no road out of the setup leaves the app unborn. */
     if (!state.profile) { state.profile = { name: "", needs: [], preferences: [], allergies: [], goals: [], setupDone: false, firstSeenAt: new Date().toISOString() }; }
     else ensureFullProfile();
+    /* "Not now" is an answer, not a deferral (Round 3):
+       the skip marks itself, and the entry auto-offer in
+       afterTour respects it from the next entry on. */
+    state.profile.setupSkipped = true;
     save();
     closeSetup(); renderAll();
   });

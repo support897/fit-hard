@@ -328,6 +328,10 @@ function repairState(raw) {
       allergies: Array.isArray(p.allergies) ? p.allergies.filter(function (g) { return typeof g === "string"; }) : [],
       needs: Array.isArray(p.needs) ? p.needs.filter(function (g) { return typeof g === "string"; }) : [],
       setupDone: !!p.setupDone,
+      /* The skip answer rides the rebuild too (Round 3): a
+         repair that strips it would resurrect the setup
+         sheet's re-offer the user already declined. */
+      setupSkipped: !!p.setupSkipped,
       /* The free-month anchor rides the rebuild (F1 writer
          cure, 20 Oct 2026): a repair that strips it forces
          the load path to re-birth a LOCAL stamp, and a moved
@@ -1017,6 +1021,20 @@ function mergeStates(cloud, local) {
      stamps a profile that has none). */
   if (out.profile && cp && typeof cp.firstSeenAt === "string" && cp.firstSeenAt) {
     out.profile = Object.assign({}, out.profile, { firstSeenAt: cp.firstSeenAt });
+  }
+  /* SETUP-SKIP CARRY (Round 3, QA's candidate-check edge on
+     build 21): the profile pick above takes the cloud
+     profile whole whenever the local one has not completed
+     setup — so a "Not now" answered seconds before a
+     sign-out/sign-in cycle was silently dropped whenever
+     the answer's own cloud mirror had not landed yet, and
+     the sheet offered itself once more. An answer is not
+     sync timing: if EITHER side's profile carries the
+     skip, the merged profile carries it (the mirror-image
+     of the firstSeenAt carry above). A completed profile
+     is never re-flagged — its setupDone already governs. */
+  if (out.profile && !out.profile.setupDone && ((lp && lp.setupSkipped) || (cp && cp.setupSkipped))) {
+    out.profile = Object.assign({}, out.profile, { setupSkipped: true });
   }
   out.checkins = unionMap(cloud.checkins, local.checkins);
   /* Challenge merge: the later start wins (a restarted or
