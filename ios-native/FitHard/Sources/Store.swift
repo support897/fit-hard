@@ -107,13 +107,13 @@ final class Store: ObservableObject {
     }
     var targets: Targets? { NutritionService.targets(s.profile) }
     var mealTypes: [String] { s.profile.mealsPerDay <= 2 ? ["lunch", "dinner"] : Lists.meals }
-    func generatePlan(days: Int = 7) {
+    func generatePlan(days: Int = 7, force: Bool = false) {
         var used = Set<String>()
         let seed = UInt64(abs(s.profile.name.hashValue % 100000) + 17)
         for i in 0..<days {
             guard let d = Calendar.current.date(byAdding: .day, value: i, to: Date()) else { continue }
             let key = dayKey(d)
-            if s.plan[key] != nil && i == 0 && !(s.plan[key]?.isEmpty ?? true) && s.profile.setupDone { continue }
+            if !force && s.plan[key] != nil && i == 0 && !(s.plan[key]?.isEmpty ?? true) && s.profile.setupDone { continue }
             var row: [String: String] = [:]
             for (mi, meal) in mealTypes.enumerated() {
                 if let pick = RecipeService.pick(meal: meal, profile: s.profile, targets: targets, count: mealTypes.count,
@@ -204,7 +204,7 @@ final class Store: ObservableObject {
         let fresh = WorkoutGenerator.generate(profile: s.profile, exercises: cat.exercises, block: nb)
         var out: [Routine] = []
         for old in s.routines {
-            if old.customized { out.append(old); continue }
+            if old.customized { var k = old; k.block = nb; out.append(k); continue }
             if var f = fresh.first(where: { $0.weekday == old.weekday }) { f.id = old.id; f.block = nb; out.append(f) } else { out.append(old) }
         }
         s.routines = out; s.blockStart = dayKey(); syncRoutineDays(); Notifier.rebuild(self)
@@ -239,7 +239,7 @@ final class Store: ObservableObject {
     /// Editing the profile anywhere calls this, so the plan, routines and reminders all follow the one profile.
     func profileChanged() {
         s.profile.vegetarian = s.profile.diet == "vegetarian" || s.profile.diet == "vegan"
-        generatePlan(); generateRoutine(); Notifier.rebuild(self)
+        generatePlan(force: true); generateRoutine(); Notifier.rebuild(self)
     }
     var todaysExercises: [Exercise] {
         let wd = Calendar.current.component(.weekday, from: Date())

@@ -231,8 +231,9 @@ enum WorkoutGenerator {
         let eq = allowedEquipment(p)
         let n = max(3, min(8, p.minutes / 8))
         var out: [Routine] = []
-        for (i, d) in days.enumerated() where i < sl.count {
-            let (kind, name) = sl[i]
+        for (i, d) in days.enumerated() {
+            let (kind, base) = sl[i % sl.count]
+            let name = i >= sl.count ? base.replacingOccurrences(of: " A", with: " C").replacingOccurrences(of: " B", with: " C") : base
             var parts = focusParts[kind] ?? focusParts["full"]!
             let partCount = parts.count
             parts = parts.filter { p.bodyFocus[$0] != "less" || partCount <= 3 }
