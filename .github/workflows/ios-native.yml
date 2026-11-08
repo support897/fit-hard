@@ -69,6 +69,14 @@ jobs:
             -only-testing:FitHardUITests -resultBundlePath "$RUNNER_TEMP/ui.xcresult" CODE_SIGNING_ALLOWED=NO 2>&1 | tee ui.log | grep -E "Test Case|error:|Executed|TEST (SUCCEEDED|FAILED)" || true
           grep -q "TEST SUCCEEDED" ui.log
 
+      - name: Collect screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: /tmp/fh-shots
+          if-no-files-found: warn
+
       - name: UI test failures
         if: failure()
         working-directory: ios-native
