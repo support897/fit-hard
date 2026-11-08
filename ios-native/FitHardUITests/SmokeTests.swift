@@ -29,12 +29,12 @@ final class SmokeTests: XCTestCase {
     func testThemeCanBeSwitched() {
         let app = seeded()
         app.tabBars.buttons["More"].tap()
-        let black = app.buttons["Black"]
-        for _ in 0..<6 where !black.exists { app.swipeUp() }
+        let black = app.descendants(matching: .any)["theme-black"]
+        for _ in 0..<8 where !black.exists { app.swipeUp() }
         XCTAssertTrue(black.waitForExistence(timeout: 5))
         black.tap()
-        app.buttons["Brown"].tap()
-        app.buttons["White"].tap()
+        app.descendants(matching: .any)["theme-brown"].tap()
+        app.descendants(matching: .any)["theme-white"].tap()
         XCTAssertTrue(app.tabBars.buttons["Today"].exists)
     }
 
