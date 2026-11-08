@@ -118,7 +118,7 @@ final class SmokeTests: XCTestCase {
         let app = seeded(); app.tabBars.buttons["Meals"].tap()
         any(app, "meals-menu-button").tap(); any(app, "menu-have").tap()
         let q = any(app, "inv-qty"); XCTAssertTrue(q.waitForExistence(timeout: 5)); q.tap(); sleep(1); q.typeText("500")
-        app.buttons["Rice"].firstMatch.tap()
+        app.buttons["Cucumber"].firstMatch.tap()
         scrollTo(app, any(app, "inv-add")); any(app, "inv-add").tap()
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS '500'")).firstMatch.waitForExistence(timeout: 5), "the new item shows its amount"); shot(app, "meals-have-added")
     }
