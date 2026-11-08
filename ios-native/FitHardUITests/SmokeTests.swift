@@ -118,7 +118,7 @@ final class SmokeTests: XCTestCase {
         let app = seeded(); app.tabBars.buttons["Meals"].tap()
         any(app, "meals-menu-button").tap(); any(app, "menu-have").tap()
         let n = any(app, "inv-name"); XCTAssertTrue(n.waitForExistence(timeout: 5)); n.tap(); n.typeText("rice")
-        let q = any(app, "inv-qty"); q.tap(); q.typeText("500")
+        app.staticTexts["Add what you have"].tap(); let q = any(app, "inv-qty"); q.tap(); _ = app.keyboards.firstMatch.waitForExistence(timeout: 5); sleep(1); q.typeText("500")
         any(app, "inv-add").tap()
         XCTAssertTrue(app.staticTexts["Rice"].waitForExistence(timeout: 5)); shot(app, "meals-have-added")
     }
