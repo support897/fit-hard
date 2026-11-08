@@ -124,9 +124,7 @@ jobs:
           </plist>
           PLIST
           xcodebuild archive -project FitHard.xcodeproj -scheme FitHard -configuration Release \
-            -destination "generic/platform=iOS" -archivePath "$RUNNER_TEMP/FitHard.xcarchive" \
-            CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=GZ9Z6BPTFR \
-            PROVISIONING_PROFILE_SPECIFIER="Fit Hard App Store" CODE_SIGN_IDENTITY="Apple Distribution"
+            -destination "generic/platform=iOS" -archivePath "$RUNNER_TEMP/FitHard.xcarchive"
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/FitHard.xcarchive" \
             -exportOptionsPlist ExportOptions.plist -exportPath "$RUNNER_TEMP/export"
           ls -la "$RUNNER_TEMP/export"
