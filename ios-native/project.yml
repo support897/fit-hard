@@ -8,7 +8,7 @@ settings:
   base:
     SWIFT_VERSION: "5.9"
     MARKETING_VERSION: "2.0"
-    CURRENT_PROJECT_VERSION: "26"
+    CURRENT_PROJECT_VERSION: "27"
     DEVELOPMENT_TEAM: GZ9Z6BPTFR
     TARGETED_DEVICE_FAMILY: "1"
 targets:
@@ -33,4 +33,31 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
-        CURRENT_PROJECT_VERSION: "26"
+        CURRENT_PROJECT_VERSION: "27"
+  FitHardTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources: [FitHardTests]
+    dependencies:
+      - target: FitHard
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.ilseplacencia.fithard.tests
+  FitHardUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [FitHardUITests]
+    dependencies:
+      - target: FitHard
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.ilseplacencia.fithard.uitests
+schemes:
+  FitHard:
+    build:
+      targets:
+        FitHard: all
+    test:
+      targets: [FitHardTests, FitHardUITests]
