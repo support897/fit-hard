@@ -1,0 +1,2251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIT HARD — Complete Personalization Build Specification</title>
+
+<style>
+:root {
+  --bg: #101214;
+  --surface: #191d20;
+  --surface2: #22282c;
+  --text: #f4f5f5;
+  --muted: #a0a9ad;
+  --accent: #b8f36b;
+  --pink: #f2a9c5;
+  --blue: #8acbff;
+  --orange: #ffbd78;
+  --purple: #c4a5ff;
+  --red: #ff8585;
+  --border: #343b40;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  line-height: 1.65;
+}
+header {
+  padding: 65px 8%;
+  background: linear-gradient(135deg,#202a24,#17191c);
+  border-bottom: 1px solid var(--border);
+}
+header h1 {
+  font-size: clamp(38px,7vw,70px);
+  margin: 0;
+  letter-spacing: -3px;
+}
+header h1 span { color: var(--accent); }
+header p { max-width: 780px; color: var(--muted); font-size: 18px; }
+.container { max-width: 1120px; margin: auto; padding: 35px 24px 90px; }
+h2 { font-size: 30px; margin-top: 65px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
+h3 { font-size: 21px; margin-top: 32px; color: var(--accent); }
+h4 { margin-bottom: 5px; }
+p, li { color: #d0d6d9; }
+small,.muted { color: var(--muted); }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  padding: 22px;
+  margin: 18px 0;
+}
+.callout {
+  background: #202b21;
+  border-left: 4px solid var(--accent);
+  border-radius: 7px;
+  padding: 18px;
+  margin: 22px 0;
+}
+.warning {
+  background: #30231e;
+  border-left: 4px solid var(--orange);
+  border-radius: 7px;
+  padding: 18px;
+}
+table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 14px; }
+th,td { text-align: left; border-bottom: 1px solid var(--border); padding: 12px; vertical-align: top; }
+th { color: var(--accent); background: var(--surface); }
+code { color: var(--accent); overflow-wrap: anywhere; }
+pre {
+  overflow-x: auto;
+  padding: 20px;
+  border-radius: 10px;
+  background: #090c0e;
+  border: 1px solid var(--border);
+  color: #c9e9aa;
+}
+a { color: var(--accent); }
+nav {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  padding: 22px;
+}
+nav a { display: block; padding: 5px 0; text-decoration: none; }
+.tag {
+  display: inline-block;
+  background: var(--surface2);
+  border-radius: 20px;
+  padding: 4px 11px;
+  margin: 3px;
+  color: var(--accent);
+  font-size: 12px;
+}
+.flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+.flow div {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+}
+footer { border-top: 1px solid var(--border); padding-top: 25px; color: var(--muted); }
+@media(max-width:600px) {
+  .container { padding: 20px 15px 60px; }
+  header { padding: 40px 20px; }
+  table { font-size: 12px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="tag">MASTER BUILD SPECIFICATION</div>
+  <h1>FIT <span>HARD.</span></h1>
+  <p>
+    A fully personalized fitness, nutrition, training, progression
+    and health-tracking ecosystem. Every screen must respond to
+    the individual user's goals, preferences, performance and schedule.
+  </p>
+  <p><strong>Platform:</strong> Existing native iOS application, Swift and SwiftUI.</p>
+  <p><strong>Architecture:</strong> Local-first, database-driven, deterministic personalization.
+  No paid AI dependency.</p>
+</header>
+
+<div class="container">
+
+<nav>
+  <h3>MASTER NAVIGATION</h3>
+  <a href="#vision">01. Product vision and architecture</a>
+  <a href="#profile">02. Shared personal profile</a>
+  <a href="#onboarding">03. Personalized onboarding</a>
+  <a href="#nutrition">04. Personalized meals engine</a>
+  <a href="#training">05. Personalized routines engine</a>
+  <a href="#progression">06. Progressive overload engine</a>
+  <a href="#trainingmode">07. Training mode and timers</a>
+  <a href="#routineslist">08. Routines library</a>
+  <a href="#calendar">09. Personal calendar</a>
+  <a href="#peptides">10. Medication and peptide tracking</a>
+  <a href="#mascot">11. Mascot recommendation engine</a>
+  <a href="#notifications">12. Notification engine</a>
+  <a href="#analytics">13. Progress and analytics</a>
+  <a href="#database">14. Data architecture</a>
+  <a href="#design">15. UI and UX requirements</a>
+  <a href="#qa">16. End-to-end testing</a>
+  <a href="#acceptance">17. Definition of done</a>
+  <a href="#references">18. Scientific references</a>
+</nav>
+
+<!-- 01 -->
+
+<section id="vision">
+<h2>01. Product vision and architecture</h2>
+
+<h3>The central concept</h3>
+
+<p>
+Fit Hard must operate as one connected system, not a collection of
+independent features.
+</p>
+
+<p>
+The user's profile is the source of truth. The meal engine, workout
+engine, calendar, progression system, mascot and notifications all
+read from the same profile and update from the same underlying records.
+</p>
+
+<div class="flow">
+  <div><strong>PERSONAL PROFILE</strong><p>Goals, body data, preferences, equipment, availability.</p></div>
+  <div><strong>MEAL ENGINE</strong><p>Calories, protein, recipes, ingredients and shopping.</p></div>
+  <div><strong>TRAINING ENGINE</strong><p>Muscle groups, splits, exercises and recovery.</p></div>
+  <div><strong>PROGRESSION</strong><p>Performance, weights, repetitions and adjustments.</p></div>
+  <div><strong>CALENDAR</strong><p>Meals, training, rest, appointments and tracking.</p></div>
+  <div><strong>MASCOT</strong><p>Recommendations, feedback and motivation.</p></div>
+</div>
+
+<h3>Critical architecture rule</h3>
+
+<p>
+Never calculate different calorie targets independently in different
+screens. Never create a workout that ignores the user's equipment.
+Never generate a shopping list independently of the selected recipes.
+</p>
+
+<p>All features must use shared services.</p>
+
+<table>
+<tr><th>Service</th><th>Responsibility</th></tr>
+<tr><td>PersonalizationService</td><td>Maintains the user's goals, preferences and profile.</td></tr>
+<tr><td>NutritionService</td><td>Calculates energy, macros and meal targets.</td></tr>
+<tr><td>RecipeService</td><td>Finds, filters, scales and swaps recipes.</td></tr>
+<tr><td>WorkoutGenerator</td><td>Creates routines based on goals and availability.</td></tr>
+<tr><td>ProgressionEngine</td><td>Adjusts exercise targets based on performance.</td></tr>
+<tr><td>ExerciseService</td><td>Provides exercise instructions, alternatives and equipment.</td></tr>
+<tr><td>CalendarService</td><td>Connects meals, workouts and user-created activities.</td></tr>
+<tr><td>MedicationReminderService</td><td>Manages user-entered prescribed medication reminders.</td></tr>
+<tr><td>NotificationService</td><td>Schedules, updates and cancels notifications.</td></tr>
+<tr><td>MascotCoachService</td><td>Creates contextual recommendations from app data.</td></tr>
+<tr><td>ProgressAnalyticsService</td><td>Calculates historical trends and achievements.</td></tr>
+</table>
+
+<div class="callout">
+<strong>Implementation requirement:</strong>
+The app must work without an internet connection for core functions.
+Store the recipe database, exercise database, routines, profile,
+progress and calendar locally. Use optional synchronization if
+the existing app supports it.
+</div>
+
+</section>
+
+<!-- 02 -->
+
+<section id="profile">
+<h2>02. Shared personal profile</h2>
+
+<p>
+Every onboarding answer must be saved to a shared profile.
+This profile feeds every personalization service.
+</p>
+
+<h3>Profile data structure</h3>
+
+<pre><code>PersonalFitnessProfile {
+    userID
+    age
+    height
+    currentWeight
+    targetWeight
+
+    primaryGoal
+    secondaryGoals
+    targetAreas
+
+    experienceLevel
+    activityLevel
+    availableTrainingDays
+    preferredTrainingDuration
+    availableEquipment
+
+    dietaryPreference
+    allergies
+    excludedIngredients
+    preferredFoods
+    dislikedFoods
+
+    dailyMealCount
+    preferredMealTypes
+    cookingTime
+    budget
+    availableIngredients
+
+    calorieTarget
+    proteinTarget
+    carbohydrateTarget
+    fatTarget
+
+    preferredUnits
+    preferredTrainingTime
+    notificationPreferences
+
+    profileVersion
+    lastUpdated
+}</code></pre>
+
+<h3>Profile update behavior</h3>
+
+<ul>
+<li>Changing a goal triggers a recalculation of relevant targets.</li>
+<li>Changing weight triggers updated nutrition estimates when appropriate.</li>
+<li>Changing equipment triggers workout exercise substitution.</li>
+<li>Changing training availability triggers schedule regeneration suggestions.</li>
+<li>Changing dietary preferences filters future recipes.</li>
+<li>Changing allergies immediately removes unsafe recipes and substitutions.</li>
+<li>Changing a meal does not unnecessarily change other meals.</li>
+</ul>
+
+<p>
+Existing completed workouts and historical meal records must never
+be silently rewritten when a profile changes.
+</p>
+
+</section>
+
+<!-- 03 -->
+
+<section id="onboarding">
+<h2>03. Personalized onboarding</h2>
+
+<p>
+Create a beautiful, short, progressive onboarding experience.
+Ask questions in manageable groups, show progress and explain why
+the app needs the information.
+</p>
+
+<h3>Screen 1: Welcome and goals</h3>
+
+<div class="card">
+<strong>What is your main fitness goal?</strong>
+<ul>
+<li>Lose body fat</li>
+<li>Build muscle</li>
+<li>Lose fat and build muscle</li>
+<li>Improve strength</li>
+<li>Improve fitness and endurance</li>
+<li>Maintain my current body composition</li>
+<li>Improve general health and consistency</li>
+</ul>
+<strong>Additional goals:</strong>
+<ul>
+<li>Build glutes</li>
+<li>Develop legs</li>
+<li>Develop upper body</li>
+<li>Strengthen core</li>
+<li>Improve cardiovascular fitness</li>
+<li>Improve mobility</li>
+</ul>
+</div>
+
+<strong>What the answer drives:</strong>
+<ul>
+<li>Nutrition target calculation.</li>
+<li>Workout selection and volume distribution.</li>
+<li>Cardio recommendations where appropriate.</li>
+<li>Mascot coaching language.</li>
+<li>Progress dashboard metrics.</li>
+</ul>
+
+<h3>Screen 2: Body information</h3>
+
+<div class="card">
+<strong>Questions:</strong>
+<ul>
+<li>Age.</li>
+<li>Height.</li>
+<li>Current weight.</li>
+<li>Optional target weight.</li>
+<li>Measurement units: kg/cm or lb/in.</li>
+<li>Optional waist, hip and other body measurements.</li>
+</ul>
+</div>
+
+<strong>What the answers drive:</strong>
+<ul>
+<li>Estimated resting energy expenditure.</li>
+<li>Estimated daily energy expenditure.</li>
+<li>Personalized nutrition estimates.</li>
+<li>Progress tracking.</li>
+</ul>
+
+<p>
+Do not require target weight or body measurements. Explain that
+body-weight estimates are estimates, not medical measurements.
+Do not set restrictive calorie targets for minors, pregnancy,
+or users reporting eating-disorder concerns.
+</p>
+
+<h3>Screen 3: Fitness experience</h3>
+
+<div class="card">
+<strong>How experienced are you?</strong>
+<ul>
+<li>Complete beginner.</li>
+<li>Beginner: I have trained occasionally.</li>
+<li>Intermediate: I train regularly.</li>
+<li>Advanced: I have trained consistently for years.</li>
+</ul>
+<strong>How active are you outside training?</strong>
+<ul>
+<li>Mostly sitting.</li>
+<li>Lightly active.</li>
+<li>Moderately active.</li>
+<li>Very active.</li>
+</ul>
+<strong>What is your current training experience?</strong>
+<ul>
+<li>Gym machines.</li>
+<li>Free weights.</li>
+<li>Bodyweight training.</li>
+<li>Home workouts.</li>
+<li>Cardio.</li>
+<li>Combination.</li>
+</ul>
+</div>
+
+<strong>What the answers drive:</strong>
+<ul>
+<li>Starting exercise difficulty.</li>
+<li>Exercise selection.</li>
+<li>Initial sets and repetition ranges.</li>
+<li>Recovery recommendations.</li>
+<li>Nutrition activity estimate.</li>
+</ul>
+
+<h3>Screen 4: Training availability</h3>
+
+<div class="card">
+<strong>How many days per week can you train?</strong>
+<ul><li>2 days</li><li>3 days</li><li>4 days</li><li>5 days</li><li>6 days</li><li>Flexible schedule</li></ul>
+
+<strong>Select your preferred days:</strong>
+<ul>
+<li>Monday through Sunday, individually selectable.</li>
+</ul>
+
+<strong>How long can each session take?</strong>
+<ul><li>20–30 minutes</li><li>30–45 minutes</li><li>45–60 minutes</li><li>60–90 minutes</li><li>90+ minutes</li></ul>
+
+<strong>Where do you train?</strong>
+<ul><li>Gym</li><li>Home</li><li>Both</li></ul>
+</div>
+
+<strong>What the answers drive:</strong>
+<ul>
+<li>Weekly split generation.</li>
+<li>Workout length.</li>
+<li>Rest-day placement.</li>
+<li>Exercise equipment compatibility.</li>
+<li>Calendar structure.</li>
+</ul>
+
+<h3>Screen 5: Body parts</h3>
+
+<p>Allow the user to select areas they want to train.</p>
+
+<div class="card">
+<strong>Choose your focus areas:</strong>
+<ul>
+<li>Glutes</li>
+<li>Quadriceps</li>
+<li>Hamstrings</li>
+<li>Calves</li>
+<li>Back</li>
+<li>Chest</li>
+<li>Shoulders</li>
+<li>Biceps</li>
+<li>Triceps</li>
+<li>Abdominals/core</li>
+<li>Full body</li>
+</ul>
+<strong>Ask:</strong>
+<ul>
+<li>Which muscles are your highest priority?</li>
+<li>Which areas would you like to maintain?</li>
+<li>Which areas would you prefer to train less?</li>
+</ul>
+</div>
+
+<strong>What the answers drive:</strong>
+<ul>
+<li>Weekly direct training volume distribution.</li>
+<li>Exercise selection.</li>
+<li>Routine naming.</li>
+<li>Mascot recommendations.</li>
+</ul>
+
+<p>
+A muscle selected as a priority must not automatically receive
+excessive training volume. Include indirect work from compound
+exercises when calculating total muscle exposure.
+</p>
+
+<h3>Screen 6: Equipment</h3>
+
+<div class="card">
+<strong>Available equipment:</strong>
+<ul>
+<li>Dumbbells.</li>
+<li>Barbells.</li>
+<li>Smith machine.</li>
+<li>Cables.</li>
+<li>Leg press.</li>
+<li>Hip thrust machine.</li>
+<li>Leg extension.</li>
+<li>Leg curl.</li>
+<li>Lat pulldown.</li>
+<li>Chest press.</li>
+<li>Resistance bands.</li>
+<li>Bodyweight only.</li>
+<li>Other/custom equipment.</li>
+</ul>
+</div>
+
+<strong>What the answers drive:</strong>
+Exercise compatibility and alternative exercises.
+
+<h3>Screen 7: Nutrition preferences</h3>
+
+<div class="card">
+<strong>What type of meals do you prefer?</strong>
+<ul>
+<li>High protein.</li>
+<li>Balanced meals.</li>
+<li>Low preparation time.</li>
+<li>Budget friendly.</li>
+<li>Vegetarian.</li>
+<li>Vegan.</li>
+<li>Mediterranean style.</li>
+<li>Other supported dietary patterns.</li>
+</ul>
+
+<strong>Food restrictions:</strong>
+<ul>
+<li>Food allergies.</li>
+<li>Intolerances.</li>
+<li>Foods I avoid.</li>
+<li>Religious or ethical dietary requirements.</li>
+</ul>
+
+<strong>Meal preferences:</strong>
+<ul>
+<li>Number of meals per day.</li>
+<li>Breakfast preferences.</li>
+<li>Lunch preferences.</li>
+<li>Dinner preferences.</li>
+<li>Snacks.</li>
+<li>Maximum cooking time.</li>
+<li>Food budget.</li>
+</ul>
+</div>
+
+<strong>What the answers drive:</strong>
+Recipe filtering, meal frequency, meal size, food substitutions,
+shopping lists and cooking instructions.
+
+<h3>Screen 8: Kitchen inventory</h3>
+
+<p>
+Ask users which ingredients they already have. This must also be
+accessible later from the Meals section.
+</p>
+
+<div class="card">
+<strong>What do you currently have?</strong>
+<ul>
+<li>Protein sources.</li>
+<li>Vegetables.</li>
+<li>Fruit.</li>
+<li>Rice and grains.</li>
+<li>Dairy and alternatives.</li>
+<li>Seasonings and sauces.</li>
+<li>Other ingredients.</li>
+</ul>
+<p>Allow manual search, quantity entry and optional expiry dates.</p>
+</div>
+
+<h3>Screen 9: Safety and readiness</h3>
+
+<p>Ask optional, appropriately worded screening questions:</p>
+<ul>
+<li>Do you have an injury or movement restriction affecting training?</li>
+<li>Has a healthcare professional advised you to limit exercise?</li>
+<li>Are there any medical or dietary considerations you want the app to account for?</li>
+<li>Are there any concerns that make calorie tracking unsuitable for you?</li>
+</ul>
+
+<p>
+Do not attempt to diagnose conditions. For significant limitations,
+direct users to a qualified healthcare professional and restrict
+unsafe automatic recommendations.
+</p>
+
+<h3>Screen 10: Generate my Fit Hard plan</h3>
+
+<p>
+Display a personalized summary before generating the plan.
+</p>
+
+<ul>
+<li>Goal summary.</li>
+<li>Estimated nutrition targets, when appropriate.</li>
+<li>Training days.</li>
+<li>Selected muscle priorities.</li>
+<li>Recommended training split.</li>
+<li>Suggested meal structure.</li>
+<li>Initial weekly calendar.</li>
+</ul>
+
+<button type="button">GENERATE MY PERSONAL PLAN</button>
+
+<p>
+This button must trigger the actual personalization pipeline,
+save the plan and populate the relevant app sections.
+</p>
+
+</section>
+
+<!-- 04 -->
+
+<section id="nutrition">
+<h2>04. Personalized meals engine</h2>
+
+<h3>Meals sidebar</h3>
+
+<p>The Meals section must contain:</p>
+
+<ul>
+<li>My Meal Plan.</li>
+<li>Breakfast.</li>
+<li>Lunch.</li>
+<li>Dinner.</li>
+<li>Snacks.</li>
+<li>My Recipes.</li>
+<li>Ingredients I Have.</li>
+<li>Shopping List.</li>
+<li>Nutrition Overview.</li>
+</ul>
+
+<h3>How the meal engine works</h3>
+
+<div class="flow">
+<div>1. Read goals and nutrition profile.</div>
+<div>2. Calculate daily nutrition targets.</div>
+<div>3. Read selected meal types.</div>
+<div>4. Filter the recipe database.</div>
+<div>5. Match ingredients and preferences.</div>
+<div>6. Calculate recipe nutrition.</div>
+<div>7. Generate shopping list.</div>
+<div>8. Save meals to calendar.</div>
+</div>
+
+<h3>Nutrition calculation</h3>
+
+<p>
+Estimate resting energy expenditure using a validated method,
+such as Mifflin-St Jeor, when its assumptions are appropriate.
+Estimate daily energy expenditure using activity information.
+Use observed weight trends to calibrate estimates over time.
+</p>
+
+<p>
+The calorie target must depend on the user's goal, age, activity,
+weight, training and safety flags.
+</p>
+
+<p>
+Do not impose aggressive deficits or guarantee a specific rate
+of weight loss.
+</p>
+
+<p>
+For eligible exercising adults, a configurable protein starting
+reference can use 1.4–2.0 g/kg/day, adjusted for context and
+professional advice.
+</p>
+
+<p>
+Calculate fats and carbohydrates from the remaining energy budget
+using a validated configurable nutrition policy. Never create
+macronutrient totals that exceed or contradict the calorie target
+without explaining rounding differences.
+</p>
+
+<h3>Meal generation screen</h3>
+
+<div class="card">
+<h4>What would you like to eat?</h4>
+<p>Meal type:</p>
+<ul>
+<li>Breakfast</li><li>Lunch</li><li>Dinner</li><li>Snack</li>
+<li>Full day plan</li>
+</ul>
+<p>Additional filters:</p>
+<ul>
+<li>High protein.</li>
+<li>Under a selected calorie amount.</li>
+<li>Quick meals.</li>
+<li>Budget friendly.</li>
+<li>Ingredients already available.</li>
+<li>Preferred cuisine.</li>
+</ul>
+</div>
+
+<h3>Recipe cards</h3>
+
+<p>Every generated meal must show:</p>
+
+<ul>
+<li>Recipe image or suitable existing placeholder.</li>
+<li>Recipe name.</li>
+<li>Total calories per serving.</li>
+<li>Protein in grams.</li>
+<li>Carbohydrates in grams.</li>
+<li>Fat in grams.</li>
+<li>Cooking time.</li>
+<li>Preparation time.</li>
+<li>Difficulty.</li>
+<li>Serving quantity.</li>
+</ul>
+
+<h3>Full recipe details</h3>
+
+<p>Opening a recipe displays:</p>
+
+<ul>
+<li>Large recipe image.</li>
+<li>Complete ingredient list.</li>
+<li>Exact quantities.</li>
+<li>Preparation steps.</li>
+<li>Cooking instructions and temperatures where relevant.</li>
+<li>Cooking and preparation times.</li>
+<li>Serving adjustment.</li>
+<li>Calories and macronutrients.</li>
+<li>Allergen information.</li>
+<li>Storage and reheating instructions where available.</li>
+<li>Available equipment.</li>
+</ul>
+
+<h3>Ingredients I have vs. ingredients to buy</h3>
+
+<p>
+Compare the recipe's normalized ingredient requirements against
+the user's kitchen inventory.
+</p>
+
+<div class="card">
+<h4>Example: Chicken rice bowl</h4>
+<p><strong>Already have</strong></p>
+<ul>
+<li>Rice ✓</li>
+<li>Olive oil ✓</li>
+<li>Salt ✓</li>
+</ul>
+<p><strong>Need to buy</strong></p>
+<ul>
+<li>Chicken breast</li>
+<li>Broccoli</li>
+<li>Greek yogurt</li>
+</ul>
+<p>Display quantities, not just ingredient names.</p>
+</div>
+
+<p>
+Ingredient matching must support synonyms, measurement conversions
+and ingredient substitutions. An ingredient marked as available
+must not automatically be treated as sufficient if its quantity
+is lower than the recipe requirement.
+</p>
+
+<h3>Shopping list</h3>
+
+<p>
+Combine missing ingredients across the selected meal plan.
+Avoid duplicate entries. Add quantities together where units
+can be converted safely.
+</p>
+
+<p>Allow users to:</p>
+<ul>
+<li>Tick purchased ingredients.</li>
+<li>Edit quantities.</li>
+<li>Add their own items.</li>
+<li>Remove items.</li>
+<li>Group items by food category.</li>
+<li>Mark ingredients as already available.</li>
+</ul>
+
+<h3>Swap one meal</h3>
+
+<p>
+Every meal card must have a clearly visible Swap button.
+</p>
+
+<p>When pressed:</p>
+<ol>
+<li>Generate alternative recipes for the same meal type.</li>
+<li>Preserve dietary restrictions and allergies.</li>
+<li>Preserve the meal's approximate calorie allocation.</li>
+<li>Prefer similar protein quantities.</li>
+<li>Respect available ingredients and cooking time.</li>
+<li>Update the shopping list.</li>
+<li>Update the calendar meal entry.</li>
+</ol>
+
+<p>
+Only replace the selected meal. Never regenerate the entire
+weekly plan unnecessarily.
+</p>
+
+<h3>Lunch planning</h3>
+
+<p>
+Lunch must have a dedicated plan card showing:
+</p>
+<ul>
+<li>Meal name.</li>
+<li>Calories.</li>
+<li>Protein.</li>
+<li>Carbohydrates.</li>
+<li>Fat.</li>
+<li>Cooking time.</li>
+<li>Ingredients.</li>
+<li>Recipe access.</li>
+</ul>
+
+<p>
+Lunch plans must be connected to training days. However,
+do not automatically force different meal targets solely because
+a workout occurs on that day.
+</p>
+
+<h3>Recipe database requirements</h3>
+
+<p>
+Each recipe needs structured ingredients, nutrition per ingredient,
+serving quantities, dietary tags, allergens, cooking time and
+instructions.
+</p>
+
+<pre><code>Recipe {
+    id
+    name
+    image
+    mealType
+    cuisine
+    servings
+    ingredients[]
+    instructions[]
+    preparationMinutes
+    cookingMinutes
+    calories
+    protein
+    carbohydrates
+    fat
+    allergens[]
+    dietaryTags[]
+    equipment[]
+}</code></pre>
+
+<p>
+Use a verified nutrition data source or a properly maintained
+ingredient nutrition database. Do not use guessed calorie values.
+Recalculate nutrition from quantities when serving sizes change.
+</p>
+
+</section>
+
+<!-- 05 -->
+
+<section id="training">
+<h2>05. Personalized routines engine</h2>
+
+<h3>Purpose</h3>
+
+<p>
+Generate the user's entire training schedule automatically.
+The user should open Routines and immediately understand what they
+are doing today, tomorrow and throughout the week.
+</p>
+
+<h3>Routine generation logic</h3>
+
+<p>The engine reads:</p>
+
+<ul>
+<li>Primary and secondary goals.</li>
+<li>Experience level.</li>
+<li>Available days.</li>
+<li>Session duration.</li>
+<li>Selected muscle groups.</li>
+<li>Muscle priorities.</li>
+<li>Available equipment.</li>
+<li>Injuries and restrictions.</li>
+<li>Previous performance.</li>
+<li>Recovery and adherence history.</li>
+</ul>
+
+<h3>Recommended split templates</h3>
+
+<table>
+<tr><th>Available days</th><th>Example structure</th></tr>
+<tr><td>2 days</td><td>Full Body A / Full Body B</td></tr>
+<tr><td>3 days</td><td>Full Body A / Full Body B / Full Body C, or a balanced emphasis split</td></tr>
+<tr><td>4 days</td><td>Upper / Lower / Upper / Lower</td></tr>
+<tr><td>5 days</td><td>Lower / Upper / Lower / Upper / Full Body or individualized emphasis split</td></tr>
+<tr><td>6 days</td><td>Push / Pull / Legs repeated, with volume and recovery carefully managed</td></tr>
+</table>
+
+<p>
+These are templates, not mandatory prescriptions. The generator
+must account for priorities and weekly muscle volume.
+</p>
+
+<h3>Example: User wants to prioritize glutes and legs</h3>
+
+<div class="card">
+<h4>YOUR PERSONALIZED WEEK</h4>
+<table>
+<tr><th>Day</th><th>Routine</th><th>Focus</th></tr>
+<tr><td>Monday</td><td>Glute & Hamstring Day</td><td>Glutes, hamstrings</td></tr>
+<tr><td>Tuesday</td><td>Upper Body</td><td>Back, shoulders, arms</td></tr>
+<tr><td>Wednesday</td><td>Recovery</td><td>Rest or mobility</td></tr>
+<tr><td>Thursday</td><td>Quads & Glutes</td><td>Quadriceps, glutes</td></tr>
+<tr><td>Friday</td><td>Upper Body & Core</td><td>Chest, back, arms, abs</td></tr>
+<tr><td>Saturday</td><td>Optional Activity</td><td>Cardio or mobility</td></tr>
+<tr><td>Sunday</td><td>Rest</td><td>Recovery</td></tr>
+</table>
+</div>
+
+<h3>Exercise selection</h3>
+
+<p>
+The exercise database must contain enough alternatives to create
+varied routines while respecting equipment and experience.
+</p>
+
+<p>Every exercise needs:</p>
+<ul>
+<li>Exercise name.</li>
+<li>Primary muscle group.</li>
+<li>Secondary muscle groups.</li>
+<li>Equipment.</li>
+<li>Movement pattern.</li>
+<li>Difficulty.</li>
+<li>Instructions.</li>
+<li>Technique cues.</li>
+<li>Common mistakes.</li>
+<li>Sets and repetition recommendations.</li>
+<li>Rest recommendations.</li>
+<li>Demonstration image or video, if licensed and available.</li>
+<li>Alternative exercises.</li>
+</ul>
+
+<h3>Training volume rules</h3>
+
+<p>
+The engine should count both direct and indirect muscle work.
+For example, pressing exercises also involve triceps and shoulders.
+Do not count every compound set as a full direct set for every
+involved muscle.
+</p>
+
+<p>
+For healthy adults seeking hypertrophy, approximately 10 weekly
+sets per muscle group is a useful evidence-based reference,
+not a compulsory starting target. Beginners may need less.
+Advanced users may tolerate different volumes.
+</p>
+
+<p>
+Start conservatively and increase volume only when the user is
+recovering and progressing.
+</p>
+
+<h3>Routine duration</h3>
+
+<p>
+Create an initial four-week training block.
+Repeat effective exercises across sessions to make performance
+measurable. The user can continue a successful program beyond
+four weeks.
+</p>
+
+<p>
+At the end of the block, evaluate:
+</p>
+<ul>
+<li>Strength changes.</li>
+<li>Completed sets and repetitions.</li>
+<li>Recovery.</li>
+<li>Training consistency.</li>
+<li>Difficulty ratings.</li>
+<li>Goal changes.</li>
+</ul>
+
+<p>
+Generate a new block or maintain the existing program based on
+actual performance. Never automatically replace all exercises
+just because a calendar period has ended.
+</p>
+
+<h3>Routine generation result</h3>
+
+<p>
+Once generated, save every session to the Routines library and
+schedule it on the calendar.
+</p>
+
+</section>
+
+<!-- 06 -->
+
+<section id="progression">
+<h2>06. Progressive overload engine</h2>
+
+<div class="callout">
+<strong>This is a core Fit Hard differentiator.</strong>
+The app should remember every exercise and help users make
+measurable progress instead of giving them the same static
+routine indefinitely.
+</div>
+
+<h3>Information to track per exercise</h3>
+
+<ul>
+<li>Weight used.</li>
+<li>Completed repetitions.</li>
+<li>Prescribed sets.</li>
+<li>Completed sets.</li>
+<li>Rest time.</li>
+<li>Difficulty rating or RIR.</li>
+<li>Exercise technique feedback.</li>
+<li>Historical performance.</li>
+</ul>
+
+<h3>Double progression</h3>
+
+<p>
+Use repetition ranges and resistance increases as the primary
+progression method for appropriate exercises.
+</p>
+
+<p>Example:</p>
+<table>
+<tr><th>Session</th><th>Weight</th><th>Repetitions</th></tr>
+<tr><td>1</td><td>30 kg</td><td>8, 8, 8</td></tr>
+<tr><td>2</td><td>30 kg</td><td>9, 8, 8</td></tr>
+<tr><td>3</td><td>30 kg</td><td>10, 10, 9</td></tr>
+<tr><td>4</td><td>30 kg</td><td>12, 12, 12</td></tr>
+<tr><td>5</td><td>32.5 kg</td><td>8, 8, 8</td></tr>
+</table>
+
+<p>
+These are illustrative targets. A progression recommendation
+must also account for technique and perceived effort.
+</p>
+
+<h3>Progression rules</h3>
+
+<ol>
+<li>Establish an appropriate starting weight or bodyweight variation.</li>
+<li>Set an exercise-specific repetition range.</li>
+<li>Track every completed set.</li>
+<li>When the user reaches the upper end of the range across all prescribed sets with good technique, assess whether a small resistance increase is appropriate.</li>
+<li>Recommend an achievable increase based on available equipment.</li>
+<li>After increasing weight, reduce the repetition target within the range if necessary.</li>
+<li>Record the new performance baseline.</li>
+</ol>
+
+<h3>When not to increase difficulty</h3>
+
+<ul>
+<li>Technique is deteriorating.</li>
+<li>The user reports excessive fatigue.</li>
+<li>Performance has repeatedly declined.</li>
+<li>The user reports pain or injury.</li>
+<li>The user has not completed the prescribed work.</li>
+</ul>
+
+<p>
+Do not interpret pain as a normal training challenge. Stop the
+affected exercise and recommend appropriate professional advice.
+</p>
+
+<h3>Deload and recovery logic</h3>
+
+<p>
+A deload should be suggested when accumulated fatigue, performance
+decline and recovery feedback indicate that a reduction may help.
+It should not be forced automatically every fourth week.
+</p>
+
+<p>
+Possible adjustments include reducing sets, reducing load,
+increasing rest or temporarily replacing a demanding exercise.
+</p>
+
+<h3>Progress display</h3>
+
+<p>Show:</p>
+<ul>
+<li>Personal records.</li>
+<li>Weight progression graphs.</li>
+<li>Repetition progression graphs.</li>
+<li>Training consistency.</li>
+<li>Weekly completed volume.</li>
+<li>Muscle group training history.</li>
+</ul>
+
+</section>
+
+<!-- 07 -->
+
+<section id="trainingmode">
+<h2>07. Training mode and timers</h2>
+
+<h3>Start workout</h3>
+
+<p>
+Every routine card must contain a prominent START WORKOUT button.
+Pressing it opens a dedicated training mode.
+</p>
+
+<h3>Training mode layout</h3>
+
+<div class="card">
+<h4>GLUTE & HAMSTRING DAY</h4>
+<p>Exercise 1 of 6</p>
+<h3>Hip Thrust</h3>
+<p>3 sets × 8–12 repetitions</p>
+<p>Target: 30 kg</p>
+<p>Rest: 90 seconds</p>
+<p>Previous session: 27.5 kg × 12</p>
+<button>START SET</button>
+<button>REST TIMER</button>
+<button>HOW TO DO IT</button>
+<button>SKIP EXERCISE</button>
+</div>
+
+<h3>Exercise demonstration toggle</h3>
+
+<p>
+Users must be able to choose their preferred training interface:
+</p>
+
+<ul>
+<li>Timer only: minimal interface focused on sets and rest.</li>
+<li>Guided mode: demonstrations, technique instructions and cues.</li>
+<li>Hybrid: timer with an optional expandable exercise guide.</li>
+</ul>
+
+<p>
+Remember the user's selected preference for future workouts.
+Allow it to be changed at any time.
+</p>
+
+<h3>Exercise guide</h3>
+
+<p>
+The HOW TO DO IT button opens an exercise detail panel with:
+</p>
+
+<ul>
+<li>Exercise demonstration.</li>
+<li>Starting position.</li>
+<li>Movement instructions.</li>
+<li>Breathing guidance.</li>
+<li>Common mistakes.</li>
+<li>Safety reminders.</li>
+<li>Alternative exercise.</li>
+</ul>
+
+<h3>Set tracking</h3>
+
+<p>
+Each exercise must support independent set tracking.
+</p>
+
+<ul>
+<li>Set number.</li>
+<li>Weight.</li>
+<li>Repetitions.</li>
+<li>Completion checkbox.</li>
+<li>Difficulty rating.</li>
+<li>Optional notes.</li>
+</ul>
+
+<p>
+Prepopulate the previous session's weight and repetitions
+as a reference, not as an instruction to repeat them regardless
+of readiness.
+</p>
+
+<h3>Timers</h3>
+
+<p>Support:</p>
+<ul>
+<li>Rest countdown.</li>
+<li>Elapsed workout time.</li>
+<li>Pause and resume.</li>
+<li>Skip rest.</li>
+<li>Adjustable rest duration.</li>
+<li>Background timer notifications where permitted.</li>
+</ul>
+
+<p>
+Timers must use reliable time calculations rather than relying
+on a continuously running UI timer. Recover correctly if the app
+is suspended or closed.
+</p>
+
+<h3>Finish workout</h3>
+
+<p>Display:</p>
+<ul>
+<li>Total workout duration.</li>
+<li>Exercises completed.</li>
+<li>Sets completed.</li>
+<li>Total repetitions.</li>
+<li>Recorded weights.</li>
+<li>Estimated energy expenditure, clearly marked as an estimate.</li>
+<li>Optional perceived difficulty.</li>
+<li>Personal records achieved.</li>
+</ul>
+
+<p>
+Save the workout and trigger progression evaluation.
+Update calendar completion and progress analytics.
+</p>
+
+</section>
+
+<!-- 08 -->
+
+<section id="routineslist">
+<h2>08. Routines library</h2>
+
+<p>
+The Routines section must contain the user's complete training
+library, not just the next workout.
+</p>
+
+<h3>Routine cards</h3>
+
+<div class="card">
+<h4>LEG DAY — GLUTES & HAMSTRINGS</h4>
+<p>6 exercises · 45–60 minutes</p>
+<p>Muscles: Glutes, hamstrings, core</p>
+<p>Estimated calories: display only if an appropriately calibrated
+estimate is available.</p>
+<p>Last completed: historical date</p>
+<button>VIEW ROUTINE</button>
+<button>START</button>
+</div>
+
+<h3>Information on each routine card</h3>
+
+<ul>
+<li>Routine name.</li>
+<li>Muscles worked.</li>
+<li>Exercise count.</li>
+<li>Estimated duration.</li>
+<li>Estimated calories, if supported.</li>
+<li>Last completed date.</li>
+<li>Progress status.</li>
+<li>Next scheduled session.</li>
+</ul>
+
+<p>
+Calorie expenditure must never be presented as an exact measurement.
+If the app cannot estimate it responsibly, show duration instead.
+</p>
+
+<h3>Routine management</h3>
+
+<ul>
+<li>View exercises.</li>
+<li>Edit routine.</li>
+<li>Reorder exercises.</li>
+<li>Add exercise.</li>
+<li>Remove exercise.</li>
+<li>Duplicate routine.</li>
+<li>Schedule routine.</li>
+<li>Replace exercise.</li>
+<li>View historical results.</li>
+</ul>
+
+<p>
+When users manually edit an automatically generated routine,
+mark it as user-customized. Future regeneration must respect
+their edits wherever possible.
+</p>
+
+</section>
+
+<!-- 09 -->
+
+<section id="calendar">
+<h2>09. Personalized calendar</h2>
+
+<h3>Purpose</h3>
+
+<p>
+The calendar is the central place where users see and manage
+their entire fitness and nutrition life.
+</p>
+
+<h3>Calendar views</h3>
+
+<ul>
+<li>Day view.</li>
+<li>Week view.</li>
+<li>Month view.</li>
+<li>Upcoming activities.</li>
+</ul>
+
+<h3>Color organization</h3>
+
+<table>
+<tr><th>Category</th><th>Color</th></tr>
+<tr><td>Training</td><td>Green</td></tr>
+<tr><td>Meals</td><td>Pink</td></tr>
+<tr><td>Recovery</td><td>Blue</td></tr>
+<tr><td>Medication reminders</td><td>Purple</td></tr>
+<tr><td>Personal activities</td><td>Orange</td></tr>
+<tr><td>Completed items</td><td>Subtle completed state</td></tr>
+</table>
+
+<p>
+Use a consistent legend. Colors must also be distinguishable
+without relying on color alone.
+</p>
+
+<h3>Adding activities</h3>
+
+<p>
+The + button must allow users to add:
+</p>
+
+<ul>
+<li>Workout.</li>
+<li>Meal.</li>
+<li>Snack.</li>
+<li>Cardio.</li>
+<li>Rest day.</li>
+<li>Personal activity.</li>
+<li>Custom reminder.</li>
+<li>Medication reminder shortcut.</li>
+</ul>
+
+<p>Each event supports:</p>
+<ul>
+<li>Name.</li>
+<li>Date.</li>
+<li>Start time.</li>
+<li>Duration.</li>
+<li>Category.</li>
+<li>Notes.</li>
+<li>Reminder.</li>
+<li>Completion status.</li>
+</ul>
+
+<h3>Training day calendar integration</h3>
+
+<p>
+When a user opens a training day, display the complete planned day.
+</p>
+
+<div class="card">
+<h4>MONDAY — TRAINING DAY</h4>
+<p>08:00 · Breakfast</p>
+<p>12:30 · Lunch — 520 kcal · 42 g protein · 20 min</p>
+<p>17:30 · Glute & Hamstring Workout</p>
+<p>19:00 · Dinner</p>
+<p>20:00 · Recovery / personal activity</p>
+</div>
+
+<p>
+The meal displayed must be the actual meal assigned to that day,
+not a generic placeholder.
+</p>
+
+<h3>Meal-calendar integration</h3>
+
+<ul>
+<li>Show meal name.</li>
+<li>Show calories.</li>
+<li>Show protein.</li>
+<li>Show cooking time.</li>
+<li>Open complete recipe.</li>
+<li>Allow meal swapping.</li>
+<li>Update the meal plan when changed.</li>
+</ul>
+
+<h3>Workout-calendar integration</h3>
+
+<ul>
+<li>Show routine name.</li>
+<li>Show planned time.</li>
+<li>Show duration.</li>
+<li>Show muscle groups.</li>
+<li>Start workout directly.</li>
+<li>Mark workout completed.</li>
+</ul>
+
+<h3>Calendar rescheduling</h3>
+
+<p>
+If a user misses a workout, offer suitable options:
+</p>
+<ul>
+<li>Move the workout to another available day.</li>
+<li>Keep the remaining split and skip that session.</li>
+<li>Generate a revised week while preserving recovery.</li>
+</ul>
+
+<p>
+Never automatically place two demanding sessions together
+if doing so creates an inappropriate recovery schedule.
+</p>
+
+<p>
+A change in calendar must update the connected workout or meal
+record. Avoid duplicate events.
+</p>
+
+</section>
+
+<!-- 10 -->
+
+<section id="peptides">
+<h2>10. Medication and peptide tracking</h2>
+
+<div class="warning">
+<strong>Important medical and regulatory boundary:</strong>
+Fit Hard must not prescribe peptides, recommend experimental
+compounds, calculate injectable doses or supply default dosing
+protocols. In Australia, many peptides promoted for fitness,
+recovery and weight loss are unapproved therapeutic goods.
+The TGA warns about significant risks, including incorrect
+ingredients, unreliable labelling and serious adverse effects.
+</div>
+
+<p>
+This feature should function as a private medication and
+prescribed-treatment tracking tool.
+</p>
+
+<h3>Medication section</h3>
+
+<p>Allow users to:</p>
+<ul>
+<li>Add a prescribed medication or peptide by name.</li>
+<li>Enter the product exactly as prescribed.</li>
+<li>Record prescribed dosage and units.</li>
+<li>Record route of administration as directed.</li>
+<li>Record prescribed frequency.</li>
+<li>Enter clinician-provided instructions.</li>
+<li>Set reminder dates and times.</li>
+<li>Record the prescribing professional if desired.</li>
+<li>Pause or discontinue tracking.</li>
+</ul>
+
+<h3>Dosage entry</h3>
+
+<p>
+Support clinician-prescribed custom entries and unit selection.
+Do not offer generic recommended doses or prefilled injectable
+dosage protocols.
+</p>
+
+<p>
+If the user changes their dosage, clearly explain that they
+must follow their prescriber's instructions.
+</p>
+
+<h3>Medication reminder interface</h3>
+
+<div class="card">
+<h4>MY MEDICATION SCHEDULE</h4>
+<p>Medication name: User-entered prescription</p>
+<p>Prescribed amount: User-entered amount and unit</p>
+<p>Time: User-selected time</p>
+<p>Frequency: User-entered prescribed schedule</p>
+<button>MARK AS TAKEN</button>
+<button>SKIP</button>
+</div>
+
+<h3>Safety requirements</h3>
+
+<ul>
+<li>Never suggest changing a dose.</li>
+<li>Never calculate injection preparation or reconstitution.</li>
+<li>Never infer a dose from body weight.</li>
+<li>Never recommend combining peptides.</li>
+<li>Do not promote unapproved products as safe or effective.</li>
+<li>Allow the user to record prescribed medicines without
+providing medical advice.</li>
+<li>Provide links to official medicine information where possible.</li>
+</ul>
+
+<p>
+Only populate an approved medicine catalogue using verified,
+current regulatory data. Do not represent an unapproved
+experimental peptide list as an approved treatment catalogue.
+</p>
+
+</section>
+
+<!-- 11 -->
+
+<section id="mascot">
+<h2>11. Mascot recommendation engine</h2>
+
+<h3>Purpose</h3>
+
+<p>
+The mascot is the personality of Fit Hard and the user's
+personal fitness companion.
+</p>
+
+<p>
+It must respond to real user activity and offer helpful,
+contextual recommendations.
+</p>
+
+<h3>Recommendation categories</h3>
+
+<table>
+<tr><th>Situation</th><th>Recommendation</th></tr>
+<tr><td>New user</td><td>Explain their personalized training plan.</td></tr>
+<tr><td>Workout completed</td><td>Celebrate actual completed activity.</td></tr>
+<tr><td>Personal record</td><td>Highlight the exercise and improvement.</td></tr>
+<tr><td>Missed workout</td><td>Offer a practical rescheduling option without guilt.</td></tr>
+<tr><td>Repeated fatigue</td><td>Suggest recovery or reviewing training difficulty.</td></tr>
+<tr><td>Low protein intake</td><td>Suggest a suitable recipe or food option.</td></tr>
+<tr><td>Missing ingredients</td><td>Point to the shopping list.</td></tr>
+<tr><td>New training week</td><td>Preview the user's upcoming routine.</td></tr>
+<tr><td>Completed milestone</td><td>Celebrate the milestone.</td></tr>
+</table>
+
+<h3>Recommendation rules</h3>
+
+<p>
+The mascot should only make statements supported by stored app data.
+It must never invent workout completion, weight changes or meals.
+</p>
+
+<p>
+Examples:
+</p>
+
+<ul>
+<li>"Your hip thrust improved from your previous session."</li>
+<li>"You've got three training sessions planned this week."</li>
+<li>"Your lunch is ready in your meal plan."</li>
+<li>"You have two ingredients left to buy."</li>
+<li>"You have completed all your planned workouts this week."</li>
+</ul>
+
+<h3>Motivational behavior</h3>
+
+<ul>
+<li>Celebrate consistency, not just weight loss.</li>
+<li>Reward effort and measurable progress.</li>
+<li>Use supportive, non-judgmental language.</li>
+<li>Never shame users for missed days.</li>
+<li>Never encourage dangerous restriction or overtraining.</li>
+<li>Allow the user to reduce mascot interactions.</li>
+</ul>
+
+<h3>Implementation</h3>
+
+<p>
+Use a deterministic rule engine with prioritized recommendation
+templates. It does not require an AI API.
+</p>
+
+<p>
+Store recommendation history to prevent the mascot from repeating
+the same message excessively.
+</p>
+
+</section>
+
+<!-- 12 -->
+
+<section id="notifications">
+<h2>12. Notification engine</h2>
+
+<h3>Notification categories</h3>
+
+<ul>
+<li>Workout reminders.</li>
+<li>Meal reminders.</li>
+<li>Shopping reminders.</li>
+<li>Recovery reminders.</li>
+<li>Medication reminders.</li>
+<li>Progress milestones.</li>
+<li>Calendar activities.</li>
+</ul>
+
+<h3>Workout notifications</h3>
+
+<p>
+Allow users to select the reminder time before a scheduled workout.
+If the workout is rescheduled, update the notification.
+</p>
+
+<h3>Meal notifications</h3>
+
+<p>
+Remind users of meals at their chosen times. Do not force a fixed
+meal schedule. Use their actual calendar and meal preferences.
+</p>
+
+<h3>Medication notifications</h3>
+
+<p>
+Use the user's entered prescribed schedule. Never create
+medication reminders based on a generic peptide protocol.
+</p>
+
+<h3>Notification controls</h3>
+
+<ul>
+<li>Enable or disable individual categories.</li>
+<li>Set preferred quiet hours.</li>
+<li>Set notification frequency.</li>
+<li>Change reminder times.</li>
+<li>Dismiss or complete reminders.</li>
+</ul>
+
+<h3>Technical behavior</h3>
+
+<p>
+Use Apple's UserNotifications framework.
+</p>
+
+<ul>
+<li>Request permission at the appropriate moment.</li>
+<li>Explain why notification permission is useful.</li>
+<li>Schedule local notifications.</li>
+<li>Store notification identifiers against their source records.</li>
+<li>Cancel outdated notifications.</li>
+<li>Reschedule after calendar edits.</li>
+<li>Handle timezone and daylight-saving changes.</li>
+<li>Do not send duplicates.</li>
+<li>Support notification action buttons where appropriate.</li>
+</ul>
+
+<p>
+The app must continue functioning when notification permission
+is denied. Display in-app reminders instead.
+</p>
+
+</section>
+
+<!-- 13 -->
+
+<section id="analytics">
+<h2>13. Progress and analytics</h2>
+
+<p>
+Progress should combine nutrition, training and consistency.
+Avoid making body weight the only measure of success.
+</p>
+
+<h3>Dashboard metrics</h3>
+
+<ul>
+<li>Weight trend, when tracked.</li>
+<li>Training sessions completed.</li>
+<li>Weekly training consistency.</li>
+<li>Exercise strength improvements.</li>
+<li>Personal records.</li>
+<li>Protein intake, where tracked.</li>
+<li>Meal plan adherence.</li>
+<li>Muscle group training volume.</li>
+<li>Optional measurements.</li>
+</ul>
+
+<h3>Visualizations</h3>
+
+<ul>
+<li>Weight trend graph.</li>
+<li>Exercise progression graphs.</li>
+<li>Weekly activity graph.</li>
+<li>Nutrition target progress.</li>
+<li>Training calendar history.</li>
+</ul>
+
+<h3>Important rules</h3>
+
+<p>
+Show trends rather than overreacting to daily weight fluctuations.
+Allow users to opt out of weight-focused tracking.
+Do not imply that estimated calories burned are exact.
+</p>
+
+</section>
+
+<!-- 14 -->
+
+<section id="database">
+<h2>14. Data architecture and Swift implementation</h2>
+
+<h3>Recommended technologies</h3>
+
+<table>
+<tr><th>Technology</th><th>Purpose</th></tr>
+<tr><td>SwiftUI</td><td>Native user interface.</td></tr>
+<tr><td>SwiftData or existing persistence layer</td><td>Local profile, routines, meals and tracking.</td></tr>
+<tr><td>Observation / Observable models</td><td>Reactive shared state.</td></tr>
+<tr><td>UserNotifications</td><td>Local notifications.</td></tr>
+<tr><td>Charts</td><td>Progress visualization.</td></tr>
+<tr><td>AVKit</td><td>Exercise demonstration videos, if supported.</td></tr>
+<tr><td>HealthKit (optional)</td><td>Explicitly authorized health data integration.</td></tr>
+</table>
+
+<p>
+Do not replace working infrastructure just to adopt these
+specific frameworks. Integrate with the existing project architecture.
+</p>
+
+<h3>Core data models</h3>
+
+<pre><code>TrainingPlan {
+    id
+    profileID
+    startDate
+    durationWeeks
+    goal
+    splitType
+    sessions[]
+    status
+}
+
+WorkoutRoutine {
+    id
+    name
+    focusMuscles[]
+    exercises[]
+    estimatedDuration
+    createdAt
+    isCustomized
+}
+
+WorkoutSession {
+    id
+    routineID
+    scheduledDate
+    completedDate
+    exerciseResults[]
+    duration
+    status
+    difficultyRating
+}
+
+Exercise {
+    id
+    name
+    primaryMuscles[]
+    secondaryMuscles[]
+    equipment[]
+    movementPattern
+    difficulty
+    instructions[]
+    image
+    video
+    alternatives[]
+}
+
+ExerciseResult {
+    exerciseID
+    sets[]
+    previousPerformance
+    nextTarget
+}
+
+ExerciseSet {
+    weight
+    repetitions
+    restSeconds
+    completed
+    perceivedEffort
+}
+
+MealPlan {
+    id
+    profileID
+    date
+    meals[]
+    dailyNutrition
+}
+
+MealEntry {
+    id
+    recipeID
+    mealType
+    scheduledTime
+    servings
+    completionStatus
+}
+
+RecipeIngredient {
+    ingredientID
+    quantity
+    unit
+}
+
+IngredientInventory {
+    ingredientID
+    quantityAvailable
+    unit
+    expiryDate
+}
+
+ShoppingListItem {
+    ingredientID
+    requiredQuantity
+    availableQuantity
+    purchaseQuantity
+    purchased
+}
+
+CalendarEvent {
+    id
+    eventType
+    linkedRecordID
+    date
+    startTime
+    duration
+    colorCategory
+    completed
+}
+
+MedicationEntry {
+    id
+    userEnteredName
+    prescribedDose
+    doseUnit
+    route
+    prescribedFrequency
+    instructions
+    reminderSchedule
+    active
+}
+
+MedicationLog {
+    medicationID
+    scheduledDate
+    status
+    recordedDate
+}
+
+NotificationRecord {
+    id
+    sourceRecordID
+    category
+    scheduledDate
+    notificationIdentifier
+}</code></pre>
+
+<h3>Data integrity</h3>
+
+<ul>
+<li>Use stable identifiers.</li>
+<li>Use database relationships rather than duplicate independent records.</li>
+<li>Preserve completed workout history.</li>
+<li>Use versioned profile and training-plan changes.</li>
+<li>Prevent duplicate calendar events.</li>
+<li>Recalculate derived nutrition values when ingredient quantities change.</li>
+<li>Preserve medication records securely.</li>
+<li>Provide backup and export options where appropriate.</li>
+</ul>
+
+<h3>Privacy</h3>
+
+<p>
+Fitness, weight, dietary and medication information is sensitive.
+Store only what is needed, use appropriate encryption and access
+controls, and obtain consent before using HealthKit or sharing
+data with external services.
+</p>
+
+</section>
+
+<!-- 15 -->
+
+<section id="design">
+<h2>15. UI and UX requirements</h2>
+
+<h3>Overall design direction</h3>
+
+<p>
+Retain the existing Fit Hard brand, visual identity, mascot and
+working components wherever possible. Extend the current design
+rather than rebuilding it without a reason.
+</p>
+
+<p>
+The experience should feel:
+</p>
+
+<ul>
+<li>Modern.</li>
+<li>Premium.</li>
+<li>Motivating.</li>
+<li>Friendly.</li>
+<li>Clean.</li>
+<li>Intuitive.</li>
+<li>Visually rewarding.</li>
+</ul>
+
+<h3>Navigation</h3>
+
+<p>
+The user must be able to access the major areas without confusion:
+</p>
+
+<ul>
+<li>Home.</li>
+<li>Meals.</li>
+<li>Routines.</li>
+<li>Calendar.</li>
+<li>Progress.</li>
+<li>Medication tracking, if enabled.</li>
+<li>Profile and settings.</li>
+</ul>
+
+<p>
+Use the existing navigation architecture if it is already working.
+Avoid creating unnecessary duplicate destinations.
+</p>
+
+<h3>Design principles</h3>
+
+<ul>
+<li>One primary action per major screen.</li>
+<li>Progressive disclosure of advanced settings.</li>
+<li>Readable nutrition and training data.</li>
+<li>Consistent category colors.</li>
+<li>Accessible typography and touch targets.</li>
+<li>Useful empty states.</li>
+<li>Clear loading and error states.</li>
+<li>Confirmation before destructive actions.</li>
+<li>Persistent progress where appropriate.</li>
+</ul>
+
+<h3>Important empty states</h3>
+
+<p>
+Do not leave users with blank pages. If there are no meals,
+routines or calendar events, provide a clear next action.
+</p>
+
+</section>
+
+<!-- 16 -->
+
+<section id="qa">
+<h2>16. End-to-end testing requirements</h2>
+
+<div class="callout">
+<strong>Mandatory:</strong>
+Every feature must be tested through actual user interactions,
+not just by checking whether the screen renders.
+</div>
+
+<h3>A. Onboarding tests</h3>
+
+<ul>
+<li>Complete onboarding with every supported goal.</li>
+<li>Test different training frequencies.</li>
+<li>Test all dietary patterns.</li>
+<li>Test missing optional answers.</li>
+<li>Test invalid and boundary values.</li>
+<li>Confirm answers persist after restarting.</li>
+<li>Confirm every answer reaches its correct service.</li>
+</ul>
+
+<h3>B. Nutrition tests</h3>
+
+<ul>
+<li>Generate meals for different goals.</li>
+<li>Check calorie calculations.</li>
+<li>Check protein, carbohydrate and fat calculations.</li>
+<li>Test recipe serving changes.</li>
+<li>Test allergy exclusion.</li>
+<li>Test ingredient matching.</li>
+<li>Test ingredient quantity conversion.</li>
+<li>Test shopping-list aggregation.</li>
+<li>Swap one meal and verify other meals remain unchanged.</li>
+<li>Confirm the calendar updates after a meal swap.</li>
+</ul>
+
+<h3>C. Training tests</h3>
+
+<ul>
+<li>Generate plans for two through six training days.</li>
+<li>Test beginners and experienced users.</li>
+<li>Test different equipment availability.</li>
+<li>Test muscle priority selection.</li>
+<li>Check weekly muscle exposure and recovery spacing.</li>
+<li>Check that sessions fit the selected duration.</li>
+<li>Test customized routines.</li>
+</ul>
+
+<h3>D. Progressive overload tests</h3>
+
+<ul>
+<li>Record weights and repetitions.</li>
+<li>Complete a full session.</li>
+<li>Confirm historical performance is saved.</li>
+<li>Confirm next targets are calculated correctly.</li>
+<li>Confirm an increase is suggested only when criteria are met.</li>
+<li>Test stalled performance.</li>
+<li>Test fatigue and pain flags.</li>
+<li>Confirm previous history is never overwritten.</li>
+</ul>
+
+<h3>E. Training mode tests</h3>
+
+<ul>
+<li>Start a workout.</li>
+<li>Start and stop timers.</li>
+<li>Pause and resume.</li>
+<li>Skip rest.</li>
+<li>Open exercise instructions.</li>
+<li>Change between timer and guided mode.</li>
+<li>Background and foreground the app.</li>
+<li>Close and reopen the app during a workout.</li>
+<li>Finish a workout and verify all results persist.</li>
+</ul>
+
+<h3>F. Calendar tests</h3>
+
+<ul>
+<li>Add an event using +.</li>
+<li>Edit an event.</li>
+<li>Move an event.</li>
+<li>Delete an event.</li>
+<li>Swap a scheduled meal.</li>
+<li>Start a workout from the calendar.</li>
+<li>Complete a workout and update its calendar state.</li>
+<li>Check category colors.</li>
+<li>Check timezone changes.</li>
+<li>Check duplicate prevention.</li>
+</ul>
+
+<h3>G. Medication tests</h3>
+
+<ul>
+<li>Add a user-entered medication.</li>
+<li>Save clinician-provided dosage information.</li>
+<li>Set reminders.</li>
+<li>Change reminder times.</li>
+<li>Mark a reminder taken or skipped.</li>
+<li>Pause a medication schedule.</li>
+<li>Verify no generic dose suggestions appear.</li>
+<li>Verify private data is not exposed in inappropriate places.</li>
+</ul>
+
+<h3>H. Notification tests</h3>
+
+<ul>
+<li>Test first permission request.</li>
+<li>Test permission denied.</li>
+<li>Test reminders when the app is closed.</li>
+<li>Test rescheduling.</li>
+<li>Test quiet hours.</li>
+<li>Test daylight-saving changes.</li>
+<li>Test duplicate prevention.</li>
+<li>Test notification action buttons.</li>
+</ul>
+
+<h3>I. Regression tests</h3>
+
+<p>
+All existing working functionality must remain functional.
+Test existing onboarding, navigation, account handling,
+persistence, visual components and other established features.
+</p>
+
+<h3>Automated testing</h3>
+
+<p>Use:</p>
+<ul>
+<li>XCTest for logic.</li>
+<li>Swift Testing where appropriate.</li>
+<li>XCUITest for user journeys.</li>
+<li>Unit tests for nutrition calculations.</li>
+<li>Unit tests for workout generation.</li>
+<li>Unit tests for progression rules.</li>
+<li>Integration tests for calendar and notifications.</li>
+</ul>
+
+</section>
+
+<!-- 17 -->
+
+<section id="acceptance">
+<h2>17. Definition of done</h2>
+
+<p>
+The project is not complete just because all screens have been
+created. The full system must work together.
+</p>
+
+<table>
+<tr><th>Requirement</th><th>Pass condition</th></tr>
+<tr><td>Personalization</td><td>Onboarding answers change actual generated outputs.</td></tr>
+<tr><td>Nutrition</td><td>Meals use goals, preferences and calculated nutrition.</td></tr>
+<tr><td>Ingredients</td><td>Available and missing ingredients are calculated accurately.</td></tr>
+<tr><td>Meal swaps</td><td>One meal can change without destroying the rest of the plan.</td></tr>
+<tr><td>Training</td><td>Different user profiles generate appropriate training structures.</td></tr>
+<tr><td>Progression</td><td>Historical performance changes future exercise targets.</td></tr>
+<tr><td>Training mode</td><td>Timers, sets, breaks and exercise guidance work correctly.</td></tr>
+<tr><td>Routines</td><td>Users can view, edit and start all saved routines.</td></tr>
+<tr><td>Calendar</td><td>Meals and training are connected to their actual records.</td></tr>
+<tr><td>Medication</td><td>User-entered prescribed schedules can be tracked safely.</td></tr>
+<tr><td>Mascot</td><td>Recommendations are based on real user data.</td></tr>
+<tr><td>Notifications</td><td>Reminders are correctly scheduled, updated and cancelled.</td></tr>
+<tr><td>Persistence</td><td>Data survives app restarts.</td></tr>
+<tr><td>Accessibility</td><td>Core screens work with accessible labels and touch targets.</td></tr>
+<tr><td>Regression</td><td>Existing app functionality is not broken.</td></tr>
+</table>
+
+<h3>Required final developer report</h3>
+
+<p>At completion, provide:</p>
+<ol>
+<li>All changed and created files.</li>
+<li>Architecture and database changes.</li>
+<li>Features implemented.</li>
+<li>Features intentionally deferred.</li>
+<li>Tests performed.</li>
+<li>Test results and remaining failures.</li>
+<li>Any required database migrations.</li>
+<li>Any permission or configuration requirements.</li>
+<li>Confirmation that the app builds successfully.</li>
+<li>Confirmation that the critical user journeys work end to end.</li>
+</ol>
+
+<p>
+Do not report a feature as completed if only its UI exists.
+</p>
+
+</section>
+
+<!-- 18 -->
+
+<section id="references">
+<h2>18. Scientific and regulatory references</h2>
+
+<p>
+Use these references as the evidence foundation for the initial
+training, nutrition and safety rules. Review current evidence
+when changing the underlying recommendation logic.
+</p>
+
+<div class="card">
+<h4>Resistance training and progression</h4>
+<ol>
+<li>
+<a href="https://pubmed.ncbi.nlm.nih.gov/41843416/">
+ACSM 2026 — Resistance Training Prescription for Muscle Function,
+Hypertrophy, and Physical Performance in Healthy Adults.
+</a>
+</li>
+<li>
+<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC12965823/">
+Full-text 2026 ACSM evidence review.
+</a>
+</li>
+<li>
+<a href="https://bjsm.bmj.com/content/early/2023/07/06/bjsports-2023-106807.full">
+2023 systematic review and Bayesian network meta-analysis
+of resistance training prescriptions.
+</a>
+</li>
+<li>
+<a href="https://pubmed.ncbi.nlm.nih.gov/41343037/">
+Resistance training dose-response meta-regression:
+weekly volume and frequency.
+</a>
+</li>
+</ol>
+</div>
+
+<div class="card">
+<h4>Physical activity</h4>
+<ol>
+<li>
+<a href="https://www.health.gov.au/topics/physical-activity/24-hour-movement-guidelines-for-all-australians/recommendations-for-adults-18-to-64-years">
+Australian Government adult physical activity guidelines.
+</a>
+</li>
+<li>
+<a href="https://www.who.int/initiatives/behealthy/physical-activity/">
+World Health Organization physical activity recommendations.
+</a>
+</li>
+</ol>
+</div>
+
+<div class="card">
+<h4>Nutrition and protein</h4>
+<ol>
+<li>
+<a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5477153/">
+International Society of Sports Nutrition:
+Protein and Exercise position stand.
+</a>
+</li>
+<li>
+<a href="https://www.niddk.nih.gov/bwp">
+NIDDK Body Weight Planner.
+</a>
+</li>
+</ol>
+</div>
+
+<div class="card">
+<h4>Peptide and medication safety — Australia</h4>
+<ol>
+<li>
+<a href="https://www.tga.gov.au/resources/explore-topic/peptide-products">
+Therapeutic Goods Administration — Peptide products.
+</a>
+</li>
+<li>
+<a href="https://www.tga.gov.au/safety/safety-monitoring-and-information/safety-alerts/tga-warning-risks-importing-unapproved-peptide-products">
+TGA warning on unapproved peptide products.
+</a>
+</li>
+<li>
+<a href="https://www.tga.gov.au/safety/safety-monitoring-and-information/safety-alerts/tga-testing-finds-unapproved-peptides-do-not-contain-what-their-labels-claim">
+TGA testing of unapproved peptides, November 2026.
+</a>
+</li>
+<li>
+<a href="https://www.qld.gov.au/health/staying-healthy/peptide-products">
+Queensland Government — Peptide product safety.
+</a>
+</li>
+</ol>
+</div>
+
+<footer>
+<h3>FIT HARD — Final product principle</h3>
+<p>
+Every user should feel that Fit Hard understands their goals,
+their body, their available time, their food preferences and their
+training progress.
+</p>
+<p>
+The meals should adapt to the user. The routines should adapt to
+the user. The calendar should organize the user's actual life.
+The progression engine should help the user improve.
+The mascot should make the experience motivating.
+</p>
+<p>
+<strong>One profile. One connected system. A genuinely personalized
+fitness experience.</strong>
+</p>
+<p>End of master build specification.</p>
+</footer>
+
+</div>
+</body>
+</html>
