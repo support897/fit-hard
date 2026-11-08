@@ -5,6 +5,8 @@ struct HealthView: View {
     @EnvironmentObject var store: Store
     @State private var name = ""
     @State private var amount = ""
+    @State private var unit = ""; @State private var route = ""; @State private var freq = "Once a day"; @State private var instr = ""; @State private var prescriber = ""
+    @State private var times: [Date] = [timeDate("08:00")]
     @State private var time = timeDate("08:00")
     @State private var confirm = false
     @State private var apTitle = ""
@@ -21,21 +23,33 @@ struct HealthView: View {
                         if store.s.meds.isEmpty { Text("Nothing added yet.").foregroundStyle(Color.muted) }
                         ForEach(store.s.meds) { m in
                             MedRow(med: m)
-                            Button(role: .destructive) { store.s.meds.removeAll { $0.id == m.id }; Notifier.rebuild(store) } label: { Text("Remove \(m.name)").font(.caption) }
+                            HStack {
+                                Toggle("Reminders paused", isOn: Binding(get: { m.isPaused }, set: { v in if let i = store.s.meds.firstIndex(where: { $0.id == m.id }) { store.s.meds[i].paused = v; Notifier.rebuild(store) } })).font(.caption).tint(Color.sage)
+                                Button(role: .destructive) { store.s.meds.removeAll { $0.id == m.id }; Notifier.rebuild(store) } label: { Text("Stop and remove").font(.caption) }
+                            }
                         }
                     }
                     Card {
-                        SectionTitle(text: "Add what your clinician gave you")
-                        TextField("Name (as given)", text: $name)
-                        TextField("Amount (as given)", text: $amount)
-                        DatePicker("Time", selection: $time, displayedComponents: .hourAndMinute)
+                        SectionTitle(text: "Add what your clinician prescribed")
+                        Text("You type everything. Fit Hard never suggests a name, a dose or a change.").font(.caption).foregroundStyle(Color.muted)
+                        TextField("Name (as given)", text: $name).accessibilityIdentifier("med-name")
+                        HStack { TextField("Dose (as given)", text: $amount).accessibilityIdentifier("med-dose"); TextField("Unit (as given)", text: $unit) }
+                        TextField("How taken, as directed (optional)", text: $route)
+                        Picker("How often", selection: $freq) { ForEach(["Once a day", "Twice a day", "Weekly", "As directed"], id: \.self) { Text($0).tag($0) } }
+                        TextField("Instructions from your clinician (optional)", text: $instr)
+                        TextField("Prescriber (optional)", text: $prescriber)
+                        ForEach(times.indices, id: \.self) { i in DatePicker("Reminder \(i + 1)", selection: $times[i], displayedComponents: .hourAndMinute) }
+                        Button("Add another reminder time") { times.append(timeDate("20:00")) }.font(.subheadline.weight(.semibold))
                         Toggle("This was provided by my clinician", isOn: $confirm).tint(Color.sage)
                         BigButton(title: "Add", icon: "plus") {
                             let n = name.trimmingCharacters(in: .whitespaces)
                             guard confirm, !n.isEmpty else { store.say("Add a name and tick the box"); return }
-                            store.s.meds.append(Med(name: n, amount: amount, time: timeString(time))); name = ""; amount = ""; confirm = false
+                            let ts = times.map { timeString($0) }
+                            store.s.meds.append(Med(name: n, amount: amount, time: ts.first ?? "08:00", unit: unit.isEmpty ? nil : unit, route: route.isEmpty ? nil : route, frequency: freq,
+                                                    instructions: instr.isEmpty ? nil : instr, prescriber: prescriber.isEmpty ? nil : prescriber, paused: false, times: ts))
+                            name = ""; amount = ""; unit = ""; route = ""; instr = ""; prescriber = ""; confirm = false; times = [timeDate("08:00")]
                             Notifier.rebuild(store); store.say("Added")
-                        }
+                        }.accessibilityIdentifier("med-add")
                     }
                     Card {
                         SectionTitle(text: "Appointments")

@@ -14,7 +14,18 @@ enum Cloud {
     static let key = "AIzaSyDZXZM0kamF2mZVHpKL2SK4JAHjsQIQI0g"   // public web identifier by design
     static let project = "fit-app-7f25f"
 
+    /// Offline mode is for automated tests only: nothing leaves the phone, and every call is logged so tests can prove what was (not) called.
+    static var forceOffline = false
+    static var log: [String] = []
+    static var offline: Bool { forceOffline || ProcessInfo.processInfo.arguments.contains("-uiTestOffline") }
     private static func post(_ url: String, _ body: [String: Any]) async throws -> [String: Any] {
+        if offline {
+            let name = String((url.split(separator: "?").first ?? "").split(separator: "/").last ?? "")
+            log.append(name)
+            if name.contains("signInWithPassword") { throw AccountError.msg(friendly("INVALID_LOGIN")) }
+            if name.contains("signUp") { return ["localId": "offline-uid", "idToken": "offline", "refreshToken": "offline"] }
+            return [:]
+        }
         var r = URLRequest(url: URL(string: url)!)
         r.httpMethod = "POST"; r.setValue("application/json", forHTTPHeaderField: "Content-Type")
         r.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -114,8 +125,16 @@ extension Store {
         }
     }
     /// After sign-in: read the cloud copy first. If it exists and this phone is brand new, adopt it; never overwrite on a failed read.
+    /// The one place the door signs in or creates. Sign in only signs in: a wrong password is an error, never a new account.
+    func door(creating: Bool, name: String, email: String, pass: String) async throws {
+        let x = creating ? try await Cloud.signUp(email, pass) : try await Cloud.signIn(email, pass)
+        if creating { s.profile.name = name }
+        await connect(x)
+        if !creating && s.profile.name.isEmpty && !name.isEmpty { s.profile.name = name }
+    }
     func connect(_ x: Session) async {
         storeSession(x); cloudReady = false
+        if Cloud.offline { return }
         do {
             var cur = x
             var remote: String? = nil
@@ -131,6 +150,7 @@ extension Store {
     func signOutKeep() async {
         await backupNow()
         storeSession(nil); cloudReady = false; syncNote = ""
+        resetAll()                 // the door comes back, and the next person on this phone starts clean
     }
     func deleteAccountEverywhere() async throws {
         guard let x = session else { return }

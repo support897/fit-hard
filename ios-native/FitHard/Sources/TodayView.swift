@@ -1,10 +1,12 @@
 import SwiftUI
+import UserNotifications
 
 struct TodayView: View {
     @EnvironmentObject var store: Store
     let go: (Int) -> Void
     @State private var newTask = ""
     @State private var showTask = false
+    @State private var denied = false
 
     var greeting: String {
         let h = Calendar.current.component(.hour, from: Date())
@@ -16,6 +18,8 @@ struct TodayView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
+                    WallyBubble()
+                    if denied { inAppReminders }
                     nextCard
                     waterCard
                     if store.s.checkins[store.today] == nil { checkinCard }
@@ -29,9 +33,20 @@ struct TodayView: View {
             }
             .background(Color.cream)
             .navigationTitle(greeting)
+            .onAppear { Notifier.status { denied = ($0 == .denied) } }
+            .toolbar { ToolbarItem(placement: .navigationBarTrailing) { AvatarView(size: 34) } }
         }
     }
 
+    var inAppReminders: some View {
+        let rows = Notifier.dueToday(store.s)
+        return Card {
+            SectionTitle(text: "Reminders for today")
+            Text("Notifications are off, so they show here.").font(.caption).foregroundStyle(Color.muted)
+            if rows.isEmpty { Text("Nothing more today.").foregroundStyle(Color.muted) }
+            ForEach(Array(rows.prefix(6).enumerated()), id: \.offset) { _, r in Text("\(r.time) · \(r.title)").font(.subheadline) }
+        }.accessibilityIdentifier("inapp-reminders")
+    }
     var nextCard: some View {
         let st = store.nextStep
         return Button { haptic(); go(st.tab) } label: {
@@ -67,8 +82,9 @@ struct TodayView: View {
             HStack(spacing: 10) {
                 ForEach(Lists.checkins, id: \.0) { c in
                     Button { store.s.checkins[store.today] = c.0; haptic(); store.say(c.2) } label: {
-                        Text(c.1).font(.headline).frame(maxWidth: .infinity).padding(.vertical, 14).background(Color.tint, in: RoundedRectangle(cornerRadius: 14))
-                    }.buttonStyle(.plain).foregroundStyle(Color.ink)
+                        VStack(spacing: 4) { Image(systemName: Lists.checkinIcons[c.0] ?? "circle").font(.title2); Text(c.1).font(.headline) }
+                            .frame(maxWidth: .infinity, minHeight: 64).background(Color.tint, in: RoundedRectangle(cornerRadius: 14))
+                    }.buttonStyle(.plain).foregroundStyle(Color.ink).accessibilityIdentifier("feel-\(c.0)")
                 }
             }
         }
@@ -83,9 +99,9 @@ struct TodayView: View {
                     HStack {
                         Button { store.toggleEaten(m) } label: { Image(systemName: done ? "checkmark.circle.fill" : "circle").font(.title2).foregroundStyle(Color.sage) }
                         NavigationLink { RecipeDetail(recipe: r) } label: {
-                            VStack(alignment: .leading) { Text(m.capitalized).font(.caption).foregroundStyle(Color.muted); Text(r.name).font(.subheadline.weight(.semibold)).strikethrough(done).multilineTextAlignment(.leading) }
+                            VStack(alignment: .leading) { Text(m.capitalized).font(.caption).foregroundStyle(Color.muted); Text(r.name).font(.subheadline.weight(.semibold)).strikethrough(done).multilineTextAlignment(.leading); Text(store.line(r)).font(.caption).foregroundStyle(Color.muted) }
                         }.foregroundStyle(Color.ink)
-                        Spacer(); Text("\(r.minutes) min").font(.caption).foregroundStyle(Color.muted)
+                        Spacer()
                     }
                 }
             }
@@ -100,7 +116,7 @@ struct TodayView: View {
             else if store.workedOutToday { Label("Done today", systemImage: "checkmark.seal.fill").foregroundStyle(Color.sage) }
             else {
                 Text(ex.prefix(3).map { $0.name }.joined(separator: " · ") + (ex.count > 3 ? " +\(ex.count - 3)" : "")).font(.subheadline).foregroundStyle(Color.muted)
-                BigButton(title: "Start", icon: "play.fill") { go(2) }
+                BigButton(title: "Start", icon: "play.fill") { if let r = store.routine(on: store.today) { store.training = r } else { go(2) } }.accessibilityIdentifier("today-start")
             }
         }
     }
@@ -145,9 +161,9 @@ struct MedRow: View {
     var body: some View {
         let st = store.medStatus(med)
         VStack(alignment: .leading, spacing: 8) {
-            Text("\(med.name) \(med.amount)").font(.subheadline.weight(.semibold))
+            Text("\(med.name) \(med.amount) \(med.unit ?? "")").font(.subheadline.weight(.semibold))
             HStack(spacing: 8) {
-                ForEach([("taken", "Taken"), ("not_taken", "Not taken"), ("unsure", "Not sure")], id: \.0) { o in
+                ForEach([("taken", "Taken"), ("not_taken", "Skip"), ("unsure", "Not sure")], id: \.0) { o in
                     Chip(label: o.1, on: st == o.0) { store.logMed(med, o.0) }
                 }
             }

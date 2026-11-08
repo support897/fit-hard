@@ -6,7 +6,7 @@ extension Color {
     }
     /// Fixed palettes: white (default), black, brown. Contrast checked for body text >= 7:1, buttons >= 4.5:1.
     static var pal: UInt = 0
-    static func pick(_ w: UInt32, _ k: UInt32, _ b: UInt32) -> Color { Color(hex: pal == 1 ? k : pal == 2 ? b : w) }
+    static func pick(_ w: UInt32, _ k: UInt32, _ b: UInt32, _ r: UInt32) -> Color { Color(hex: pal == 1 ? k : pal == 2 ? b : pal == 3 ? r : w) }
     static var cream: Color { pick(0xFFFFFF, 0x000000, 0x3A281D) }
     static var surface: Color { pick(0xF3F5F3, 0x1B1B1B, 0x4B362A) }
     static var ink: Color { pick(0x161616, 0xFFFFFF, 0xFFF6E8) }
@@ -96,6 +96,8 @@ struct BundleImage: View {
             Image(uiImage: ui).resizable().scaledToFit()
         } else if let p = Bundle.main.path(forResource: name, ofType: "webp"), let ui = UIImage(contentsOfFile: p) {
             Image(uiImage: ui).resizable().scaledToFit()
+        } else if let p = Bundle.main.path(forResource: name, ofType: "png"), let ui = UIImage(contentsOfFile: p) {
+            Image(uiImage: ui).resizable().scaledToFit()
         } else { Color.clear }
     }
 }
@@ -119,7 +121,7 @@ struct SectionTitle: View {
 
 struct ThemePicker: View {
     @EnvironmentObject var store: Store
-    let opts: [(String, String, UInt32, UInt32)] = [("white", "White", 0xFFFFFF, 0x161616), ("black", "Black", 0x000000, 0xFFFFFF), ("brown", "Brown", 0x3A281D, 0xFFF6E8)]
+    let opts: [(String, String, UInt32, UInt32)] = [("burrow", "Burrow", 0xFAEED6, 0x3E2F26), ("white", "White", 0xFFFFFF, 0x161616), ("black", "Black", 0x000000, 0xFFFFFF), ("brown", "Brown", 0x3A281D, 0xFFF6E8)]
     var body: some View {
         HStack(spacing: 12) {
             ForEach(opts, id: \.0) { th in
