@@ -276,7 +276,7 @@ struct MonthView: View {
                     Button { month = cal.date(byAdding: .month, value: 1, to: month) ?? month } label: { Image(systemName: "chevron.right") } }
                 let cols = Array(repeating: GridItem(.flexible()), count: 7)
                 LazyVGrid(columns: cols) {
-                    ForEach(["M", "T", "W", "T", "F", "S", "S"], id: \.self) { Text($0).font(.caption).foregroundStyle(Color.muted) }
+                    ForEach(Array(["M", "T", "W", "T", "F", "S", "S"].enumerated()), id: \.offset) { _, d in Text(d).font(.caption).foregroundStyle(Color.muted) }
                     ForEach(Array(days.enumerated()), id: \.offset) { _, d in
                         if let d = d {
                             let k = dayKey(d); let it = store.items(on: k)
@@ -346,7 +346,7 @@ struct TasksView: View {
                 SectionTitle(text: "To do")
                 ForEach(store.s.tasks.sorted { ($0.done ? 1 : 0, $0.day ?? "") < ($1.done ? 1 : 0, $1.day ?? "") }) { t in
                     HStack { Button { if let i = store.s.tasks.firstIndex(where: { $0.id == t.id }) { store.s.tasks[i].done.toggle(); haptic(); Notifier.rebuild(store) } } label: { Image(systemName: t.done ? "checkmark.circle.fill" : "circle").font(.title3).foregroundStyle(Color.sage) }
-                        VStack(alignment: .leading) { Text(t.title).strikethrough(t.done); Text((t.day ?? "") + (t.time.map { " " + $0 } ?? "")).font(.caption).foregroundStyle(Color.muted) }
+                        VStack(alignment: .leading) { Text(t.title).strikethrough(t.done); Text(((t.day.flatMap { dateFromKey($0) })?.formatted(.dateTime.weekday(.abbreviated).day().month()) ?? "") + (t.time.map { " " + $0 } ?? "")).font(.caption).foregroundStyle(Color.muted) }
                         Spacer(); Button { store.s.tasks.removeAll { $0.id == t.id }; Notifier.rebuild(store) } label: { Image(systemName: "trash") }.foregroundStyle(Color.muted) }
                 }
                 if store.s.tasks.isEmpty { Text("Nothing here. Lovely.").foregroundStyle(Color.muted) }

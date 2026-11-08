@@ -12,17 +12,19 @@ struct FitHardApp: App {
 
 struct Themed: View {
     @EnvironmentObject var store: Store
+    @State private var tab = 0
     var body: some View {
         let th = store.s.settings.theme
         let _ = { Color.pal = th == "black" ? 1 : th == "brown" ? 2 : 0 }()
-        RootView().tint(Color.sage).foregroundStyle(Color.ink)
+        // .id(th) rebuilds every screen so no view keeps the old theme's colours; the tab is kept outside so you stay on it.
+        RootView(tab: $tab).id(th).tint(Color.sage).foregroundStyle(Color.ink)
             .preferredColorScheme(th == "white" ? .light : .dark)
     }
 }
 
 struct RootView: View {
     @EnvironmentObject var store: Store
-    @State private var tab = 0
+    @Binding var tab: Int
     var body: some View {
         ZStack(alignment: .bottom) {
             Color.cream.ignoresSafeArea()
