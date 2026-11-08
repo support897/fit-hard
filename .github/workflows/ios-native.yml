@@ -45,6 +45,35 @@ jobs:
         working-directory: ios-native
         run: grep -n "error:" build.log | head -60 || true
 
+      - name: Unit tests (logic, allergies, reminders, persistence)
+        working-directory: ios-native
+        run: |
+          set -o pipefail
+          UDID=$(xcrun simctl list devices available | grep -E "iPhone" | head -1 | grep -oE "[0-9A-F]{8}-([0-9A-F]{4}-){3}[0-9A-F]{12}")
+          echo "UDID=$UDID" >> $GITHUB_ENV
+          xcrun simctl boot "$UDID" || true
+          xcodebuild test -project FitHard.xcodeproj -scheme FitHard -destination "id=$UDID" \
+            -only-testing:FitHardTests CODE_SIGNING_ALLOWED=NO 2>&1 | tee unit.log | grep -E "Test Case|error:|Executed|TEST (SUCCEEDED|FAILED)" || true
+          grep -q "TEST SUCCEEDED" unit.log
+
+      - name: Unit test failures
+        if: failure()
+        working-directory: ios-native
+        run: grep -nE "error:|failed" unit.log | head -60 || true
+
+      - name: UI tests (onboarding, tabs, calendar, themes)
+        working-directory: ios-native
+        run: |
+          set -o pipefail
+          xcodebuild test -project FitHard.xcodeproj -scheme FitHard -destination "id=$UDID" \
+            -only-testing:FitHardUITests -resultBundlePath "$RUNNER_TEMP/ui.xcresult" CODE_SIGNING_ALLOWED=NO 2>&1 | tee ui.log | grep -E "Test Case|error:|Executed|TEST (SUCCEEDED|FAILED)" || true
+          grep -q "TEST SUCCEEDED" ui.log
+
+      - name: UI test failures
+        if: failure()
+        working-directory: ios-native
+        run: grep -nE "error:|failed" ui.log | head -60 || true
+
       - name: Install signing material from secrets
         if: ${{ github.event.inputs.ship == 'true' }}
         env:
