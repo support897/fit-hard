@@ -1,4 +1,5 @@
 import XCTest
+import SwiftUI
 @testable import Fit_Hard
 
 @MainActor
@@ -142,5 +143,28 @@ final class FitHardTests: XCTestCase {
         st.generateRoutine()
         for wd in [3, 5, 6, 7, 1] { XCTAssertTrue((st.s.routine[String(wd)] ?? []).isEmpty, "weekday \(wd)") }
         XCTAssertFalse((st.s.routine["2"] ?? []).isEmpty)
+    }
+
+    // Contrast: WCAG ratios for the real palette in every theme.
+    func lum(_ c: Color) -> Double {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        UIColor(c).getRed(&r, green: &g, blue: &b, alpha: &a)
+        func f(_ v: CGFloat) -> Double { let x = Double(v); return x <= 0.03928 ? x / 12.92 : pow((x + 0.055) / 1.055, 2.4) }
+        return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
+    }
+    func ratio(_ a: Color, _ b: Color) -> Double { let x = lum(a), y = lum(b); return (max(x, y) + 0.05) / (min(x, y) + 0.05) }
+    func testPaletteContrastMeetsWCAGInEveryTheme() {
+        defer { Color.pal = 0 }
+        for (i, name) in ["white", "black", "brown"].enumerated() {
+            Color.pal = UInt(i)
+            XCTAssertGreaterThanOrEqual(ratio(.ink, .cream), 7, "\(name) body text on background")
+            XCTAssertGreaterThanOrEqual(ratio(.ink, .surface), 7, "\(name) body text on cards")
+            XCTAssertGreaterThanOrEqual(ratio(.muted, .cream), 4.5, "\(name) secondary text on background")
+            XCTAssertGreaterThanOrEqual(ratio(.muted, .surface), 4.5, "\(name) secondary text on cards")
+            XCTAssertGreaterThanOrEqual(ratio(.surface, .sage), 4.5, "\(name) button label on green button")
+            XCTAssertGreaterThanOrEqual(ratio(.ink, .tint), 4.5, "\(name) label on tinted button")
+            XCTAssertGreaterThanOrEqual(ratio(.sage, .cream), 3, "\(name) green icons on background")
+            XCTAssertGreaterThanOrEqual(ratio(.amber, .surface), 3, "\(name) amber marker on cards")
+        }
     }
 }
