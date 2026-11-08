@@ -240,6 +240,9 @@ This profile feeds every personalization service.
     secondaryGoals
     targetAreas
 
+    characterAppearance
+    // boy, girl, nonBinary
+
     experienceLevel
     activityLevel
     availableTrainingDays
@@ -271,6 +274,46 @@ This profile feeds every personalization service.
     lastUpdated
 }</code></pre>
 
+<h3>Character appearance field</h3>
+
+<p>
+The characterAppearance field stores the appearance selected
+by the user during account setup.
+</p>
+
+<p>Supported values:</p>
+<ul>
+<li>boy</li>
+<li>girl</li>
+<li>nonBinary</li>
+</ul>
+
+<p>
+This is a visual customization preference. It must not be used
+to infer the user's gender identity, biological characteristics
+or medical requirements.
+</p>
+
+<h3>Character persistence and consistency</h3>
+
+<ul>
+<li>Save the selection to the user's persistent profile.</li>
+<li>Display the selected character as the user's app icon or avatar.</li>
+<li>Use the matching character appearance in exercise animations.</li>
+<li>Keep the same selected appearance across the app.</li>
+<li>Restore the selection after logout and login.</li>
+<li>Preserve the selection when updating the app.</li>
+<li>Allow the user to change their appearance later in Profile Settings.</li>
+<li>Changing appearance must not delete workout history, routines or progress.</li>
+<li>Support the non-binary appearance as a complete, intentional visual option, not as an incomplete fallback.</li>
+</ul>
+
+<p>
+The app must use a consistent character asset family for all three
+appearance options. The same exercise movement, machine interaction,
+camera angle and animation timing must be maintained across variants.
+</p>
+
 <h3>Profile update behavior</h3>
 
 <ul>
@@ -280,6 +323,7 @@ This profile feeds every personalization service.
 <li>Changing training availability triggers schedule regeneration suggestions.</li>
 <li>Changing dietary preferences filters future recipes.</li>
 <li>Changing allergies immediately removes unsafe recipes and substitutions.</li>
+<li>Changing character appearance updates the app avatar and matching exercise animation assets.</li>
 <li>Changing a meal does not unnecessarily change other meals.</li>
 </ul>
 
@@ -288,9 +332,7 @@ Existing completed workouts and historical meal records must never
 be silently rewritten when a profile changes.
 </p>
 
-</section>
-
-<!-- 03 -->
+</section><!-- 03 -->
 
 <section id="onboarding">
 <h2>03. Personalized onboarding</h2>
@@ -363,7 +405,67 @@ Do not set restrictive calorie targets for minors, pregnancy,
 or users reporting eating-disorder concerns.
 </p>
 
-<h3>Screen 3: Fitness experience</h3>
+<h3>Screen 3: Choose your character appearance</h3>
+
+<p>
+During account setup, the user must choose how their Fit Hard
+character and app avatar will look.
+This is a dedicated onboarding step, not a hidden settings option.
+</p>
+
+<div class="card">
+<h4>What should your Fit Hard character look like?</h4>
+
+<p>Display three large visual character selection cards.</p>
+
+<div class="flow">
+<div>
+<strong>BOY</strong>
+<p>Show the boy character illustration.</p>
+</div>
+<div>
+<strong>GIRL</strong>
+<p>Show the girl character illustration.</p>
+</div>
+<div>
+<strong>NON-BINARY</strong>
+<p>Show the non-binary character illustration.</p>
+</div>
+</div>
+
+<p>
+Each option must have a clear visual preview. The selected option
+must have a visible selection indicator.
+</p>
+
+<p>
+Question wording must remain friendly and simple.
+Do not ask the user to explain or justify their choice.
+</p>
+</div>
+
+<h4>What this answer drives</h4>
+
+<ul>
+<li>Saves the selected value to PersonalFitnessProfile.characterAppearance.</li>
+<li>Sets the user's main Fit Hard avatar.</li>
+<li>Displays the selected character in relevant app areas.</li>
+<li>Selects the corresponding character variant for exercise animations.</li>
+<li>Ensures exercise help and demonstration visuals use the same character appearance.</li>
+</ul>
+
+<p>
+The three options must have equal functionality.
+Do not hide features, restrict workouts or change nutrition
+calculations based on this visual selection.
+</p>
+
+<p>
+The user must be able to change this selection later under
+Profile Settings without restarting onboarding.
+</p>
+
+<h3>Screen 4: Fitness experience</h3>
 
 <div class="card">
 <strong>How experienced are you?</strong>
@@ -400,7 +502,7 @@ or users reporting eating-disorder concerns.
 <li>Nutrition activity estimate.</li>
 </ul>
 
-<h3>Screen 4: Training availability</h3>
+<h3>Screen 5: Training availability</h3>
 
 <div class="card">
 <strong>How many days per week can you train?</strong>
@@ -427,7 +529,7 @@ or users reporting eating-disorder concerns.
 <li>Calendar structure.</li>
 </ul>
 
-<h3>Screen 5: Body parts</h3>
+<h3>Screen 6: Body parts</h3>
 
 <p>Allow the user to select areas they want to train.</p>
 
@@ -468,7 +570,7 @@ excessive training volume. Include indirect work from compound
 exercises when calculating total muscle exposure.
 </p>
 
-<h3>Screen 6: Equipment</h3>
+<h3>Screen 7: Equipment</h3>
 
 <div class="card">
 <strong>Available equipment:</strong>
@@ -492,7 +594,7 @@ exercises when calculating total muscle exposure.
 <strong>What the answers drive:</strong>
 Exercise compatibility and alternative exercises.
 
-<h3>Screen 7: Nutrition preferences</h3>
+<h3>Screen 8: Nutrition preferences</h3>
 
 <div class="card">
 <strong>What type of meals do you prefer?</strong>
@@ -531,7 +633,7 @@ Exercise compatibility and alternative exercises.
 Recipe filtering, meal frequency, meal size, food substitutions,
 shopping lists and cooking instructions.
 
-<h3>Screen 8: Kitchen inventory</h3>
+<h3>Screen 9: Kitchen inventory</h3>
 
 <p>
 Ask users which ingredients they already have. This must also be
@@ -552,7 +654,7 @@ accessible later from the Meals section.
 <p>Allow manual search, quantity entry and optional expiry dates.</p>
 </div>
 
-<h3>Screen 9: Safety and readiness</h3>
+<h3>Screen 10: Safety and readiness</h3>
 
 <p>Ask optional, appropriately worded screening questions:</p>
 <ul>
@@ -568,7 +670,7 @@ direct users to a qualified healthcare professional and restrict
 unsafe automatic recommendations.
 </p>
 
-<h3>Screen 10: Generate my Fit Hard plan</h3>
+<h3>Screen 11: Generate my Fit Hard plan</h3>
 
 <p>
 Display a personalized summary before generating the plan.
@@ -579,6 +681,7 @@ Display a personalized summary before generating the plan.
 <li>Estimated nutrition targets, when appropriate.</li>
 <li>Training days.</li>
 <li>Selected muscle priorities.</li>
+<li>Selected character appearance.</li>
 <li>Recommended training split.</li>
 <li>Suggested meal structure.</li>
 <li>Initial weekly calendar.</li>
@@ -591,9 +694,7 @@ This button must trigger the actual personalization pipeline,
 save the plan and populate the relevant app sections.
 </p>
 
-</section>
-
-<!-- 04 -->
+</section><!-- 04 -->
 
 <section id="nutrition">
 <h2>04. Personalized meals engine</h2>
@@ -914,10 +1015,10 @@ varied routines while respecting equipment and experience.
 
 <p>Every exercise needs:</p>
 <ul>
-<li>Exercise name.</li>
+<li>Exercise ID and name.</li>
 <li>Primary muscle group.</li>
 <li>Secondary muscle groups.</li>
-<li>Equipment.</li>
+<li>Equipment and machine type.</li>
 <li>Movement pattern.</li>
 <li>Difficulty.</li>
 <li>Instructions.</li>
@@ -927,7 +1028,103 @@ varied routines while respecting equipment and experience.
 <li>Rest recommendations.</li>
 <li>Demonstration image or video, if licensed and available.</li>
 <li>Alternative exercises.</li>
+<li>Exercise help text written in very simple everyday language.</li>
+<li>Short, numbered help steps suitable for the mascot to display.</li>
+<li>Character appearance variants: boy, girl and non-binary.</li>
+<li>Animation asset identifier for each appearance variant.</li>
+<li>Machine interaction and movement metadata.</li>
+<li>Animation quality approval status.</li>
 </ul>
+
+<h3>Exercise animation quality standard</h3>
+
+<p>
+Every exercise and machine must have a professionally checked
+demonstration animation. An animation is not acceptable merely
+because it shows a character near a machine.
+The character must visibly and correctly perform the exercise
+using the actual equipment.
+</p>
+
+<div class="warning">
+<strong>NON NEGOTIABLE QUALITY REQUIREMENT</strong>
+A character that appears to float beside a machine, pass through
+equipment, use the wrong machine parts or perform a movement that
+does not physically connect to the machine is a FAILED animation.
+It must not be published in the app.
+</div>
+
+<p>Every animation must meet all of these requirements:</p>
+
+<ol>
+<li><strong>Realistic body movement:</strong> The character must have believable human proportions, joint movement and body positioning.</li>
+<li><strong>Correct machine interaction:</strong> Hands, feet, back and other contact points must remain correctly positioned against the relevant machine surfaces.</li>
+<li><strong>Correct exercise form:</strong> The animation must demonstrate the intended movement, range of motion and body alignment.</li>
+<li><strong>No overlapping parts:</strong> The character must not intersect, pass through or visibly overlap machine components or their own body in an anatomically incorrect way.</li>
+<li><strong>No broken frames:</strong> There must be no distorted limbs, missing body parts, flickering, sudden position jumps or visual glitches.</li>
+<li><strong>Smooth movement:</strong> The movement must have consistent timing and believable transitions.</li>
+<li><strong>Seamless loop:</strong> The animation must return to its initial position smoothly without a visible jump or sudden reset.</li>
+<li><strong>Correct camera angle:</strong> The user must be able to understand how the machine and body interact.</li>
+<li><strong>Visible movement:</strong> The relevant working muscles and movement should be easy to understand from the demonstration.</li>
+<li><strong>Character consistency:</strong> The character must match the appearance selected in the user's profile.</li>
+</ol>
+
+<h3>Animation production and approval</h3>
+
+<p>
+Use professionally produced, properly licensed 3D or 2D exercise
+assets. Prefer 3D assets where realistic machine contact and
+body movement require multiple viewing angles.
+</p>
+
+<p>
+Animations may be created using rigged character models and
+equipment models. They must be reviewed by a qualified exercise
+professional or appropriately knowledgeable reviewer for
+movement accuracy.
+</p>
+
+<p>
+Create one approved master animation for each exercise movement.
+Generate or produce matching character appearance variants
+without changing the underlying movement or machine mechanics.
+</p>
+
+<p>
+Do not generate different unverified animations randomly for
+different users.
+</p>
+
+<p>
+Each exercise animation must pass visual quality assurance
+before being marked approved and available in training mode.
+</p>
+
+<h3>Animation asset metadata</h3>
+
+<pre><code>ExerciseAnimation {
+    exerciseID
+    machineID
+    characterAppearance
+    assetID
+    cameraAngle
+    movementPhases[]
+    loopStartFrame
+    loopEndFrame
+    duration
+    contactPoints[]
+    techniqueValidationStatus
+    visualQualityStatus
+    approvedBy
+    approvalDate
+}</code></pre>
+
+<p>
+Only assets with approved quality and technique status may be
+used as the primary demonstration. If an animation is unavailable
+or fails validation, show a verified instructional image or
+written guide instead.
+</p>
 
 <h3>Training volume rules</h3>
 
@@ -984,9 +1181,7 @@ Once generated, save every session to the Routines library and
 schedule it on the calendar.
 </p>
 
-</section>
-
-<!-- 06 -->
+</section><!-- 06 -->
 
 <section id="progression">
 <h2>06. Progressive overload engine</h2>
@@ -1112,8 +1307,185 @@ Pressing it opens a dedicated training mode.
 <button>START SET</button>
 <button>REST TIMER</button>
 <button>HOW TO DO IT</button>
-<button>SKIP EXERCISE</button>
 </div>
+
+<h3>Exercise animation display</h3>
+
+<p>
+Every exercise in training mode must have an exercise demonstration
+area. Display the approved animation corresponding to the selected
+exercise and the user's saved character appearance.
+</p>
+
+<p>
+The animation must show the character physically using the
+correct machine or equipment, performing the movement with
+correct technique.
+</p>
+
+<p>
+Do not use an animation that simply shows a person standing
+next to the machine, floating near it or performing an unrelated
+movement.
+</p>
+
+<p>
+The animation must satisfy every requirement in Section 05:
+realistic movement, correct contact points, correct exercise form,
+no overlapping body parts or machine parts, no broken frames,
+smooth transitions and a seamless loop.
+</p>
+
+<p>
+The animation should be large enough for the user to understand
+the exercise. Avoid tiny demonstrations that are difficult to see.
+</p>
+
+<h3>Round question mark help button</h3>
+
+<div class="card">
+<h4>Exercise screen example</h4>
+<p>Hip Thrust</p>
+<p>3 sets × 8–12 repetitions</p>
+<p>Rest: 90 seconds</p>
+
+<div style="display:flex;align-items:center;gap:12px">
+<button style="border-radius:50%;width:48px;height:48px;font-size:24px">?</button>
+<strong>Tap ? for help from your mascot.</strong>
+</div>
+</div>
+
+<p>
+Every single exercise in training mode must have a visible,
+round question mark button.
+</p>
+
+<p>
+This button must be consistently positioned and easily accessible
+without interfering with the exercise controls.
+</p>
+
+<p>
+When the user taps it, open a friendly mascot help panel.
+The mascot explains how to use the specific machine or perform
+the specific exercise.
+</p>
+
+<h3>Mascot help writing rules</h3>
+
+<p>
+This is a strict content requirement. The mascot's exercise
+instructions must follow every rule below:
+</p>
+
+<ol>
+<li>Use very simple everyday words.</li>
+<li>Write as if a friendly person is helping someone at the gym.</li>
+<li>Use very short steps.</li>
+<li>Include only the information the user needs to perform the movement.</li>
+<li>Use a small amount of text.</li>
+<li>Make each step easy for a complete beginner to understand.</li>
+<li>Explain machine setup and body positioning where relevant.</li>
+<li>Explain the movement in a clear order.</li>
+<li>Use numbered steps rather than long paragraphs.</li>
+<li>Never use dash characters of any kind anywhere in the help text.</li>
+<li>Never use hyphenated words.</li>
+<li>Never use bullet characters.</li>
+<li>Never use complicated anatomy or technical language when a simpler word works.</li>
+<li>Never use unnecessary motivational speeches.</li>
+<li>Keep the tone friendly, reassuring and human.</li>
+</ol>
+
+<p>
+The no dash rule applies to every character in the displayed help
+content, including titles, instructions and closing messages.
+Use numbered steps with ordinary punctuation only.
+</p>
+
+<h3>Complete mascot help example 1: Leg press</h3>
+
+<div class="card">
+<h4>MAScot HELP: LEG PRESS</h4>
+
+<p><strong>Let's do it together!</strong></p>
+
+<p>1. Sit back and rest your head.</p>
+
+<p>2. Put your feet on the platform.</p>
+
+<p>3. Keep your feet about shoulder width apart.</p>
+
+<p>4. Slowly bend your knees and lower the platform.</p>
+
+<p>5. Push the platform away without locking your knees.</p>
+
+<p>6. Repeat slowly and stay in control.</p>
+
+<p><strong>You've got this!</strong></p>
+</div>
+
+<h3>Complete mascot help example 2: Lat pulldown</h3>
+
+<div class="card">
+<h4>MASCOT HELP: LAT PULLDOWN</h4>
+
+<p><strong>I'll show you how!</strong></p>
+
+<p>1. Sit down and place your thighs under the pads.</p>
+
+<p>2. Hold the bar with both hands.</p>
+
+<p>3. Sit tall and keep your chest up.</p>
+
+<p>4. Pull the bar down towards your upper chest.</p>
+
+<p>5. Slowly let the bar go back up.</p>
+
+<p>6. Repeat without swinging your body.</p>
+
+<p><strong>Nice and steady!</strong></p>
+</div>
+
+<p>
+These examples are the exact writing standard to follow.
+Each exercise needs its own accurate instructions.
+Do not reuse the leg press instructions for another machine.
+</p>
+
+<h3>Help content data requirements</h3>
+
+<pre><code>ExerciseHelp {
+    exerciseID
+    title
+    introduction
+    steps[]
+    closingMessage
+    language
+    approved
+}
+
+Validation:
+    All text must be beginner friendly.
+    Every step must be short.
+    No dash characters.
+    No bullet characters.
+    No complicated unnecessary wording.
+    Instructions must match the exercise.
+    Instructions must be reviewed for safety.</code></pre>
+
+<p>
+The help content must be stored locally so that it works
+without an internet connection.
+</p>
+
+<h3>Exercise demonstration fallback</h3>
+
+<p>
+If the approved animation cannot load, display a verified
+instructional image and the mascot's help steps.
+Never show a broken animation or an unapproved animation as
+a substitute.
+</p>
 
 <h3>Exercise demonstration toggle</h3>
 
@@ -1128,6 +1500,12 @@ Users must be able to choose their preferred training interface:
 </ul>
 
 <p>
+The round question mark button must remain available in all modes.
+In timer only mode, tapping it opens the mascot's text instructions.
+It must not force the user to switch to guided mode.
+</p>
+
+<p>
 Remember the user's selected preference for future workouts.
 Allow it to be changed at any time.
 </p>
@@ -1139,7 +1517,7 @@ The HOW TO DO IT button opens an exercise detail panel with:
 </p>
 
 <ul>
-<li>Exercise demonstration.</li>
+<li>Approved exercise demonstration.</li>
 <li>Starting position.</li>
 <li>Movement instructions.</li>
 <li>Breathing guidance.</li>
@@ -1147,6 +1525,13 @@ The HOW TO DO IT button opens an exercise detail panel with:
 <li>Safety reminders.</li>
 <li>Alternative exercise.</li>
 </ul>
+
+<p>
+The question mark help button and the detailed exercise guide
+are connected to the same exercise record, but have different
+levels of detail.
+The mascot help must remain short and simple.
+</p>
 
 <h3>Set tracking</h3>
 
@@ -1206,9 +1591,7 @@ Save the workout and trigger progression evaluation.
 Update calendar completion and progress analytics.
 </p>
 
-</section>
-
-<!-- 08 -->
+</section><!-- 08 -->
 
 <section id="routineslist">
 <h2>08. Routines library</h2>
@@ -1891,6 +2274,75 @@ The experience should feel:
 <li>Visually rewarding.</li>
 </ul>
 
+<h3>Character appearance consistency</h3>
+
+<p>
+The user's selected character appearance must be respected
+throughout the entire app.
+</p>
+
+<ul>
+<li>Display the selected character as the user's profile avatar.</li>
+<li>Use the same selected appearance in the mascot and exercise animation experience.</li>
+<li>Support boy, girl and non-binary character options.</li>
+<li>Maintain consistent proportions, clothing style and visual quality across all variants.</li>
+<li>Do not change the selected appearance automatically.</li>
+<li>Allow appearance customization from Profile Settings.</li>
+<li>Ensure that changing the avatar updates the exercise animation selection.</li>
+</ul>
+
+<p>
+The character is a visual preference and must not influence
+the user's workout difficulty, exercise selection, calories,
+nutrition targets or other fitness calculations.
+</p>
+
+<h3>Exercise animation visual quality</h3>
+
+<p>
+Exercise animations are a core instructional part of Fit Hard.
+They must be treated as production assets, not decorative
+illustrations.
+</p>
+
+<ul>
+<li>Characters must look like real people performing the actual exercise.</li>
+<li>Machines and characters must interact physically and correctly.</li>
+<li>Body positioning and exercise form must be accurate.</li>
+<li>No body part may visibly pass through or incorrectly overlap equipment.</li>
+<li>No machine component may intersect the character incorrectly.</li>
+<li>No missing limbs, distorted joints, flickering or broken frames.</li>
+<li>Movement must be smooth and natural.</li>
+<li>Loops must be seamless.</li>
+<li>Animations must match the selected character appearance.</li>
+<li>All assets must pass approval before being published.</li>
+</ul>
+
+<p>
+If the animation quality standard is not met, do not display
+that animation. Use an approved alternative instructional
+image or the mascot's text guidance.
+</p>
+
+<h3>Exercise help button</h3>
+
+<p>
+Every exercise screen must contain a round question mark button.
+It must be easy to find, consistently positioned and large enough
+to tap comfortably.
+</p>
+
+<p>
+When tapped, it opens a short mascot explanation for that exact
+exercise. The mascot instructions must use everyday words,
+numbered short steps and minimal text.
+</p>
+
+<p>
+The displayed help text must contain no dash characters,
+hyphenated words or bullet characters.
+</p>
+
 <h3>Navigation</h3>
 
 <p>
@@ -1933,9 +2385,7 @@ Do not leave users with blank pages. If there are no meals,
 routines or calendar events, provide a clear next action.
 </p>
 
-</section>
-
-<!-- 16 -->
+</section><!-- 16 -->
 
 <section id="qa">
 <h2>16. End-to-end testing requirements</h2>
@@ -1944,6 +2394,8 @@ routines or calendar events, provide a clear next action.
 <strong>Mandatory:</strong>
 Every feature must be tested through actual user interactions,
 not just by checking whether the screen renders.
+Animation quality and mascot help text require explicit
+pass or fail approval.
 </div>
 
 <h3>A. Onboarding tests</h3>
@@ -1956,6 +2408,11 @@ not just by checking whether the screen renders.
 <li>Test invalid and boundary values.</li>
 <li>Confirm answers persist after restarting.</li>
 <li>Confirm every answer reaches its correct service.</li>
+<li>Confirm the character appearance selection is visible and selectable.</li>
+<li>Confirm boy, girl and non-binary selections save correctly.</li>
+<li>Confirm the chosen character appears as the user's avatar.</li>
+<li>Confirm the selected character appearance is used by exercise animations.</li>
+<li>Confirm changing the character later updates its appearance without deleting user data.</li>
 </ul>
 
 <h3>B. Nutrition tests</h3>
@@ -1983,7 +2440,163 @@ not just by checking whether the screen renders.
 <li>Check weekly muscle exposure and recovery spacing.</li>
 <li>Check that sessions fit the selected duration.</li>
 <li>Test customized routines.</li>
+<li>Confirm every exercise has a valid exercise help record.</li>
+<li>Confirm each exercise has an approved animation or verified fallback.</li>
+<li>Confirm the animation matches the user's selected character appearance.</li>
 </ul>
+
+<h3>C1. Exercise animation quality assurance</h3>
+
+<p>
+Every individual exercise animation must be inspected.
+Passing one animation does not approve the remaining exercise
+animations.
+</p>
+
+<p>Test the complete animation at normal playback speed and frame by frame.</p>
+
+<table>
+<tr>
+<th>Quality check</th>
+<th>PASS</th>
+<th>FAIL</th>
+</tr>
+<tr>
+<td>Human appearance</td>
+<td>Character has realistic proportions and believable movement.</td>
+<td>Character looks distorted or anatomically broken.</td>
+</tr>
+<tr>
+<td>Machine interaction</td>
+<td>Hands, feet and body correctly interact with machine parts.</td>
+<td>Character floats, misses contact points or passes through equipment.</td>
+</tr>
+<tr>
+<td>Exercise technique</td>
+<td>Movement demonstrates the correct exercise and form.</td>
+<td>Movement is incorrect or unrelated to the exercise.</td>
+</tr>
+<tr>
+<td>Body and machine overlap</td>
+<td>No incorrect intersections or visual collisions.</td>
+<td>Body parts or equipment overlap incorrectly.</td>
+</tr>
+<tr>
+<td>Frame quality</td>
+<td>No flicker, distortion, missing parts or sudden jumps.</td>
+<td>Any broken or glitched frame appears.</td>
+</tr>
+<tr>
+<td>Movement smoothness</td>
+<td>Natural and consistent movement throughout.</td>
+<td>Jerky, unnatural or discontinuous movement.</td>
+</tr>
+<tr>
+<td>Loop quality</td>
+<td>Animation returns to its start position seamlessly.</td>
+<td>Visible jump or sudden reset occurs.</td>
+</tr>
+<tr>
+<td>Character matching</td>
+<td>Character matches the user's selected appearance.</td>
+<td>Wrong or inconsistent character appears.</td>
+</tr>
+<tr>
+<td>Visibility</td>
+<td>Exercise and machine interaction are easy to understand.</td>
+<td>Movement is obscured or too small to interpret.</td>
+</tr>
+</table>
+
+<p>
+<strong>Strict release rule:</strong>
+If any mandatory quality check fails, the animation must not
+be approved. Fix it or replace it with a verified instructional
+image and text guide.
+</p>
+
+<p>
+Test all three character appearance variants for every exercise
+where those assets are available. Confirm that changing the
+character does not change the actual exercise mechanics.
+</p>
+
+<h3>C2. Mascot question mark help tests</h3>
+
+<ul>
+<li>Confirm every exercise has a visible round question mark button.</li>
+<li>Tap the button on every exercise type.</li>
+<li>Confirm the correct exercise specific help text opens.</li>
+<li>Confirm the mascot help panel opens without leaving the workout.</li>
+<li>Confirm the text is readable and fits the available screen space.</li>
+<li>Confirm the user can close the panel and continue training.</li>
+<li>Confirm help works in timer only mode.</li>
+<li>Confirm help works in guided mode.</li>
+<li>Confirm help works in hybrid mode.</li>
+<li>Confirm help content is available offline.</li>
+</ul>
+
+<h4>Strict writing quality checks</h4>
+
+<p>
+Run automated content validation on every help title,
+introduction, numbered step and closing message.
+</p>
+
+<ul>
+<li>PASS: Uses ordinary everyday language.</li>
+<li>PASS: Steps are short and easy to understand.</li>
+<li>PASS: Only a small amount of text is displayed.</li>
+<li>PASS: Instructions accurately describe the selected exercise.</li>
+<li>PASS: Instructions are safe and technically reviewed.</li>
+<li>PASS: Steps are numbered.</li>
+<li>PASS: No dash characters appear anywhere.</li>
+<li>PASS: No hyphenated words appear.</li>
+<li>PASS: No bullet characters appear.</li>
+<li>FAIL: Any dash character, hyphen or bullet is detected.</li>
+<li>FAIL: Instructions are too long, complicated or unrelated.</li>
+<li>FAIL: The user cannot understand the instructions as a beginner.</li>
+</ul>
+
+<p>
+The automated validation must inspect the complete displayed
+help content, including headings and closing messages.
+A human reviewer must also approve the clarity and accuracy
+of the instructions.
+</p>
+
+<h4>Required example regression tests</h4>
+
+<p>
+The following examples must be retained as reference content
+for the help writing standard.
+</p>
+
+<div class="card">
+<strong>LEG PRESS</strong>
+<p>Let's do it together!</p>
+<p>1. Sit back and rest your head.</p>
+<p>2. Put your feet on the platform.</p>
+<p>3. Keep your feet about shoulder width apart.</p>
+<p>4. Slowly bend your knees and lower the platform.</p>
+<p>5. Push the platform away without locking your knees.</p>
+<p>6. Repeat slowly and stay in control.</p>
+<p>You've got this!</p>
+<small>Expected result: PASS. No dash characters. Short numbered steps.</small>
+</div>
+
+<div class="card">
+<strong>LAT PULLDOWN</strong>
+<p>I'll show you how!</p>
+<p>1. Sit down and place your thighs under the pads.</p>
+<p>2. Hold the bar with both hands.</p>
+<p>3. Sit tall and keep your chest up.</p>
+<p>4. Pull the bar down towards your upper chest.</p>
+<p>5. Slowly let the bar go back up.</p>
+<p>6. Repeat without swinging your body.</p>
+<p>Nice and steady!</p>
+<small>Expected result: PASS. No dash characters. Short numbered steps.</small>
+</div>
 
 <h3>D. Progressive overload tests</h3>
 
@@ -2006,6 +2619,7 @@ not just by checking whether the screen renders.
 <li>Pause and resume.</li>
 <li>Skip rest.</li>
 <li>Open exercise instructions.</li>
+<li>Open mascot help using the round question mark.</li>
 <li>Change between timer and guided mode.</li>
 <li>Background and foreground the app.</li>
 <li>Close and reopen the app during a workout.</li>
@@ -2072,11 +2686,11 @@ persistence, visual components and other established features.
 <li>Unit tests for workout generation.</li>
 <li>Unit tests for progression rules.</li>
 <li>Integration tests for calendar and notifications.</li>
+<li>Automated string validation for mascot help text.</li>
+<li>Asset validation and frame inspection for exercise animations.</li>
 </ul>
 
-</section>
-
-<!-- 17 -->
+</section><!-- 17 -->
 
 <section id="acceptance">
 <h2>17. Definition of done</h2>
