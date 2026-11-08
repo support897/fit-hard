@@ -32,7 +32,10 @@
     celebrate: "celebrate",
     soft: "rough",
     rough: "rough",
-    rest: "rest"
+    rest: "rest",
+    ready: "welcome",
+    gentle: "rough",
+    curious: "welcome"
   };
   function wallyImg(pose, size) {
     var src = ART[POSES[pose] || "welcome"];
@@ -50,7 +53,10 @@
     tea: "Tea first. Then, maybe.",
     celebrateFirst: "Small counts.",
     celebrateWeek: "You showed up. Noted.",
-    tomorrow: "Tomorrow is also a day."
+    tomorrow: "Tomorrow is also a day.",
+    ready: "Ready when you are.",
+    gentle: "A smaller version works.",
+    curious: "Want a look together?"
   };
   window.Wally = { img: wallyImg, BUBBLES: BUBBLES, POSES: Object.keys(POSES) };
 })();

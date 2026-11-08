@@ -205,7 +205,10 @@ async function saveCloudState(uid, state) {
   const sliceData = [];
   Object.keys(state).forEach(function (k) {
     if (k === "demoUnlock") return; /* rides in the root doc, never a slice */
-    if (ROOT_KEYS.indexOf(k) >= 0) rootState[k] = state[k];
+    /* A null root key (a brand-new account before setup) is OMITTED, never written as null:
+       stored nulls made the anchor fence in firestore.rules fail with a null-value
+       evaluation error and every later save was refused (found by the two-user journey test). */
+    if (ROOT_KEYS.indexOf(k) >= 0) { if (state[k] !== null && state[k] !== undefined) rootState[k] = state[k]; }
     else sliceData.push([k, state[k]]); /* DATA only — no calls yet */
   });
   const rootDocData = { state: rootState, updatedAt: new Date().toISOString() };

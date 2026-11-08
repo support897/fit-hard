@@ -9,7 +9,8 @@ window.FIT_DATA = (function () {
       subs: [
         { id: "pep-list", label: "My peptides" },
         { id: "pep-log", label: "Dose log" },
-        { id: "pep-next", label: "Next doses" }
+        { id: "pep-next", label: "Next doses" },
+        { id: "pep-appts", label: "Appointments" }
       ] },
     { id: "meals", label: "Meals", color: "#52695A", soft: "#DCE7D8",
       subs: [
@@ -24,13 +25,22 @@ window.FIT_DATA = (function () {
         { id: "gym-routines", label: "Routines" },
         { id: "gym-session", label: "Session" },
         { id: "gym-machine", label: "Machine photo" },
-        { id: "gym-library", label: "Exercise library" }
+        { id: "gym-library", label: "Exercise library" },
+        { id: "gym-history", label: "History" }
       ] },
     { id: "calendar", label: "Calendar", color: "#52695A", soft: "#EAF0E2",
       subs: [
         { id: "cal-month", label: "Month" },
         { id: "cal-habits", label: "Habits" },
-        { id: "cal-todos", label: "To do list" }
+        { id: "cal-todos", label: "To do list" },
+        { id: "cal-reminders", label: "Reminders" }
+      ] },
+    { id: "progress", label: "Progress", color: "#52695A", soft: "#EAF0E2",
+      subs: [
+        { id: "prog-overview", label: "Overview" },
+        { id: "prog-strength", label: "Strength" },
+        { id: "prog-body", label: "Body" },
+        { id: "prog-review", label: "Weekly review" }
       ] }
   ];
   /* What-they-need picker in setup. Each need lights up one area;

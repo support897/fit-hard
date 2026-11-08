@@ -16,6 +16,7 @@
   if (typeof ICAL !== "undefined") ICALRef = ICAL;
   else if (typeof require !== "undefined") { try { var m = require("./vendor/ical/ical.min.js"); ICALRef = (m && m.default) || m; } catch (e) { ICALRef = null; } }
 
+  var MAX_FILE_CHARS = 2000000, MAX_ADD = 1500;
   var DAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
   var BYDAY_NUM = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
 
@@ -27,10 +28,15 @@
   /* ---------- parse ---------- */
   function parseICS(text) {
     if (!ICALRef) return { calendarName: "", events: [], error: "parser missing" };
+    if (String(text || "").length > MAX_FILE_CHARS) return { calendarName: "", events: [], error: "file too large" };
     var jcal;
     try { jcal = ICALRef.parse(String(text || "")); }
     catch (e) { return { calendarName: "", events: [], error: "not a calendar file" }; }
-    var comp = new ICALRef.Component(jcal);
+    var comp;
+    try {
+      if (!Array.isArray(jcal) || String(jcal[0]).toLowerCase() !== "vcalendar") return { calendarName: "", events: [], error: "not a calendar file" };
+      comp = new ICALRef.Component(jcal);
+    } catch (e) { return { calendarName: "", events: [], error: "not a calendar file" }; }
     // Register the file's own timezone definitions first (Apple/Outlook
     // exports lean on these; without them times land hours wrong).
     comp.getAllSubcomponents("vtimezone").forEach(function (vtz) {
@@ -52,8 +58,8 @@
         ve.getAllProperties("exdate").forEach(function (p) { p.getValues().forEach(function (v) { exdates.push(v.toJSDate ? keyOf(v.toJSDate()) : String(v)); }); });
         var recId = ve.getFirstPropertyValue("recurrence-id");
         events.push({
-          uid: ev.uid || "", title: (ev.summary || "").trim(), notes: (ev.description || "").trim(),
-          location: (ev.location || "").trim(),
+          uid: ev.uid || ("noid-" + hashStr((ev.summary || "") + "|" + String(ev.startDate))), title: (ev.summary || "").trim().slice(0, 120), notes: (ev.description || "").trim().slice(0, 500),
+          location: (ev.location || "").trim().slice(0, 120),
           allDay: !!ev.startDate.isDate,
           start: ev.startDate, end: ev.endDate || ev.startDate,
           rrule: rrule, exdates: exdates,
@@ -134,7 +140,7 @@
     var importKey = opts.importKey || importKeyFor(opts.sourceLabel || "calendar", parsed.events);
     var seen = {};
     (existingTasks || []).forEach(function (t) {
-      if (t && t.importUid) seen[t.importKey + "|" + t.importUid + "|" + t.date + "|" + (t.time || "")] = true;
+      if (t && t.importUid) seen[t.importUid + "|" + t.date + "|" + (t.time || "")] = true;
     });
     // Group overrides by uid; a series with overrides expands as a whole,
     // and the master's occurrence at each overridden slot is skipped.
@@ -173,8 +179,11 @@
   }
 
   function addOne(plan, seen, ev, s, importKey, repeat) {
-    var key = importKey + "|" + ev.uid + "|" + s.date + "|" + (s.time || "");
+    /* Dedupe by event identity (uid + slot), NOT by file: a re-exported file with extra
+       events must not double the ones already imported. */
+    var key = ev.uid + "|" + s.date + "|" + (s.time || "");
     if (seen[key]) { plan.dupes++; return; }
+    if (plan.add.length >= MAX_ADD) { plan.skipped.push({ title: s.title, why: "too many events in one import" }); return; }
     seen[key] = true;
     plan.add.push({
       title: s.title, date: s.date, time: s.time, durationMin: s.durationMin,

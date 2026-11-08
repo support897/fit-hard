@@ -150,7 +150,8 @@ textarea{resize:vertical}
 .calGrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
 .calDow{font-size:12px;font-weight:700;color:var(--mut);text-align:center;padding:2px 0}
 .calCell{background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:74px;padding:6px;cursor:pointer;text-align:left;font:inherit;color:var(--ink);min-width:0;overflow:hidden}
-.calCell.dim{opacity:.42}
+.calCell.dim{opacity:1;background:transparent}
+.calCell.dim .dNum,.calCell.dim .evTxt{color:var(--mut2)}
 .calCell.today{outline:2px solid var(--sage)}
 .calCell.sel{outline:2px solid var(--ink)}
 .calCell .dNum{font-weight:700;font-size:13px}
@@ -304,3 +305,125 @@ textarea{resize:vertical}
 .gsRow.done{opacity:.65;cursor:default}
 .gsTick{color:var(--sage);font-weight:700}
 .coachCard{border-color:var(--sage-mist)}
+
+/* ===== PHASE 1: primary tab bar (Today, Food, Train, Calendar, More) =====
+   Phone: bottom bar with the device safe area. Wide screens: the same five
+   destinations as a left rail, so the information architecture never changes.
+   The old area-first side menu is retired (its DOM stays for state code). */
+#sidebar,#sbShield,#sidebarToggle{display:none !important}
+#tabBar{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:space-around;background:var(--surface);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 18px rgba(62,47,38,.06)}
+body.signedOut #tabBar{display:none}
+.tabBtn{flex:1;min-width:44px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:0;border-radius:14px;color:var(--mut2);font:inherit;font-size:12px;font-weight:700;cursor:pointer;padding:4px 2px}
+.tabBtn .ic{width:24px;height:24px}
+.tabBtn.active{color:var(--sage);background:var(--sage-tint)}
+.tabBtn:focus-visible,.subTab:focus-visible,.moreRow:focus-visible,.dayAct:focus-visible,.pillBtn:focus-visible,.primaryBtn:focus-visible{outline:3px solid var(--sage);outline-offset:2px}
+body:not(.signedOut) #main{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+body:not(.signedOut) .toast{bottom:calc(86px + env(safe-area-inset-bottom,0px))}
+body:not(.signedOut) #wallyFloat{bottom:calc(86px + env(safe-area-inset-bottom,0px))}
+@media (min-width:900px){
+  #tabBar{top:calc(49px + var(--sat));right:auto;bottom:0;width:104px;flex-direction:column;justify-content:flex-start;gap:6px;border-top:0;border-right:1px solid var(--line);padding:14px 8px;box-shadow:none}
+  .tabBtn{flex:0 0 auto;min-height:64px}
+  body:not(.signedOut) #app{padding-left:104px}
+  body:not(.signedOut) #main{padding-bottom:40px}
+  body:not(.signedOut) .toast{bottom:22px}
+  body:not(.signedOut) #wallyFloat{bottom:14px}
+}
+.subTabs{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin:0 0 6px;scrollbar-width:none}
+.subTabs::-webkit-scrollbar{display:none}
+.subTab{flex:0 0 auto;min-height:44px;padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;cursor:pointer}
+.subTab.active{background:var(--sage);border-color:var(--sage);color:var(--on-accent)}
+.dayTimeline{list-style:none;margin:8px 0 0;padding:0}
+.dayItem{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.dayItem:last-child{border-bottom:0}
+.dayTime{flex:0 0 58px;font-weight:700;color:var(--mut2);font-size:13px}
+.dayMain{flex:1;min-width:0;display:flex;flex-direction:column}
+.dayMain b{overflow-wrap:anywhere}
+.dayMain small{color:var(--mut);font-weight:600}
+.dayItem.isDone .dayMain b{text-decoration:line-through;text-decoration-thickness:1px;opacity:.7}
+.dayAct{min-height:44px;flex:0 0 auto}
+.nextStep{background:var(--sage-tint);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:2px;margin:6px 0}
+.nextLbl{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--sage)}
+.quickRow{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+.quickRow .pillBtn{min-height:44px}
+.moreList{display:grid;gap:10px}
+.moreRow{display:flex;align-items:center;gap:14px;width:100%;min-height:64px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px 14px;font:inherit;color:var(--ink);cursor:pointer}
+.moreTxt{flex:1;display:flex;flex-direction:column}
+.moreTxt small{color:var(--mut);font-weight:600}
+.moreRow .chev{color:var(--mut)}
+@media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important;scroll-behavior:auto !important}}
+.calHead{flex-wrap:wrap;row-gap:8px}
+.calHead h3{flex:1 1 120px;min-width:0;margin:0}
+.todoCheck{position:relative}
+.todoCheck::after{content:"";position:absolute;inset:-10px}
+
+/* ===== PHASE 2: food ===== */
+.mealItem{margin:6px 0;border-radius:14px}
+.mealItem .mealRow{width:100%}
+.mealActs{display:flex;gap:8px;flex-wrap:wrap;padding:4px 2px 8px}
+.miniBtn{min-height:44px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;font-size:13px;cursor:pointer}
+.miniBtn[aria-pressed="true"]{background:var(--sage-tint);border-color:var(--sage)}
+.mealItem.isEaten .mName{text-decoration:line-through;text-decoration-thickness:1px;opacity:.75}
+.svChip{color:var(--mut2);font-weight:700}
+.recipeArt{width:100%;max-height:200px;object-fit:cover;border-radius:14px;margin:8px 0 2px;background:var(--sage-tint)}
+.artNote{margin-top:0;font-size:12px}
+.allergenChip{display:inline-block;padding:2px 9px;border-radius:999px;background:#F4E6D5;color:#6B4423;font-weight:700;font-size:12px;margin:2px 2px 2px 0;border:1px solid #E7CDAE}
+body[data-appearance="black"] .allergenChip{background:#3A2C1F;color:#F1D9B8;border-color:#5B4630}
+.cardAllergens{margin-top:4px}
+.warnBox{border:2px solid #C08552;background:#FBEBD8;color:#5A3A1A}
+body[data-appearance="black"] .warnBox{background:#3A2C1F;color:#F6E4C8}
+.svRow{display:flex;align-items:center;gap:12px;margin:10px 0}
+.svBtn{min-width:44px;min-height:44px;font-size:20px;padding:0 14px}
+.svNum{font-weight:800;min-width:110px;text-align:center}
+.filterRow{margin-top:8px}
+.chkRow{display:flex;align-items:center;gap:10px;min-height:44px;font-weight:700}
+.chkRow input,.grocRow input[type=checkbox]{width:22px;height:22px;accent-color:var(--sage)}
+.grocRow{min-height:44px;gap:12px}
+.grocRow.isTicked .grow{text-decoration:line-through;opacity:.65}
+.swapList{display:grid;gap:10px;margin:10px 0}
+.swapOpt{display:flex;align-items:center;gap:12px;text-align:left;width:100%;min-height:64px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px;font:inherit;color:var(--ink);cursor:pointer}
+.swapOpt img{width:72px;height:48px;object-fit:cover;border-radius:10px;flex:0 0 auto}
+.swapOpt span{display:flex;flex-direction:column}
+.swapOpt small{color:var(--mut);font-weight:600}
+.provNote{margin-top:12px}
+
+/* ===== PHASE 3: training ===== */
+.wLabel{display:flex;flex-direction:column;gap:6px;font-weight:700;width:100%}
+.wLabel input{min-height:48px;font-size:18px}
+.pausedBanner{background:var(--sage-tint);border:2px solid var(--sage);border-radius:14px;padding:10px 14px;font-weight:800;text-align:center}
+.staleCard{border:2px solid #C08552}
+.lastTime{font-weight:600}
+.err{color:#8A3B22;font-weight:700;min-height:0}
+.histRow{min-height:56px}
+button:disabled{opacity:.5;cursor:not-allowed}
+.exRow{flex-wrap:wrap}
+.exRow .eName{min-width:0;flex:1 1 140px;overflow-wrap:anywhere}
+.exRow .kcalChip{max-width:100%;white-space:normal}
+
+/* ===== PHASE 4: calendar & reminders ===== */
+.remLabel{display:flex;flex-direction:column;gap:4px;width:100%;font-weight:700;font-size:13px;margin-top:6px}
+.remLabel select{min-height:44px}
+.todoRow{flex-wrap:wrap}
+.remRow{min-height:56px}
+
+/* ===== PHASE 5: progress ===== */
+.bigLine{font-weight:800;font-size:18px;margin:6px 0}
+.bigNum{font-family:var(--serif,inherit);font-size:48px;font-weight:800;margin:0;color:var(--sage)}
+.weekBars{display:flex;gap:6px;align-items:flex-end;height:70px;margin:10px 0}
+.wkBar{flex:1;height:100%;display:flex;align-items:flex-end;background:var(--sage-tint);border-radius:8px;overflow:hidden}
+.wkBar i{display:block;width:100%;background:var(--sage);min-height:3px;border-radius:8px 8px 0 0}
+.plainList{margin:6px 0;padding-left:20px;font-weight:600}
+.sparkline{width:100%;height:80px;margin:10px 0;background:var(--sage-tint);border-radius:12px}
+.dataTable{width:100%;border-collapse:collapse;font-size:14px}
+.dataTable th,.dataTable td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+.srOnly{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.photoGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:10px}
+.phItem{margin:0;display:flex;flex-direction:column;gap:6px}
+.phItem img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:12px}
+.phItem figcaption{font-size:12px;font-weight:700}
+#progressCard .bigLine{margin:4px 0}
+
+.confirmRow{display:flex;gap:10px;align-items:flex-start;margin:10px 0}.confirmRow input[type=checkbox]{width:22px;height:22px;flex:none;margin:1px 0 0}
+
+.suCount{margin:4px 0 8px;font-weight:700}.suOpt{margin:0 0 8px}#setupModal .row{flex-wrap:wrap}
+
+#accountBox{scroll-margin-top:76px}

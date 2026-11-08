@@ -133,36 +133,74 @@
       try { return (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications) || null; }
       catch (e) { return null; }
     }
-    function nid(kind, ref, key) {
-      var s = kind + "|" + ref + "|" + key, h = 0;
-      for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-      return 1000 + (h % 2000000000);
-    }
+    function readMap() { try { var m = JSON.parse(localStorage.getItem("fit-remind-map") || "null"); return (m && typeof m === "object" && !Array.isArray(m)) ? m : null; } catch (e) { return null; } }
+    function writeMap(m) { try { localStorage.setItem("fit-remind-map", JSON.stringify(m)); } catch (e) {} }
     function sync() {
       var P = plugin(); if (!P) return;
       if (timer) clearTimeout(timer);
       timer = setTimeout(run, 400);
     }
+    function bodyFor(r) {
+      var g = window.FitHealth.notificationContent(r.kind, r.name, !!(state.settings && state.settings.notifDetails));
+      if (g) return tr("rem.generalBody", null, g.body);
+      if (r.kind === "dose") return tr("rem.doseBody");
+      return bodyForRest(r);
+    }
+    function bodyForRest(r) { return r.kind === "dose" ? tr("rem.doseBody") : (r.kind === "todo" ? tr("rem.todoBody", null, "Time for your task") : tr("rem.gymBody")); }
+    function titleFor(r) {
+      var g = window.FitHealth.notificationContent(r.kind, r.name, !!(state.settings && state.settings.notifDetails));
+      if (g) return g.title;
+      return r.kind === "water" ? tr("water.remindTitle") : r.name;
+    }
+    var CAT = { dose: "health", appt: "health", gym: "workout", water: "water", todo: "tasks" };
+    function catOn(kind) { var off = (state.settings && state.settings.remindOff) || []; return off.indexOf(CAT[kind] || kind) === -1; }
+    function currentItems() {
+      return window.FitEvents.assignIds(window.FitEvents.plan(state, Date.now(), L.todayKey()).filter(function (r) { return catOn(r.kind); })).map(function (r) {
+        return Object.assign({}, r, { title: titleFor(r), body: bodyFor(r) });
+      });
+    }
+    var running = false, again = false;
     function run() {
       var P = plugin(); if (!P) return;
+      if (running) { again = true; return; }
+      running = true;
+      var done = function () { running = false; if (again) { again = false; run(); } };
       try {
-        var old = [];
-        try { old = JSON.parse(localStorage.getItem("fit-remind-ids") || "[]"); } catch (e) {}
-        if (old.length) P.cancel({ notifications: old.map(function (id) { return { id: id }; }) }).catch(function () {});
+        var prev = readMap();
+        var legacy = [];
+        if (!prev) { try { legacy = JSON.parse(localStorage.getItem("fit-remind-ids") || "[]"); } catch (e) {} prev = {}; }
+        var pre = Promise.resolve();
+        if (legacy.length) pre = P.cancel({ notifications: legacy.map(function (id) { return { id: id }; }) }).catch(function () {}).then(function () { try { localStorage.removeItem("fit-remind-ids"); } catch (e) {} });
         if (!state.settings || state.settings.notifications !== true) {
-          try { localStorage.setItem("fit-remind-ids", "[]"); } catch (e) {}
-          maybeAsk();
+          var ids = Object.keys(prev).map(function (k) { return { id: Number(k) }; });
+          pre.then(function () { return ids.length ? P.cancel({ notifications: ids }) : null; }).catch(function () {}).then(function () { writeMap({}); maybeAsk(); done(); });
           return;
         }
-        var plan = L.planReminders(state, L.todayKey(), { now: Date.now() });
-        var notes = plan.map(function (r) {
-          return { id: nid(r.kind, r.ref, r.key), title: r.kind === "water" ? tr("water.remindTitle") : r.name,
-            body: tr(r.kind === "dose" ? "rem.doseBody" : "rem.gymBody"),
-            schedule: { at: new Date(r.at) } };
-        });
-        try { localStorage.setItem("fit-remind-ids", JSON.stringify(notes.map(function (n) { return n.id; }))); } catch (e) {}
-        if (notes.length) P.schedule({ notifications: notes }).catch(function () {});
-      } catch (e) {}
+        var items = currentItems();
+        var rc = window.FitEvents.reconcile(prev, items.map(function (n) { return { id: n.id, at: n.at, title: n.title, body: n.body }; }));
+        var byId = {}; items.forEach(function (n) { byId[n.id] = n; });
+        pre.then(function () { return rc.cancel.length ? P.cancel({ notifications: rc.cancel.map(function (id) { return { id: id }; }) }) : null; })
+          .catch(function () {})
+          .then(function () {
+            var map = Object.assign({}, rc.map);
+            rc.schedule.forEach(function (n) { delete map[n.id]; });
+            if (!rc.schedule.length) { writeMap(map); return null; }
+            return P.schedule({ notifications: rc.schedule.map(function (n) { return { id: n.id, title: n.title, body: n.body, schedule: { at: new Date(n.at) } }; }) })
+              .then(function () { rc.schedule.forEach(function (n) { map[n.id] = rc.map[n.id]; }); writeMap(map); })
+              .catch(function () { writeMap(map); });
+          }).then(done, done);
+      } catch (e) { done(); }
+    }
+    /* Honest permission state for the UI: unavailable (web) | off | denied | on. */
+    function status() {
+      var P = plugin();
+      if (!P) return Promise.resolve("unavailable");
+      if (!state.settings || state.settings.notifications !== true) {
+        if (P.checkPermissions) return P.checkPermissions().then(function (r) { return r && r.display === "denied" ? "denied" : "off"; }).catch(function () { return "off"; });
+        return Promise.resolve("off");
+      }
+      if (P.checkPermissions) return P.checkPermissions().then(function (r) { return r && r.display === "granted" ? "on" : "denied"; }).catch(function () { return "on"; });
+      return Promise.resolve("on");
     }
     var askShown = false;
     function maybeAsk() {
@@ -187,7 +225,14 @@
         return false;
       }).catch(function () { return false; });
     }
-    return { sync: sync, setOn: setOn, available: function () { return !!plugin(); } };
+    function cancelAll() {
+      var P = plugin(); var m = readMap() || {};
+      var ids = Object.keys(m).map(function (k) { return { id: Number(k) }; });
+      try { localStorage.removeItem("fit-remind-map"); } catch (e) {}
+      if (!P || !ids.length) return Promise.resolve();
+      try { return Promise.resolve(P.cancel({ notifications: ids })).catch(function () {}); } catch (e) { return Promise.resolve(); }
+    }
+    return { catOn: catOn, cancelAll: cancelAll, sync: sync, run: run, setOn: setOn, status: status, upcoming: function (n) { return window.FitEvents.listUpcoming(state, Date.now(), L.todayKey(), n * 3).filter(function (r) { return catOn(r.kind); }).slice(0, n); }, available: function () { return !!plugin(); } };
   })();
 
   /* --- Plans, prices and the shop seam (Tranche B) ------------------------
@@ -469,6 +514,7 @@
        a scroll position earned inside a form or a long view
        never carries into the next screen. */
     if (window.scrollTo) window.scrollTo(0, 0);
+    if (typeof markTab === "function") markTab(name);
   }
   document.querySelectorAll("[data-view]").forEach(function (b) {
     b.addEventListener("click", function () {
@@ -497,6 +543,8 @@
     closeSbOnPhone();
     var sub = a.subs.filter(function (s) { return s.id === subId; })[0] || a.subs[0];
     showView("area");
+    lastSub[areaId] = sub.id;
+    renderSubTabs(a, sub.id);
     $("areaTitle").textContent = tr("nav." + a.id, null, a.label);
     $("areaSub").textContent = tr("sub." + sub.id, null, sub.label) + ".";
     renderCoachMark(coachKeyFor(areaId, sub.id));
@@ -515,6 +563,11 @@
     if (areaId === "gym") {
       $("areaEmpty").classList.add("hidden");
       renderGym(sub.id);
+      return;
+    }
+    if (areaId === "progress") {
+      $("areaEmpty").classList.add("hidden");
+      renderProgress(sub.id);
       return;
     }
     if (areaId === "peptides") {
@@ -547,25 +600,30 @@
     return tr("cal.wd" + L.parseKey(isoKey).getDay());
   }
   function budgetKcal() { var b = L.estimateBudget(state.profile || {}); return b ? b.target : null; }
+  function mealOpts() { return { maxMinutes: (state.mealPrefs && state.mealPrefs.maxMinutes) || 0 }; }
   function planWeek() {
     var target = budgetKcal();
-    var recent = [];
+    var recent = [], gaps = 0, tokeep = [];
     for (var i = 0; i < 7; i++) {
       var iso = L.addDays(L.todayKey(), i);
       var dayTarget = target;
       if (i === 0 && target) dayTarget = L.mealBudgetFor(state.checkins[iso] || "ok", { target: target }).meals;
-      var day = L.planDayMeals(dayTarget, allRecipes(), kcalOf, state.profile || {}, recent);
+      var day = L.planDayMeals(dayTarget, allRecipes(), kcalOf, state.profile || {}, recent, mealOpts());
       var entry = {};
-      ["breakfast", "lunch", "dinner"].forEach(function (m) { if (day[m]) { entry[m] = day[m].id; recent.push(day[m].id); } });
+      ["breakfast", "lunch", "dinner"].forEach(function (m) {
+        delete state.planServings[mpKey(iso) + "." + m];
+        if (day[m]) { entry[m] = day[m].id; recent.push(day[m].id); } else gaps++;
+      });
       state.plan[mpKey(iso)] = entry;
     }
     save();
+    return { gaps: gaps };
   }
   function mealPlanForDay(level, recent) {
     var target = budgetKcal();
     if (!target) return null;
     var budget = L.mealBudgetFor(level, { target: target });
-    var day = L.planDayMeals(budget.meals, allRecipes(), kcalOf, state.profile || {}, recent || []);
+    var day = L.planDayMeals(budget.meals, allRecipes(), kcalOf, state.profile || {}, recent || [], mealOpts());
     if (!day || !day.complete) return null;
     var entry = {};
     ["breakfast", "lunch", "dinner"].forEach(function (m) { if (day[m]) entry[m] = day[m].id; });
@@ -588,8 +646,14 @@
   function mealRow(iso, meal, r) {
     var colors = { breakfast: "#C08552", lunch: "#7A8B6F", dinner: "#52695A" };
     var k = kcalOf(r);
-    return '<button class="mealRow" data-recipe="' + r.id + '"><span class="mealDot" style="background:' + colors[meal] + '"></span>' +
-      '<span class="mName">' + esc(recName(r)) + '</span><span class="kcalChip">' + (k == null ? tr("meal.noCount") : tr("meal.aboutKcal", { kcal: k })) + "</span></button>";
+    var eaten = !!(state.eaten || {})[iso + "." + meal];
+    var sv = (state.planServings || {})[mpKey(iso) + "." + meal];
+    var flags = window.FitAllergens ? window.FitAllergens.recipeFlags(r) : [];
+    return '<div class="mealItem' + (eaten ? " isEaten" : "") + '"><button class="mealRow" data-recipe="' + r.id + '"><span class="mealDot" style="background:' + colors[meal] + '"></span>' +
+      '<span class="mName">' + esc(recName(r)) + (sv && sv !== r.servings ? ' <small class="svChip">' + esc(tr("meal.serves", { n: sv })) + "</small>" : "") + '</span><span class="kcalChip">' + (k == null ? tr("meal.noCount") : tr("meal.aboutKcal", { kcal: k })) + "</span></button>" +
+      '<div class="mealActs"><button type="button" class="miniBtn" data-eat="' + iso + "|" + meal + '" aria-pressed="' + eaten + '">' + esc(eaten ? tr("meal.eatenUndo", null, "Eaten ✓") : tr("meal.eat", null, "Mark eaten")) + "</button>" +
+      '<button type="button" class="miniBtn" data-swap="' + iso + "|" + meal + '">' + esc(tr("meal.swap", null, "Swap")) + "</button>" +
+      '<button type="button" class="miniBtn" data-unplan="' + iso + "|" + meal + '" aria-label="' + esc(tr("meal.removeAria", { name: recName(r) }, "Remove " + recName(r) + " from the plan")) + '">' + esc(tr("meal.remove", null, "Remove")) + "</button></div></div>";
   }
   /* --- Water (build 17, Wave 1): sips, not lectures. Fixed
      friendly sizes, the user's own bottle once set, an undo
@@ -674,6 +738,10 @@
     var html = waterCardHtml() + '<div class="card"><h2>' + esc(tr("meal.week")) + "</h2>" +
       '<p class="hint">' + (target ? tr("legal.planHint", { kcal: target }) :
         tr("meal.planHintNone")) + "</p>" +
+      '<label>' + esc(tr("meal.maxTime", null, "Cooking time limit")) + '<select id="planMaxMin">' +
+        [[0, tr("meal.anyTime", null, "Any time")], [15, "15 min"], [20, "20 min"], [30, "30 min"], [45, "45 min"], [60, "60 min"]].map(function (o) {
+          return '<option value="' + o[0] + '"' + (((state.mealPrefs && state.mealPrefs.maxMinutes) || 0) === o[0] ? " selected" : "") + ">" + esc(o[1]) + "</option>"; }).join("") + "</select></label>" +
+      '<p class="hint" id="planNote" role="status"></p>' +
       '<div class="row"><button class="primaryBtn" id="planWeekBtn">' + esc(tr("meal.planWeekBtn")) + '</button></div>' +
       ((function () { var y = state.plan[mpKey(L.addDays(L.todayKey(), -1))] || {}; return ["breakfast", "lunch", "dinner"].some(function (m) { return !!y[m]; }); })()
         ? '<div class="row"><button class="pillBtn" id="sameYesterdayBtn">' + esc(tr("meal.sameYesterday")) + '</button></div>' : "") +
@@ -711,7 +779,36 @@
       ["breakfast", "lunch", "dinner"].forEach(function (m) { if (y[m]) state.plan[key][m] = y[m]; });
       save(); renderPlan(); toast(tr("meal.yesterdayCopied"));
     });
-    $("planWeekBtn").addEventListener("click", function () { planWeek(); renderPlan(); toast(tr("meal.weekPlanned")); showWallyCelebration("plan"); });
+    $("planMaxMin").addEventListener("change", function () {
+      state.mealPrefs = state.mealPrefs || {}; state.mealPrefs.maxMinutes = Number($("planMaxMin").value) || 0; save();
+    });
+    $("planWeekBtn").addEventListener("click", function () {
+      var res = planWeek(); renderPlan();
+      if (res.gaps) {
+        var pn = $("planNote");
+        if (pn) pn.textContent = tr("meal.gapsNote", { n: res.gaps }, res.gaps + " meal slot(s) have no recipe that fits your allergies and time limit. Nothing was relaxed. Try a longer time limit, or check your foods to avoid in the setup guide.");
+        toast(tr("meal.weekPartial", null, "Week planned, with a few gaps"));
+      } else { toast(tr("meal.weekPlanned")); showWallyCelebration("plan"); }
+    });
+    el.querySelectorAll("[data-eat]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var k = b.getAttribute("data-eat").replace("|", ".");
+        state.eaten = state.eaten || {};
+        if (state.eaten[k]) delete state.eaten[k]; else state.eaten[k] = true;
+        save(); renderPlan();
+      });
+    });
+    el.querySelectorAll("[data-unplan]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var p = b.getAttribute("data-unplan").split("|");
+        var e = state.plan[mpKey(p[0])]; if (!e) return;
+        delete e[p[1]]; delete state.planServings[mpKey(p[0]) + "." + p[1]]; delete state.eaten[p[0] + "." + p[1]];
+        save(); renderPlan(); toast(tr("meal.removed", null, "Removed from your plan"));
+      });
+    });
+    el.querySelectorAll("[data-swap]").forEach(function (b) {
+      b.addEventListener("click", function () { var p = b.getAttribute("data-swap").split("|"); openSwap(p[0], p[1], b); });
+    });
     $("mealNoteBtn").addEventListener("click", function () {
       var items = L.parseQuickDump($("mealNote").value, L.todayKey());
       var done = 0, missed = [];
@@ -727,43 +824,122 @@
       $("mealNoteMsg").textContent = done ? (done === 1 ? tr("meal.sortedOne") : tr("meal.sortedMany", { n: done })) + (missed.length ? tr("meal.noMatch", { list: missed.join(", ") }) : "") : tr("meal.nothingMatched");
     });
     wireMic($("mealNoteMic"), $("mealNote"));
-    el.querySelectorAll("[data-recipe]").forEach(function (b) { b.addEventListener("click", function () { openRecipe(b.getAttribute("data-recipe")); }); });
+    el.querySelectorAll("[data-recipe]").forEach(function (b) { b.addEventListener("click", function () { openRecipe(b.getAttribute("data-recipe"), b); }); });
   }
 
-  function openRecipe(id) {
+  /* Modal a11y helpers: role=dialog, focus in, Escape closes, focus returns. */
+  var modalReturn = null;
+  function openRecipeModal(opener) {
+    var m = $("recipeModal"), c = $("recipeModalCard");
+    modalReturn = opener || document.activeElement;
+    c.setAttribute("role", "dialog"); c.setAttribute("aria-modal", "true"); c.setAttribute("tabindex", "-1");
+    var h = c.querySelector("h2"); if (h) { h.id = "recipeModalTitle"; c.setAttribute("aria-labelledby", "recipeModalTitle"); }
+    m.classList.remove("hidden");
+    setTimeout(function () { c.focus(); }, 30);
+  }
+  function closeRecipeModal() {
+    $("recipeModal").classList.add("hidden");
+    if (modalReturn && modalReturn.focus && document.contains(modalReturn)) { try { modalReturn.focus(); } catch (e) {} }
+    modalReturn = null;
+  }
+  document.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape" && !$("recipeModal").classList.contains("hidden")) closeRecipeModal();
+    if (ev.key === "Tab" && !$("recipeModal").classList.contains("hidden")) {
+      var f = $("recipeModalCard").querySelectorAll("button,[href],input,select,textarea,[tabindex]:not([tabindex='-1'])");
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (ev.shiftKey && (document.activeElement === first || document.activeElement === $("recipeModalCard"))) { ev.preventDefault(); last.focus(); }
+      else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+    }
+  });
+  $("recipeModal").addEventListener("click", function (ev) { if (ev.target === $("recipeModal")) closeRecipeModal(); });
+
+  function openSwap(iso, meal, opener) {
+    var cur = recipeById((state.plan[mpKey(iso)] || {})[meal]);
+    var cands = window.FitFood.alternatives({ recipes: allRecipes(), meal: meal, currentId: cur && cur.id, profile: state.profile || {},
+      recentIds: L.recentRecipeIds(state, L.todayKey()), kcalOf: kcalOf, targetKcal: cur ? kcalOf(cur) : null,
+      maxMinutes: mealOpts().maxMinutes }).slice(0, 6);
+    var html = "<h2>" + esc(tr("meal.swapTitle", { meal: tr("meal." + meal, null, meal).toLowerCase() }, "Pick a different " + meal)) + "</h2>" +
+      '<p class="hint">' + esc(tr("meal.swapHint", null, "Only recipes that fit your allergies and time limit are shown, closest to the calories of the one you have now.")) + "</p>";
+    if (!cands.length) html += '<p class="hint">' + esc(tr("meal.swapNone", null, "No other recipe fits right now. Nothing was relaxed.")) + "</p>";
+    html += '<div class="swapList">' + cands.map(function (r) {
+      var k = kcalOf(r);
+      return '<button type="button" class="swapOpt" data-pick="' + esc(r.id) + '"><img alt="" src="' + window.FitRecipeArt.artFor(r) + '"><span><b>' + esc(recName(r)) + "</b><small>" + r.minutes + " min · " +
+        (k == null ? esc(tr("meal.noCount")) : esc(tr("meal.aboutKcal", { kcal: k }))) + "</small></span></button>";
+    }).join("") + "</div>" +
+      '<div class="row"><button class="pillBtn" id="swapClose">' + esc(tr("common.close")) + "</button></div>";
+    $("recipeModalCard").innerHTML = html;
+    openRecipeModal(opener);
+    $("swapClose").addEventListener("click", closeRecipeModal);
+    $("recipeModalCard").querySelectorAll("[data-pick]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        state.plan[mpKey(iso)][meal] = b.getAttribute("data-pick");
+        delete state.planServings[mpKey(iso) + "." + meal]; delete state.eaten[iso + "." + meal];
+        save(); closeRecipeModal(); renderMeals(currentSub); toast(tr("meal.swapped", null, "Swapped"));
+      });
+    });
+  }
+
+  function allergenLine(r) {
+    var A = window.FitAllergens; if (!A) return "";
+    var flags = A.recipeFlags(r);
+    if (!flags.length) return '<p class="hint allergenLine">' + esc(tr("meal.noKnownAllergens", null, "No common allergens found in the listed ingredients. Always check packaging.")) + "</p>";
+    return '<p class="allergenLine"><b>' + esc(tr("meal.contains", null, "Contains or may contain")) + ":</b> " + flags.map(function (f) { return '<span class="allergenChip">' + esc(A.label(f)) + "</span>"; }).join(" ") + "</p>";
+  }
+  function openRecipe(id, opener, servingsOverride) {
     var r = recipeById(id); if (!r) return;
+    var prof = state.profile || {};
+    var sv = Math.min(24, Math.max(1, Number(servingsOverride) || r.servings));
     var k = kcalOf(r);
-    var ads = state.profile ? MP.adaptations(r, [{ name: "You", allergies: state.profile.allergies || [], dislikes: [] }], MD) : [];
+    var conflicts = (window.FitAllergens && (prof.allergies || []).length) ? window.FitAllergens.recipeConflicts(r, prof.allergies) : [];
+    var ads = state.profile ? MP.adaptations(r, [{ name: "You", allergies: prof.allergies || [], dislikes: [] }], MD) : [];
     var html = "<h2>" + esc(recName(r)) + "</h2>" +
-      '<p class="hint">' + esc((r.cuisines || []).join(", ")) + " · " + r.minutes + " min · " + tr("meal.serves", { n: r.servings }) +
-      (k == null ? tr("meal.noKcalYet") : tr("meal.perServing", { kcal: k })) + "</p>";
-    if (r.picture) html += '<img class="photoImg" alt="' + esc(tr("meal.photoAlt")) + '" src="' + r.picture + '">';
-    if (ads.length) html += '<div class="swapBox">' + esc(tr("meal.madeSafe")) + ads.map(function (a) {
+      '<p class="hint">' + esc((r.cuisines || []).join(", ")) + " · " + r.minutes + " min · " + tr("meal.serves", { n: sv }) +
+      (k == null ? tr("meal.noKcalYet") : tr("meal.perServing", { kcal: k })) + "</p>" +
+      '<img class="recipeArt" alt="' + esc(r.picture ? tr("meal.photoAlt") : tr("meal.artAlt", { name: recName(r) }, "Illustration of " + recName(r))) + '" src="' + window.FitRecipeArt.artFor(r) + '">' +
+      (r.picture ? "" : '<p class="hint artNote">' + esc(tr("meal.artNote", null, "Illustration drawn from this recipe's ingredients, not a photo.")) + "</p>");
+    if (conflicts.length) html += '<div class="swapBox warnBox" role="alert"><b>' + esc(tr("meal.hasYourAllergen", null, "Heads up: this recipe contains something you listed to avoid")) + ":</b> " + esc(conflicts.join(", ")) + ". " +
+      esc(tr("meal.pickAnother", null, "It is hidden from planning and search. Use Swap to pick a recipe that fits.")) + "</div>";
+    html += allergenLine(r);
+    if (ads.length && !conflicts.length) html += '<div class="swapBox">' + esc(tr("meal.madeSafe")) + ads.map(function (a) {
       return esc(tr("meal.becomes", { ing: cName("ingredient", a.ingredient, a.ingredient), swap: cName("ingredient", a.swap, a.swap) })); }).join("; ") + ".</div>";
+    html += '<div class="svRow" role="group" aria-label="' + esc(tr("meal.servingsAria", null, "Servings")) + '">' +
+      '<button type="button" class="pillBtn svBtn" id="svMinus" aria-label="' + esc(tr("meal.fewer", null, "Fewer servings")) + '"' + (sv <= 1 ? " disabled" : "") + '>−</button>' +
+      '<span class="svNum" id="svNum" aria-live="polite">' + esc(tr("meal.serves", { n: sv })) + "</span>" +
+      '<button type="button" class="pillBtn svBtn" id="svPlus" aria-label="' + esc(tr("meal.more", null, "More servings")) + '"' + (sv >= 24 ? " disabled" : "") + ">+</button></div>";
     if ((r.ingredients || []).length) html += "<h3>" + esc(tr("meal.ingredients")) + "</h3><ul class='ingList'>" + r.ingredients.map(function (i) {
-      return "<li>" + esc(i.qty) + " " + esc(recUnitName(r, i.unit)) + " " + esc(recIngName(r, i.name)) + "</li>"; }).join("") + "</ul>";
+      var q = window.FitFood.fmtQty(window.FitFood.scaleQty(i.qty, sv, r.servings), i.unit);
+      return "<li>" + esc(q) + " " + esc(recUnitName(r, i.unit)) + " " + esc(recIngName(r, i.name)) + "</li>"; }).join("") + "</ul>";
     var steps = recSteps(r);
     if (steps.length) html += "<h3>" + esc(tr("meal.steps")) + "</h3><ol class='stepList'>" + steps.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ol>";
+    html += '<p class="hint provNote">' + (k == null ? esc(tr("meal.noKcalWhy", null, "Calories are not shown because at least one ingredient has no verified value. Nothing was guessed.")) :
+      esc(tr("meal.kcalSource", null, "Calories are estimated per serving from USDA FoodData Central values for each ingredient (rounded to 5). They are a guide, not medical advice."))) + "</p>";
     var isFav = (state.favRecipes || []).indexOf(r.id) !== -1;
     html += '<div class="row"><button class="primaryBtn" id="rmToday">' + esc(tr("meal.putToday")) + '</button>' +
-      '<button class="pillBtn" id="rmFav">' + esc(tr(isFav ? "meal.favRemove" : "meal.favAdd")) + '</button>' +
+      '<button class="pillBtn" id="rmFav" aria-pressed="' + isFav + '">' + esc(tr(isFav ? "meal.favRemove" : "meal.favAdd")) + '</button>' +
       '<button class="pillBtn" id="rmClose">' + esc(tr("common.close")) + '</button></div>';
     $("recipeModalCard").innerHTML = html;
-    $("recipeModal").classList.remove("hidden");
+    if ($("recipeModal").classList.contains("hidden")) openRecipeModal(opener); else { var c0 = $("recipeModalCard"); var h0 = c0.querySelector("h2"); if (h0) { h0.id = "recipeModalTitle"; } }
+    $("svMinus").addEventListener("click", function () { openRecipe(id, null, sv - 1); $("svMinus").focus(); });
+    $("svPlus").addEventListener("click", function () { openRecipe(id, null, sv + 1); $("svPlus").focus(); });
     $("rmFav").addEventListener("click", function () {
       state.favRecipes = state.favRecipes || [];
       var i = state.favRecipes.indexOf(r.id);
       if (i === -1) state.favRecipes.push(r.id); else state.favRecipes.splice(i, 1);
-      save(); openRecipe(r.id);
+      save(); openRecipe(r.id, null, sv);
       if (currentArea === "meals" && currentSub === "meal-recipes") renderRecipes();
     });
-    $("rmClose").addEventListener("click", function () { $("recipeModal").classList.add("hidden"); });
+    $("rmClose").addEventListener("click", closeRecipeModal);
     $("rmToday").addEventListener("click", function () {
       var key = mpKey(L.todayKey());
       if (!state.plan[key]) state.plan[key] = {};
-      state.plan[key][r.meal] = r.id; save();
-      $("recipeModal").classList.add("hidden"); toast(tr("meal.onToday"));
+      state.plan[key][r.meal] = r.id;
+      if (sv !== r.servings) state.planServings[key + "." + r.meal] = sv; else delete state.planServings[key + "." + r.meal];
+      delete state.eaten[L.todayKey() + "." + r.meal];
+      save();
+      closeRecipeModal(); toast(tr("meal.onToday"));
       if (currentArea === "meals") renderMeals(currentSub);
+      renderToday();
     });
   }
 
@@ -784,7 +960,12 @@
       '<label>' + esc(tr("meal.ingsLabel")) + '<textarea id="picIngredients" rows="4"></textarea></label>' +
       '<p class="hint">' + esc(tr("meal.picIngsHint")) + '</p>' +
       '<div class="row"><button class="pillBtn" id="picSave">' + esc(tr("meal.savePic")) + '</button></div></div>' +
-      '<div class="card"><h2>' + esc(tr("meal.allRecipes")) + '</h2><div class="row"><input id="recipeSearch" type="text" placeholder="' + esc(tr("meal.searchPh")) + '"></div><div id="recipeList" class="recipeGrid"></div></div>';
+      '<div class="card"><h2>' + esc(tr("meal.allRecipes")) + '</h2><div class="row"><input id="recipeSearch" type="search" aria-label="' + esc(tr("meal.searchPh")) + '" placeholder="' + esc(tr("meal.searchPh")) + '"></div>' +
+      '<div class="grid2 filterRow"><label>' + esc(tr("meal.mealLabel")) + '<select id="fMeal"><option value="">' + esc(tr("meal.allMeals", null, "All meals")) + '</option><option value="breakfast">' + esc(tr("meal.breakfast")) + '</option><option value="lunch">' + esc(tr("meal.lunch")) + '</option><option value="dinner">' + esc(tr("meal.dinner")) + '</option></select></label>' +
+      '<label>' + esc(tr("meal.maxTime", null, "Cooking time limit")) + '<select id="fTime"><option value="0">' + esc(tr("meal.anyTime", null, "Any time")) + '</option><option value="15">15 min</option><option value="20">20 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60">60 min</option></select></label></div>' +
+      '<div class="row"><label class="chkRow"><input type="checkbox" id="fShort"> ' + esc(tr("meal.shortList", null, "Short shopping list (8 ingredients or fewer)")) + '</label></div>' +
+      '<div class="row"><label class="chkRow"><input type="checkbox" id="fFav"> ' + esc(tr("meal.favsOnly", null, "Favourites only")) + '</label></div>' +
+      '<p class="hint" id="recipeCount" role="status" aria-live="polite"></p><div id="recipeList" class="recipeGrid"></div><div class="row"><button class="pillBtn hidden" id="recipeMore">' + esc(tr("meal.showMore", null, "Show more")) + '</button></div></div>';
     var picData = "";
     $("picFile").addEventListener("change", function () {
       var f = $("picFile").files[0]; if (!f) return;
@@ -850,31 +1031,47 @@
       var sv = $("nameMealSave");
       if (sv) sv.addEventListener("click", function () { state.customRecipes.push(r); save(); renderRecipes(); toast(tr("common.saved")); });
     });
-    function drawList(filter) {
+    var shown = 24;
+    function drawList(filter, reset) {
+      if (reset) shown = 24;
       var all = allRecipes();
-      var list = all.filter(function (r) { return !filter || r.name.toLowerCase().indexOf(filter) !== -1 || recName(r).toLowerCase().indexOf(filter) !== -1; });
+      var prof = state.profile || {};
+      var flt = { query: filter || "", meal: $("fMeal").value, maxMinutes: Number($("fTime").value) || 0, maxIngredients: $("fShort").checked ? 8 : 0,
+        favouritesOnly: $("fFav").checked, favourites: state.favRecipes || [], profile: prof, nameOf: recName };
+      var list = window.FitFood.filterRecipes(all, flt);
+      var hidden = window.FitFood.countHidden(all, flt);
+      var A = window.FitAllergens, unres = A ? A.unresolved(prof.allergies || []) : [];
       function card(r) {
-        var k = kcalOf(r);
-        return '<button class="recipeCard" data-recipe="' + r.id + '">' + (r.picture ? '<img alt="" src="' + r.picture + '">' : "") +
+        var k = kcalOf(r), flags = A ? A.recipeFlags(r) : [];
+        return '<button class="recipeCard" data-recipe="' + r.id + '"><img alt="" loading="lazy" src="' + window.FitRecipeArt.artFor(r) + '">' +
           "<h3>" + esc(recName(r)) + "</h3><p>" + esc(tr("meal." + r.meal, null, r.meal)) + " · " + r.minutes + " min</p><p>" +
-          (k == null ? tr("meal.noCount") : tr("meal.aboutPerServing", { kcal: k })) + "</p></button>";
+          (k == null ? tr("meal.noCount") : tr("meal.aboutPerServing", { kcal: k })) + "</p>" +
+          (flags.length ? '<p class="cardAllergens">' + flags.map(function (f) { return '<span class="allergenChip">' + esc(A.label(f)) + "</span>"; }).join(" ") + "</p>" : "") + "</button>";
       }
       var html = "";
-      if (!filter) {
+      if (!filter && !flt.meal && !flt.maxMinutes && !flt.maxIngredients && !flt.favouritesOnly) {
         var byId = {}; all.forEach(function (r) { byId[r.id] = r; });
-        var favs = (state.favRecipes || []).map(function (id) { return byId[id]; }).filter(Boolean);
-        var recents = L.recentRecipeIds(state, L.todayKey()).map(function (id) { return byId[id]; }).filter(Boolean);
+        var favs = (state.favRecipes || []).map(function (id) { return byId[id]; }).filter(function (r) { return r && window.FitFood.isSafe(r, prof); });
+        var recents = L.recentRecipeIds(state, L.todayKey()).map(function (id) { return byId[id]; }).filter(function (r) { return r && window.FitFood.isSafe(r, prof); });
         if (favs.length) html += '<h3 class="gridHead">' + esc(tr("meal.favsHead")) + "</h3>" + favs.map(card).join("");
         else html += '<div class="card emptyCard">' + (guideOn() ? wallyWrap("welcome", null, 56) : "") + "<p>" + esc(tr("meal.noFavsLine")) + "</p></div>";
         if (recents.length) html += '<h3 class="gridHead">' + esc(tr("meal.recentsHead")) + "</h3>" + recents.map(card).join("");
         if (html) html += '<h3 class="gridHead">' + esc(tr("meal.allRecipes")) + "</h3>";
       }
-      html += list.map(card).join("") || '<p class="hint">' + esc(tr("meal.noMatchSearch")) + '</p>';
+      html += list.slice(0, shown).map(card).join("") || '<p class="hint">' + esc(tr("meal.noMatchSearch")) + '</p>';
       $("recipeList").innerHTML = html;
-      $("recipeList").querySelectorAll("[data-recipe]").forEach(function (b) { b.addEventListener("click", function () { openRecipe(b.getAttribute("data-recipe")); }); });
+      var cnt = tr("meal.showingN", { n: Math.min(shown, list.length), total: list.length }, "Showing " + Math.min(shown, list.length) + " of " + list.length);
+      if (hidden > 0) cnt += " · " + tr("meal.hiddenAllergy", { n: hidden }, hidden + " hidden because of the foods you avoid");
+      if (unres.length) cnt += " · " + tr("meal.unresolved", { list: unres.join(", ") }, "We could not map \"" + unres.join(", ") + "\" to a known allergen, so it is matched by ingredient name only. Check labels.");
+      $("recipeCount").textContent = cnt;
+      $("recipeMore").classList.toggle("hidden", list.length <= shown);
+      $("recipeList").querySelectorAll("[data-recipe]").forEach(function (b) { b.addEventListener("click", function () { openRecipe(b.getAttribute("data-recipe"), b); }); });
     }
+    function redraw() { drawList($("recipeSearch").value.trim().toLowerCase(), true); }
     drawList("");
-    $("recipeSearch").addEventListener("input", function () { drawList($("recipeSearch").value.trim().toLowerCase()); });
+    ["recipeSearch"].forEach(function (id) { $(id).addEventListener("input", redraw); });
+    ["fMeal", "fTime", "fShort", "fFav"].forEach(function (id) { $(id).addEventListener("change", redraw); });
+    $("recipeMore").addEventListener("click", function () { shown += 24; drawList($("recipeSearch").value.trim().toLowerCase(), false); });
   }
 
   function renderFridge() {
@@ -1039,27 +1236,29 @@
 
   function renderGroceries() {
     var el = $("areaBody");
-    var planMP = state.plan;
-    var items = MP.buildGroceryList(planMP, allRecipes(), state.pantry || []);
-    /* Grocery rows carry no provenance, so rebuild the library set
-       from the plan: a name translates only when a LIBRARY recipe in
-       this plan uses it. Custom-recipe and pantry words stay raw. */
+    var rows = window.FitFood.shoppingList({ state: state, recipes: allRecipes(), fromIso: L.todayKey(), days: 7 });
     var libIng = {}, libUnit = {};
-    Object.keys(planMP || {}).forEach(function (day) {
-      ["breakfast", "lunch", "dinner"].forEach(function (meal) {
-        var id = planMP[day] && planMP[day][meal]; if (!id) return;
-        var r = allRecipes().filter(function (x) { return x.id === id; })[0];
-        if (r && !r.custom) (r.ingredients || []).forEach(function (i) { libIng[i.name] = 1; libUnit[i.unit] = 1; });
-      });
-    });
+    allRecipes().forEach(function (r) { if (!r.custom) (r.ingredients || []).forEach(function (i) { libIng[i.name] = 1; libUnit[i.unit] = 1; }); });
     var pantrySorted = MP.sortByExpiry((state.pantry || []).slice(), new Date(), MD);
-    var html = '<div class="card"><h2>' + esc(tr("meal.groceryList")) + '</h2><p class="hint">' + esc(tr("meal.grocHint")) + '</p>' +
-      (items.length ? items.map(function (i) {
-        return '<div class="listRow"><span class="grow">' + esc(libIng[i.name] ? cName("ingredient", i.name, i.name) : i.name) + " · " + esc(i.qty) + " " + esc(libUnit[i.unit] ? cName("unit", i.unit, i.unit) : i.unit) + "</span>" +
-          (i.haveIt ? '<span class="haveIt">' + esc(tr("meal.haveIt")) + '</span>' : "") + "</div>";
-      }).join("") : '<p class="hint">' + esc(tr("meal.noPlanYet")) + '</p>') +
-      '<div class="row"><input id="extraName" type="text" placeholder="' + esc(tr("meal.addAnythingPh")) + '"><button class="pillBtn" id="extraAdd">' + esc(tr("common.add")) + '</button></div>' +
-      (state.extras || []).map(function (x) { return '<div class="listRow"><span class="grow">' + esc(x.name) + "</span></div>"; }).join("") + "</div>";
+    var checkedN = rows.filter(function (r) { return r.checked; }).length + (state.extras || []).filter(function (x) { return x.checked; }).length;
+    var cats = {}, order = [];
+    rows.forEach(function (r) { if (!cats[r.category]) { cats[r.category] = []; order.push(r.category); } cats[r.category].push(r); });
+    function rowHtml(i) {
+      var nm = libIng[i.name] ? cName("ingredient", i.name, i.name) : i.name;
+      var un = libUnit[i.unit] ? cName("unit", i.unit, i.unit) : i.unit;
+      var amount = i.covered ? tr("meal.haveIt") : window.FitFood.fmtQty(i.qty, i.unit) + " " + un;
+      var partial = (!i.covered && i.partialHave > 0) ? ' <small class="hint">(' + esc(tr("meal.haveSome", { qty: window.FitFood.fmtQty(i.partialHave, i.unit), unit: un }, "you have " + window.FitFood.fmtQty(i.partialHave, i.unit) + " " + un)) + ")</small>" : "";
+      return '<label class="listRow grocRow' + (i.checked ? " isTicked" : "") + '"><input type="checkbox" data-gtick="' + esc(i.key) + '"' + (i.checked ? " checked" : "") + '><span class="grow">' + esc(nm) + " · " + esc(amount) + partial + "</span></label>";
+    }
+    var html = '<div class="card"><h2>' + esc(tr("meal.groceryList")) + '</h2><p class="hint">' + esc(tr("meal.grocHint")) + " " + esc(tr("meal.grocRange", null, "Covers the next 7 days of your plan, scaled to the servings you chose.")) + '</p>' +
+      (rows.length ? order.map(function (c) { return '<h3 class="gridHead">' + esc(c) + "</h3>" + cats[c].map(rowHtml).join(""); }).join("") : '<p class="hint">' + esc(tr("meal.noPlanYet")) + '</p>') +
+      '<h3 class="gridHead">' + esc(tr("meal.extras", null, "Your extras")) + "</h3>" +
+      (state.extras || []).map(function (x) {
+        return '<div class="listRow grocRow' + (x.checked ? " isTicked" : "") + '"><label class="grow"><input type="checkbox" data-xtick="' + esc(x.id) + '"' + (x.checked ? " checked" : "") + "> " + esc(x.name) + "</label>" +
+          '<button type="button" class="miniBtn" data-xdel="' + esc(x.id) + '" aria-label="' + esc(tr("meal.removeAria", { name: x.name }, "Remove " + x.name)) + '">' + esc(tr("meal.remove", null, "Remove")) + "</button></div>";
+      }).join("") +
+      '<div class="row"><input id="extraName" type="text" aria-label="' + esc(tr("meal.addAnythingPh")) + '" placeholder="' + esc(tr("meal.addAnythingPh")) + '"><button class="pillBtn" id="extraAdd">' + esc(tr("common.add")) + '</button></div>' +
+      (checkedN ? '<div class="row"><button class="pillBtn" id="grocClear">' + esc(tr("meal.clearTicked", { n: checkedN }, "Clear ticked (" + checkedN + ")")) + "</button></div>" : "") + "</div>";
     html += '<div class="card"><h2>' + esc(tr("meal.foodYouHave")) + '</h2>' +
       '<div class="grid2"><label>' + esc(tr("meal.foodName")) + '<input id="gName" type="text" placeholder="' + esc(tr("meal.foodNamePh")) + '"></label>' +
       '<label>' + esc(tr("meal.amount")) + '<input id="gQty" type="number" min="0" step="any" value="500"></label>' +
@@ -1073,9 +1272,30 @@
       }).join("") : '<p class="hint">' + esc(tr("meal.pantryEmpty")) + '</p>') +
       '<p class="hint">' + esc(tr("meal.usdaNote")) + '</p></div>';
     el.innerHTML = html;
+    el.querySelectorAll("[data-gtick]").forEach(function (c) {
+      c.addEventListener("change", function () {
+        var k = c.getAttribute("data-gtick"); state.groceryChecked = state.groceryChecked || {};
+        if (c.checked) state.groceryChecked[k] = true; else delete state.groceryChecked[k];
+        save(); renderGroceries();
+      });
+    });
+    el.querySelectorAll("[data-xtick]").forEach(function (c) {
+      c.addEventListener("change", function () {
+        (state.extras || []).forEach(function (x) { if (x.id === c.getAttribute("data-xtick")) x.checked = c.checked; });
+        save(); renderGroceries();
+      });
+    });
+    el.querySelectorAll("[data-xdel]").forEach(function (b) {
+      b.addEventListener("click", function () { state.extras = state.extras.filter(function (x) { return x.id !== b.getAttribute("data-xdel"); }); save(); renderGroceries(); });
+    });
+    var gc = $("grocClear");
+    if (gc) gc.addEventListener("click", function () {
+      state.groceryChecked = {}; state.extras = (state.extras || []).filter(function (x) { return !x.checked; });
+      save(); renderGroceries(); toast(tr("meal.cleared", null, "Cleared"));
+    });
     $("extraAdd").addEventListener("click", function () {
       var n = $("extraName").value.trim(); if (!n) return;
-      state.extras.push({ id: "x" + Date.now(), name: n }); save(); renderGroceries();
+      state.extras.push({ id: "x" + Date.now(), name: n.slice(0, 80) }); save(); renderGroceries();
     });
     $("gAdd").addEventListener("click", function () {
       var n = $("gName").value.trim(); if (!n) { toast(tr("toast.foodFirst")); return; }
@@ -1100,7 +1320,7 @@
     (state.sessions || []).forEach(function (s) { if (s.dateKey === iso && s.status === "done") evs.push({ color: "#52695A", label: tr("cal.gymSession"), kind: "gym" }); });
     (state.routines || []).forEach(function (r) { if (L.routineDueOn(r, iso)) evs.push({ color: "#7A8B6F", label: r.name + (r.time ? " " + r.time : ""), kind: "routine" }); });
     (state.peptides || []).forEach(function (p) {
-      (p.log || []).forEach(function (lg) { if (lg.dateKey === iso) evs.push({ color: p.color, label: p.name, kind: "peptide" }); });
+      (p.log || []).forEach(function (lg) { if (lg.dateKey === iso) { var st = window.FitHealth.statusOf(lg); evs.push({ color: p.color, label: p.name + (st === "taken" ? "" : " · " + tr("pep.st." + st, null, st === "not_taken" ? "Not taken" : "Not sure")), kind: "peptide" }); } });
     });
     (state.habits || []).forEach(function (h) { if (h.days && h.days[iso]) evs.push({ color: h.color || "#7A8B6F", label: h.name, kind: "habit" }); });
     L.todosOn(state.todos, iso).forEach(function (t) { evs.push({ color: t.color, label: t.title, kind: "todo", id: t.id, time: t.time, done: t.status === "done" }); });
@@ -1152,10 +1372,14 @@
   function openImport() {
     if (!window.CI) return;
     $("importResult").textContent = "";
+    importOpener = document.activeElement;
     $("importSheet").classList.remove("hidden");
     setImportSource(importSource);
+    setTimeout(function () { var c = $("importCard"); if (c) c.focus(); }, 30);
   }
-  function closeImport() { $("importSheet").classList.add("hidden"); }
+  var importOpener = null;
+  function closeImport() { $("importSheet").classList.add("hidden"); if (importOpener && document.contains(importOpener)) { try { importOpener.focus(); } catch (e) {} } importOpener = null; }
+  document.addEventListener("keydown", function (ev) { if (ev.key === "Escape" && !$("importSheet").classList.contains("hidden")) closeImport(); });
   function setImportSource(src) {
     importSource = src;
     document.querySelectorAll(".import-src").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-src") === src); });
@@ -1206,7 +1430,7 @@
     }).join("");
     if (todos.length) html += todos.map(function (t) {
       return '<div class="todoRow' + (t.status === "done" ? " done" : "") + '"><button class="todoCheck' + (t.status === "done" ? " done" : "") +
-        '" data-todo="' + t.id + '">' + (t.status === "done" ? "✓" : "") + '</button><span class="tTitle">' + esc(t.title) + "</span>" +
+        '" data-todo="' + t.id + '" aria-pressed="' + (t.status === "done" ? "true" : "false") + '" aria-label="' + esc(t.title) + '">' + (t.status === "done" ? "✓" : "") + '</button><span class="tTitle">' + esc(t.title) + "</span>" +
         (t.time ? '<span class="kcalChip">' + esc(t.time) + "</span>" : "") + "</div>";
     }).join("");
     var habs = (state.habits || []);
@@ -1217,7 +1441,7 @@
     if (!meals.length && !todos.length && !others.length && !habs.length) html += '<p class="hint">' + esc(tr("cal.blankDay")) + '</p>';
     html += "</div>";
     box.innerHTML = html;
-    box.querySelectorAll("[data-recipe]").forEach(function (b) { b.addEventListener("click", function () { openRecipe(b.getAttribute("data-recipe")); }); });
+    box.querySelectorAll("[data-recipe]").forEach(function (b) { b.addEventListener("click", function () { openRecipe(b.getAttribute("data-recipe"), b); }); });
     box.querySelectorAll("[data-todo]").forEach(function (b) { b.addEventListener("click", function () { toggleTodo(b.getAttribute("data-todo")); renderMonth(); }); });
     box.querySelectorAll("[data-habitday]").forEach(function (b) { b.addEventListener("click", function () { toggleHabitDay(b.getAttribute("data-habitday"), iso); renderMonth(); }); });
   }
@@ -1297,10 +1521,13 @@
       }
       html += '<div class="card"><h2>' + esc({ Today: tr("nav.today"), Tomorrow: tr("cal.tomorrow"), Later: tr("cal.gLater"), "Any time": tr("cal.gAnytime"), Done: tr("cal.gDone") }[g] || g) + "</h2>" + (g === "Today" && todayLevel === "bad" ? '<p class="hint">' + esc(tr("cal.badEssentials")) + '</p>' : "") + rowsList.map(function (t) {
         return '<div class="todoRow' + (t.status === "done" ? " done" : "") + '"><button class="todoCheck' + (t.status === "done" ? " done" : "") +
-          '" data-todo="' + t.id + '">' + (t.status === "done" ? "✓" : "") + '</button><span class="mealDot" style="background:' + esc(t.color) + '"></span>' +
+          '" data-todo="' + t.id + '" aria-pressed="' + (t.status === "done" ? "true" : "false") + '" aria-label="' + esc(t.title) + '">' + (t.status === "done" ? "✓" : "") + '</button><span class="mealDot" style="background:' + esc(t.color) + '"></span>' +
           '<span class="tTitle">' + esc(t.title) + "</span>" +
           (t.time ? '<span class="kcalChip">' + esc(t.time) + "</span>" : "") +
-          '<span class="kcalChip">' + t.durationMin + ' min</span><button class="miniBtn" data-del="' + t.id + '">' + esc(tr("common.remove")) + '</button></div>';
+          '<span class="kcalChip">' + t.durationMin + ' min</span><button class="miniBtn" data-del="' + t.id + '">' + esc(tr("common.remove")) + '</button>' +
+          (t.time && t.date && t.status !== "done" ? '<label class="remLabel">' + esc(tr("rem.remindMe", null, "Remind me")) + '<select data-remind="' + esc(t.id) + '" aria-label="' + esc(tr("rem.remindFor", { name: t.title }, "Reminder for " + t.title)) + '">' +
+            [[-1, tr("rem.off", null, "Off")], [0, tr("rem.atTime", null, "At the time")], [10, tr("rem.min10", null, "10 minutes before")], [30, tr("rem.min30", null, "30 minutes before")], [60, tr("rem.min60", null, "1 hour before")]].map(function (o) {
+              var cur = typeof t.remindMin === "number" ? t.remindMin : -1; return '<option value="' + o[0] + '"' + (cur === o[0] ? " selected" : "") + ">" + esc(o[1]) + "</option>"; }).join("") + "</select></label>" : "") + "</div>";
       }).join("") + waitingNote + "</div>";
     });
     if (!(state.todos || []).length) html += '<div class="card emptyCard">' + (guideOn() ? wallyWrap("welcome", null, 56) : "") + '<svg class="ic icBig"><use href="#i-list"/></svg><p>' + esc(tr("cal.listEmpty")) + '</p><p class="hint">' + esc(tr("cal.dumpHint")) + '</p></div>';
@@ -1315,9 +1542,53 @@
     el.querySelectorAll("[data-todo]").forEach(function (b) { b.addEventListener("click", function () { toggleTodo(b.getAttribute("data-todo")); renderTodos(); }); });
     el.querySelectorAll("[data-del]").forEach(function (b) { b.addEventListener("click", function () {
       state.todos = state.todos.filter(function (t) { return t.id !== b.getAttribute("data-del"); }); save(); renderTodos(); }); });
+    el.querySelectorAll("[data-remind]").forEach(function (sel) { sel.addEventListener("change", function () {
+      var v = Number(sel.value);
+      state.todos.forEach(function (t) { if (t.id === sel.getAttribute("data-remind")) t.remindMin = v >= 0 ? v : null; });
+      save();
+      if (v >= 0 && !FitRemind.available()) toast(tr("rem.webNote", null, "Reminders show inside the app on this device. Phone alerts need the iPhone or Android app."));
+      else if (v >= 0 && !(state.settings && state.settings.notifications === true)) toast(tr("rem.turnOnFirst", null, "Turn on reminders in Calendar > Reminders so alerts can reach your phone."));
+    }); });
+  }
+  function renderReminders() {
+    var el = $("areaBody");
+    el.innerHTML = '<div class="card"><h2>' + esc(tr("sub.cal-reminders", null, "Reminders")) + '</h2><p class="hint" id="remStatus" role="status">' + esc(tr("rem.checking", null, "Checking…")) + "</p>" +
+      '<div class="row"><button class="primaryBtn hidden" id="remToggle"></button></div>' +
+      '<label class="confirmRow"><input type="checkbox" id="remDetails"' + (state.settings && state.settings.notifDetails ? " checked" : "") + '> <span>' + esc(tr("rem.showNames", null, "Show names on the lock screen")) + '</span></label>' +
+      '<h3>' + esc(tr("rem.catsTitle", null, "Which reminders do you want?")) + '</h3>' +
+      [["workout", tr("rem.catWorkout", null, "Workouts")], ["water", tr("rem.catWater", null, "Water")], ["tasks", tr("rem.catTasks", null, "Tasks")], ["health", tr("rem.catHealth", null, "Health and appointments")]].map(function (c) {
+        var off = (state.settings && state.settings.remindOff) || [];
+        return '<label class="confirmRow"><input type="checkbox" data-remcat="' + c[0] + '"' + (off.indexOf(c[0]) === -1 ? " checked" : "") + '> <span>' + esc(c[1]) + '</span></label>'; }).join("") +
+      '<p class="hint">' + esc(tr("rem.catsHint", null, "Every reminder uses a time you chose. Turn a group off and its reminders stop right away; your times are kept.")) + '</p>' +
+      '<p class="hint">' + esc(tr("rem.showNamesHint", null, "Off by default. Phone alerts for doses and appointments say only “You have a reminder.” so nobody nearby can read your health details.")) + '</p></div>' +
+      '<div class="card"><h2>' + esc(tr("rem.upcoming", null, "Coming up")) + '</h2><div id="remList"></div></div>';
+    el.querySelectorAll("[data-remcat]").forEach(function (cb) { cb.addEventListener("change", function () {
+      state.settings = state.settings || {}; var off = (state.settings.remindOff || []).filter(function (x) { return x !== cb.getAttribute("data-remcat"); });
+      if (!cb.checked) off.push(cb.getAttribute("data-remcat")); state.settings.remindOff = off; save(); renderReminders();
+    }); });
+    $("remDetails").addEventListener("change", function () { state.settings = state.settings || {}; state.settings.notifDetails = $("remDetails").checked; save(); renderReminders(); });
+    var items = FitRemind.upcoming(12);
+    var kindName = { dose: tr("rem.kDose", null, "Scheduled log reminder"), gym: tr("rem.kGym", null, "Workout"), water: tr("rem.kWater", null, "Water"), todo: tr("rem.kTodo", null, "Task"), appt: tr("rem.kAppt", null, "Appointment") };
+    $("remList").innerHTML = items.length ? items.map(function (r) {
+      var d = new Date(r.at);
+      return '<div class="listRow remRow"><span class="grow"><b>' + esc(r.kind === "water" ? tr("water.remindTitle") : r.name) + "</b><br><span class='hint'>" + esc(kindName[r.kind] || r.kind) + " · " + esc(r.key) + " " + esc(("0" + d.getHours()).slice(-2) + ":" + ("0" + d.getMinutes()).slice(-2)) +
+        (r.lead ? " · " + esc(tr("rem.leadN", { n: r.lead }, r.lead + " min before")) : "") + (r.shifted ? " · " + esc(tr("rem.shifted", null, "moved a little because of a clock change")) : "") + "</span></span></div>";
+    }).join("") : '<p class="hint">' + esc(tr("rem.none", null, "Nothing is scheduled. Set a time on a task, workout, water goal or log schedule and it will appear here.")) + "</p>";
+    var msgs = { unavailable: tr("rem.webNote", null, "Reminders show inside the app on this device. Phone alerts need the iPhone or Android app."),
+      off: tr("rem.offNote", null, "Phone alerts are off. Turn them on to get a nudge at the times below."),
+      denied: tr("rem.deniedNote", null, "Phone alerts are blocked in your phone's settings. Reminders still show on Today inside the app. You can allow notifications for Fit Hard in Settings, then come back."),
+      on: tr("rem.onNote", null, "Phone alerts are on. Changing or deleting a task, workout or schedule updates its reminder automatically.") };
+    FitRemind.status().then(function (st) {
+      var s1 = $("remStatus"); if (!s1) return;
+      s1.textContent = msgs[st]; s1.setAttribute("data-status", st);
+      var tg = $("remToggle");
+      if (st === "off" || st === "on") { tg.classList.remove("hidden"); tg.textContent = st === "on" ? tr("rem.turnOff") : tr("rem.turnOn"); }
+      tg.onclick = function () { var on = st === "on"; FitRemind.setOn(!on).then(function (ok) { if (!on && !ok) toast(tr("rem.notAllowed")); renderReminders(); }); };
+    });
   }
   function renderCalendar(subId) {
-    if (subId === "cal-habits") renderHabits();
+    if (subId === "cal-reminders") renderReminders();
+    else if (subId === "cal-habits") renderHabits();
     else if (subId === "cal-todos") renderTodos();
     else { if (!calSelected) calSelected = L.todayKey(); renderMonth(); }
   }
@@ -1460,7 +1731,7 @@
     if (!items.length) { toast(tr("gym.nothingPlayable")); return; }
     state.sessions.push({ id: "session." + Date.now(), dateKey: L.todayKey(), routineId: r.id,
       routineName: r.name, status: "active", idx: 0, set: 1, doneSets: 0,
-      startedAt: Date.now(), items: items, lightened: !!use.lightened });
+      startedAt: Date.now(), lastActiveAt: Date.now(), log: [], pausedAt: null, pausedTotalMs: 0, restEndsAt: null, items: items, lightened: !!use.lightened });
     save(); openArea("gym", "gym-session");
     toast(light ? tr("gym.lighterToday") : tr("gym.sessionStarted"));
   }
@@ -1554,24 +1825,47 @@
        never edited. */
     while (item && (!ex || !L.routinePlayable(ex))) { s.idx++; item = s.items[s.idx]; ex = item ? exerciseById(item.exerciseId) : null; }
     if (!item || !ex) { finishSession(s, true); return; }
+    var FT = window.FitTrain; FT.ensure(s);
+    var stale = FT.recoveryState(s, Date.now()) === "stale";
+    var paused = s.pausedAt != null;
+    var lastPerf = FT.lastPerformance(state.sessions, item.exerciseId, s.id);
+    var note = FT.overloadNote(lastPerf, item.timed ? 0 : item.reps);
+    var existingLog = s.log.filter(function (x) { return x.exerciseId === item.exerciseId && x.setNo === s.set; })[0];
+    function fmtW(w) { return w == null ? "" : String(w); }
+    var lastLine = "";
+    if (note.kind !== "none") {
+      lastLine = '<p class="hint lastTime">' + esc(tr("gym.lastTime", { sets: note.sets, reps: note.topReps, date: lastPerf.dateKey || "" },
+        "Last time (" + (lastPerf.dateKey || "") + "): " + note.sets + " sets, best " + note.topReps + (item.timed ? " s" : " reps") + (note.weightKg != null ? " at " + note.weightKg + " kg" : "") + ".")) +
+        (note.weightKg != null ? " " + esc(tr("gym.lastKg", { kg: note.weightKg }, "")) : "") +
+        (note.kind === "reachedTarget" && !item.timed ? " " + esc(tr("gym.overloadInfo", null, "You hit your rep goal on every set. If it felt easy, you could try one more rep or a slightly heavier option. Only you can judge that.")) : "") + "</p>";
+    }
+    var staleHtml = stale ? '<div class="card staleCard" role="alert"><h2>' + esc(tr("gym.staleTitle", null, "Welcome back")) + '</h2><p>' + esc(tr("gym.staleBody", null, "This workout has been paused for a while. Your logged sets are safe. What would you like to do?")) +
+      '</p><div class="row"><button class="primaryBtn" id="staleResume">' + esc(tr("gym.staleResume", null, "Continue workout")) + '</button><button class="pillBtn" id="staleFinish">' + esc(tr("gym.staleFinish", null, "Finish with what I logged")) + '</button><button class="pillBtn" id="staleDiscard">' + esc(tr("gym.staleDiscard", null, "Discard workout")) + '</button></div></div>' : "";
     var pips = "";
     for (var i = 1; i <= item.sets; i++) pips += '<span class="pip' + (i < s.set ? " done" : "") + '"></span>';
-    el.innerHTML = skinAskHtml() + '<div class="card"><h2>' + esc(s.routineName) + (s.lightened ? tr("gym.lighterSuffix") : "") + '</h2>' +
+    el.innerHTML = staleHtml + skinAskHtml() + '<div class="card"><h2>' + esc(s.routineName) + (s.lightened ? tr("gym.lighterSuffix") : "") + '</h2>' +
       '<p class="hint">' + esc(tr("gym.exOf", { a: s.idx + 1, b: s.items.length })) + '<span id="sessClock">0:00</span></p>' +
       '<div class="exRow"><span class="exTile"><svg><use href="#i-gym"/></svg></span><span class="eName sessionBig">' + esc(exName(ex)) +
       '<br><span class="eMeta">' + esc(exPart(ex)) + " · " + esc(exEquip(ex)) + "</span>" +
       (ex.level === "intermediate" ? ' <span class="kcalChip">' + esc(tr("gym.stepUp")) + "</span>" : "") + "</span></div>" +
-      '<p class="hint">' + esc(exCue(ex)) + "</p>" +
+      '<p class="hint">' + esc(tr("gym.howTo", null, "How to")) + ": " + esc(exCue(ex)) + "</p>" + lastLine +
       '<div class="timerBar" id="timerBar"><span class="timerBarClock" id="timerBarClock">0:00</span><span class="timerBarLabel" id="timerBarLabel"></span></div>' +
       '<div id="animMount"></div>' +
       '<div class="setPips">' + pips + '</div><p class="hint">' + esc(tr("gym.setOf", { a: s.set, b: item.sets })) + "</p>" +
+      (paused ? '<p class="pausedBanner" role="status">' + esc(tr("gym.paused", null, "Workout paused. Your time is not counting.")) + "</p>" : "") +
       (item.timed
-        ? '<div class="timerBig" id="countBox">' + item.reps + esc(tr("gym.secSuffix")) + '</div><div class="row"><button class="primaryBtn" id="holdBtn">' + esc(tr("gym.startHold")) + '</button></div>'
-        : '<div class="repCount" id="repCount">0</div><p class="hint" style="text-align:center">' + esc(tr("gym.repsHint")) + '</p>' +
-          '<div class="row"><button class="pillBtn" id="repMinus">' + esc(tr("gym.minus1")) + '</button><button class="primaryBtn" id="repPlus">' + esc(tr("gym.plus1")) + '</button><button class="primaryBtn" id="setDone">' + esc(tr("gym.doneSet")) + '</button></div>' +
-          '<div class="timerBig" id="countBox"></div><div class="row"><button class="pillBtn" id="restBtn">' + esc(tr("gym.startRest", { sec: item.restSec })) + '</button></div>') +
-      '<div class="row"><button class="pillBtn" id="nextEx">' + esc(tr("gym.nextEx")) + '</button><button class="pillBtn" id="finishBtn">' + esc(tr("gym.finishSession")) + '</button></div></div>';
-    var reps = 0;
+        ? '<div class="timerBig" id="countBox">' + item.reps + esc(tr("gym.secSuffix")) + '</div><div class="row"><button class="primaryBtn" id="holdBtn"' + (paused ? " disabled" : "") + ">" + esc(tr("gym.startHold")) + '</button><button class="primaryBtn" id="setDone"' + (paused ? " disabled" : "") + ">" + esc(tr("gym.doneSet")) + "</button></div>"
+        : '<div class="repCount" id="repCount" aria-live="polite">0</div><p class="hint" style="text-align:center">' + esc(tr("gym.repsHint")) + '</p>' +
+          '<div class="row"><button class="pillBtn" id="repMinus"' + (paused ? " disabled" : "") + ">" + esc(tr("gym.minus1")) + '</button><button class="primaryBtn" id="repPlus"' + (paused ? " disabled" : "") + ">" + esc(tr("gym.plus1")) + "</button></div>" +
+          '<div class="row"><label class="wLabel">' + esc(tr("gym.weightLabel", null, "Weight used (kg, optional)")) + '<input id="wInput" type="text" inputmode="decimal" autocomplete="off" value="' + esc(fmtW(existingLog ? existingLog.weightKg : (lastPerf && note.weightKg != null ? note.weightKg : null))) + '"></label></div>' +
+          '<p class="hint err" id="logErr" role="alert"></p>' +
+          '<div class="row"><button class="primaryBtn" id="setDone"' + (paused ? " disabled" : "") + ">" + esc(tr("gym.doneSet")) + "</button></div>" +
+          '<div class="timerBig" id="countBox" role="timer"></div><div class="row"><button class="pillBtn" id="restBtn"' + (paused ? " disabled" : "") + ">" + esc(tr("gym.startRest", { sec: item.restSec })) + "</button></div>") +
+      '<div class="row"><button class="pillBtn" id="pauseBtn" aria-pressed="' + paused + '">' + esc(paused ? tr("gym.resume", null, "Resume") : tr("gym.pause", null, "Pause")) + '</button><button class="pillBtn" id="nextEx">' + esc(tr("gym.nextEx")) + '</button><button class="pillBtn" id="finishBtn">' + esc(tr("gym.finishSession")) + '</button></div>' +
+      '<div class="row"><button class="pillBtn" id="discardBtn">' + esc(tr("gym.discard", null, "Discard workout")) + "</button></div>" +
+      '<p class="hint err" id="discardAsk" hidden></p></div>';
+    var reps = item.timed ? 0 : (existingLog ? existingLog.reps : item.reps);
+    if (!item.timed && $('repCount')) $('repCount').textContent = reps;
     /* THE TOP TIMER BAR (order of 17 Oct 2026): one calm bar
        above the animation for the whole session. Work on a rep
        set counts UP beside its guide; a hold counts DOWN its
@@ -1595,7 +1889,7 @@
         label.textContent = tr("gym.timerGuide", { t: fmtClock(setGuideSec(item.reps)) });
       }
     }
-    function tickClock() { var c = $("sessClock"); if (c) c.textContent = fmtClock((Date.now() - s.startedAt) / 1000); drawBar(); }
+    function tickClock() { var c = $("sessClock"); if (c) c.textContent = fmtClock(FT.elapsedMs(s, Date.now()) / 1000); drawBar(); }
     tickClock();
     gymTimer = setInterval(tickClock, 1000);
     function countdown(sec, label, after) {
@@ -1606,37 +1900,69 @@
       var restAnim = null;
       if (label === "rest") { mountAnim(ex, preT); restAnim = animHandle; if (restAnim) restAnim.setFrozen(true); }
       var left = sec;
-      barPhase = label; barLeft = sec;
+      if (label === "rest") { if (s.restEndsAt == null || FT.restLeftSec(s, Date.now()) <= 0) { FT.startRest(s, sec, Date.now()); save(); } left = FT.restLeftSec(s, Date.now()); }
+      barPhase = label; barLeft = left;
       var box = $("countBox");
       function draw() { barLeft = left; if (box) box.textContent = tr("gym." + label + "Label") + " " + fmtClock(left); drawBar(); }
       draw();
       gymTimer = setInterval(function () {
-        left--; draw(); tickClock();
-        if (left <= 0) { barPhase = "work"; setStart = Date.now(); var tEnd = restAnim && restAnim.time ? restAnim.time() : 0; stopGymTimer(); gymTimer = setInterval(tickClock, 1000); if (box) box.textContent = tr("gym.countDone"); drawBar(); mountAnim(ex, tEnd); if (after) after(); }
+        if (label === "rest") left = FT.restLeftSec(s, Date.now()); else left--; draw(); tickClock();
+        if (left <= 0) { if (label === "rest") { FT.clearRest(s); save(); } barPhase = "work"; setStart = Date.now(); var tEnd = restAnim && restAnim.time ? restAnim.time() : 0; stopGymTimer(); gymTimer = setInterval(tickClock, 1000); if (box) box.textContent = tr("gym.countDone"); drawBar(); mountAnim(ex, tEnd); if (after) after(); }
       }, 1000);
+    }
+    function logCurrent() {
+      var w = item.timed ? "" : $("wInput").value;
+      var r = FT.logSet(s, { exerciseId: item.exerciseId, setNo: s.set, reps: item.timed ? item.reps : reps, weightKg: w }, Date.now());
+      if (!r.ok) { var er = $("logErr"); if (er) er.textContent = r.error === "weight" ? tr("gym.badWeight", null, "Enter a weight like 20 or 22.5, or leave it empty.") : tr("gym.badReps", null, "Enter the number of reps."); if (r.error === "weight") $("wInput").focus(); return false; }
+      return true;
+    }
+    function advance() {
+      s.doneSets++;
+      FT.clearRest(s);
+      if (s.set >= item.sets) { s.idx++; s.set = 1; } else s.set++;
+      save();
+      if (s.idx >= s.items.length) finishSession(s, false); else renderSession();
     }
     if (item.timed) $("holdBtn").addEventListener("click", function () { countdown(item.reps, "hold", function () {}); });
     else {
-      $("repPlus").addEventListener("click", function () { reps++; $("repCount").textContent = reps; });
+      $("repPlus").addEventListener("click", function () { reps = Math.min(999, reps + 1); $("repCount").textContent = reps; });
       $("repMinus").addEventListener("click", function () { reps = Math.max(0, reps - 1); $("repCount").textContent = reps; });
       $("restBtn").addEventListener("click", function () { countdown(item.restSec, "rest", null); });
-      $("setDone").addEventListener("click", function () {
-        s.doneSets++;
-        if (s.set >= item.sets) { s.idx++; s.set = 1; } else s.set++;
-        save();
-        if (s.idx >= s.items.length) finishSession(s, false); else renderSession();
-      });
     }
+    $("setDone").addEventListener("click", function () { if (logCurrent()) advance(); });
+    $("pauseBtn").addEventListener("click", function () { if (paused) FT.resume(s, Date.now()); else FT.pause(s, Date.now()); save(); renderSession(); });
+    $("discardBtn").addEventListener("click", function () {
+      var ask = $("discardAsk");
+      if (!ask.hidden) return;
+      ask.hidden = false; ask.innerHTML = esc(tr("gym.discardSure", null, "Discard this workout and its logged sets? This cannot be undone.")) + ' <button type="button" class="pillBtn" id="discardYes">' + esc(tr("gym.discardYes", null, "Yes, discard")) + '</button> <button type="button" class="pillBtn" id="discardNo">' + esc(tr("common.cancel", null, "Cancel")) + "</button>";
+      $("discardYes").addEventListener("click", function () { discardSession(s); });
+      $("discardNo").addEventListener("click", function () { ask.hidden = true; ask.innerHTML = ""; $("discardBtn").focus(); });
+      $("discardYes").focus();
+    });
+    if (stale) {
+      $("staleResume").addEventListener("click", function () { s.lastActiveAt = Date.now(); save(); renderSession(); });
+      $("staleFinish").addEventListener("click", function () { finishSession(s, false); });
+      $("staleDiscard").addEventListener("click", function () { discardSession(s); });
+    }
+    if (!paused && !stale && !item.timed && FT.restLeftSec(s, Date.now()) > 0) countdown(item.restSec, "rest", null);
     $("nextEx").addEventListener("click", function () { s.idx++; s.set = 1; save(); if (s.idx >= s.items.length) finishSession(s, false); else renderSession(); });
     $("finishBtn").addEventListener("click", function () { finishSession(s, false); });
+    if (paused) { var tc = $("sessClock"); if (tc) tc.textContent = fmtClock(FT.elapsedMs(s, Date.now()) / 1000); }
     wireSkinAsk(el);
     mountAnim(ex);
     drawBar();
   }
+  function discardSession(s) {
+    stopGymTimer();
+    /* Tombstone, not delete: a plain delete would be resurrected by the cloud merge. */
+    s.status = "discarded"; s.log = []; s.restEndsAt = null; s.pausedAt = null;
+    save(); toast(tr("gym.discarded", null, "Workout discarded")); renderSession();
+  }
   function finishSession(s, silent) {
     stopGymTimer();
     s.status = "done";
-    s.minutes = Math.max(1, Math.round((Date.now() - (s.startedAt || Date.now())) / 60000));
+    if (window.FitTrain) { window.FitTrain.resume(s, Date.now()); window.FitTrain.clearRest(s); }
+    s.minutes = Math.max(1, Math.round(window.FitTrain.elapsedMs(s, Date.now()) / 60000));
     save();
     if (!silent) { toast(tr("gym.sessionSaved")); showWallyCelebration("session"); }
     renderSession();
@@ -1747,7 +2073,7 @@
       '<div id="mcNames" class="hidden"><p class="hint">' + esc(tr("gym.noneHint")) + '</p>' +
       '<div class="chipRow">' + EX.MACHINES.map(function (m) {
         return '<button class="chip" type="button" data-machine="' + m.id + '">' + esc(machName(m)) + "</button>"; }).join("") + "</div></div>" +
-      '<div id="mcConfirm" class="hidden" aria-live="polite"></div><div id="mcResult"></div></div>';
+      '<div id="mcConfirm" class="hidden" aria-live="polite"></div><div id="mcResult"></div><div id="myMachines"></div></div>';
     var photoSelected = false;
     function folded(s) {
       return String(s || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
@@ -1765,6 +2091,15 @@
       $("mcSearchStatus").textContent = q && !count ? tr("gym.machineSearchNoResults") : "";
       $("mcClearSearch").classList.toggle("hidden", !q);
     }
+    var pendingMachinePhoto = null;
+    function drawMyMachines() {
+      var box = $("myMachines"); if (!box || !window.FitPhotos || !window.FitPhotos.available()) return;
+      window.FitPhotos.list("machines").then(function (xs) {
+        box.innerHTML = '<h3>' + esc(tr("gym.myMachines", null, "My gym machines")) + '</h3><p class="hint">' + esc(tr("gym.myMachinesNote", null, "Photos you saved after choosing the machine yourself. They stay on this device only.")) + "</p>" +
+          (xs.length ? '<div class="photoGrid">' + xs.map(function (x) { return '<figure class="phItem"><img alt="' + esc(tr("gym.savedMachineAlt", { name: x.label }, "Your photo of " + x.label)) + '" src="' + URL.createObjectURL(x.blob) + '"><figcaption>' + esc(x.label) + '</figcaption><button class="miniBtn" data-mdel="' + esc(x.id) + '" aria-label="' + esc(tr("prog.delPhotoAria", { d: x.label }, "Remove photo of " + x.label)) + '">' + esc(tr("common.remove")) + "</button></figure>"; }).join("") + "</div>" : '<p class="hint">' + esc(tr("gym.noSavedMachines", null, "No saved machines yet.")) + "</p>");
+        box.querySelectorAll("[data-mdel]").forEach(function (b) { b.addEventListener("click", function () { window.FitPhotos.remove(b.getAttribute("data-mdel")).then(drawMyMachines); }); });
+      }).catch(function () {});
+    }
     function selectMachine(m) {
       if (!m) return;
       if (!photoSelected) { renderStation(m); return; }
@@ -1774,7 +2109,16 @@
         '<button class="primaryBtn" id="mcConfirmYes" type="button">' + esc(tr("gym.machineConfirm")) + '</button>' +
         '<button class="pillBtn" id="mcConfirmNo" type="button">' + esc(tr("gym.machineChooseAnother")) + '</button></div></div>';
       confirm.classList.remove("hidden");
-      $("mcConfirmYes").addEventListener("click", function () { confirm.classList.add("hidden"); renderStation(m); });
+      $("mcConfirmYes").addEventListener("click", function () {
+        confirm.classList.add("hidden");
+        var f = pendingMachinePhoto; pendingMachinePhoto = null;
+        if (f && window.FitPhotos && window.FitPhotos.available()) {
+          window.FitPhotos.prepare(f, 900).then(function (b) { return window.FitPhotos.add("machines", b, { date: L.todayKey(), label: machName(m), machineId: m.id }); })
+            .then(function () { toast(tr("gym.machineSaved", null, "Saved to My gym machines on this device")); drawMyMachines(); })
+            .catch(function () { toast(tr("gym.machineSaveFail", null, "The photo could not be saved, but the machine guide still works.")); });
+        }
+        renderStation(m);
+      });
       $("mcConfirmNo").addEventListener("click", function () { confirm.classList.add("hidden"); $("mcSearch").focus(); });
     }
     $("mcSearch").addEventListener("input", updateMachineSearch);
@@ -1783,7 +2127,7 @@
     });
     $("mcPhoto").addEventListener("change", function () {
       var f = $("mcPhoto").files[0]; if (!f) return;
-      photoSelected = true;
+      photoSelected = true; pendingMachinePhoto = f;
       $("mcResult").innerHTML = "";
       $("mcConfirm").classList.add("hidden");
       $("mcPhotoStatus").textContent = tr("gym.machineConfidenceUnavailable");
@@ -1799,6 +2143,7 @@
       });
     });
     updateMachineSearch();
+    drawMyMachines();
   }
   /* --- Exercise library (Phase 2): the full spliced set,
      searchable, with the D2 labels. Expert and held-class
@@ -1808,7 +2153,7 @@
      only once the trainer unlock opens (design section 5: the
      count is a desk parameter in logic.js). No surface renders
      the whole set at once: results are windowed. --- */
-  var libState = { q: "", kind: "all" };
+  var libState = { q: "", kind: "all", part: "all", equip: "all" };
   function addToPicks(exId) {
     var ex = exerciseById(exId);
     if (!ex || !((ex.category === "strength" || ex.category == null) && ex.level !== "expert")) return;
@@ -1833,9 +2178,12 @@
     var q = foldName(libState.q.trim());
     var list = (EX.EXERCISES || []).filter(function (e) {
       if (libState.kind !== "all" && (e.category || "strength") !== libState.kind) return false;
+      if (libState.part && libState.part !== "all" && e.partLabel !== libState.part) return false;
+      if (libState.equip && libState.equip !== "all" && e.equipment !== libState.equip) return false;
       if (q && foldName(e.name).indexOf(q) === -1 && foldName(exName(e)).indexOf(q) === -1) return false;
       return true;
     });
+    var fac = window.FitTrain.facets(EX.EXERCISES || []);
     var shown = list.slice(0, 100);
     var rows = shown.map(function (e) {
       var chip = "";
@@ -1851,19 +2199,36 @@
     el.innerHTML = '<div class="card"><h2>' + esc(tr("sub.gym-library", null, "Exercise library")) + '</h2>' +
       '<p class="hint">' + esc(tr("gym.libraryHint")) + '</p>' +
       (L.stepUpUnlocked(state.sessions) ? "" : '<p class="hint">' + esc(tr("gym.stepUpLocked")) + "</p>") +
-      '<input id="libSearch" type="search" placeholder="' + esc(tr("gym.searchPh")) + '" value="' + esc(libState.q) + '">' +
+      '<input id="libSearch" type="search" aria-label="' + esc(tr("gym.searchPh")) + '" placeholder="' + esc(tr("gym.searchPh")) + '" value="' + esc(libState.q) + '">' +
+      '<div class="grid2 filterRow"><label>' + esc(tr("gym.musclePick", null, "Muscle area")) + '<select id="libPart"><option value="all">' + esc(tr("gym.allMuscles", null, "All muscles")) + "</option>" + fac.parts.map(function (p) { return '<option value="' + esc(p) + '"' + (libState.part === p ? " selected" : "") + ">" + esc(cName("part", p, p)) + "</option>"; }).join("") + "</select></label>" +
+      '<label>' + esc(tr("gym.equipPick", null, "Equipment")) + '<select id="libEquip"><option value="all">' + esc(tr("gym.allEquip", null, "All equipment")) + "</option>" + fac.equipment.map(function (p) { return '<option value="' + esc(p) + '"' + (libState.equip === p ? " selected" : "") + ">" + esc(cName("equip", p, p)) + "</option>"; }).join("") + "</select></label></div>" +
+      '<p class="hint" id="libCount" role="status" aria-live="polite">' + esc(tr("gym.libCount", { n: list.length }, list.length + " exercises")) + "</p>" +
       '<div class="chipRow">' + kinds.map(function (k) {
         return '<button class="chip' + (libState.kind === k[0] ? " on" : "") + '" data-libkind="' + k[0] + '">' + esc(tr(k[1])) + "</button>"; }).join("") + "</div>" +
       (list.length > shown.length ? '<p class="hint">' + esc(tr("gym.showingCount", { a: shown.length, b: list.length })) + "</p>" : "") +
       (rows || '<p class="hint">' + esc(tr("gym.noMatch")) + "</p>") + "</div>";
+    $("libPart").addEventListener("change", function () { libState.part = $("libPart").value; renderLibrary(false); });
+    $("libEquip").addEventListener("change", function () { libState.equip = $("libEquip").value; renderLibrary(false); });
     var search = $("libSearch");
     search.addEventListener("input", function () { libState.q = search.value; renderLibrary(true); });
     el.querySelectorAll("[data-libkind]").forEach(function (b) { b.addEventListener("click", function () { libState.kind = b.getAttribute("data-libkind"); renderLibrary(false); }); });
     el.querySelectorAll("[data-libadd]").forEach(function (b) { b.addEventListener("click", function () { addToPicks(b.getAttribute("data-libadd")); }); });
     if (refocus) { var ns = $("libSearch"); if (ns) { ns.focus(); try { ns.setSelectionRange(ns.value.length, ns.value.length); } catch (e) {} } }
   }
+  function renderHistory() {
+    stopGymTimer();
+    var el = $("areaBody"), H = window.FitTrain.history(state.sessions);
+    var html = '<div class="card"><h2>' + esc(tr("sub.gym-history", null, "History")) + "</h2>";
+    if (!H.length) html += '<p class="hint">' + esc(tr("gym.noHistory", null, "No finished workouts yet. When you finish one, it shows up here.")) + "</p>";
+    html += H.slice(0, 50).map(function (h) {
+      return '<div class="listRow histRow"><span class="grow"><b>' + esc(h.name || tr("gym.sessionWord")) + "</b><br><span class='hint'>" + esc(h.dateKey || "") + " · " + h.minutes + " min" +
+        (h.logged ? " · " + esc(tr("gym.setsLogged", { n: h.sets }, h.sets + " sets logged")) + (h.volumeKg ? " · " + h.volumeKg + " kg total" : "") : " · " + esc(tr("gym.notLogged", null, "sets not logged"))) + "</span></span></div>";
+    }).join("") + "</div>";
+    el.innerHTML = html;
+  }
   function renderGym(subId) {
-    if (subId === "gym-session") renderSession();
+    if (subId === "gym-history") renderHistory();
+    else if (subId === "gym-session") renderSession();
     else if (subId === "gym-machine") renderMachine();
     else if (subId === "gym-library") renderLibrary(false);
     else renderRoutines();
@@ -1905,7 +2270,8 @@
       });
       return;
     }
-    if (subId === "pep-log") renderPepLog();
+    if (subId === "pep-appts") renderPepAppts();
+    else if (subId === "pep-log") renderPepLog();
     else if (subId === "pep-next") renderPepNext();
     else renderPepList();
   }
@@ -1924,6 +2290,9 @@
         return '<button class="chip" data-ppday="' + dayVals[i] + '">' + d + "</button>"; }).join("") + "</div></div>" +
       '<div id="ppIntBox" class="hidden"><div class="grid2"><label>' + esc(tr("pep.everyHowMany")) + '<input id="ppInterval" type="number" min="1" value="7"></label>' +
       '<label>' + esc(tr("pep.startingOn")) + '<input id="ppStart" type="date" value="' + L.todayKey() + '"></label></div></div>' +
+      '<label>' + esc(tr("pep.instrLabel", null, "Your clinician's instructions, in their words (optional)")) + '<textarea id="ppInstr" maxlength="500" rows="2"></textarea></label>' +
+      '<label>' + esc(tr("pep.prescLabel", null, "Prescriber (optional)")) + '<input id="ppPresc" type="text" maxlength="80"></label>' +
+      '<label class="confirmRow"><input type="checkbox" id="ppConfirm"> <span>' + esc(tr("pep.confirmLabel", null, "I confirm this is what my clinician or pharmacist told me. Fit Hard does not suggest or change it.")) + '</span></label>' +
       '<div class="row"><button class="primaryBtn" id="ppAdd">' + esc(tr("pep.saveBtn")) + '</button></div></div>';
     if (!(state.peptides || []).length) html += '<div class="card emptyCard">' + (guideOn() ? wallyWrap("welcome", null, 56) : "") + '<svg class="ic icBig"><use href="#i-pep"/></svg><p>' + esc(tr("pep.nothingTracked")) + '</p><p class="hint">' + esc(tr("pep.nothingHint")) + '</p></div>';
     (state.peptides || []).forEach(function (p) {
@@ -1931,8 +2300,13 @@
         '<p class="hint">' + esc(tr("pep.youTake", { amount: p.amount, unit: tr("pep.unit" + p.unit.charAt(0).toUpperCase() + p.unit.slice(1), null, p.unit) })) + " · " + scheduleText(p) + (p.time ? " · " + esc(p.time) : "") + "</p>" +
         '<p class="dayTotal">' + nextDoseLine(p) + "</p>" +
         '<div class="row"><label style="flex:1">' + esc(tr("pep.amountThisTime")) + '<input type="text" inputmode="decimal" id="amt-' + p.id + '" value="' + esc(p.amount) + '"></label>' +
-        '<button class="primaryBtn" data-log="' + p.id + '">' + esc(tr("pep.logDose")) + '</button>' +
-        '<button class="pillBtn" data-delpep="' + p.id + '">' + esc(tr("common.remove")) + '</button></div></div>';
+        '<button class="primaryBtn" data-log="' + p.id + '">' + esc(tr("pep.st.taken", null, "Taken")) + '</button>' +
+        '<button class="pillBtn" data-logs="' + p.id + '|not_taken">' + esc(tr("pep.st.not_taken", null, "Not taken")) + '</button>' +
+        '<button class="pillBtn" data-logs="' + p.id + '|unknown">' + esc(tr("pep.st.unknown", null, "Not sure")) + '</button></div>' +
+        (p.instructions ? '<p class="hint">' + esc(tr("pep.instrShown", null, "Your clinician's instructions")) + ': ' + esc(p.instructions) + '</p>' : "") +
+        '<div class="row"><button class="pillBtn" data-editpep="' + p.id + '">' + esc(tr("pep.edit", null, "Edit")) + '</button>' +
+        '<button class="pillBtn" data-histpep="' + p.id + '">' + esc(tr("pep.history", null, "Change history")) + '</button>' +
+        '<button class="pillBtn" data-delpep="' + p.id + '">' + esc(tr("common.remove")) + '</button></div><div id="pepPanel-' + p.id + '"></div></div>';
     });
     el.innerHTML = html;
     el.querySelectorAll("[data-ppday]").forEach(function (b) { b.addEventListener("click", function () { b.classList.toggle("on"); }); });
@@ -1946,6 +2320,7 @@
       if (!name) { toast(tr("pep.toastNameFirst")); return; }
       var amount = $("ppAmount").value.trim();
       if (!amount) { toast(tr("pep.toastAmount")); return; }
+      if (!$("ppConfirm").checked) { toast(tr("pep.toastConfirm", null, "Please tick the box to confirm this is from your clinician.")); return; }
       var schedule;
       if ($("ppMode").value === "interval") {
         var n = Math.max(1, Number($("ppInterval").value) || 1);
@@ -1957,20 +2332,62 @@
         schedule = { days: days };
       }
       state.peptides.push({ id: "pep." + Date.now(), name: name, amount: amount, unit: $("ppUnit").value,
-        color: L.nextColor((state.peptides || []).map(function (p) { return p.color; })), schedule: schedule, time: $("ppTime").value || null, log: [] });
+        color: L.nextColor((state.peptides || []).map(function (p) { return p.color; })), schedule: schedule, time: $("ppTime").value || null, log: [],
+        instructions: window.FitHealth.clean($("ppInstr").value, 500), prescriber: window.FitHealth.clean($("ppPresc").value, 80), confirmedAt: new Date().toISOString(), audit: [] });
+      window.FitHealth.appendAudit(state.peptides[state.peptides.length - 1], "created", {}, new Date().toISOString());
       save(); renderPepList(); toast(tr("pep.toastSaved"));
     });
+    function logStatus(id, status, amt) {
+      var p = peptideById(id); if (!p) return;
+      var now = new Date();
+      window.FitHealth.addLog(p, { dateKey: L.todayKey(), time: ("0" + now.getHours()).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2), status: status, amount: amt });
+      save(); toast(tr("pep.toastLogged"));
+      if (status === "taken") showWallyCelebration("dose");
+    }
     el.querySelectorAll("[data-log]").forEach(function (b) { b.addEventListener("click", function () {
       var p = peptideById(b.getAttribute("data-log")); if (!p) return;
-      var amt = ($("amt-" + p.id) || {}).value || p.amount;
-      var now = new Date();
-      p.log.push({ dateKey: L.todayKey(), time: ("0" + now.getHours()).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2),
-        amount: String(amt).trim() || p.amount, unit: p.unit });
-      save(); renderPepList(); toast(tr("pep.toastLogged")); showWallyCelebration("dose");
+      logStatus(p.id, "taken", ($("amt-" + p.id) || {}).value || p.amount); renderPepList();
     }); });
+    el.querySelectorAll("[data-logs]").forEach(function (b) { b.addEventListener("click", function () {
+      var parts = b.getAttribute("data-logs").split("|"); logStatus(parts[0], parts[1]); renderPepList();
+    }); });
+    el.querySelectorAll("[data-histpep]").forEach(function (b) { b.addEventListener("click", function () {
+      var p = peptideById(b.getAttribute("data-histpep")); var box = $("pepPanel-" + p.id); if (!p || !box) return;
+      if (box.innerHTML) { box.innerHTML = ""; return; }
+      box.innerHTML = '<div class="histBox"><h3>' + esc(tr("pep.history", null, "Change history")) + '</h3>' + ((p.audit || []).length ? (p.audit || []).slice().reverse().map(function (a) {
+        var ch = Object.keys(a.changes || {}).map(function (k) { return esc(k) + ": " + esc(String(a.changes[k][0])) + " → " + esc(String(a.changes[k][1])); }).join("; ");
+        return '<p class="hint">' + esc(a.at.slice(0, 16).replace("T", " ")) + " · " + esc(a.action) + (ch ? " · " + ch : "") + "</p>"; }).join("") : '<p class="hint">' + esc(tr("pep.noHistory", null, "No changes yet.")) + "</p>") + "</div>";
+    }); });
+    el.querySelectorAll("[data-editpep]").forEach(function (b) { b.addEventListener("click", function () {
+      var p = peptideById(b.getAttribute("data-editpep")); var box = $("pepPanel-" + p.id); if (!p || !box) return;
+      if (box.innerHTML) { box.innerHTML = ""; return; }
+      box.innerHTML = '<div class="editBox"><div class="grid2"><label>' + esc(tr("pep.nameLabel")) + '<input id="ed-name" type="text" value="' + esc(p.name) + '"></label>' +
+        '<label>' + esc(tr("pep.amountLabel")) + '<input id="ed-amount" type="text" value="' + esc(p.amount) + '"></label>' +
+        '<label>' + esc(tr("pep.timeLabel")) + '<input id="ed-time" type="time" value="' + esc(p.time || "") + '"></label>' +
+        '<label>' + esc(tr("pep.prescLabel", null, "Prescriber (optional)")) + '<input id="ed-presc" type="text" maxlength="80" value="' + esc(p.prescriber || "") + '"></label></div>' +
+        '<label>' + esc(tr("pep.instrLabel", null, "Your clinician's instructions, in their words (optional)")) + '<textarea id="ed-instr" maxlength="500" rows="2">' + esc(p.instructions || "") + '</textarea></label>' +
+        '<label class="confirmRow"><input type="checkbox" id="ed-confirm"> <span>' + esc(tr("pep.confirmChange", null, "I confirm this change matches what my clinician or pharmacist told me.")) + '</span></label>' +
+        '<div class="row"><button class="primaryBtn" id="ed-save">' + esc(tr("pep.saveChange", null, "Save change")) + '</button></div></div>';
+      $("ed-save").addEventListener("click", function () {
+        if (!$("ed-name").value.trim()) { toast(tr("pep.toastNameFirst")); return; }
+        if (!$("ed-amount").value.trim()) { toast(tr("pep.toastAmount")); return; }
+        if (!$("ed-confirm").checked) { toast(tr("pep.toastConfirmChange", null, "Please tick the box to confirm this change is from your clinician.")); return; }
+        var before = JSON.parse(JSON.stringify(p));
+        p.name = window.FitHealth.clean($("ed-name").value, 80); p.amount = window.FitHealth.clean($("ed-amount").value, 40);
+        p.time = $("ed-time").value || null; p.prescriber = window.FitHealth.clean($("ed-presc").value, 80); p.instructions = window.FitHealth.clean($("ed-instr").value, 500);
+        var ch = window.FitHealth.diff(before, p);
+        if (!Object.keys(ch).length) { toast(tr("pep.noChange", null, "Nothing changed.")); return; }
+        p.confirmedAt = new Date().toISOString();
+        window.FitHealth.appendAudit(p, "edited", ch, p.confirmedAt);
+        save(); renderPepList(); toast(tr("pep.toastChanged", null, "Saved. The change is in your history."));
+      });
+    }); });
+    renderHealthData(el);
     el.querySelectorAll("[data-delpep]").forEach(function (b) { b.addEventListener("click", function () {
+      var gone = peptideById(b.getAttribute("data-delpep"));
       state.peptides = state.peptides.filter(function (p) { return p.id !== b.getAttribute("data-delpep"); });
-      save(); renderPepList();
+      state.healthRemoved = (state.healthRemoved || []);
+      save(); renderPepList(); if (gone) toast(tr("pep.removed", null, "Removed."));
     }); });
   }
   function renderPepLog() {
@@ -1984,7 +2401,7 @@
     if (!rows.length) html += '<p class="hint">' + esc(tr("pep.nothingLogged")) + '</p>';
     html += rows.map(function (r) {
       return '<div class="listRow"><span class="mealDot" style="background:' + esc(r.p.color) + '"></span>' +
-        '<span class="grow">' + esc(r.p.name) + " · " + esc(r.lg.amount) + " " + esc(r.lg.unit) + "</span>" +
+        '<span class="grow">' + esc(r.p.name) + (window.FitHealth.statusOf(r.lg) === "taken" ? " · " + esc(r.lg.amount) + " " + esc(r.lg.unit) : "") + ' <span class="chip statusChip" data-status="' + window.FitHealth.statusOf(r.lg) + '">' + esc(tr("pep.st." + window.FitHealth.statusOf(r.lg), null, { taken: "Taken", not_taken: "Not taken", unknown: "Not sure" }[window.FitHealth.statusOf(r.lg)])) + "</span></span>" +
         '<span class="hint">' + esc(r.lg.dateKey) + (r.lg.time ? " " + esc(r.lg.time) : "") + "</span>" +
         '<button class="miniBtn" data-unlog="' + r.p.id + "|" + r.idx + '">' + esc(tr("common.remove")) + '</button></div>';
     }).join("") + "</div>";
@@ -2011,9 +2428,68 @@
         '<span class="grow">' + esc(p.name) + "</span><span class='hint'>" +
         (keys.length ? keys.map(function (k) { return dayLabel(k) + " " + k.slice(8) + "/" + k.slice(5, 7); }).join(" · ") : tr("pep.noDaysShort")) +
         (p.time ? " · " + esc(p.time) : "") + "</span></div>";
+      if (keys[0] === L.todayKey()) {
+        var ds = window.FitHealth.dayStatus(p, L.todayKey());
+        html += '<div class="row dueRow" data-due="' + p.id + '"><span class="hint">' + esc(tr("pep.dueToday", null, "Due today")) + (ds !== "none" ? ": " + esc(tr("pep.st." + ds, null, { taken: "Taken", not_taken: "Not taken", unknown: "Not sure" }[ds])) : "") + '</span>' +
+          '<button class="pillBtn" data-nx="' + p.id + '|taken">' + esc(tr("pep.st.taken", null, "Taken")) + '</button>' +
+          '<button class="pillBtn" data-nx="' + p.id + '|not_taken">' + esc(tr("pep.st.not_taken", null, "Not taken")) + '</button>' +
+          '<button class="pillBtn" data-nx="' + p.id + '|unknown">' + esc(tr("pep.st.unknown", null, "Not sure")) + '</button></div>';
+      }
     });
     html += "</div>";
     el.innerHTML = html;
+    el.querySelectorAll("[data-nx]").forEach(function (b) { b.addEventListener("click", function () {
+      var parts = b.getAttribute("data-nx").split("|"); var p = peptideById(parts[0]); if (!p) return;
+      var now = new Date();
+      window.FitHealth.addLog(p, { dateKey: L.todayKey(), time: ("0" + now.getHours()).slice(-2) + ":" + ("0" + now.getMinutes()).slice(-2), status: parts[1] });
+      save(); renderPepNext(); toast(tr("pep.toastLogged"));
+    }); });
+  }
+  /* Appointments: the user's own appointment times, with an optional reminder. */
+  function renderPepAppts() {
+    var el = $("areaBody");
+    var list = (state.appointments || []).slice().sort(function (a, b) { return (a.date + (a.time || "")) < (b.date + (b.time || "")) ? -1 : 1; });
+    var html = '<div class="card"><h2>' + esc(tr("pep.apptTitle", null, "Add an appointment")) + '</h2><p class="hint">' + esc(tr("pep.apptHint", null, "Your own clinic or pharmacy visits. The app only reminds you of the time you enter.")) + '</p>' +
+      '<div class="grid2"><label>' + esc(tr("pep.apptName", null, "What is it")) + '<input id="apTitle" type="text" maxlength="80"></label>' +
+      '<label>' + esc(tr("pep.apptPlace", null, "Where (optional)")) + '<input id="apPlace" type="text" maxlength="120"></label>' +
+      '<label>' + esc(tr("pep.apptDate", null, "Date")) + '<input id="apDate" type="date" value="' + L.todayKey() + '"></label>' +
+      '<label>' + esc(tr("pep.timeLabel")) + '<input id="apTime" type="time" value="09:00"></label>' +
+      '<label>' + esc(tr("pep.apptRemind", null, "Remind me")) + '<select id="apRemind"><option value="">' + esc(tr("task.remind.none", null, "No reminder")) + '</option><option value="0">' + esc(tr("pep.atTime", null, "At the time")) + '</option><option value="60">' + esc(tr("pep.1h", null, "1 hour before")) + '</option><option value="1440">' + esc(tr("pep.1d", null, "1 day before")) + '</option></select></label></div>' +
+      '<div class="row"><button class="primaryBtn" id="apAdd">' + esc(tr("pep.apptSave", null, "Save appointment")) + '</button></div></div>';
+    html += '<div class="card"><h2>' + esc(tr("pep.apptList", null, "Your appointments")) + '</h2>' + (list.length ? list.map(function (a) {
+      return '<div class="listRow"><span class="grow"><b>' + esc(a.title) + '</b><br><span class="hint">' + esc(a.date) + (a.time ? " " + esc(a.time) : "") + (a.place ? " · " + esc(a.place) : "") +
+        (a.remindMin != null ? " · " + esc(tr("pep.reminderOn", null, "reminder on")) : "") + '</span></span><button class="miniBtn" data-delap="' + esc(a.id) + '">' + esc(tr("common.remove")) + '</button></div>';
+    }).join("") : '<p class="hint">' + esc(tr("pep.apptNone", null, "No appointments yet.")) + '</p>') + '</div>';
+    el.innerHTML = html;
+    $("apAdd").addEventListener("click", function () {
+      var a = { title: $("apTitle").value, date: $("apDate").value, time: $("apTime").value };
+      var v = window.FitHealth.validateAppointment(a);
+      if (!v.ok) { toast(v.errors.title ? tr("pep.toastApptName", null, "Name the appointment first.") : tr("pep.toastApptWhen", null, "Pick a date and time.")); return; }
+      state.appointments = state.appointments || [];
+      state.appointments.push({ id: "appt." + Date.now(), title: window.FitHealth.clean(a.title, 80), date: a.date, time: a.time, place: window.FitHealth.clean($("apPlace").value, 120), remindMin: $("apRemind").value === "" ? null : Number($("apRemind").value) });
+      save(); renderPepAppts(); toast(tr("pep.apptSaved", null, "Appointment saved."));
+      if ($("apRemind").value !== "" && !FitRemind.available()) toast(tr("rem.webNote", null, "Reminders show inside the app on this device. Phone alerts need the iPhone or Android app."));
+    });
+    el.querySelectorAll("[data-delap]").forEach(function (b) { b.addEventListener("click", function () {
+      state.appointments = (state.appointments || []).filter(function (a) { return a.id !== b.getAttribute("data-delap"); }); save(); renderPepAppts();
+    }); });
+  }
+  /* Export and erase health data (owner controls). */
+  function renderHealthData(el) {
+    var box = document.createElement("div"); box.className = "card";
+    box.innerHTML = '<h2>' + esc(tr("pep.dataTitle", null, "Your health data")) + '</h2><p class="hint">' + esc(tr("pep.dataHint", null, "It stays yours. Download a copy any time, or erase it from this device and your account.")) + '</p>' +
+      '<div class="row"><button class="pillBtn" id="hxExport">' + esc(tr("pep.export", null, "Download my health data")) + '</button><button class="pillBtn" id="hxDelete">' + esc(tr("pep.eraseAll", null, "Erase all health data")) + '</button></div><div id="hxConfirm"></div>';
+    el.appendChild(box);
+    $("hxExport").addEventListener("click", function () {
+      var data = JSON.stringify(window.FitHealth.exportHealth(state, new Date().toISOString()), null, 2);
+      try { var url = URL.createObjectURL(new Blob([data], { type: "application/json" })); var a = document.createElement("a"); a.href = url; a.download = "fit-hard-health-export.json"; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 2000); toast(tr("pep.exported", null, "Your file is ready.")); }
+      catch (e) { toast(tr("pep.exportFail", null, "Could not make the file. Try again.")); }
+    });
+    $("hxDelete").addEventListener("click", function () {
+      $("hxConfirm").innerHTML = '<p class="hint">' + esc(tr("pep.eraseAsk", null, "This removes every medication, dose log, change history and appointment. It cannot be undone.")) + '</p><div class="row"><button class="primaryBtn" id="hxYes">' + esc(tr("pep.eraseYes", null, "Yes, erase it")) + '</button><button class="pillBtn" id="hxNo">' + esc(tr("common.cancel", null, "Cancel")) + '</button></div>';
+      $("hxNo").addEventListener("click", function () { $("hxConfirm").innerHTML = ""; });
+      $("hxYes").addEventListener("click", function () { state.peptides = []; state.appointments = []; save(); renderPepList(); toast(tr("pep.erased", null, "Health data erased.")); });
+    });
   }
 
   function renderMeals(subId) {
@@ -2073,6 +2549,7 @@
   var wallyFloatTimer = null;
   function showWallyCelebration(kind) {
     if (!guideOn() || !window.Wally) return;
+    if (state.settings && state.settings.noCelebrate) return;
     state.settings = state.settings || {};
     state.settings.wally = state.settings.wally || {};
     if (state.settings.wally[kind]) return;
@@ -2201,12 +2678,335 @@
     $("checkinHint").textContent = cur ? tr("checkin." + cur.id + "Hint", null, cur.hint) : tr("checkin.none");
     renderWallyCheckin();
   }
+  /* ================= PHASE 1: ONE DAY PLAN + PRIMARY TABS =================
+     One chronological list for today, built only from records the
+     user already has (planned meals, routines due, to-dos, dose
+     reminders the user entered). Nothing is invented, nothing is
+     labelled late: undone items simply wait. */
+  function timeOf(t) { return /^\d{2}:\d{2}$/.test(String(t || "")) ? t : ""; }
+  function dayPlanItems(iso) {
+    var items = [];
+    var entry = state.plan[mpKey(iso)] || {};
+    ["breakfast", "lunch", "dinner"].forEach(function (m) {
+      var r = entry[m] ? recipeById(entry[m]) : null;
+      if (!r) return;
+      var meta = (MD.MEALS && MD.MEALS[m]) || {};
+      items.push({ kind: "meal", id: "meal." + m, time: timeOf(meta.defaultTime), label: recName(r),
+        sub: tr("meal." + m, null, meta.label || m), done: !!(state.eaten || {})[iso + "." + m], eatKey: iso + "." + m,
+        cta: (state.eaten || {})[iso + "." + m] ? tr("today.undo", null, "Undo") : tr("today.eaten", null, "Eaten") });
+    });
+    (state.routines || []).forEach(function (r) {
+      if (!L.routineDueOn(r, iso)) return;
+      var done = (state.sessions || []).some(function (x) { return x.dateKey === iso && x.routineId === r.id && x.status === "done"; });
+      var live = (state.sessions || []).some(function (x) { return x.routineId === r.id && x.status === "active"; });
+      items.push({ kind: "routine", id: "routine." + r.id, time: timeOf(r.time), label: r.name,
+        sub: tr("nav.gym", null, "Gym"), done: done, area: "gym", subId: "gym-session",
+        cta: live ? tr("today.resumeWorkout", null, "Resume") : tr("today.startWorkout", null, "Start") });
+    });
+    L.todosOn(state.todos, iso).forEach(function (t) {
+      items.push({ kind: "todo", id: "todo." + t.id, time: timeOf(t.time), label: t.title, sub: tr("today.task", null, "Task"),
+        done: t.status === "done", todoId: t.id, cta: t.status === "done" ? tr("today.undo", null, "Undo") : tr("today.markDone", null, "Done") });
+    });
+    var doses = L.planReminders(state, iso).filter(function (r) { return r.kind === "dose" && r.key === iso; });
+    doses.forEach(function (r) {
+      var pep = (state.peptides || []).filter(function (x) { return x.id === r.ref; })[0];
+      var done = !!(pep && (pep.log || []).some(function (lg) { return lg.dateKey === iso; }));
+      items.push({ kind: "dose", id: "dose." + r.ref, time: timeOf(r.time), label: r.name,
+        sub: tr("today.doseReminder", null, "Your reminder"), done: done, area: "peptides", subId: "pep-log",
+        cta: tr("today.openLog", null, "Open log") });
+    });
+    (state.habits || []).forEach(function (h) {
+      items.push({ kind: "habit", id: "habit." + h.id, time: "", label: h.name, sub: tr("cal.habits", null, "Habit"),
+        done: !!(h.days && h.days[iso]), habitId: h.id, cta: (h.days && h.days[iso]) ? tr("today.undo", null, "Undo") : tr("today.markDone", null, "Done") });
+    });
+    items.sort(function (a, b) {
+      var ta = a.time || "99:99", tb = b.time || "99:99";
+      if (ta !== tb) return ta < tb ? -1 : 1;
+      return 0;
+    });
+    return items;
+  }
+  function renderDayPlan() {
+    var list = $("dayTimeline"); if (!list) return;
+    var iso = L.todayKey();
+    var items = dayPlanItems(iso);
+    var empty = $("dayPlanEmpty"), nextBox = $("nextStep");
+    var open = items.filter(function (x) { return !x.done; });
+    list.innerHTML = items.map(function (it, i) {
+      return '<li class="dayItem k-' + it.kind + (it.done ? " isDone" : "") + '" data-i="' + i + '">' +
+        '<span class="dayTime">' + esc(it.time || tr("today.anytime", null, "Anytime")) + "</span>" +
+        '<span class="dayMain"><b>' + esc(it.label) + "</b><small>" + esc(it.sub) + (it.done ? " · " + esc(tr("today.done", null, "Done")) : "") + "</small></span>" +
+        '<button type="button" class="pillBtn dayAct" data-act="' + i + '">' + esc(it.cta) + "</button></li>";
+    }).join("");
+    if (!items.length) {
+      empty.hidden = false;
+      empty.textContent = tr("today.planEmpty", null, "Nothing is planned for today. Rest is a fine plan. Add a meal, a workout or a task whenever you like.");
+    } else { empty.hidden = true; empty.textContent = ""; }
+    if (open.length) {
+      var n = open[0];
+      nextBox.hidden = false;
+      nextBox.innerHTML = '<span class="nextLbl">' + esc(tr("today.nextStep", null, "Next step")) + "</span><b>" + esc(n.label) + "</b>" +
+        (n.time ? "<small>" + esc(n.time) + "</small>" : "");
+    } else if (items.length) {
+      nextBox.hidden = false;
+      nextBox.innerHTML = '<span class="nextLbl">' + esc(tr("today.allDone", null, "All done for today. Well done.")) + "</span>";
+    } else { nextBox.hidden = true; nextBox.innerHTML = ""; }
+    list.querySelectorAll("[data-act]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var it = items[Number(b.getAttribute("data-act"))]; if (!it) return;
+        if (it.eatKey) { state.eaten = state.eaten || {}; if (state.eaten[it.eatKey]) delete state.eaten[it.eatKey]; else state.eaten[it.eatKey] = true; save(); renderToday(); return; }
+        if (it.todoId) { state.todos.forEach(function (t) { if (t.id === it.todoId) t.status = t.status === "done" ? "open" : "done"; }); save(); renderToday(); return; }
+        if (it.habitId) { state.habits.forEach(function (h) { if (h.id === it.habitId) { h.days = h.days || {}; if (h.days[iso]) delete h.days[iso]; else h.days[iso] = true; } }); save(); renderToday(); return; }
+        if (it.area) openArea(it.area, it.subId);
+      });
+    });
+  }
+  function renderQuickActions() {
+    var box = $("quickActions"); if (!box) return;
+    var acts = [
+      { id: "water", label: tr("today.qaWater", null, "+ Glass of water"), go: function () {
+          var today = L.todayKey(); state.water = state.water || {}; state.waterTaps = state.waterTaps || {};
+          state.waterTaps[today] = state.waterTaps[today] || []; state.waterTaps[today].push(250);
+          state.water[today] = (state.water[today] || 0) + 250; save(); renderPlan(); renderChallenge();
+          toast(tr("today.waterAdded", null, "Added 250 ml. Undo is on the Food tab.")); } },
+      { id: "workout", label: tr("today.qaWorkout", null, "Start a workout"), go: function () { switchTab("train", "gym-session"); } },
+      { id: "meals", label: tr("today.qaMeals", null, "Plan meals"), go: function () { switchTab("food", "meal-plan"); } },
+      { id: "task", label: tr("today.qaTask", null, "Add a task"), go: function () { switchTab("calendar", "cal-todos"); } }
+    ];
+    box.innerHTML = acts.map(function (a) { return '<button type="button" class="pillBtn" data-qa="' + a.id + '">' + esc(a.label) + "</button>"; }).join("");
+    box.querySelectorAll("[data-qa]").forEach(function (b, i) { b.addEventListener("click", acts[i].go); });
+  }
+
+  /* Primary tabs: Today, Food, Train, Calendar, More. Each tab keeps
+     the last section the user opened, and every older area (including
+     Peptides, now "Health tracker") stays reachable. */
+  var TAB_AREA = { food: "meals", train: "gym", calendar: "calendar" };
+  var lastSub = {};
+  function tabForView(name) {
+    if (name === "today") return "today";
+    if (name === "area") {
+      if (currentArea === "meals") return "food";
+      if (currentArea === "gym") return "train";
+      if (currentArea === "calendar") return "calendar";
+      return "more";
+    }
+    return "more";
+  }
+  function markTab(name) {
+    var t = tabForView(name);
+    document.querySelectorAll("#tabBar .tabBtn").forEach(function (b) {
+      var on = b.getAttribute("data-tab") === t;
+      b.classList.toggle("active", on);
+      if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+    });
+  }
+  function switchTab(tab, subId) {
+    if (tab === "today") { showView("today"); renderToday(); return; }
+    if (tab === "more") { showView("more"); renderMore(); return; }
+    var areaId = TAB_AREA[tab], a = areaById(areaId);
+    if (!a) return;
+    openArea(areaId, subId || lastSub[areaId] || a.subs[0].id);
+  }
+  function renderSubTabs(a, activeId) {
+    var nav = $("subTabs"); if (!nav) return;
+    nav.innerHTML = a.subs.map(function (s) {
+      var on = s.id === activeId;
+      return '<button type="button" class="subTab' + (on ? " active" : "") + '" data-subtab="' + s.id + '"' + (on ? ' aria-current="true"' : "") + ">" +
+        esc(tr("sub." + s.id, null, s.label)) + "</button>";
+    }).join("");
+    nav.querySelectorAll("[data-subtab]").forEach(function (b) {
+      b.addEventListener("click", function () { openArea(a.id, b.getAttribute("data-subtab")); });
+    });
+  }
+  /* ================= PROGRESS (Phase 5) =================
+     Optional, private, neutral. Totals only grow; a quiet week is never a loss; body numbers carry no
+     good/bad colour; every part can be hidden, exported or deleted. */
+  function progPrefs() { state.progressPrefs = state.progressPrefs || { off: false, hideBody: false }; return state.progressPrefs; }
+  function downloadFile(name, text, mime) {
+    var blob = new Blob([text], { type: mime }), a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(a.href); }, 500);
+  }
+  function milestoneName(id) {
+    var N = { first_session: "Your first workout", first_log: "First set logged", sessions_5: "5 workouts", sessions_10: "10 workouts", sessions_25: "25 workouts", sessions_50: "50 workouts",
+      first_pb: "A personal best", weeks_4: "4 active weeks", weeks_12: "12 active weeks", first_plan: "A full week of meals planned", first_rest: "Your first planned rest day" };
+    return tr("prog.m." + id, null, N[id] || id);
+  }
+  function exName2(id) { var e = exerciseById(id); return e ? exName(e) : id; }
+  function fmtSet(reps, w) { return reps + " " + tr("prog.reps", null, "reps") + (w ? " " + tr("prog.at", null, "at") + " " + w + " kg" : ""); }
+  function weekSummaryText(s) {
+    var bits = [s.sessions === 1 ? tr("prog.oneSession", null, "1 workout") : tr("prog.nSessions", { n: s.sessions }, s.sessions + " workouts")];
+    bits.push(tr("prog.nActiveDays", { n: s.moveDays }, s.moveDays + " active days"));
+    if (s.restDays) bits.push(s.restDays === 1 ? tr("prog.oneRest", null, "1 rest day") : tr("prog.nRest", { n: s.restDays }, s.restDays + " rest days"));
+    return bits.join(" · ");
+  }
+  function progressOffCard() {
+    return '<div class="card"><h2>' + esc(tr("sub.prog-overview", null, "Progress")) + '</h2><p>' + esc(tr("prog.offBody", null, "Progress tracking is turned off. Nothing is shown or counted on screen. Your data is kept until you delete it.")) + '</p>' +
+      '<div class="row"><button class="primaryBtn" id="progOn">' + esc(tr("prog.turnOn", null, "Turn progress back on")) + "</button></div></div>";
+  }
+  function wireProgOn(el) { var b = el.querySelector("#progOn"); if (b) b.addEventListener("click", function () { progPrefs().off = false; save(); renderProgress(currentSub); renderToday(); }); }
+  function renderProgress(subId) {
+    var el = $("areaBody"); stopGymTimer();
+    if (progPrefs().off) { el.innerHTML = progressOffCard(); wireProgOn(el); return; }
+    if (subId === "prog-strength") return renderProgStrength(el);
+    if (subId === "prog-body") return renderProgBody(el);
+    if (subId === "prog-review") return renderProgReview(el);
+    return renderProgOverview(el);
+  }
+  function renderProgOverview(el) {
+    var P = window.FitProgress, today = L.todayKey(), wk = P.weeks(state, today, 8), cur = wk[wk.length - 1], fs = P.flexibleStreak(state, today), ms = P.milestones(state, today), pbs = P.recentBests(state, today, 21);
+    var max = Math.max(1, Math.max.apply(null, wk.map(function (w) { return w.sessions; })));
+    var html = '<div class="card"><h2>' + esc(tr("prog.thisWeek", null, "This week")) + '</h2><p class="bigLine" id="progWeek">' + esc(weekSummaryText(cur)) + "</p>" +
+      (cur.planned ? '<p class="hint">' + esc(tr("prog.plannedN", { n: cur.planned }, "You planned " + cur.planned + " workouts a week. Fewer is fine too.")) + "</p>" : "") +
+      (!cur.counted ? '<p class="hint">' + esc(tr("prog.freshWeek", null, "A fresh week. Your next step is ready when you are.")) + "</p>" : "") +
+      '<div class="row"><button class="pillBtn" id="restToggle" aria-pressed="' + !!state.restDays[today] + '">' + esc(state.restDays[today] ? tr("prog.restOn", null, "Today is a rest day ✓") : tr("prog.restBtn", null, "Mark today as a rest day")) + "</button></div>" +
+      '<p class="hint">' + esc(tr("prog.restHint", null, "Rest counts. It keeps your weeks going.")) + "</p></div>";
+    html += '<div class="card"><h2>' + esc(tr("prog.journey", null, "Your journey")) + '</h2><p class="bigNum" id="activeWeeks">' + fs.activeWeeks + "</p><p>" + esc(tr("prog.activeWeeks", null, "active weeks so far. This number only goes up.")) + "</p>" +
+      (fs.currentRun > 1 ? '<p class="hint">' + esc(tr("prog.run", { n: fs.currentRun }, fs.currentRun + " weeks in a row right now")) + (fs.bestRun > fs.currentRun ? " · " + esc(tr("prog.best", { n: fs.bestRun }, "your longest is " + fs.bestRun)) : "") + "</p>" : "") +
+      (fs.returned ? '<p class="hint">' + esc(tr("prog.returned", null, "Good to have you back. Everything you did before still counts.")) + "</p>" : "") +
+      '<div role="img" aria-label="' + esc(tr("prog.chartAria", null, "Workouts per week, last 8 weeks")) + ": " + wk.map(function (w) { return w.sessions; }).join(", ") + '"><div class="weekBars" aria-hidden="true">' +
+      wk.map(function (w) { return '<span class="wkBar"><i style="height:' + Math.round((w.sessions / max) * 100) + '%"></i></span>'; }).join("") + "</div></div>" +
+      '<p class="hint">' + esc(tr("prog.chartNote", null, "Last 8 weeks, oldest on the left.")) + "</p></div>";
+    html += '<div class="card"><h2>' + esc(tr("prog.milestones", null, "Milestones")) + "</h2>" +
+      (ms.earned.length ? '<ul class="plainList" id="msList">' + ms.earned.map(function (id) { return "<li>" + esc(milestoneName(id)) + "</li>"; }).join("") + "</ul>" : '<p class="hint">' + esc(tr("prog.noMs", null, "Your first one is a single workout away. No rush.")) + "</p>") +
+      (ms.next ? '<p class="hint">' + esc(tr("prog.nextMs", null, "Next, whenever you like")) + ": " + esc(milestoneName(ms.next)) + "</p>" : "") + "</div>";
+    html += '<div class="card"><h2>' + esc(tr("prog.pbs", null, "Personal bests")) + '</h2><p class="hint">' + esc(tr("prog.pbHint", null, "Compared only with your own earlier sets.")) + "</p>" +
+      (pbs.length ? '<ul class="plainList" id="pbList">' + pbs.slice(-6).reverse().map(function (e) { return "<li><b>" + esc(exName2(e.exerciseId)) + "</b>: " + esc(fmtSet(e.reps, e.weightKg)) + " · " + esc(e.dateKey) + "</li>"; }).join("") + "</ul>" : '<p class="hint">' + esc(tr("prog.noPb", null, "Log your sets in a workout and your bests will show up here.")) + "</p>") + "</div>";
+    html += '<div class="card"><h2>' + esc(tr("prog.yourData", null, "Your progress data")) + '</h2><div class="row"><button class="pillBtn" id="expJson">' + esc(tr("prog.expJson", null, "Export (JSON)")) + '</button><button class="pillBtn" id="expCsv">' + esc(tr("prog.expCsv", null, "Export (spreadsheet)")) + '</button><button class="pillBtn" id="progOff">' + esc(tr("prog.turnOff", null, "Turn progress off")) + "</button></div></div>";
+    el.innerHTML = html;
+    $("restToggle").addEventListener("click", function () { if (state.restDays[today]) delete state.restDays[today]; else state.restDays[today] = true; save(); renderProgOverview(el); renderToday(); });
+    $("expJson").addEventListener("click", function () { downloadFile("fit-hard-progress.json", JSON.stringify(P.exportData(state, new Date().toISOString()), null, 2), "application/json"); });
+    $("expCsv").addEventListener("click", function () { downloadFile("fit-hard-progress.csv", P.toCsv(state), "text/csv"); });
+    $("progOff").addEventListener("click", function () { progPrefs().off = true; save(); renderProgress(currentSub); renderToday(); });
+  }
+  var progEx = null;
+  function renderProgStrength(el) {
+    var P = window.FitProgress, ids = P.loggedExercises(state);
+    if (!ids.length) { el.innerHTML = '<div class="card"><h2>' + esc(tr("sub.prog-strength", null, "Strength")) + '</h2><p class="hint">' + esc(tr("prog.noStrength", null, "When you log reps and weight in a workout, your strength over time shows here.")) + "</p></div>"; return; }
+    if (!progEx || ids.indexOf(progEx) === -1) progEx = ids[0];
+    var ser = P.strengthSeries(state, progEx), hasW = ser.some(function (s) { return s.weightKg; });
+    var vals = ser.map(function (s) { return hasW ? (s.weightKg || 0) : s.reps; }), mx = Math.max.apply(null, vals), mn = Math.min.apply(null, vals);
+    var pts = vals.map(function (v, i) { var x = ser.length === 1 ? 150 : 10 + (280 * i) / (ser.length - 1), y = mx === mn ? 40 : 70 - ((v - mn) / (mx - mn)) * 60; return x.toFixed(1) + "," + y.toFixed(1); }).join(" ");
+    el.innerHTML = '<div class="card"><h2>' + esc(tr("sub.prog-strength", null, "Strength")) + '</h2><label>' + esc(tr("prog.pickEx", null, "Exercise")) + '<select id="progEx">' + ids.map(function (id) { return '<option value="' + esc(id) + '"' + (id === progEx ? " selected" : "") + ">" + esc(exName2(id)) + "</option>"; }).join("") + "</select></label>" +
+      '<svg class="sparkline" viewBox="0 0 300 80" role="img" aria-label="' + esc(tr("prog.sparkAria", { name: exName2(progEx), n: ser.length }, exName2(progEx) + ", " + ser.length + " sessions")) + '"><polyline fill="none" stroke="var(--sage)" stroke-width="3" points="' + pts + '"/>' + vals.map(function (v, i) { var p = pts.split(" ")[i].split(","); return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="4" fill="var(--sage)"/>'; }).join("") + "</svg>" +
+      '<table class="dataTable"><caption class="srOnly">' + esc(exName2(progEx)) + '</caption><thead><tr><th scope="col">' + esc(tr("prog.date", null, "Date")) + '</th><th scope="col">' + esc(tr("prog.topSet", null, "Top set")) + "</th></tr></thead><tbody>" +
+      ser.slice().reverse().slice(0, 20).map(function (s) { return "<tr><td>" + esc(s.dateKey) + "</td><td>" + esc(fmtSet(s.reps, s.weightKg)) + "</td></tr>"; }).join("") + "</tbody></table></div>";
+    $("progEx").addEventListener("change", function () { progEx = $("progEx").value; renderProgStrength(el); });
+  }
+  var BODY_FIELDS = [["weightKg", "Weight (kg)"], ["waistCm", "Waist (cm)"], ["hipCm", "Hips (cm)"], ["chestCm", "Chest (cm)"], ["armCm", "Upper arm (cm)"], ["thighCm", "Thigh (cm)"]];
+  function renderProgBody(el) {
+    var P = window.FitProgress, pp = progPrefs();
+    if (pp.hideBody) {
+      el.innerHTML = '<div class="card"><h2>' + esc(tr("sub.prog-body", null, "Body")) + '</h2><p>' + esc(tr("prog.bodyHidden", null, "Body tracking is hidden. Nothing is shown here.")) + '</p><div class="row"><button class="primaryBtn" id="bodyShow">' + esc(tr("prog.bodyShow", null, "Show body tracking")) + "</button></div></div>";
+      $("bodyShow").addEventListener("click", function () { pp.hideBody = false; save(); renderProgBody(el); });
+      return;
+    }
+    var entries = (state.body || []).slice().sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; });
+    var html = '<div class="card"><h2>' + esc(tr("sub.prog-body", null, "Body")) + '</h2><p class="hint">' + esc(tr("prog.bodyIntro", null, "Optional and private. These numbers are only a record. They say nothing about your worth, and you can skip any of them.")) + "</p>" +
+      '<label>' + esc(tr("prog.date", null, "Date")) + '<input type="date" id="bdDate" value="' + L.todayKey() + '" max="' + L.todayKey() + '"></label><div class="grid2">' +
+      BODY_FIELDS.map(function (f) { return '<label>' + esc(tr("prog.f." + f[0], null, f[1])) + '<input type="text" inputmode="decimal" autocomplete="off" id="bd_' + f[0] + '"></label>'; }).join("") + "</div>" +
+      '<p class="hint err" id="bdErr" role="alert"></p><div class="row"><button class="primaryBtn" id="bdSave">' + esc(tr("prog.bodySave", null, "Save entry")) + '</button></div></div>';
+    html += '<div class="card"><h2>' + esc(tr("prog.entries", null, "Your entries")) + "</h2>";
+    if (!entries.length) html += '<p class="hint">' + esc(tr("prog.noEntries", null, "Nothing saved yet. That is completely fine.")) + "</p>";
+    else {
+      html += P.METRICS.map(function (m) { var s = P.bodySummary(entries, m); if (!s || s.count < 2) return ""; var f = BODY_FIELDS.filter(function (x) { return x[0] === m; })[0];
+        return '<p class="hint">' + esc(tr("prog.f." + m, null, f[1])) + ": " + s.first.value + " → " + s.last.value + " (" + s.count + " " + esc(tr("prog.entriesWord", null, "entries")) + ")</p>"; }).join("");
+      html += entries.slice(0, 60).map(function (e) {
+        return '<div class="listRow"><span class="grow"><b>' + esc(e.date) + "</b><br><span class='hint'>" + BODY_FIELDS.filter(function (f) { return typeof e[f[0]] === "number"; }).map(function (f) { return esc(tr("prog.f." + f[0], null, f[1]).replace(/ \(.*\)/, "")) + " " + e[f[0]]; }).join(" · ") + "</span></span>" +
+          '<button class="miniBtn" data-bdel="' + esc(e.id) + '" aria-label="' + esc(tr("prog.delEntryAria", { d: e.date }, "Remove entry from " + e.date)) + '">' + esc(tr("common.remove")) + "</button></div>"; }).join("");
+    }
+    html += '<div class="row"><button class="pillBtn" id="bodyHide">' + esc(tr("prog.bodyHide", null, "Hide body tracking")) + '</button>' + (entries.length ? '<button class="pillBtn" id="bodyWipe">' + esc(tr("prog.bodyWipe", null, "Delete all body entries")) + "</button>" : "") + '</div><p class="hint err" id="bodyAsk" hidden></p></div>';
+    html += '<div class="card" id="photoCard"><h2>' + esc(tr("prog.photos", null, "Private photos")) + '</h2><p class="hint">' + esc(tr("prog.photoNote", null, "Photos stay on this device only. They are not uploaded, not backed up and not in exports. If you delete the app or clear browser data, they are gone.")) + "</p>" +
+      (window.FitPhotos && window.FitPhotos.available() ? '<label>' + esc(tr("prog.addPhoto", null, "Add a progress photo")) + '<input type="file" id="phFile" accept="image/*"></label><p class="hint err" id="phErr" role="alert"></p><div id="phGrid" class="photoGrid"></div>' : '<p class="hint">' + esc(tr("prog.photoNA", null, "Photo storage is not available in this browser.")) + "</p>") + "</div>";
+    el.innerHTML = html;
+    $("bdSave").addEventListener("click", function () {
+      var rec = { id: "body." + Date.now() + "." + Math.random().toString(36).slice(2, 6), date: $("bdDate").value || L.todayKey() }, any = false, err = "";
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(rec.date) || rec.date > L.todayKey()) err = tr("prog.badDate", null, "Pick today or an earlier date.");
+      BODY_FIELDS.forEach(function (f) {
+        var raw = $("bd_" + f[0]).value.trim(); if (!raw) return;
+        var v = P.parseMeasure(f[0], raw); if (v == null) err = err || tr("prog.badNum", { f: f[1] }, "Check " + f[1] + ": use a plain number like 72.5."); else { rec[f[0]] = v; any = true; }
+      });
+      if (!err && !any) err = tr("prog.needOne", null, "Add at least one number, or skip this for today.");
+      if (err) { $("bdErr").textContent = err; return; }
+      state.body.push(rec); save(); renderProgBody(el); toast(tr("prog.saved", null, "Saved"));
+    });
+    el.querySelectorAll("[data-bdel]").forEach(function (b) { b.addEventListener("click", function () { state.body = state.body.filter(function (e) { return e.id !== b.getAttribute("data-bdel"); }); save(); renderProgBody(el); }); });
+    $("bodyHide").addEventListener("click", function () { pp.hideBody = true; save(); renderProgBody(el); });
+    var bw = $("bodyWipe");
+    if (bw) bw.addEventListener("click", function () {
+      var ask = $("bodyAsk"); if (!ask.hidden) return; ask.hidden = false;
+      ask.innerHTML = esc(tr("prog.wipeSure", null, "Delete every body entry? This cannot be undone.")) + ' <button type="button" class="pillBtn" id="wipeYes">' + esc(tr("prog.wipeYes", null, "Yes, delete")) + '</button> <button type="button" class="pillBtn" id="wipeNo">' + esc(tr("common.cancel", null, "Cancel")) + "</button>";
+      $("wipeYes").addEventListener("click", function () { state.body = []; save(); renderProgBody(el); toast(tr("prog.deleted", null, "Deleted")); });
+      $("wipeNo").addEventListener("click", function () { ask.hidden = true; ask.innerHTML = ""; bw.focus(); }); $("wipeYes").focus();
+    });
+    if (window.FitPhotos && window.FitPhotos.available()) {
+      var drawPhotos = function () {
+        window.FitPhotos.list("progress").then(function (xs) {
+          var g = $("phGrid"); if (!g) return;
+          if (!xs.length) { g.innerHTML = '<p class="hint">' + esc(tr("prog.noPhotos", null, "No photos saved.")) + "</p>"; return; }
+          g.innerHTML = xs.map(function (x) { return '<figure class="phItem"><img alt="' + esc(tr("prog.photoAlt", { d: x.date }, "Progress photo from " + x.date)) + '" src="' + URL.createObjectURL(x.blob) + '"><figcaption>' + esc(x.date) + '</figcaption><button class="miniBtn" data-pdel="' + esc(x.id) + '" aria-label="' + esc(tr("prog.delPhotoAria", { d: x.date }, "Remove photo from " + x.date)) + '">' + esc(tr("common.remove")) + "</button></figure>"; }).join("") +
+            '<div class="row"><button class="pillBtn" id="phWipe">' + esc(tr("prog.photoWipe", null, "Delete all photos")) + "</button></div>";
+          g.querySelectorAll("[data-pdel]").forEach(function (b) { b.addEventListener("click", function () { window.FitPhotos.remove(b.getAttribute("data-pdel")).then(drawPhotos); }); });
+          $("phWipe").addEventListener("click", function () { if (window.confirm(tr("prog.photoWipeSure", null, "Delete all progress photos from this device?"))) window.FitPhotos.clearCol("progress").then(drawPhotos); });
+        }).catch(function () { var g = $("phGrid"); if (g) g.innerHTML = '<p class="hint">' + esc(tr("prog.photoNA", null, "Photo storage is not available in this browser.")) + "</p>"; });
+      };
+      drawPhotos();
+      $("phFile").addEventListener("change", function () {
+        var f = $("phFile").files && $("phFile").files[0]; if (!f) return; $("phErr").textContent = "";
+        window.FitPhotos.prepare(f, 900).then(function (blob) { return window.FitPhotos.add("progress", blob, { date: L.todayKey() }); }).then(function () { $("phFile").value = ""; drawPhotos(); toast(tr("prog.photoSaved", null, "Photo saved on this device")); })
+          .catch(function (e) { $("phErr").textContent = tr("prog.photoBad", null, "That file could not be used. Try a normal photo (JPG or PNG)."); });
+      });
+    }
+  }
+  function renderProgReview(el) {
+    var P = window.FitProgress, today = L.todayKey(), r = P.weeklyReview(state, today), saved = (state.reflections || {})[r.week] || { easier: "", change: "", next: "" };
+    var stepText = { build_routine: tr("prog.stepBuild", null, "If you like, build a small routine to have a plan ready."), one_small: tr("prog.stepSmall", null, "Pick one small thing this week. A short walk counts."),
+      next_session: tr("prog.stepNext", null, "Your next planned workout is a good next step, at whatever size feels right."), enjoy: tr("prog.stepEnjoy", null, "You did what you set out to do. Enjoy the rest of the week.") }[r.step];
+    var past = Object.keys(state.reflections || {}).sort().reverse().filter(function (k) { return k !== r.week; }).slice(0, 5);
+    el.innerHTML = '<div class="card"><h2>' + esc(tr("sub.prog-review", null, "Weekly review")) + '</h2><p class="bigLine">' + esc(weekSummaryText(r.thisWeek)) + '</p><p class="hint">' + esc(tr("prog.lastWeek", null, "Last week")) + ": " + esc(weekSummaryText(r.lastWeek)) + "</p>" +
+      '<p id="revStep"><b>' + esc(tr("prog.oneStep", null, "One suggested next step")) + ":</b> " + esc(stepText) + "</p></div>" +
+      '<div class="card"><h2>' + esc(tr("prog.reflect", null, "A quick look back")) + '</h2><p class="hint">' + esc(tr("prog.reflectHint", null, "Optional. Skip any of these. It stays private to you.")) + "</p>" +
+      '<label>' + esc(tr("prog.q1", null, "What felt easier?")) + '<textarea id="rf1" rows="2" maxlength="300">' + esc(saved.easier) + '</textarea></label>' +
+      '<label>' + esc(tr("prog.q2", null, "What would you change?")) + '<textarea id="rf2" rows="2" maxlength="300">' + esc(saved.change) + '</textarea></label>' +
+      '<label>' + esc(tr("prog.q3", null, "Your own next step")) + '<textarea id="rf3" rows="2" maxlength="300">' + esc(saved.next) + '</textarea></label>' +
+      '<div class="row"><button class="primaryBtn" id="rfSave">' + esc(tr("prog.rfSave", null, "Save reflection")) + '</button></div></div>' +
+      (past.length ? '<div class="card"><h2>' + esc(tr("prog.pastRef", null, "Earlier reflections")) + "</h2>" + past.map(function (k) { var v = state.reflections[k]; return '<p><b>' + esc(k) + "</b><br>" + [v.easier, v.change, v.next].filter(Boolean).map(esc).join("<br>") + "</p>"; }).join("") + "</div>" : "");
+    $("rfSave").addEventListener("click", function () {
+      state.reflections[r.week] = { easier: P.cleanText($("rf1").value), change: P.cleanText($("rf2").value), next: P.cleanText($("rf3").value) };
+      save(); toast(tr("prog.saved", null, "Saved"));
+    });
+  }
+  function renderMore() {
+    var box = $("moreList"); if (!box) return;
+    var rows = [
+      { id: "health", ico: "#i-pep", title: tr("more.health", null, "Health tracker"), sub: tr("more.healthSub", null, "Your own prescribed schedule, logs and reminders. Record-keeping only."), go: function () { var a = areaById("peptides"); openArea("peptides", lastSub.peptides || a.subs[0].id); } },
+      { id: "progress", ico: "#i-star", title: tr("more.progress", null, "Progress"), sub: tr("more.progressSub", null, "Your journey, personal bests and weekly look-back. Optional and private."), go: function () { openArea("progress", lastSub.progress || "prog-overview"); } },
+      { id: "setup", ico: "#i-star", title: tr("nav.setupGuide", null, "Setup guide"), sub: tr("more.setupSub", null, "Change your goals, foods and tools."), go: function () { openSetup(); } },
+      { id: "settings", ico: "#i-gear", title: tr("nav.settings", null, "Settings"), sub: tr("more.settingsSub", null, "Account, look, reminders and your data."), go: function () { showView("settings"); renderSettings(); } }
+    ];
+    box.innerHTML = rows.map(function (r) {
+      return '<button type="button" class="moreRow" data-more="' + r.id + '"><span class="navIcon icInk"><svg class="ic" aria-hidden="true"><use href="' + r.ico + '"/></svg></span>' +
+        '<span class="moreTxt"><b>' + esc(r.title) + "</b><small>" + esc(r.sub) + '</small></span><svg class="ic chev" aria-hidden="true"><use href="#i-chev"/></svg></button>';
+    }).join("");
+    box.querySelectorAll("[data-more]").forEach(function (b, i) { b.addEventListener("click", rows[i].go); });
+  }
+  document.querySelectorAll("#tabBar .tabBtn").forEach(function (b) {
+    b.addEventListener("click", function () { switchTab(b.getAttribute("data-tab")); });
+  });
+
+  function renderProgressCard() {
+    var c = $("progressCard"); if (!c) return;
+    if (progPrefs().off || !window.FitProgress) { c.hidden = true; return; }
+    c.hidden = false;
+    var P = window.FitProgress, w = P.weekSummary(state, P.weekStart(L.todayKey()));
+    $("progressLine").textContent = w.counted ? weekSummaryText(w) : tr("prog.freshWeek", null, "A fresh week. Your next step is ready when you are.");
+  }
   function renderToday() {
     var p = state.profile;
     $("stripHi").textContent = p && p.name ? tr("today.hiPlain", { name: p.name }) : "";
     $("todayTitle").textContent = p && p.name ? tr("today.hiPlain", { name: p.name }) : tr("nav.today");
     renderCheckin();
     renderChecklist();
+    renderProgressCard();
     var budget = L.estimateBudget(p || {});
     var level = state.checkins[L.todayKey()] || "ok";
     if (budget) {
@@ -2237,17 +3037,8 @@
     $("todayEmpty").hidden = setUp;
     var ew = $("emptyWally");
     if (ew) ew.innerHTML = !setUp && guideOn() && window.Wally ? wallyWrap("welcome", wallyLine("welcome"), 64) : "";
-    var split = L.areasForNeeds(setUp ? p.needs : ["meals", "gym", "peptides", "calendar"]);
-    $("todayAreas").innerHTML = split.active.map(function (id) {
-      var a = areaById(id);
-      return '<button class="areaCard" data-open="' + id + '"><span class="dot ic-' + id + '">' +
-        '<svg class="ic"><use href="' + iconFor(id) + '"/></svg></span><h3>' + esc(tr("nav." + id, null, a.label)) + "</h3>" +
-        "<p>" + esc(tr("area.tapOpen")) + "</p></button>";
-    }).join("");
-    document.querySelectorAll("[data-open]").forEach(function (b) {
-      b.addEventListener("click", function () {
-        var a = areaById(b.getAttribute("data-open")); openArea(a.id, a.subs[0].id); });
-    });
+    renderDayPlan();
+    renderQuickActions();
     renderChallenge();
   }
 
@@ -2283,6 +3074,9 @@
     var box = $("challengeCard"); if (!box) return;
     var p = state.profile;
     if (!p || !p.setupDone || !authUser) { box.hidden = true; box.innerHTML = ""; return; }
+    var tk = L.todayKey();
+    var active = state.challenge || chBuild || ((state.water || {})[tk] || 0) > 0 || Object.keys(state.workouts || state.sessions || {}).length > 0;
+    if (!active) { box.hidden = true; box.innerHTML = ""; return; }
     box.hidden = false;
     var today = L.todayKey();
     var ch = state.challenge;
@@ -2399,6 +3193,7 @@
       tr("legal.noteStatus");
     var cname = companionName();
     $("guideStatus").textContent = guideOn() ? tr("set.guideOn", { name: cname }) : tr("set.guideOff", { name: cname });
+    var cb = $("celebBtn"); if (cb) { cb.textContent = (state.settings && state.settings.noCelebrate) ? tr("set.celebOn", null, "Turn celebrations back on") : tr("set.celebOff", null, "Turn celebrations off"); cb.setAttribute("aria-pressed", String(!!(state.settings && state.settings.noCelebrate))); }
     $("guideToggleBtn").textContent = guideOn() ? tr("set.guideRestBtn", { name: cname }) : tr("set.guideBackBtn", { name: cname });
     var restSpot = $("guideRestSpot");
     if (restSpot) restSpot.innerHTML = !guideOn() && window.Wally ? wallyWrap("rest", wallyLine("tomorrow"), 56) : "";
@@ -2426,6 +3221,11 @@
     renderAppearance();
     renderAccount();
   }
+  $("progressOpen").addEventListener("click", function () { openArea("progress", "prog-overview"); });
+  $("celebBtn").addEventListener("click", function () {
+    state.settings = state.settings || {}; state.settings.noCelebrate = !state.settings.noCelebrate; save(); renderSettings();
+    toast(state.settings.noCelebrate ? tr("set.celebOffToast", null, "Celebrations are off") : tr("set.celebOnToast", null, "Celebrations are on"));
+  });
   $("guideToggleBtn").addEventListener("click", function () {
     state.settings = state.settings || {};
     guideOn(); /* runs the one-time key migration first */
@@ -2466,6 +3266,8 @@
   $("importGo").addEventListener("click", function () {
     var url = $("importUrl").value.trim();
     if (!url) { $("importResult").textContent = tr("cal.importNeedLink"); return; }
+    url = url.replace(/^webcal:/i, "https:");
+    if (!/^https:\/\//i.test(url)) { $("importResult").textContent = tr("cal.importHttps", null, "Please use a link that starts with https://"); return; }
     $("importResult").textContent = tr("cal.importFetching");
     fetch(url).then(function (r) { if (!r.ok) throw new Error("http " + r.status); return r.text(); })
       .then(function (t) { runImport(t, IMPORT_LABELS[importSource]); })
@@ -2640,8 +3442,19 @@
   }
   var doorStep = 1, doorEmail = "";
   var mirrorTimer = null;
+  /* The cloud copy is only written once it has been read successfully this session: a failed read must never be
+     followed by a write of an empty or partial state over the real account data. Changes stay safe on the phone. */
+  var cloudReady = false, loadRetries = 0;
+  function loadCloudWithRetry(user, first) {
+    window.FitAuth.loadCloudState(user.uid).then(function (cloud) { cloudReady = true; loadRetries = 0; afterCloudLoad(user, cloud); })
+      .catch(function () {
+        mirrorNote = tr("acc.loadNote", null, "Could not reach your account just now. Your changes stay safe on this phone and will sync when it is back.");
+        renderAccount();
+        if (loadRetries < 6 && authUser && authUser.uid === user.uid) { loadRetries++; setTimeout(function () { if (authUser && authUser.uid === user.uid && !cloudReady) loadCloudWithRetry(user, false); }, 8000 * loadRetries); }
+      });
+  }
   function scheduleMirror() {
-    if (!authUser || !window.FitAuth) return;
+    if (!authUser || !window.FitAuth || !cloudReady) return;
     if (mirrorTimer) clearTimeout(mirrorTimer);
     mirrorTimer = setTimeout(function () {
       /* Re-checked at fire time: a sign-out inside the window
@@ -2704,20 +3517,37 @@
      settles (bounded in auth.js) and its result only chooses
      the line that speaks: the given key on success, the
      sign-out failure line on any failure. Never silence. */
+  /* Sign-out on a phone that someone else may pick up: push the last changes to the account first; when that
+     worked, remove this account's copy from the phone (the account holds it) and reload to a clean door.
+     When the push could not happen (offline), keep the local copy so nothing is lost, and say so plainly.
+     Progress photos are never uploaded, so they stay in their per-account on-device vault. */
   function signOutFlow(okKey) {
+    var uid = authUser && authUser.uid, snap = state;
     authUser = null;
     doorStep = 1; doorEmail = "";
     renderAccount();
     if (!window.FitAuth || !window.FitAuth.signOutUser) { toast(tr("acc.signOutFail")); return; }
-    window.FitAuth.signOutUser().then(function () {
-      toast(tr(okKey));
-    }).catch(function () {
-      toast(tr("acc.signOutFail"));
-    });
+    var pushed = Promise.resolve(false);
+    var wasReady = cloudReady; cloudReady = false;
+    if (uid && wasReady && window.FitAuth.saveCloudState) {
+      pushed = Promise.race([window.FitAuth.saveCloudState(uid, snap).then(function () { return true; }, function () { return false; }),
+        new Promise(function (res) { setTimeout(function () { res(false); }, 6000); })]);
+    }
+    pushed.then(function (ok) {
+      return window.FitAuth.signOutUser().then(function () {
+        if (ok && uid) {
+          var cancelled = Promise.resolve(); try { cancelled = FitRemind.cancelAll(); } catch (e) {}
+          cancelled.then(function () {
+            try { localStorage.removeItem(KEY); localStorage.removeItem(OWNER_KEY); localStorage.removeItem(accountStateKey(uid)); localStorage.removeItem("fit-remind-ids"); } catch (e) {}
+            location.reload();
+          });
+        } else { toast(tr("acc.signedOutKept", null, "Signed out. Some recent changes are only on this phone for now. They stay here until you sign in again.")); }
+      });
+    }).catch(function () { toast(tr("acc.signOutFail")); });
   }
   function renderAccount() {
     var box = $("accountBox"); if (!box) return;
-    doorBusy = false;
+    doorBusy = false; box.classList.remove("doorBusy"); /* a finished sign-in must never leave the buttons faded and dead */
     /* DOOR PURITY + ACCOUNT MANDATORY (fleet rulings, 21 Oct
        2026): before entry the app shows the DOOR and nothing
        else — the settings page carries sign-up/sign-in only,
@@ -2855,8 +3685,11 @@
       authUser.providerData[0].providerId === "password");
   }
   function wipeDeviceAndReload() {
-    try { localStorage.removeItem(KEY); } catch (e) {}
-    location.reload();
+    var done = function () { location.reload(); };
+    var cancelled = Promise.resolve();
+    try { cancelled = FitRemind.cancelAll(); } catch (e) {}
+    try { localStorage.removeItem(KEY); localStorage.removeItem("fit-remind-ids"); } catch (e) {}
+    cancelled.then(function () { try { return window.FitPhotos && window.FitPhotos.clearAll ? window.FitPhotos.clearAll() : null; } catch (e) { return null; } }).then(done, done);
   }
   function deleteAccountFlow() {
     if (!authUser || !window.FitAuth) return;
@@ -3157,7 +3990,12 @@
     if (user.isAnonymous) { window.FitAuth.signOutUser().then(function () { renderAccount(); }, function () { renderAccount(); }); return; }
     activateAccountStorage(user.uid);
     authUser = user;
-    window.FitAuth.loadCloudState(user.uid).then(function (cloud) {
+    if (window.FitPhotos) window.FitPhotos.setScope(user.uid);
+    cloudReady = false; loadRetries = 0;
+    loadCloudWithRetry(user, true);
+  }
+  function afterCloudLoad(user, cloud) {
+    mirrorNote = "";
       if (cloud) {
         state = repairKeep(L.mergeStates(cloud, state));
         adoptSignInName(user);
@@ -3180,8 +4018,8 @@
          path shows Today itself. */
       showView("today");
       joinFollowUp();
-    }).catch(function () { renderAccount(); });
   }
+  function initAccountsUnused() {}
   function initAccounts() {
     if (doorStarted || !window.FitAuth || !window.FIT_ACCOUNT_CONFIG) { renderAccount(); return; }
     if (!window.FitAuth.initDoor(window.FIT_ACCOUNT_CONFIG)) { renderAccount(); return; }
@@ -3253,8 +4091,27 @@
     pickedNeeds = (p.needs || []).slice();
     chips($("suCuisines"), D.CUISINES, pickedCuisines);
     chips($("suNeeds"), D.NEEDS, pickedNeeds);
+    suGo(1);
     $("setupModal").classList.remove("hidden");
+    setTimeout(function () { try { $("suName").focus(); } catch (e) {} }, 50);
   }
+  /* Three short steps (research: 2-3 screens, optional, skip on each). Step 1 is all the app needs. */
+  var suStep = 1, SU_LAST = 3;
+  function suGo(n) {
+    suStep = Math.max(1, Math.min(SU_LAST, n));
+    document.querySelectorAll("#setupModal .suStep").forEach(function (el) { el.classList.toggle("hidden", Number(el.getAttribute("data-su")) !== suStep); });
+    $("suCount").textContent = tr("setup.stepOf", { n: suStep, total: SU_LAST }, "Step " + suStep + " of " + SU_LAST);
+    $("suBack").classList.toggle("hidden", suStep === 1);
+    $("suNext").classList.toggle("hidden", suStep === SU_LAST);
+    $("suDone").classList.toggle("hidden", suStep !== SU_LAST);
+    $("suNext").textContent = suStep === 1 ? tr("setup.next", null, "Next") : tr("setup.skipStep", null, "Next");
+    var card = document.querySelector("#setupModal .modalCard"); if (card) card.scrollTop = 0;
+  }
+  $("suNext").addEventListener("click", function () { suGo(suStep + 1); });
+  $("suBack").addEventListener("click", function () { suGo(suStep - 1); });
+  $("setupModal").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && e.target && e.target.tagName === "INPUT") { e.preventDefault(); if (suStep < SU_LAST) suGo(suStep + 1); else $("suDone").click(); }
+  });
   function closeSetup() { $("setupModal").classList.add("hidden"); }
   /* FIT (QA leg 7): a restored state that already holds a completed
      setup closes the sheet — the wall must never stand over a

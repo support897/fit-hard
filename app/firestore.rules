@@ -82,9 +82,17 @@ service cloud.firestore {
          one, or births it where the record never had one;
          only a change or a drop is refused. Every legitimate
          save carries the stamp forward unchanged. */
+      /* Null-safe (found by the real two-user journey test, 7 Nov 2026): a root doc stored with
+         "profile": null (a new account saved before setup) made the old chained .get() raise a
+         null-value error and refused every later save. anchorOf treats null/non-map as "no stamp". */
+      function anchorOf(d) {
+        let s = d.get("state", null);
+        let p = (s is map) ? s.get("profile", null) : null;
+        return (p is map) ? p.get("firstSeenAt", null) : null;
+      }
       function anchorKept() {
-        let before = resource.data.get("state", {}).get("profile", {}).get("firstSeenAt", null);
-        let after = request.resource.data.get("state", {}).get("profile", {}).get("firstSeenAt", null);
+        let before = anchorOf(resource.data);
+        let after = anchorOf(request.resource.data);
         return after == before || before == null;
       }
       allow read: if request.auth != null && request.auth.uid == uid;

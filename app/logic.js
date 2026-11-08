@@ -289,6 +289,8 @@ function emptyState() {
   return { profile: null, checkins: {}, plan: {}, customRecipes: [], treats: [],
     pantry: [], extras: [], routines: [], sessions: [], peptides: [], habits: [], todos: [], imports: [],
     challenge: null, challengePast: [], water: {}, waterTaps: {}, favRecipes: [],
+    planServings: {}, eaten: {}, groceryChecked: {}, mealPrefs: { maxMinutes: 0 }, appointments: [],
+    body: [], restDays: {}, reflections: {}, progressPrefs: { off: false, hideBody: false },
     disclaimer: null, settings: { notifications: false }, demoUnlock: null };
 }
 /* Routine and session items, normalised slot by slot (QA
@@ -353,6 +355,49 @@ function repairState(raw) {
   out.favRecipes = Array.isArray(raw.favRecipes) ? raw.favRecipes.filter(function (id) { return typeof id === "string" && !!id; }).slice(0, 200) : [];
   out.challenge = repairChallenge(raw.challenge);
   out.challengePast = safeList(raw.challengePast, function (c) { return repairChallenge(c); }).filter(function (c) { return !!c; });
+  /* Phase 2: servings per planned meal, meals eaten, ticked grocery rows, planner time limit. */
+  out.planServings = {};
+  if (isObj(raw.planServings)) Object.keys(raw.planServings).forEach(function (k) {
+    var v = Math.round(Number(raw.planServings[k]));
+    if (/^\d{4}\.\d{2}\.\d{2}\.(breakfast|lunch|dinner)$/.test(k) && isFinite(v) && v >= 1 && v <= 24) out.planServings[k] = v;
+  });
+  out.eaten = {};
+  if (isObj(raw.eaten)) Object.keys(raw.eaten).forEach(function (k) {
+    if (/^\d{4}-\d{2}-\d{2}\.(breakfast|lunch|dinner)$/.test(k) && raw.eaten[k] === true) out.eaten[k] = true;
+  });
+  out.groceryChecked = {};
+  if (isObj(raw.groceryChecked)) Object.keys(raw.groceryChecked).slice(0, 600).forEach(function (k) {
+    if (typeof k === "string" && k.length <= 120 && raw.groceryChecked[k] === true) out.groceryChecked[k] = true;
+  });
+  out.appointments = [];
+  if (Array.isArray(raw.appointments)) raw.appointments.slice(0, 500).forEach(function (a, i) {
+    if (!isObj(a) || !isoOk(a.date) || typeof a.title !== "string" || !a.title.trim()) return;
+    var rm = Math.round(Number(a.remindMin));
+    out.appointments.push({ id: typeof a.id === "string" && a.id ? a.id.slice(0, 60) : "appt." + i, title: a.title.replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 80), date: a.date,
+      time: typeof a.time === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(a.time) ? a.time : null,
+      place: typeof a.place === "string" ? a.place.replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 120) : "", remindMin: isFinite(rm) && rm >= 0 && rm <= 10080 ? rm : null });
+  });
+  out.body = [];
+  if (Array.isArray(raw.body)) raw.body.slice(0, 1000).forEach(function (e, i) {
+    if (!isObj(e) || !isoOk(e.date)) return;
+    var r = { id: typeof e.id === "string" && e.id ? e.id.slice(0, 60) : "body." + i, date: e.date }, any = false;
+    [["weightKg", 20, 400], ["waistCm", 30, 250], ["hipCm", 30, 250], ["chestCm", 30, 250], ["armCm", 10, 120], ["thighCm", 20, 150]].forEach(function (m) {
+      var v = Number(e[m[0]]); if (e[m[0]] != null && isFinite(v) && v >= m[1] && v <= m[2]) { r[m[0]] = Math.round(v * 100) / 100; any = true; }
+    });
+    if (any) out.body.push(r);
+  });
+  out.restDays = {};
+  if (isObj(raw.restDays)) Object.keys(raw.restDays).slice(0, 1500).forEach(function (k) { if (isoOk(k) && raw.restDays[k] === true) out.restDays[k] = true; });
+  out.reflections = {};
+  if (isObj(raw.reflections)) Object.keys(raw.reflections).slice(0, 300).forEach(function (k) {
+    var v = raw.reflections[k]; if (!isoOk(k) || !isObj(v)) return;
+    function t(x) { return typeof x === "string" ? x.replace(/[\u0000-\u001f]/g, " ").trim().slice(0, 300) : ""; }
+    out.reflections[k] = { easier: t(v.easier), change: t(v.change), next: t(v.next) };
+  });
+  out.progressPrefs = { off: false, hideBody: false };
+  if (isObj(raw.progressPrefs)) { out.progressPrefs.off = raw.progressPrefs.off === true; out.progressPrefs.hideBody = raw.progressPrefs.hideBody === true; }
+  out.mealPrefs = { maxMinutes: 0 };
+  if (isObj(raw.mealPrefs)) { var mm = Math.round(Number(raw.mealPrefs.maxMinutes)); if (isFinite(mm) && mm >= 5 && mm <= 240) out.mealPrefs.maxMinutes = mm; }
   out.water = {};
   if (isObj(raw.water)) Object.keys(raw.water).forEach(function (k) {
     var v = Number(raw.water[k]);
@@ -389,7 +434,12 @@ function repairState(raw) {
     var base = Object.assign({}, pp, { id: typeof pp.id === "string" && pp.id ? pp.id : "pep." + i,
       name: typeof pp.name === "string" && pp.name ? pp.name : "Peptide",
       color: typeof pp.color === "string" && pp.color ? pp.color : null,
-      log: Array.isArray(pp.log) ? pp.log : [] });
+      log: (Array.isArray(pp.log) ? pp.log : []).filter(function (l) { return isObj(l) && isoOk(l.dateKey); }).map(function (l) {
+        return Object.assign({}, l, { status: ["taken", "not_taken", "unknown"].indexOf(l.status) !== -1 ? l.status : "taken" }); }),
+      instructions: typeof pp.instructions === "string" ? pp.instructions.replace(/[\u0000-\u001f]/g, " ").slice(0, 500) : "",
+      prescriber: typeof pp.prescriber === "string" ? pp.prescriber.replace(/[\u0000-\u001f]/g, " ").slice(0, 80) : "",
+      confirmedAt: typeof pp.confirmedAt === "string" ? pp.confirmedAt : null,
+      audit: (Array.isArray(pp.audit) ? pp.audit : []).filter(function (a) { return isObj(a) && typeof a.at === "string"; }).slice(-100) });
     /* Schedule shapes of record are { days:[..] } and
        { intervalDays:n, startKey } (what the intake writes and
        nextDoseKey reads). Older/fixture shapes are translated
@@ -423,7 +473,13 @@ function repairState(raw) {
     return Object.assign({}, ss, { id: typeof ss.id === "string" && ss.id ? ss.id : "session." + i,
       dateKey: typeof ss.dateKey === "string" ? ss.dateKey : null,
       items: safeRoutineItems(ss.items),
-      status: ss.status === "active" ? "active" : "done" });
+      log: (Array.isArray(ss.log) ? ss.log : []).filter(function (x) {
+        return isObj(x) && typeof x.exerciseId === "string" && Number(x.setNo) >= 1 && Number(x.reps) >= 0 && Number(x.reps) <= 999 &&
+          (x.weightKg == null || (Number(x.weightKg) > 0 && Number(x.weightKg) <= 500)); }).slice(0, 2000),
+      pausedAt: typeof ss.pausedAt === "number" && isFinite(ss.pausedAt) ? ss.pausedAt : null,
+      pausedTotalMs: typeof ss.pausedTotalMs === "number" && ss.pausedTotalMs >= 0 ? ss.pausedTotalMs : 0,
+      restEndsAt: typeof ss.restEndsAt === "number" && isFinite(ss.restEndsAt) ? ss.restEndsAt : null,
+      status: ss.status === "active" ? "active" : (ss.status === "discarded" ? "discarded" : "done") });
   });
   out.habits = safeList(raw.habits, function (hb, i) {
     return Object.assign({}, hb, { id: typeof hb.id === "string" && hb.id ? hb.id : "habit." + i,
@@ -438,6 +494,7 @@ function repairState(raw) {
       color: typeof t.color === "string" && t.color ? t.color : "#8A7A63",
       category: typeof t.category === "string" && t.category ? t.category : "general",
       durationMin: Number(t.durationMin) > 0 ? Number(t.durationMin) : 25,
+      remindMin: typeof t.remindMin === "number" && t.remindMin >= 0 && t.remindMin <= 1440 ? Math.round(t.remindMin) : null,
       status: t.status === "done" ? "done" : "open" });
   });
   /* The import registry (Bring my calendar in): rows are kept
@@ -458,6 +515,8 @@ function repairState(raw) {
   if (isObj(raw.settings)) {
     out.settings = Object.assign({}, raw.settings);
     out.settings.notifications = !!raw.settings.notifications;
+    if ("remindOff" in out.settings) out.settings.remindOff = Array.isArray(out.settings.remindOff) ? out.settings.remindOff.filter(function (x) { return ["workout", "water", "tasks", "health"].indexOf(x) !== -1; }) : [];
+    if ("notifDetails" in out.settings) out.settings.notifDetails = out.settings.notifDetails === true;
   }
   /* P4 demo unlock (SPARK SHAPE): a code-door demo session
      carries the SHA-256 of its access code here; auth.js
@@ -495,24 +554,37 @@ var ALLERGEN_FAMILIES = {
   "gluten": ["flour", "bread", "pasta", "spaghetti", "couscous", "tortilla", "pita", "pizza base", "noodles", "taco shells", "soy sauce", "rolled oats"],
   "egg": ["mayonnaise"]
 };
-function ingredientHitsAllergy(ingredientName, allergies) {
+function faRef() {
+  if (root.FitAllergens) return root.FitAllergens;
+  if (typeof module !== "undefined" && module.exports && typeof require !== "undefined") { try { return require("./allergens.js"); } catch (e) {} }
+  return null;
+}
+function ingredientHitsAllergyLegacy(ingredientName, allergies) {
   var n = " " + String(ingredientName || "").toLowerCase() + " ";
   return (allergies || []).some(function (a) {
     var t = String(a || "").toLowerCase().trim();
     if (!t) return false;
-    if ((t === "milk" || t === "dairy") && (n.indexOf("coconut") !== -1 || n.indexOf("peanut butter") !== -1 || n.indexOf("cocoa butter") !== -1 || n.indexOf("cacao butter") !== -1)) return false;
+    if ((t === "milk" || t === "dairy") && (n.indexOf("coconut") !== -1 || /(oat|almond|soy|soya|rice|cashew|hazelnut) milk/.test(n) || n.indexOf("peanut butter") !== -1 || n.indexOf("cocoa butter") !== -1 || n.indexOf("cacao butter") !== -1)) return false;
     var terms = [t].concat(ALLERGEN_FAMILIES[t] || []);
     return terms.some(function (k) { return n.indexOf(k) !== -1; });
   });
+}
+/* Hard exclusion = the stricter of the curated allergen layer (allergens.js) and the
+   original substring rule. Union only: a constraint is never relaxed. */
+function ingredientHitsAllergy(ingredientName, allergies) {
+  var FA = faRef();
+  if (FA && FA.hits(ingredientName, allergies)) return true;
+  return ingredientHitsAllergyLegacy(ingredientName, allergies);
 }
 function recipeSafe(recipe, profile) {
   if (!profile || !profile.allergies || !profile.allergies.length) return true;
   return !(recipe.ingredients || []).some(function (i) { return ingredientHitsAllergy(i.name, profile.allergies); });
 }
-function planDayMeals(budgetKcal, recipes, kcalOf, profile, recentIds) {
+function planDayMeals(budgetKcal, recipes, kcalOf, profile, recentIds, opts) {
+  var maxMin = opts && Number(opts.maxMinutes) > 0 ? Number(opts.maxMinutes) : 0;
   var out = { total: 0, complete: true };
   ["breakfast", "lunch", "dinner"].forEach(function (meal) {
-    var pool = (recipes || []).filter(function (r) { return r.meal === meal && recipeSafe(r, profile); });
+    var pool = (recipes || []).filter(function (r) { return r.meal === meal && recipeSafe(r, profile) && (!maxMin || Number(r.minutes) <= maxMin); });
     if (!pool.length) { out[meal] = null; out.complete = false; return; }
     var target = budgetKcal ? budgetKcal * MEAL_SHARES[meal] : null;
     var best = null, bestScore = -Infinity;
@@ -527,7 +599,7 @@ function planDayMeals(budgetKcal, recipes, kcalOf, profile, recentIds) {
         r.cuisines.forEach(function (c) { if (profile.preferences.indexOf(c) !== -1) score += 12; });
       }
       if ((recentIds || []).indexOf(r.id) !== -1) score -= 30;
-      if (score > bestScore) { bestScore = score; best = { recipe: r, kcal: k }; }
+      if (score > bestScore || (score === bestScore && best && r.id < best.recipe.id)) { bestScore = score; best = { recipe: r, kcal: k }; }
     });
     out[meal] = best ? { id: best.recipe.id, kcal: best.kcal } : null;
     if (!best) out.complete = false;
@@ -1002,7 +1074,7 @@ function mergeStates(cloud, local) {
     });
     return out;
   }
-  function progressed(item) { return isObj(item) && (item.status === "done" || item.done === true); }
+  function progressed(item) { return isObj(item) && (item.status === "done" || item.status === "discarded" || item.done === true); }
   function progressFirst(existing, incoming) {
     return progressed(incoming) && !progressed(existing);
   }
@@ -1066,6 +1138,15 @@ function mergeStates(cloud, local) {
     if (sum > (out.water[k] || 0)) out.water[k] = sum;
   });
   out.plan = unionMap(cloud.plan, local.plan);
+  out.planServings = unionMap(cloud.planServings, local.planServings);
+  out.eaten = unionMap(cloud.eaten, local.eaten);
+  out.groceryChecked = unionMap(cloud.groceryChecked, local.groceryChecked);
+  out.body = unionList(cloud.body, local.body);
+  out.appointments = unionList(cloud.appointments, local.appointments);
+  out.restDays = unionMap(cloud.restDays, local.restDays);
+  out.reflections = unionMap(cloud.reflections, local.reflections);
+  out.progressPrefs = isObj(local.progressPrefs) && (local.progressPrefs.off || local.progressPrefs.hideBody) ? local.progressPrefs : (isObj(cloud.progressPrefs) ? cloud.progressPrefs : { off: false, hideBody: false });
+  out.mealPrefs = isObj(local.mealPrefs) && local.mealPrefs.maxMinutes ? local.mealPrefs : (isObj(cloud.mealPrefs) ? cloud.mealPrefs : { maxMinutes: 0 });
   out.customRecipes = unionList(cloud.customRecipes, local.customRecipes);
   out.treats = unionList(cloud.treats, local.treats);
   out.favRecipes = [];

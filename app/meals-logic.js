@@ -49,6 +49,10 @@
     return [t].concat(groups[t] || []);
   }
   function ingredientMatchesTerm(ingredientName, term, DATA) {
+    try {
+      const FA = (typeof window !== "undefined" && window.FitAllergens) || (typeof module !== "undefined" && module.exports && typeof require !== "undefined" ? require("./allergens.js") : null);
+      if (FA && FA.hits(ingredientName, [term])) return true;
+    } catch (e) { /* fall through to the original rule */ }
     const n = norm(ingredientName); const t = norm(term);
     if (!n || !t) return false;
     /* Peanut butter and coconut milk or cream carry no dairy, so a milk allergy must not fire on them. */
