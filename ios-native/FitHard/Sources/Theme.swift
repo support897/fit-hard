@@ -134,6 +134,8 @@ struct ThemePicker: View {
                         Text(th.1).font(.caption.weight(.semibold)).foregroundStyle(Color.ink)
                     }.frame(maxWidth: .infinity)
                 }.buttonStyle(.plain)
+                .accessibilityLabel("\(th.1) theme").accessibilityIdentifier("theme-\(th.0)")
+                .accessibilityAddTraits(on ? .isSelected : [])
             }
         }
     }
