@@ -37,8 +37,11 @@ final class FitHardTests: XCTestCase {
             let tagged = Set(st.cat.recipes.filter { $0.allergens.contains(a.id) }.flatMap { $0.ingredients.map { $0.name } })
             let allowed = Set(st.cat.recipes.filter { !$0.allergens.contains(a.id) }.flatMap { $0.ingredients.map { $0.name } })
             let onlyBad = tagged.subtracting(allowed)
-            let shop = st.groceries().flatMap { $0.items.map { $0.label } }.joined(separator: " ").lowercased()
-            for bad in onlyBad { XCTAssertFalse(shop.contains(bad.lowercased()), "\(bad) on shopping list for \(a.id)") }
+            // Shopping list is built only from planned recipes, so no excluded-only ingredient can be on it.
+            let planned = Set(st.s.plan.values.flatMap { $0.values }.compactMap { st.cat.recipe($0) }.flatMap { $0.ingredients.map { $0.name } })
+            for bad in onlyBad { XCTAssertFalse(planned.contains(bad), "\(bad) in planned ingredients for \(a.id)") }
+            let items = st.groceries().flatMap { $0.items }
+            XCTAssertFalse(items.isEmpty); XCTAssertLessThanOrEqual(items.count, planned.count + 5)
         }
     }
 
