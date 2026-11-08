@@ -120,7 +120,7 @@ final class SmokeTests: XCTestCase {
         let q = any(app, "inv-qty"); XCTAssertTrue(q.waitForExistence(timeout: 5)); q.tap(); sleep(1); q.typeText("500")
         app.buttons["Cucumber"].firstMatch.tap()
         scrollTo(app, any(app, "inv-add")); any(app, "inv-add").tap()
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS '500'")).firstMatch.waitForExistence(timeout: 5), "the new item shows its amount"); shot(app, "meals-have-added")
+        XCTAssertTrue(app.steppers.matching(NSPredicate(format: "label CONTAINS '500'")).firstMatch.waitForExistence(timeout: 5), "the new item shows its amount"); shot(app, "meals-have-added")
     }
 
     // MARK: 4 + 5 Routines, training mode, question mark help in every mode
