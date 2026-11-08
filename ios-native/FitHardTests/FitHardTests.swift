@@ -1,5 +1,5 @@
 import XCTest
-@testable import FitHard
+@testable import Fit_Hard
 
 @MainActor
 final class FitHardTests: XCTestCase {
