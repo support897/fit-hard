@@ -39,18 +39,25 @@ struct SeededRNG: RandomNumberGenerator {
 final class Store: ObservableObject {
     @Published var s: AppState { didSet { save() } }
     @Published var toast: String? = nil
+    @Published var session: Session? = nil
+    @Published var syncNote = ""
+    var cloudReady = false
+    var backupTask: Task<Void, Never>? = nil
     let cat = Catalog.shared
-    private let url: URL
+    let url: URL
 
     init() {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         url = dir.appendingPathComponent("fithard-state.json")
         if let d = try? Data(contentsOf: url), let st = try? JSONDecoder().decode(AppState.self, from: d) { s = st } else { s = AppState() }
+        loadSession()
+        if session != nil { Task { [weak self] in if let x = self?.session { await self?.connect(x) } } }
     }
 
     private func save() {
         if let d = try? JSONEncoder().encode(s) { try? d.write(to: url, options: .atomic) }
+        scheduleBackup()
     }
     func say(_ m: String) {
         toast = m

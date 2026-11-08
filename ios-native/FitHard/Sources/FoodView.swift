@@ -6,9 +6,9 @@ struct FoodView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Picker("", selection: $mode) { Text("Plan").tag(0); Text("Recipes").tag(1); Text("Groceries").tag(2) }
+                Picker("", selection: $mode) { Text("Plan").tag(0); Text("Recipes").tag(1); Text("Groceries").tag(2); Text("Fridge").tag(3); Text("Treats").tag(4) }
                     .pickerStyle(.segmented).padding(16)
-                switch mode { case 0: PlanView(); case 1: RecipesView(); default: GroceriesView() }
+                switch mode { case 0: PlanView(); case 1: RecipesView(); case 2: GroceriesView(); case 3: FridgeScreen(); default: TreatsScreen() }
             }.background(Color.cream).navigationTitle("Food")
         }
     }

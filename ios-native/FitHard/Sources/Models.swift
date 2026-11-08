@@ -27,6 +27,13 @@ struct Profile: Codable {
     var minutes = 30
     var workoutTime = "18:00"
     var waterGoal = 2000
+    init() {}
+    init(from d: Decoder) throws {
+        let c = try d.container(keyedBy: CodingKeys.self)
+        name = c.v(.name, ""); goals = c.v(.goals, []); needs = c.v(.needs, []); cuisines = c.v(.cuisines, [])
+        allergens = c.v(.allergens, []); vegetarian = c.v(.vegetarian, false); trainDays = c.v(.trainDays, [2, 4, 6])
+        equipment = c.v(.equipment, "gym"); minutes = c.v(.minutes, 30); workoutTime = c.v(.workoutTime, "18:00"); waterGoal = c.v(.waterGoal, 2000)
+    }
 }
 
 struct TaskItem: Codable, Identifiable, Hashable {
@@ -47,6 +54,16 @@ struct WorkoutLog: Codable, Identifiable, Hashable {
     var id = UUID(); var date = Date(); var entries: [Entry]
 }
 
+struct Treat: Codable, Identifiable, Hashable { var id = UUID(); var day: String; var name: String; var kcal: Int? = nil }
+struct Habit: Codable, Identifiable, Hashable { var id = UUID(); var name: String; var time: String? = nil; var done: [String] = [] }
+struct BodyEntry: Codable, Identifiable, Hashable {
+    var id = UUID(); var day: String
+    var weight: Double? = nil; var waist: Double? = nil; var hips: Double? = nil
+    var chest: Double? = nil; var arm: Double? = nil; var thigh: Double? = nil
+}
+struct Reflection: Codable, Hashable { var easier = ""; var change = ""; var next = "" }
+struct Challenge: Codable, Hashable { var start: String; var days: Int; var tasks: [String] }
+
 struct Settings: Codable {
     /// Reminder groups the user has turned on: workout, water, meals, tasks, health
     var on: [String] = ["workout", "tasks", "health"]
@@ -56,6 +73,12 @@ struct Settings: Codable {
     var dinner = "18:30"
     var detailsOnLock = false
     var appearance = "system"   // system | light | dark
+    init() {}
+    init(from d: Decoder) throws {
+        let c = try d.container(keyedBy: CodingKeys.self)
+        on = c.v(.on, ["workout", "tasks", "health"]); waterTime = c.v(.waterTime, "12:00"); breakfast = c.v(.breakfast, "08:00")
+        lunch = c.v(.lunch, "12:30"); dinner = c.v(.dinner, "18:30"); detailsOnLock = c.v(.detailsOnLock, false); appearance = c.v(.appearance, "system")
+    }
 }
 
 struct AppState: Codable {
@@ -73,6 +96,27 @@ struct AppState: Codable {
     var workouts: [WorkoutLog] = []
     var groceryChecked: [String] = []
     var settings = Settings()
+    var treats: [Treat] = []
+    var habits: [Habit] = []
+    var restDays: [String] = []
+    var body: [BodyEntry] = []
+    var hideBody = false
+    var reflections: [String: Reflection] = [:]
+    var challenge: Challenge? = nil
+
+    init() {}
+    init(from d: Decoder) throws {
+        let c = try d.container(keyedBy: CodingKeys.self)
+        onboarded = c.v(.onboarded, false); profile = c.v(.profile, Profile()); water = c.v(.water, [:])
+        plan = c.v(.plan, [:]); eaten = c.v(.eaten, [:]); checkins = c.v(.checkins, [:]); routine = c.v(.routine, [:])
+        tasks = c.v(.tasks, []); meds = c.v(.meds, []); medLogs = c.v(.medLogs, []); appts = c.v(.appts, [])
+        workouts = c.v(.workouts, []); groceryChecked = c.v(.groceryChecked, []); settings = c.v(.settings, Settings())
+        treats = c.v(.treats, []); habits = c.v(.habits, []); restDays = c.v(.restDays, []); body = c.v(.body, [])
+        hideBody = c.v(.hideBody, false); reflections = c.v(.reflections, [:]); challenge = try? c.decodeIfPresent(Challenge.self, forKey: .challenge)
+    }
+}
+extension KeyedDecodingContainer {
+    func v<T: Decodable>(_ k: Key, _ d: T) -> T { (try? decodeIfPresent(T.self, forKey: k)) ?? d }
 }
 
 enum Lists {
@@ -100,6 +144,10 @@ final class Catalog {
     static let shared = Catalog()
     let recipes: [Recipe]
     let exercises: [Exercise]
+    struct Machine: Codable, Identifiable, Hashable { let id: String; let name: String; let exerciseIds: [String] }
+    struct Ingredients: Codable { let common: [String]; let all: [String] }
+    let machines: [Machine]
+    let ingredients: Ingredients
     private let byId: [String: Recipe]
     private let exById: [String: Exercise]
     init() {
@@ -110,6 +158,8 @@ final class Catalog {
         }
         recipes = load("recipes", [Recipe].self) ?? []
         exercises = load("exercises", [Exercise].self) ?? []
+        machines = load("machines", [Machine].self) ?? []
+        ingredients = load("ingredients", Ingredients.self) ?? Ingredients(common: [], all: [])
         byId = Dictionary(recipes.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         exById = Dictionary(exercises.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
     }

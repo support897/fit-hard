@@ -10,6 +10,7 @@ struct OnboardingView: View {
     @State private var medAmount = ""
     @State private var medTime = timeDate("08:00")
     @State private var askedNotif = false
+    @State private var showAuth = false
     private let total = 7
 
     var body: some View {
@@ -25,6 +26,7 @@ struct OnboardingView: View {
                 }.padding(.horizontal, 24).padding(.bottom, 16)
             }
         }
+        .sheet(isPresented: $showAuth) { AuthSheet() }
     }
 
     @ViewBuilder var page: some View {
@@ -35,6 +37,7 @@ struct OnboardingView: View {
             TextField("Your name", text: $store.s.profile.name)
                 .textContentType(.givenName).font(.title3).padding(16)
                 .background(Color.surface, in: RoundedRectangle(cornerRadius: 16)).overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.line))
+            Button("I already have an account") { showAuth = true }.font(.subheadline.weight(.semibold))
         case 1:
             title("What are your goals?"); hint("Pick any.")
             Flow { ForEach(Array(Lists.goals.enumerated()), id: \.offset) { i, g in
@@ -89,6 +92,7 @@ struct OnboardingView: View {
         }
     }
 
+    func reminderRowPlaceholder() {}
     func reminderRow(_ id: String, _ label: String, _ icon: String) -> some View {
         Toggle(isOn: Binding(get: { store.s.settings.on.contains(id) }, set: { v in
             if v { if !store.s.settings.on.contains(id) { store.s.settings.on.append(id) } } else { store.s.settings.on.removeAll { $0 == id } } })) {

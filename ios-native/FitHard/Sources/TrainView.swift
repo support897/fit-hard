@@ -6,8 +6,8 @@ struct TrainView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Picker("", selection: $mode) { Text("Today").tag(0); Text("Library").tag(1); Text("History").tag(2) }.pickerStyle(.segmented).padding(16)
-                switch mode { case 0: SessionView(); case 1: LibraryView(); default: HistoryView() }
+                Picker("", selection: $mode) { Text("Today").tag(0); Text("Library").tag(1); Text("History").tag(2); Text("Routines").tag(3); Text("Machines").tag(4) }.pickerStyle(.segmented).padding(16)
+                switch mode { case 0: SessionView(); case 1: LibraryView(); case 2: HistoryView(); case 3: RoutinesScreen(); default: MachineScreen() }
             }.background(Color.cream).navigationTitle("Train")
         }
     }

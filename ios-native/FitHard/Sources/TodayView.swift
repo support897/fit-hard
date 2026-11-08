@@ -22,7 +22,9 @@ struct TodayView: View {
                     mealsCard
                     workoutCard
                     if !store.s.meds.isEmpty { medsCard }
+                    habitsCard
                     tasksCard
+                    ChallengeCard()
                 }.padding(16)
             }
             .background(Color.cream)
@@ -94,7 +96,7 @@ struct TodayView: View {
         let ex = store.todaysExercises
         return Card {
             SectionTitle(text: "Workout")
-            if ex.isEmpty { Text("Rest day. That counts.").foregroundStyle(Color.muted) }
+            if ex.isEmpty || store.isRestToday { Text("Rest day. That counts.").foregroundStyle(Color.muted) }
             else if store.workedOutToday { Label("Done today", systemImage: "checkmark.seal.fill").foregroundStyle(Color.sage) }
             else {
                 Text(ex.prefix(3).map { $0.name }.joined(separator: " · ") + (ex.count > 3 ? " +\(ex.count - 3)" : "")).font(.subheadline).foregroundStyle(Color.muted)
@@ -110,6 +112,12 @@ struct TodayView: View {
         }
     }
 
+    var habitsCard: some View {
+        Group { if !store.s.habits.isEmpty { Card {
+            SectionTitle(text: "Habits")
+            ForEach(store.s.habits) { h in HStack { Button { store.toggleHabit(h) } label: { Image(systemName: store.habitDone(h) ? "checkmark.circle.fill" : "circle").font(.title3).foregroundStyle(Color.sage) }; Text(h.name) } }
+        } } }
+    }
     var tasksCard: some View {
         Card {
             SectionTitle(text: "To do")

@@ -21,6 +21,12 @@ struct MoreView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("Explore") {
+                    NavigationLink { ProgressScreen() } label: { Label("Progress", systemImage: "chart.line.uptrend.xyaxis") }
+                    NavigationLink { CalendarScreen() } label: { Label("Calendar, habits, to do", systemImage: "calendar") }
+                    NavigationLink { TreatsScreen() } label: { Label("Treats", systemImage: "heart") }
+                    NavigationLink { RoutinesScreen() } label: { Label("My routines", systemImage: "list.bullet.rectangle") }
+                }
                 Section("Reminders") {
                     if notif == .denied {
                         Button { if let u = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(u) } } label: { Label("Notifications are off. Tap to allow in Settings", systemImage: "bell.slash") }
@@ -55,16 +61,17 @@ struct MoreView: View {
                     Picker("Appearance", selection: $store.s.settings.appearance) { Text("System").tag("system"); Text("Light").tag("light"); Text("Dark").tag("dark") }
                     TextField("Your name", text: $store.s.profile.name)
                 }
+                AccountSection()
                 Section("Your data") {
                     if let d = try? JSONEncoder().encode(store.s), let s = String(data: d, encoding: .utf8) { ShareLink("Export my data", item: s) }
                     Button("Erase everything and start again", role: .destructive) { reset = true }
                 }
-                Section { Text("Fit Hard 2.0 · Your data stays on this phone.").font(.footnote).foregroundStyle(Color.muted) }
+                Section { Text("Fit Hard 2.0").font(.footnote).foregroundStyle(Color.muted) }
             }
             .scrollContentBackground(.hidden).background(Color.cream).navigationTitle("More")
             .onAppear(perform: refresh)
             .confirmationDialog("Erase all your data on this phone?", isPresented: $reset, titleVisibility: .visible) {
-                Button("Erase everything", role: .destructive) { store.resetAll() }
+                Button("Erase everything", role: .destructive) { store.storeSession(nil); store.resetAll() }
             }
         }
     }
