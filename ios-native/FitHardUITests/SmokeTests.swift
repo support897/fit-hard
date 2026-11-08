@@ -117,10 +117,10 @@ final class SmokeTests: XCTestCase {
     func testIngredientsIHaveCanBeAdded() {
         let app = seeded(); app.tabBars.buttons["Meals"].tap()
         any(app, "meals-menu-button").tap(); any(app, "menu-have").tap()
-        let n = any(app, "inv-name"); XCTAssertTrue(n.waitForExistence(timeout: 5)); n.tap(); n.typeText("rice")
-        app.staticTexts["Add what you have"].tap(); let q = any(app, "inv-qty"); q.tap(); _ = app.keyboards.firstMatch.waitForExistence(timeout: 5); sleep(1); q.typeText("500")
-        any(app, "inv-add").tap()
-        XCTAssertTrue(app.staticTexts["Rice"].waitForExistence(timeout: 5)); shot(app, "meals-have-added")
+        let q = any(app, "inv-qty"); XCTAssertTrue(q.waitForExistence(timeout: 5)); q.tap(); sleep(1); q.typeText("500")
+        app.buttons["Rice"].firstMatch.tap()
+        scrollTo(app, any(app, "inv-add")); any(app, "inv-add").tap()
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS '500'")).firstMatch.waitForExistence(timeout: 5), "the new item shows its amount"); shot(app, "meals-have-added")
     }
 
     // MARK: 4 + 5 Routines, training mode, question mark help in every mode
