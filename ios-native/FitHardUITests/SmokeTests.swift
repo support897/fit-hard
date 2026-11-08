@@ -54,4 +54,50 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(app.tabBars.buttons["Today"].waitForExistence(timeout: 40))
         XCTAssertTrue(app.tabBars.buttons["Calendar"].exists)
     }
+
+    // MARK: Screenshot tour + real interactions, in every theme. PNGs go to /tmp/fh-shots for CI to collect.
+    func shot(_ app: XCUIApplication, _ name: String) {
+        try? FileManager.default.createDirectory(atPath: "/tmp/fh-shots", withIntermediateDirectories: true)
+        let s = app.screenshot()
+        try? s.pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/fh-shots/\(name).png"))
+        let a = XCTAttachment(screenshot: s); a.name = name; a.lifetime = .keepAlways; add(a)
+    }
+    func setTheme(_ app: XCUIApplication, _ id: String) {
+        app.tabBars.buttons["More"].tap()
+        let b = app.descendants(matching: .any)["theme-\(id)"]
+        for _ in 0..<8 where !b.exists { app.swipeUp() }
+        XCTAssertTrue(b.waitForExistence(timeout: 5)); b.tap()
+    }
+
+    func testTourAllScreensInAllThemes() {
+        let app = seeded()
+        XCTAssertTrue(app.tabBars.buttons["Today"].waitForExistence(timeout: 20))
+        for theme in ["white", "black", "brown"] {
+            setTheme(app, theme)
+            shot(app, "\(theme)-more")
+            for t in ["Today", "Food", "Train", "Calendar"] {
+                app.tabBars.buttons[t].tap(); sleep(1); shot(app, "\(theme)-\(t.lowercased())")
+            }
+        }
+    }
+
+    func testCalendarTaskAndHabitCanBeAdded() {
+        let app = seeded()
+        XCTAssertTrue(app.tabBars.buttons["Calendar"].waitForExistence(timeout: 20))
+        app.tabBars.buttons["Calendar"].tap()
+        shot(app, "cal-month")
+        app.buttons["To do"].tap()
+        let f = app.textFields["New task"]; XCTAssertTrue(f.waitForExistence(timeout: 5))
+        f.tap(); f.typeText("Buy oats")
+        app.buttons["Add"].firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Buy oats"].waitForExistence(timeout: 5), "task not listed")
+        shot(app, "cal-todo-added")
+        app.buttons["Habits"].tap()
+        let h = app.textFields["New habit"]; XCTAssertTrue(h.waitForExistence(timeout: 5))
+        h.tap(); h.typeText("Stretch\n")
+        XCTAssertTrue(app.staticTexts["Stretch"].waitForExistence(timeout: 5), "habit not listed")
+        shot(app, "cal-habit-added")
+        app.buttons["Month"].tap()
+        shot(app, "cal-month-after")
+    }
 }
