@@ -298,7 +298,12 @@ struct MonthView: View {
                 if it.meals.isEmpty && !it.workout && !it.plannedWorkout && it.tasks.isEmpty && it.appts.isEmpty && store.s.meds.isEmpty { Text("Nothing planned. That is fine.").foregroundStyle(Color.muted) }
                 ForEach(it.meals) { Label($0.name, systemImage: "fork.knife").font(.subheadline) }
                 if it.workout { Label("Workout done", systemImage: "checkmark.seal.fill").foregroundStyle(Color.sage) } else if it.plannedWorkout { Label("Workout planned", systemImage: "dumbbell") }
-                ForEach(it.tasks) { Label($0.title, systemImage: $0.done ? "checkmark.circle" : "circle").font(.subheadline) }
+                ForEach(it.tasks) { t in
+                    HStack { Label(t.title, systemImage: t.done ? "checkmark.circle.fill" : "circle").font(.subheadline).strikethrough(t.done); Spacer()
+                        if !t.done {
+                            Button("Done") { store.updateTask(t.id) { $0.done = true }; haptic() }.font(.caption.weight(.bold))
+                            Button("Tomorrow") { store.updateTask(t.id) { $0.day = dayKey(Calendar.current.date(byAdding: .day, value: 1, to: dateFromKey(sel) ?? Date()) ?? Date()) }; haptic(.soft) }.font(.caption.weight(.bold))
+                        } } }
                 ForEach(it.appts) { Label("\($0.title) \($0.date.formatted(date: .omitted, time: .shortened))", systemImage: "calendar") }
                 ForEach(store.s.meds) { md in
                     let st = store.s.medLogs.last(where: { $0.medId == md.id && $0.day == sel })?.status

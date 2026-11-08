@@ -21,6 +21,7 @@ struct SessionView: View {
         ScrollView {
             VStack(spacing: 14) {
                 let ex = store.todaysExercises
+                if started { RestTimer() }
                 if ex.isEmpty {
                     Card { BundleImage(name: "wally-rest").frame(height: 120).frame(maxWidth: .infinity); Text("Rest day. Recovery is part of the plan.").foregroundStyle(Color.muted) }
                     BigButton(title: "Train anyway", icon: "bolt", filled: false) { startFree() }
@@ -32,9 +33,12 @@ struct SessionView: View {
                         if let e = store.cat.exercise(en.exerciseId) { SetEditor(exercise: e, entry: $en, last: store.lastSets(for: e.id)) }
                     }
                     BigButton(title: "Finish", icon: "checkmark") { finish() }
+                    Button("Discard this workout", role: .destructive) { started = false; entries = []; store.s.draft = [] }.font(.footnote)
                 }
             }.padding(16)
         }
+        .onAppear { if !started && !store.s.draft.isEmpty { entries = store.s.draft; started = true } }
+        .onChange(of: entries) { v in if started { store.s.draft = v } }
     }
     func start(_ ex: [Exercise]) { entries = ex.map { Entry(exerciseId: $0.id, sets: [store.lastSets(for: $0.id)?.first ?? SetLog(reps: 10, kg: 0)]) }; started = true; haptic(.medium) }
     func startFree() {
@@ -43,7 +47,28 @@ struct SessionView: View {
     }
     func finish() {
         let done = entries.filter { !$0.sets.isEmpty }
-        store.s.workouts.append(WorkoutLog(entries: done)); started = false; entries = []; haptic(.heavy); store.say("Workout saved. Nice work.")
+        store.s.workouts.append(WorkoutLog(entries: done)); started = false; entries = []; store.s.draft = []; haptic(.heavy); store.say("Workout saved. Nice work.")
+    }
+}
+
+struct RestTimer: View {
+    @State private var end: Date? = nil
+    var body: some View {
+        Card {
+            TimelineView(.periodic(from: .now, by: 1)) { ctx in
+                let left = max(0, Int((end ?? ctx.date).timeIntervalSince(ctx.date).rounded(.up)))
+                HStack {
+                    Label(left > 0 ? "Rest \(left / 60):" + String(format: "%02d", left % 60) : "Rest timer", systemImage: "timer").font(.headline)
+                        .accessibilityLabel(left > 0 ? "Rest, \(left) seconds left" : "Rest timer")
+                    Spacer()
+                    ForEach([30, 60, 90], id: \.self) { s in
+                        Button("\(s)s") { end = Date().addingTimeInterval(Double(s)); haptic(.soft) }
+                            .font(.subheadline.weight(.bold)).padding(.horizontal, 12).padding(.vertical, 8).background(Color.tint, in: Capsule())
+                    }
+                }
+                .onChange(of: left) { v in if v == 0 && end != nil { end = nil; haptic(.heavy) } }
+            }
+        }
     }
 }
 

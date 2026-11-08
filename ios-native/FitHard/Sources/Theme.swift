@@ -102,11 +102,13 @@ struct BundleImage: View {
 
 struct AnimatedFrames: View {
     let base: String
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.7)) { ctx in
+        if reduceMotion { BundleImage(name: "anim-\(base)-1") } else
+        { TimelineView(.periodic(from: .now, by: 0.7)) { ctx in
             let i = Int(ctx.date.timeIntervalSinceReferenceDate / 0.7) % 3 + 1
             BundleImage(name: "anim-\(base)-\(i)")
-        }
+        } }
     }
 }
 

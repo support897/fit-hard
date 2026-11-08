@@ -16,18 +16,28 @@ enum Notifier {
     }
     static func cancelAll() { center.removeAllPendingNotificationRequests() }
 
-    private static func add(_ id: String, _ title: String, _ body: String, _ comps: DateComponents, repeats: Bool) {
+    struct Reminder: Equatable { let id: String; let title: String; let body: String; let comps: DateComponents; let repeats: Bool }
+
+    private static func schedule(_ r: Reminder) {
         let c = UNMutableNotificationContent()
-        c.title = title; c.body = body; c.sound = .default
-        let t = UNCalendarNotificationTrigger(dateMatching: comps, repeats: repeats)
-        center.add(UNNotificationRequest(identifier: id, content: c, trigger: t))
+        c.title = r.title; c.body = r.body; c.sound = .default
+        center.add(UNNotificationRequest(identifier: r.id, content: c, trigger: UNCalendarNotificationTrigger(dateMatching: r.comps, repeats: r.repeats)))
     }
 
     @MainActor
     static func rebuild(_ store: Store) {
-        let s = store.s
         cancelAll()
-        guard s.onboarded else { return }
+        for r in plan(store.s) { schedule(r) }
+    }
+
+    /// Pure: what should be scheduled for this state. One reminder per event, stable ids, no duplicates.
+    static func plan(_ s: AppState, now: Date = Date()) -> [Reminder] {
+        var out: [Reminder] = []
+        func add(_ id: String, _ title: String, _ body: String, _ comps: DateComponents, repeats: Bool) {
+            guard !out.contains(where: { $0.id == id }) else { return }
+            out.append(Reminder(id: id, title: title, body: body, comps: comps, repeats: repeats))
+        }
+        guard s.onboarded else { return [] }
         let on = Set(s.settings.on)
         let name = s.profile.name.isEmpty ? "" : ", \(s.profile.name)"
 
@@ -53,14 +63,14 @@ enum Notifier {
                 let body = s.settings.detailsOnLock ? "Time to check in on \(med.name)." : "Open Fit Hard to check in."
                 add("med-\(med.id.uuidString)", "Your check-in", body, DateComponents(hour: h, minute: m), repeats: true)
             }
-            for a in s.appts where a.date > Date() {
+            for a in s.appts where a.date > now {
                 let title = "Appointment reminder"
                 let body = s.settings.detailsOnLock ? a.title : "You have an appointment coming up."
-                if let day = Calendar.current.date(byAdding: .day, value: -1, to: a.date), day > Date() {
+                if let day = Calendar.current.date(byAdding: .day, value: -1, to: a.date), day > now {
                     add("appt-\(a.id.uuidString)-d", title, body,
                         Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: day), repeats: false)
                 }
-                if let hour = Calendar.current.date(byAdding: .hour, value: -1, to: a.date), hour > Date() {
+                if let hour = Calendar.current.date(byAdding: .hour, value: -1, to: a.date), hour > now {
                     add("appt-\(a.id.uuidString)-h", title, body,
                         Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: hour), repeats: false)
                 }
@@ -70,10 +80,11 @@ enum Notifier {
             for t in s.tasks.filter({ !$0.done }).prefix(20) {
                 guard let day = t.day, let d = dateFromKey(day), let time = t.time else { continue }
                 let (h, m) = hm(time)
-                guard let when = Calendar.current.date(bySettingHour: h, minute: m, second: 0, of: d), when > Date() else { continue }
+                guard let when = Calendar.current.date(bySettingHour: h, minute: m, second: 0, of: d), when > now else { continue }
                 add("task-\(t.id.uuidString)", "To do", t.title,
                     Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: when), repeats: false)
             }
         }
+        return out
     }
 }

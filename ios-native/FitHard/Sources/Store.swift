@@ -46,11 +46,22 @@ final class Store: ObservableObject {
     let cat = Catalog.shared
     let url: URL
 
-    init() {
-        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        url = dir.appendingPathComponent("fithard-state.json")
+    /// `url` lets tests use a throwaway file. `-uiTestSeed` launches with a ready-made onboarded profile.
+    init(url custom: URL? = nil) {
+        let seeded = ProcessInfo.processInfo.arguments.contains("-uiTestSeed")
+        if let c = custom { url = c } else if seeded {
+            url = FileManager.default.temporaryDirectory.appendingPathComponent("fithard-uitest-\(UUID().uuidString).json")
+        } else {
+            let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+            url = dir.appendingPathComponent("fithard-state.json")
+        }
         if let d = try? Data(contentsOf: url), let st = try? JSONDecoder().decode(AppState.self, from: d) { s = st } else { s = AppState() }
+        if seeded && !s.onboarded {
+            s.profile.name = "Tester"; s.profile.goals = ["Build strength"]; s.profile.needs = ["meals", "gym", "calendar"]
+            s.onboarded = true; generatePlan(); generateRoutine()
+        }
+        if custom != nil || seeded { return }
         loadSession()
         if session != nil { Task { [weak self] in if let x = self?.session { await self?.connect(x) } } }
     }
@@ -62,6 +73,11 @@ final class Store: ObservableObject {
     func say(_ m: String) {
         toast = m
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.4) { [weak self] in if self?.toast == m { self?.toast = nil } }
+    }
+
+    func updateTask(_ id: UUID, _ f: (inout TaskItem) -> Void) {
+        guard let i = s.tasks.firstIndex(where: { $0.id == id }) else { return }
+        f(&s.tasks[i]); Notifier.rebuild(self)
     }
 
     // MARK: Water

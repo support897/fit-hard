@@ -100,6 +100,7 @@ struct AppState: Codable {
     var treats: [Treat] = []
     var habits: [Habit] = []
     var restDays: [String] = []
+    var draft: [Entry] = []                       // workout in progress, autosaved
     var body: [BodyEntry] = []
     var hideBody = false
     var reflections: [String: Reflection] = [:]
@@ -113,7 +114,7 @@ struct AppState: Codable {
         tasks = c.v(.tasks, []); meds = c.v(.meds, []); medLogs = c.v(.medLogs, []); appts = c.v(.appts, [])
         workouts = c.v(.workouts, []); groceryChecked = c.v(.groceryChecked, []); settings = c.v(.settings, Settings())
         treats = c.v(.treats, []); habits = c.v(.habits, []); restDays = c.v(.restDays, []); body = c.v(.body, [])
-        hideBody = c.v(.hideBody, false); reflections = c.v(.reflections, [:]); challenge = try? c.decodeIfPresent(Challenge.self, forKey: .challenge)
+        draft = c.v(.draft, []); hideBody = c.v(.hideBody, false); reflections = c.v(.reflections, [:]); challenge = try? c.decodeIfPresent(Challenge.self, forKey: .challenge)
     }
 }
 extension KeyedDecodingContainer {
