@@ -7,6 +7,7 @@ final class SmokeTests: XCTestCase {
     func door() -> XCUIApplication { let a = XCUIApplication(); a.launchArguments = ["-uiTestDoor", "-uiTestOffline"]; a.launch(); return a }
 
     func shot(_ app: XCUIApplication, _ name: String) {
+        usleep(700_000)
         try? FileManager.default.createDirectory(atPath: "/tmp/fh-shots", withIntermediateDirectories: true)
         let s = app.screenshot()
         try? s.pngRepresentation.write(to: URL(fileURLWithPath: "/tmp/fh-shots/\(name).png"))
