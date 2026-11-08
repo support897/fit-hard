@@ -91,13 +91,23 @@ struct FlowLayout: Layout {
 /// Loads a bundled image file (WebP is decoded natively on iOS 14+).
 struct BundleImage: View {
     let name: String
+    /// Mascot and animation art is drawn on white. On light themes it blends into the page; on dark themes it sits on a soft white card.
+    private var onWhite: Bool { name.hasPrefix("wally-") || name.hasPrefix("anim-") }
+    private func art(_ ui: UIImage) -> some View {
+        let img = Image(uiImage: ui).resizable().scaledToFit()
+        return Group {
+            if !onWhite { img }
+            else if Color.pal == 1 || Color.pal == 2 { img.padding(4).background(Color.white, in: RoundedRectangle(cornerRadius: 14)) }
+            else { img.blendMode(.multiply) }
+        }
+    }
     var body: some View {
         if let p = Bundle.main.path(forResource: name, ofType: "webp", inDirectory: "media"), let ui = UIImage(contentsOfFile: p) {
-            Image(uiImage: ui).resizable().scaledToFit()
+            art(ui)
         } else if let p = Bundle.main.path(forResource: name, ofType: "webp"), let ui = UIImage(contentsOfFile: p) {
-            Image(uiImage: ui).resizable().scaledToFit()
+            art(ui)
         } else if let p = Bundle.main.path(forResource: name, ofType: "png"), let ui = UIImage(contentsOfFile: p) {
-            Image(uiImage: ui).resizable().scaledToFit()
+            art(ui)
         } else { Color.clear }
     }
 }
