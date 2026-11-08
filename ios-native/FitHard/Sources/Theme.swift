@@ -7,14 +7,14 @@ extension Color {
     /// Fixed palettes: white (default), black, brown. Contrast checked for body text >= 7:1, buttons >= 4.5:1.
     static var pal: UInt = 0
     static func pick(_ w: UInt32, _ k: UInt32, _ b: UInt32, _ r: UInt32) -> Color { Color(hex: pal == 1 ? k : pal == 2 ? b : pal == 3 ? r : w) }
-    static var cream: Color { pick(0xFFFFFF, 0x000000, 0x3A281D) }
-    static var surface: Color { pick(0xF3F5F3, 0x1B1B1B, 0x4B362A) }
-    static var ink: Color { pick(0x161616, 0xFFFFFF, 0xFFF6E8) }
-    static var muted: Color { pick(0x4F4F4F, 0xC4C4C4, 0xE6D3B8) }
-    static var sage: Color { pick(0x1F6B47, 0x8EDDAE, 0xC4E0B2) }
-    static var tint: Color { pick(0xDDEEE3, 0x1E3B2B, 0x5E4838) }
-    static var line: Color { pick(0xC9D0CB, 0x3D3D3D, 0x735845) }
-    static var amber: Color { pick(0x9A4F12, 0xFFB26B, 0xFFC084) }
+    static var cream: Color { pick(0xFFFFFF, 0x000000, 0x3A281D, 0xFAEED6) }
+    static var surface: Color { pick(0xF3F5F3, 0x1B1B1B, 0x4B362A, 0xFFFDF7) }
+    static var ink: Color { pick(0x161616, 0xFFFFFF, 0xFFF6E8, 0x3E2F26) }
+    static var muted: Color { pick(0x4F4F4F, 0xC4C4C4, 0xE6D3B8, 0x6E5D4B) }
+    static var sage: Color { pick(0x1F6B47, 0x8EDDAE, 0xC4E0B2, 0x52695A) }
+    static var tint: Color { pick(0xDDEEE3, 0x1E3B2B, 0x5E4838, 0xDCE7D8) }
+    static var line: Color { pick(0xC9D0CB, 0x3D3D3D, 0x735845, 0xE4D3B8) }
+    static var amber: Color { pick(0x9A4F12, 0xFFB26B, 0xFFC084, 0xA86A38) }
 }
 
 extension View {
