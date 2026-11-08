@@ -24,7 +24,7 @@ Then, in this order:
 
 9. WALLY: Wally guides from the user's REAL data — recommendations follow their goals and progress (the spec's mascot rules). Wally is currently two onboarding pictures; build the guide through the app, not only at the door.
 
-10. DOSES (spec Section 10 — TRACKER SHAPE): a private tracker for what the user's own clinician prescribed — user-entered name and dose, reminders fire from it. NO preset doses, NO catalogue, nothing suggested. Preset doses are an open question with the owner and are NOT built in this run.
+10. DOSES (spec Section 10 — TRACKER SHAPE): a private tracker for what the user's own clinician prescribed — user-entered name and dose, reminders fire from it. NO preset doses, NO catalogue, nothing suggested. The owner has ruled on this herself: keep the safe tracker, presets are not built, full stop.
 
 11. NOTIFICATIONS: per the spec — reminders fire from the profile, the plan and the tracker, at the times the user picked.
 
