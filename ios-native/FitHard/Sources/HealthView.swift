@@ -11,8 +11,9 @@ struct HealthView: View {
     @State private var apDate = Date().addingTimeInterval(86400)
     @State private var erase = false
 
-    var body: some View {
-        NavigationStack {
+    var body: some View { NavigationStack { content } }
+    var content: some View {
+        Group {
             ScrollView {
                 VStack(spacing: 14) {
                     Card {

@@ -37,6 +37,8 @@ struct OnboardingView: View {
             TextField("Your name", text: $store.s.profile.name)
                 .textContentType(.givenName).font(.title3).padding(16)
                 .background(Color.surface, in: RoundedRectangle(cornerRadius: 16)).overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.line))
+            Text("Pick your look").font(.subheadline.weight(.semibold)).foregroundStyle(Color.muted)
+            ThemePicker()
             Button("I already have an account") { showAuth = true }.font(.subheadline.weight(.semibold))
         case 1:
             title("What are your goals?"); hint("Pick any.")

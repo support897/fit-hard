@@ -5,6 +5,7 @@ import Charts
 struct ProgressScreen: View {
     @EnvironmentObject var store: Store
     @State private var mode = 0
+    @State private var pendingDay: String? = nil
     var body: some View {
         VStack(spacing: 0) {
             Picker("", selection: $mode) { Text("Overview").tag(0); Text("Strength").tag(1); Text("Body").tag(2); Text("Review").tag(3) }.pickerStyle(.segmented).padding(16)
@@ -248,15 +249,17 @@ struct LibraryPicker: View {
 struct CalendarScreen: View {
     @EnvironmentObject var store: Store
     @State private var mode = 0
+    @State private var pendingDay: String? = nil
     var body: some View {
         VStack(spacing: 0) {
             Picker("", selection: $mode) { Text("Month").tag(0); Text("Habits").tag(1); Text("To do").tag(2) }.pickerStyle(.segmented).padding(16)
-            switch mode { case 0: MonthView(); case 1: HabitsView(); default: TasksView() }
+            switch mode { case 0: MonthView(onAddTask: { d in pendingDay = d; mode = 2 }); case 1: HabitsView(); default: TasksView(startDay: pendingDay) }
         }.background(Color.cream).navigationTitle("Calendar").navigationBarTitleDisplayMode(.inline)
     }
 }
 struct MonthView: View {
     @EnvironmentObject var store: Store
+    var onAddTask: (String) -> Void = { _ in }
     @State private var month = Date(); @State private var sel = dayKey()
     var cal: Calendar { var c = Calendar.current; c.firstWeekday = 2; return c }
     var days: [Date?] {
@@ -269,7 +272,7 @@ struct MonthView: View {
         ScrollView { VStack(spacing: 14) {
             Card {
                 HStack { Button { month = cal.date(byAdding: .month, value: -1, to: month) ?? month } label: { Image(systemName: "chevron.left") }; Spacer()
-                    Text(month.formatted(.dateTime.month(.wide).year())).font(.headline); Spacer()
+                    Button { month = Date(); sel = store.today; haptic(.soft) } label: { Text(month.formatted(.dateTime.month(.wide).year())).font(.headline) }.buttonStyle(.plain); Spacer()
                     Button { month = cal.date(byAdding: .month, value: 1, to: month) ?? month } label: { Image(systemName: "chevron.right") } }
                 let cols = Array(repeating: GridItem(.flexible()), count: 7)
                 LazyVGrid(columns: cols) {
@@ -288,13 +291,23 @@ struct MonthView: View {
                 }
             }
             let it = store.items(on: sel)
+            let isToday = sel == store.today
             Card {
-                Text(dateFromKey(sel)?.formatted(.dateTime.weekday(.wide).day().month()) ?? sel).font(.headline)
-                if it.meals.isEmpty && !it.workout && !it.plannedWorkout && it.tasks.isEmpty && it.appts.isEmpty { Text("Nothing planned. That is fine.").foregroundStyle(Color.muted) }
+                HStack { Text(dateFromKey(sel)?.formatted(.dateTime.weekday(.wide).day().month()) ?? sel).font(.headline); Spacer()
+                    if !isToday { Button("Today") { month = Date(); sel = store.today; haptic(.soft) }.font(.subheadline.weight(.semibold)) } }
+                if it.meals.isEmpty && !it.workout && !it.plannedWorkout && it.tasks.isEmpty && it.appts.isEmpty && store.s.meds.isEmpty { Text("Nothing planned. That is fine.").foregroundStyle(Color.muted) }
                 ForEach(it.meals) { Label($0.name, systemImage: "fork.knife").font(.subheadline) }
                 if it.workout { Label("Workout done", systemImage: "checkmark.seal.fill").foregroundStyle(Color.sage) } else if it.plannedWorkout { Label("Workout planned", systemImage: "dumbbell") }
                 ForEach(it.tasks) { Label($0.title, systemImage: $0.done ? "checkmark.circle" : "circle").font(.subheadline) }
                 ForEach(it.appts) { Label("\($0.title) \($0.date.formatted(date: .omitted, time: .shortened))", systemImage: "calendar") }
+                ForEach(store.s.meds) { md in
+                    let st = store.s.medLogs.last(where: { $0.medId == md.id && $0.day == sel })?.status
+                    Label("\(md.name) at \(md.time)" + (st.map { " (\($0))" } ?? ""), systemImage: "cross.case").font(.subheadline)
+                }
+                ForEach(store.s.habits) { h in
+                    Label(h.name, systemImage: h.done.contains(sel) ? "checkmark.circle.fill" : "circle").font(.subheadline).foregroundStyle(h.done.contains(sel) ? Color.sage : Color.ink)
+                }
+                Button { onAddTask(sel) } label: { Label("Add a task for this day", systemImage: "plus.circle.fill").font(.subheadline.weight(.semibold)) }
             }
         }.padding(16) }
     }
@@ -320,6 +333,7 @@ struct HabitsView: View {
 }
 struct TasksView: View {
     @EnvironmentObject var store: Store
+    var startDay: String? = nil
     @State private var title = ""; @State private var day = Date(); @State private var hasTime = false; @State private var time = Date()
     var body: some View {
         ScrollView { VStack(spacing: 14) {
@@ -343,6 +357,7 @@ struct TasksView: View {
                 }
             }
         }.padding(16) }
+        .onAppear { if let k = startDay, let d = dateFromKey(k) { day = d } }
     }
 }
 

@@ -5,11 +5,18 @@ struct FitHardApp: App {
     @StateObject private var store = Store()
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .environmentObject(store)
-                .tint(Color.sage)
-                .preferredColorScheme(store.s.settings.appearance == "dark" ? .dark : store.s.settings.appearance == "light" ? .light : nil)
+            Themed().environmentObject(store)
         }
+    }
+}
+
+struct Themed: View {
+    @EnvironmentObject var store: Store
+    var body: some View {
+        let th = store.s.settings.theme
+        let _ = { Color.pal = th == "black" ? 1 : th == "brown" ? 2 : 0 }()
+        RootView().tint(Color.sage).foregroundStyle(Color.ink)
+            .preferredColorScheme(th == "white" ? .light : .dark)
     }
 }
 
@@ -26,9 +33,7 @@ struct RootView: View {
                     TodayView(go: { tab = $0 }).tabItem { Label("Today", systemImage: "sun.max") }.tag(0)
                     FoodView().tabItem { Label("Food", systemImage: "fork.knife") }.tag(1)
                     TrainView().tabItem { Label("Train", systemImage: "dumbbell") }.tag(2)
-                    if store.s.profile.needs.contains("peptides") || !store.s.meds.isEmpty {
-                        HealthView().tabItem { Label("Health", systemImage: "cross.case") }.tag(3)
-                    }
+                    NavigationStack { CalendarScreen() }.tabItem { Label("Calendar", systemImage: "calendar") }.tag(3)
                     MoreView().tabItem { Label("More", systemImage: "ellipsis.circle") }.tag(4)
                 }
             }

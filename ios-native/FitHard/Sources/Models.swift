@@ -72,12 +72,13 @@ struct Settings: Codable {
     var lunch = "12:30"
     var dinner = "18:30"
     var detailsOnLock = false
-    var appearance = "system"   // system | light | dark
+    var appearance = "system"   // legacy, unused
+    var theme = "white"         // white | black | brown
     init() {}
     init(from d: Decoder) throws {
         let c = try d.container(keyedBy: CodingKeys.self)
         on = c.v(.on, ["workout", "tasks", "health"]); waterTime = c.v(.waterTime, "12:00"); breakfast = c.v(.breakfast, "08:00")
-        lunch = c.v(.lunch, "12:30"); dinner = c.v(.dinner, "18:30"); detailsOnLock = c.v(.detailsOnLock, false); appearance = c.v(.appearance, "system")
+        lunch = c.v(.lunch, "12:30"); dinner = c.v(.dinner, "18:30"); detailsOnLock = c.v(.detailsOnLock, false); appearance = c.v(.appearance, "system"); theme = c.v(.theme, "white")
     }
 }
 

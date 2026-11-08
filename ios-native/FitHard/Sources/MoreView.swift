@@ -23,10 +23,12 @@ struct MoreView: View {
             Form {
                 Section("Explore") {
                     NavigationLink { ProgressScreen() } label: { Label("Progress", systemImage: "chart.line.uptrend.xyaxis") }
-                    NavigationLink { CalendarScreen() } label: { Label("Calendar, habits, to do", systemImage: "calendar") }
+                    if store.s.profile.needs.contains("peptides") || !store.s.meds.isEmpty {
+                        NavigationLink { HealthView().content } label: { Label("Health log and appointments", systemImage: "cross.case") }
+                    }
                     NavigationLink { TreatsScreen() } label: { Label("Treats", systemImage: "heart") }
                     NavigationLink { RoutinesScreen() } label: { Label("My routines", systemImage: "list.bullet.rectangle") }
-                }
+                }.themedRows()
                 Section("Reminders") {
                     if notif == .denied {
                         Button { if let u = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(u) } } label: { Label("Notifications are off. Tap to allow in Settings", systemImage: "bell.slash") }
@@ -46,7 +48,7 @@ struct MoreView: View {
                     Toggle("To do items", isOn: on("tasks"))
                     Toggle("Doses and appointments", isOn: on("health"))
                     Toggle("Show health details on lock screen", isOn: Binding(get: { store.s.settings.detailsOnLock }, set: { store.s.settings.detailsOnLock = $0; Notifier.rebuild(store) }))
-                }
+                }.themedRows()
                 Section("My plan") {
                     Picker("Training where", selection: Binding(get: { store.s.profile.equipment }, set: { store.s.profile.equipment = $0; store.generateRoutine(); Notifier.rebuild(store) })) {
                         Text("Gym").tag("gym"); Text("Home").tag("home"); Text("No kit").tag("body") }
@@ -56,19 +58,20 @@ struct MoreView: View {
                     NavigationLink("Food and allergies") { FoodPrefs() }
                     NavigationLink("Training days") { DaysPicker() }
                     Button("Rebuild meals and workouts") { store.s.plan = [:]; store.generatePlan(); store.generateRoutine(); Notifier.rebuild(store); store.say("Plan rebuilt") }
-                }
+                }.themedRows()
                 Section("Look") {
-                    Picker("Appearance", selection: $store.s.settings.appearance) { Text("System").tag("system"); Text("Light").tag("light"); Text("Dark").tag("dark") }
+                    ThemePicker()
                     TextField("Your name", text: $store.s.profile.name)
-                }
+                }.themedRows()
                 AccountSection()
                 Section("Your data") {
                     if let d = try? JSONEncoder().encode(store.s), let s = String(data: d, encoding: .utf8) { ShareLink("Export my data", item: s) }
                     Button("Erase everything and start again", role: .destructive) { reset = true }
-                }
+                }.themedRows()
                 Section { Text("Fit Hard 2.0").font(.footnote).foregroundStyle(Color.muted) }
             }
             .scrollContentBackground(.hidden).background(Color.cream).navigationTitle("More")
+            .environment(\.defaultMinListRowHeight, 44)
             .onAppear(perform: refresh)
             .confirmationDialog("Erase all your data on this phone?", isPresented: $reset, titleVisibility: .visible) {
                 Button("Erase everything", role: .destructive) { store.storeSession(nil); store.resetAll() }

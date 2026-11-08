@@ -57,7 +57,7 @@ struct AccountSection: View {
                 Text("Not signed in. Your data is only on this phone.").font(.footnote).foregroundStyle(Color.muted)
                 Button("Sign in or create account") { show = true }
             }
-        }
+        }.themedRows()
         .sheet(isPresented: $show) { AuthSheet() }
         .confirmationDialog("Delete your account and everything backed up? Your data on this phone is erased too.", isPresented: $del, titleVisibility: .visible) {
             Button("Delete everything", role: .destructive) { Task { do { try await store.deleteAccountEverywhere() } catch { delErr = "Could not delete. Sign out, sign in again, and retry." } } }
