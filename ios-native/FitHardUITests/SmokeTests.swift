@@ -13,7 +13,7 @@ final class SmokeTests: XCTestCase {
         let a = XCTAttachment(screenshot: s); a.name = name; a.lifetime = .keepAlways; add(a)
     }
     func scrollTo(_ app: XCUIApplication, _ el: XCUIElement) { for _ in 0..<10 where !el.exists || !el.isHittable { app.swipeUp() } }
-    func any(_ app: XCUIApplication, _ id: String) -> XCUIElement { app.descendants(matching: .any)[id] }
+    func any(_ app: XCUIApplication, _ id: String) -> XCUIElement { app.descendants(matching: .any).matching(identifier: id).firstMatch }
 
     // MARK: 1 The door
     func testDoorIsTheFirstScreenAndNothingElseShowsBeforeIt() {
@@ -144,7 +144,7 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(any(app, "rest-left").waitForExistence(timeout: 5)); shot(app, "training-rest")
         any(app, "rest-pause").tap(); any(app, "rest-pause").tap(); any(app, "skip-rest").tap()
         XCTAssertFalse(any(app, "rest-left").exists)
-        any(app, "set-done-0").tap(); any(app, "skip-rest").tap()
+        any(app, "set-done-1").tap(); XCTAssertTrue(any(app, "skip-rest").waitForExistence(timeout: 5)); any(app, "skip-rest").tap()
         while any(app, "train-next").label == "Next exercise" { any(app, "train-next").tap() }
         any(app, "train-next").tap()
         XCTAssertTrue(any(app, "train-summary").waitForExistence(timeout: 5)); shot(app, "training-summary")
