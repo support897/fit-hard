@@ -65,6 +65,15 @@ final class Build29Tests: XCTestCase {
         XCTAssertEqual(seen.count, 3, "each character gets its own frames")
     }
 
+    func testEveryExerciseWithBoyAndNonbinarySetsAlsoHasGirlSet() {
+        for ex in Catalog.shared.exercises {
+            let k = CharacterAnim.key(ex)
+            if CharacterAnim.exists("anim-boy-\(k)-1") && CharacterAnim.exists("anim-nb-\(k)-1") {
+                XCTAssertNotNil(CharacterAnim.base(for: ex, character: "girl"), "girl set missing for \(k)")
+            }
+        }
+    }
+
     // Item 4: typefaces
     func testSpecTypefacesLoad() {
         FHFonts.register()
