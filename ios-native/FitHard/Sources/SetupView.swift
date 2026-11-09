@@ -43,8 +43,11 @@ struct SetupView: View {
         VStack(spacing: 0) {
             if building { buildingView } else {
                 VStack(alignment: .leading, spacing: 4) {
+                    if store.s.onboarded {
+                        Text("Welcome back. Answer again so your meals, training and calendar fit you. Everything you saved stays.").font(.fh_subheadline).foregroundStyle(Color.ink).padding(.bottom, 6).accessibilityIdentifier("setup-welcome-back")
+                    }
                     ProgressView(value: Double(step + 1), total: Double(SetupView.total)).tint(Color.sage)
-                    Text("Step \(step + 1) of \(SetupView.total)").font(.caption).foregroundStyle(Color.muted).accessibilityIdentifier("setup-step")
+                    Text("Step \(step + 1) of \(SetupView.total)").font(.fh_caption).foregroundStyle(Color.muted).accessibilityIdentifier("setup-step")
                 }.padding(.horizontal, 24).padding(.top, 12)
                 ScrollView { VStack(alignment: .leading, spacing: 16) { page }.padding(24).frame(maxWidth: .infinity, alignment: .leading) }
                 HStack(spacing: 12) {
@@ -90,7 +93,7 @@ struct SetupView: View {
                 NumField(label: "Weight", unit: imp ? "lb" : "kg", value: Binding(get: { imp ? store.s.profile.weightKg * 2.2046 : store.s.profile.weightKg }, set: { store.s.profile.weightKg = imp ? $0 / 2.2046 : $0 }))
                 NumField(label: "Target weight (optional)", unit: imp ? "lb" : "kg", value: Binding(get: { imp ? store.s.profile.targetKg * 2.2046 : store.s.profile.targetKg }, set: { store.s.profile.targetKg = imp ? $0 / 2.2046 : $0 }))
             }.id(imp)
-            if !bodyOk { Text("Please check those numbers. Age 13 to 100, height 120 to 230 cm, weight 30 to 250 kg.").font(.footnote).foregroundStyle(Color.amber) }
+            if !bodyOk { Text("Please check those numbers. Age 13 to 100, height 120 to 230 cm, weight 30 to 250 kg.").font(.fh_footnote).foregroundStyle(Color.amber) }
             hint("For the resting energy estimate only, pick the closest formula. This is separate from your character.")
             Picker("Formula", selection: p.calcBasis) { Text("Female").tag("female"); Text("Male").tag("male"); Text("Average").tag("avg") }.pickerStyle(.segmented)
         case 2:
@@ -100,7 +103,7 @@ struct SetupView: View {
                     Button { store.s.profile.character = c.0; haptic() } label: {
                         VStack(spacing: 6) {
                             BundleImage(name: "avatar-\(c.0)").frame(height: 96).clipShape(RoundedRectangle(cornerRadius: 14))
-                            Text(c.1).font(.subheadline.weight(.bold))
+                            Text(LocalizedStringKey(c.1)).font(.fh_subheadline_b)
                         }.padding(8).frame(maxWidth: .infinity)
                         .background(store.s.profile.character == c.0 ? Color.tint : Color.surface, in: RoundedRectangle(cornerRadius: 18))
                         .overlay(RoundedRectangle(cornerRadius: 18).stroke(store.s.profile.character == c.0 ? Color.sage : Color.line, lineWidth: store.s.profile.character == c.0 ? 3 : 1))
@@ -160,7 +163,7 @@ struct SetupView: View {
                 Chip(label: n.capitalized, on: store.s.inventory.contains { RecipeService.norm($0.name) == RecipeService.norm(n) }) { toggleInv(n) } } }
             ForEach($store.s.inventory) { $it in
                 HStack {
-                    Text(it.name.capitalized).font(.subheadline.weight(.semibold))
+                    Text(it.name.capitalized).font(.fh_subheadline_b)
                     Spacer()
                     Stepper("\(RecipeService.fmt(it.qty)) \(it.unit)", value: $it.qty, in: 0...5000, step: it.unit == "g" || it.unit == "ml" ? 100 : 1).fixedSize()
                 }.padding(12).background(Color.surface, in: RoundedRectangle(cornerRadius: 14))
@@ -172,7 +175,7 @@ struct SetupView: View {
             toggleRow("Counting calories worries me, or I have had an eating disorder", p.edConcern)
             toggleRow("A clinician has limited my exercise", p.clinicianLimits)
             TextField("Any injury or sore spot? (optional)", text: p.injury).padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 14))
-            if !NutritionService.targetsAllowed(store.s.profile) { Text("We will not set calorie targets for you. Please talk with a clinician about food. Meals and workouts still work.").font(.footnote).foregroundStyle(Color.amber) }
+            if !NutritionService.targetsAllowed(store.s.profile) { Text("We will not set calorie targets for you. Please talk with a clinician about food. Meals and workouts still work.").font(.fh_footnote).foregroundStyle(Color.amber) }
         default:
             title("Ready, \(store.s.profile.name)?")
             Card {
@@ -188,16 +191,16 @@ struct SetupView: View {
         }
     }
 
-    func summaryRow(_ a: String, _ b: String) -> some View { HStack { Text(a).foregroundStyle(Color.muted); Spacer(); Text(b).font(.subheadline.weight(.semibold)) } }
+    func summaryRow(_ a: String, _ b: String) -> some View { HStack { Text(a).foregroundStyle(Color.muted); Spacer(); Text(b).font(.fh_subheadline_b) } }
     func toggleRow(_ t: String, _ b: Binding<Bool>) -> some View { Toggle(t, isOn: b).tint(Color.sage).padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 14)) }
     func reminderRow(_ id: String, _ label: String, _ icon: String) -> some View {
         Toggle(isOn: Binding(get: { store.s.settings.on.contains(id) }, set: { v in
             if v { if !store.s.settings.on.contains(id) { store.s.settings.on.append(id) } } else { store.s.settings.on.removeAll { $0 == id } } })) {
-            Label(label, systemImage: icon).font(.headline)
+            BrandLabel(label, icon: icon).font(.fh_headline)
         }.tint(Color.sage).padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 16))
     }
-    func title(_ t: String) -> some View { Text(t).font(.system(.title, design: .serif).weight(.bold)).foregroundStyle(Color.ink) }
-    func hint(_ t: String) -> some View { Text(t).font(.subheadline).foregroundStyle(Color.muted) }
+    func title(_ t: String) -> some View { Text(t).font(.fh_title_b).foregroundStyle(Color.ink) }
+    func hint(_ t: String) -> some View { Text(t).font(.fh_subheadline).foregroundStyle(Color.muted) }
     func toggle<T: Equatable>(_ arr: Binding<[T]>, _ v: T) {
         var a = arr.wrappedValue
         if let i = a.firstIndex(of: v) { a.remove(at: i) } else { a.append(v) }
@@ -214,7 +217,7 @@ struct SetupView: View {
         if step < SetupView.total - 1 { go(step + 1); return }
         building = true
         store.finishSetup()
-        let finish = { store.s.onboarded = true; Notifier.rebuild(store) }
+        let finish = { store.s.onboarded = true; store.s.personalizationVersion = Store.personalizationRound; Notifier.rebuild(store) }
         if store.s.settings.on.isEmpty { DispatchQueue.main.asyncAfter(deadline: .now() + 1.4, execute: finish) }
         else { Notifier.ask { _ in DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: finish) } }
     }
@@ -224,7 +227,7 @@ struct SetupView: View {
             Spacer()
             BundleImage(name: "wally-celebrate").frame(height: 160)
             ProgressView().tint(Color.sage)
-            Text("Building your plan, \(store.s.profile.name)").font(.system(.title2, design: .serif).bold()).foregroundStyle(Color.ink)
+            Text("Building your plan, \(store.s.profile.name)").font(.fh_title2_b).foregroundStyle(Color.ink)
             Text("Meals, workouts and reminders").foregroundStyle(Color.muted)
             Spacer()
         }.padding()

@@ -5,6 +5,8 @@ struct CalItem: Identifiable, Hashable {
     let id: String; let time: String; let title: String; let detail: String
     let cat: String        // training | meals | recovery | medication | personal
     let icon: String; let done: Bool; let eventID: UUID?; let routineID: UUID?
+    var tone: String? = nil
+    var colorKey: String { tone ?? cat }
 }
 
 extension Color {
@@ -30,24 +32,40 @@ extension Store {
     func routine(on day: String) -> Routine? {
         guard let d = dateFromKey(day) else { return nil }
         let wd = Calendar.current.component(.weekday, from: d)
-        guard let r = s.routines.first(where: { $0.weekday == wd }) else { return nil }
-        return s.skipped.contains("\(day)|\(r.id.uuidString)") ? nil : r
+        guard var r = s.routines.first(where: { $0.weekday == wd }) else { return nil }
+        if s.skipped.contains("\(day)|\(r.id.uuidString)") { return nil }
+        // A Bad check-in makes that day's workout an easier one: the first three exercises, two sets each (see TrainingMode).
+        if s.lightDays.contains(day), r.trainType != .mobility, r.exIds.count > 3 { r.exIds = Array(r.exIds.prefix(3)); r.name += ", lighter" }
+        return r
     }
     func calItems(on day: String) -> [CalItem] {
         var out: [CalItem] = []
         for meal in Lists.meals {
             if let r = s.plan[day]?[meal].flatMap({ cat.recipe($0) }) {
                 let done = day == today ? (s.eaten[day] ?? []).contains(meal) : (s.eaten[day] ?? []).contains(meal)
-                out.append(CalItem(id: "meal-\(day)-\(meal)", time: mealTime(meal), title: "\(meal.capitalized): \(r.name)", detail: line(r), cat: "meals", icon: "fork.knife", done: done, eventID: nil, routineID: nil))
+                out.append(CalItem(id: "meal-\(day)-\(meal)", time: mealTime(meal), title: "\(meal.capitalized): \(r.name)", detail: line(r), cat: "meals", icon: "m-" + meal, done: done, eventID: nil, routineID: nil, tone: "meal." + meal))
             }
         }
         if let r = routine(on: day) {
             let done = s.workouts.contains { dayKey($0.date) == day }
-            out.append(CalItem(id: "train-\(day)-\(r.id)", time: s.profile.workoutTime, title: r.name, detail: "\(r.exIds.count) exercises · \(s.profile.minutes) min", cat: "training", icon: "dumbbell", done: done, eventID: nil, routineID: r.id))
+            out.append(CalItem(id: "train-\(day)-\(r.id)", time: s.profile.workoutTime, title: r.name, detail: "\(r.trainType.label) · \(r.exIds.count) exercises · \(s.profile.minutes) min", cat: "training", icon: r.trainType.icon, done: done, eventID: nil, routineID: r.id, tone: r.trainType.tone))
         }
         for e in s.events where e.day == day {
-            let icon = e.cat == "training" ? "dumbbell" : e.cat == "meals" ? "fork.knife" : e.cat == "recovery" ? "moon" : e.cat == "medication" ? "cross.case" : "person"
-            out.append(CalItem(id: "ev-\(e.id)", time: e.time, title: e.title, detail: "\(e.minutes) min" + (e.notes.isEmpty ? "" : " · \(e.notes)"), cat: e.cat, icon: icon, done: e.done, eventID: e.id, routineID: e.link.flatMap { UUID(uuidString: $0) }))
+            var icon = e.cat == "training" ? "dumbbell" : e.cat == "meals" ? "fork.knife" : e.cat == "recovery" ? "moon" : e.cat == "medication" ? "cross.case" : "person"
+            var tone: String? = nil
+            if e.cat == "training" {
+                let t = e.link.flatMap { id in s.routines.first { $0.id.uuidString == id } }?.trainType ?? TrainType.infer(name: e.title)
+                icon = t.icon; tone = t.tone
+            } else if e.cat == "meals" {
+                let low = e.title.lowercased()
+                let k = low.contains("breakfast") ? "breakfast" : low.contains("lunch") ? "lunch" : low.contains("dinner") ? "dinner" : "snacks"
+                icon = "m-" + k; tone = "meal." + k
+            }
+            out.append(CalItem(id: "ev-\(e.id)", time: e.time, title: e.title, detail: "\(e.minutes) min" + (e.notes.isEmpty ? "" : " · \(e.notes)"), cat: e.cat, icon: icon, done: e.done, eventID: e.id, routineID: e.link.flatMap { UUID(uuidString: $0) }, tone: tone))
+        }
+        // Rest is planned, not earned: a day with no session shows as a planned rest day.
+        if s.onboarded, routine(on: day) == nil, !s.restDays.contains(day), !s.events.contains(where: { $0.day == day && $0.cat == "training" }) {
+            out.append(CalItem(id: "plannedrest-\(day)", time: "08:00", title: "Rest", detail: "Planned rest day", cat: "recovery", icon: TrainType.rest.icon, done: false, eventID: nil, routineID: nil, tone: TrainType.rest.tone))
         }
         if s.restDays.contains(day) { out.append(CalItem(id: "rest-\(day)", time: "08:00", title: "Rest day", detail: "Recovery counts", cat: "recovery", icon: "moon", done: true, eventID: nil, routineID: nil)) }
         for m in s.meds where !m.isPaused {
@@ -84,7 +102,9 @@ extension Store {
     // MARK: Nutrition today
     var eatenMacros: (kcal: Int, p: Int) {
         var k = 0, p = 0
-        for m in s.eaten[today] ?? [] { if let r = s.plan[today]?[m].flatMap({ cat.recipe($0) }) { k += r.kcal; p += RecipeService.macros(r)?.p ?? 0 } }
+        var kf = 0.0, pf = 0.0
+        for m in s.eaten[today] ?? [] { if let r = s.plan[today]?[m].flatMap({ cat.recipe($0) }) { kf += Double(r.kcal) * portion(m); pf += Double(RecipeService.macros(r)?.p ?? 0) * portion(m) } }
+        k = Int(kf.rounded()); p = Int(pf.rounded())
         return (k, p)
     }
 

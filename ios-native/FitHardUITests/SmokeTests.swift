@@ -21,7 +21,7 @@ final class SmokeTests: XCTestCase {
         let app = door()
         XCTAssertTrue(any(app, "door-title").waitForExistence(timeout: 15))
         XCTAssertTrue(app.staticTexts["Create your account"].exists)
-        XCTAssertTrue(app.buttons["Continue with Apple"].exists); XCTAssertTrue(app.buttons["Continue with Google"].exists)
+        XCTAssertTrue(app.buttons["door-apple"].exists || app.buttons["Sign up with Apple"].exists || app.buttons["Continue with Apple"].exists); XCTAssertTrue(app.buttons["door-google"].exists)
         XCTAssertTrue(app.textFields["Your name"].exists); XCTAssertTrue(app.textFields["Email"].exists)
         XCTAssertFalse(app.tabBars.firstMatch.exists, "no app content before the door")
         XCTAssertFalse(app.buttons["setup-next"].exists, "no setup before the door")
@@ -39,10 +39,14 @@ final class SmokeTests: XCTestCase {
         XCTAssertFalse(app.tabBars.firstMatch.exists); XCTAssertFalse(any(app, "setup-step").exists, "no account was created")
         shot(app, "door-failed-signin")
     }
-    func testAppleAndGoogleAreHonestAboutNotBeingSwitchedOn() {
+    func testAppleAndGoogleAreRealDoorsAndNoStubTextRemains() {
         let app = door()
-        XCTAssertTrue(app.buttons["Continue with Apple"].waitForExistence(timeout: 15)); app.buttons["Continue with Apple"].tap()
-        XCTAssertTrue(app.staticTexts["Apple sign in is not switched on yet. Please use email for now."].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["door-google"].waitForExistence(timeout: 15))
+        XCTAssertTrue(any(app, "door-apple").exists, "Apple door is present")
+        app.buttons["door-google"].tap()
+        // Offline test launch: the Google door answers truthfully that it needs a connection. The old stub text is gone.
+        XCTAssertTrue(app.staticTexts["Google sign in needs a connection. Use email, or try again online."].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Google sign in is not switched on yet. Please use email for now."].exists)
         XCTAssertFalse(app.tabBars.firstMatch.exists)
     }
 

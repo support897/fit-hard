@@ -1,4 +1,6 @@
 import SwiftUI
+import AuthenticationServices
+import GoogleSignIn
 
 /// The first screen. No app content shows until there is an account.
 /// Create account asks for a name, an email and the user's own password. Sign in never creates an account.
@@ -18,29 +20,29 @@ struct DoorView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 BundleImage(name: "wally-welcome").frame(height: 130).frame(maxWidth: .infinity)
-                Text(creating ? "Create your account" : "Welcome back").font(.system(.largeTitle, design: .serif).bold()).foregroundStyle(Color.ink)
+                Text(creating ? "Create your account" : "Welcome back").font(.fh_largeTitle_b).foregroundStyle(Color.ink)
                     .accessibilityIdentifier("door-title")
-                Text(creating ? "One account keeps your plan safe and on every phone." : "Sign in to pick up where you left off.").font(.subheadline).foregroundStyle(Color.muted)
+                Text(creating ? "One account keeps your plan safe and on every phone." : "Sign in to pick up where you left off.").font(.fh_subheadline).foregroundStyle(Color.muted)
                 VStack(spacing: 10) {
-                    providerButton("Continue with Apple", "apple.logo", "apple")
-                    providerButton("Continue with Google", "g.circle", "google")
+                    appleButton()
+                    googleButton()
                 }
-                HStack { Rectangle().fill(Color.line).frame(height: 1); Text("or use email").font(.caption).foregroundStyle(Color.muted); Rectangle().fill(Color.line).frame(height: 1) }
+                HStack { Rectangle().fill(Color.line).frame(height: 1); Text("or use email").font(.fh_caption).foregroundStyle(Color.muted); Rectangle().fill(Color.line).frame(height: 1) }
                 if creating {
                     field("Your name", text: $name).textContentType(.givenName)
                 }
                 field("Email", text: $email).textContentType(.emailAddress).keyboardType(.emailAddress).textInputAutocapitalization(.never).autocorrectionDisabled()
                 SecureField(creating ? "Choose a password (8+ characters)" : "Password", text: $pass).textContentType(creating ? .newPassword : .password)
                     .padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.line))
-                if !err.isEmpty { Text(err).font(.footnote.weight(.semibold)).foregroundStyle(Color.amber).accessibilityIdentifier("door-error") }
-                if !info.isEmpty { Text(info).font(.footnote).foregroundStyle(Color.sage) }
+                if !err.isEmpty { Text(err).font(.fh_footnote_b).foregroundStyle(Color.amber).accessibilityIdentifier("door-error") }
+                if !info.isEmpty { Text(info).font(.fh_footnote).foregroundStyle(Color.sage) }
                 BigButton(title: busy ? "One moment" : (creating ? "Create account" : "Sign in")) { go() }
                     .disabled(busy || !valid).opacity(valid ? 1 : 0.4).accessibilityIdentifier("door-go")
                 HStack {
-                    Button(creating ? "I already have an account" : "Create a new account") { creating.toggle(); err = ""; info = "" }.font(.subheadline.weight(.semibold))
+                    Button(creating ? "I already have an account" : "Create a new account") { creating.toggle(); err = ""; info = "" }.font(.fh_subheadline_b)
                         .accessibilityIdentifier("door-toggle")
                     Spacer()
-                    if !creating { Button("Forgot password?") { forgot() }.font(.footnote) }
+                    if !creating { Button("Forgot password?") { forgot() }.font(.fh_footnote) }
                 }
             }.padding(24)
         }.background(Color.cream.ignoresSafeArea())
@@ -49,14 +51,47 @@ struct DoorView: View {
     func field(_ t: String, text: Binding<String>) -> some View {
         TextField(t, text: text).padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.line))
     }
-    func providerButton(_ title: String, _ icon: String, _ id: String) -> some View {
+    @State private var rawNonce = ""
+    func appleButton() -> some View {
+        SignInWithAppleButton(creating ? .signUp : .signIn, onRequest: { req in
+            rawNonce = Providers.nonce(); req.requestedScopes = [.fullName, .email]; req.nonce = Providers.sha256(rawNonce)
+        }, onCompletion: { result in
+            switch result {
+            case .failure(let e):
+                if (e as? ASAuthorizationError)?.code != .canceled { err = "Apple sign in did not finish. Try again, or use email." }
+            case .success(let auth):
+                guard let c = auth.credential as? ASAuthorizationAppleIDCredential, let t = c.identityToken, let tok = String(data: t, encoding: .utf8) else { err = "Apple did not send a sign in token. Try again."; return }
+                let given = c.fullName?.givenName ?? ""
+                let n = rawNonce, makeNew = creating
+                busy = true; err = ""
+                Task {
+                    do { try await store.providerDoor(creating: makeNew, provider: "apple.com", idToken: tok, accessToken: nil, rawNonce: n, name: given) }
+                    catch { err = (error as? AccountError)?.errorDescription ?? "Try again." }
+                    busy = false
+                }
+            }
+        }).signInWithAppleButtonStyle(Color.pal == 1 || Color.pal == 2 ? .white : .black)
+        .frame(height: 48).clipShape(Capsule()).disabled(busy).accessibilityIdentifier("door-apple")
+    }
+    func googleButton() -> some View {
         Button {
-            haptic()
-            err = "\(id == "apple" ? "Apple" : "Google") sign in is not switched on yet. Please use email for now."
+            haptic(); err = ""
+            if Cloud.offline { err = "Google sign in needs a connection. Use email, or try again online."; return }
+            let makeNew = creating
+            busy = true
+            Task {
+                do {
+                    let g = try await Providers.google()
+                    try await store.providerDoor(creating: makeNew, provider: "google.com", idToken: g.idToken, accessToken: g.accessToken, rawNonce: nil, name: g.givenName)
+                } catch {
+                    if (error as NSError).code != GIDSignInError.canceled.rawValue { err = (error as? AccountError)?.errorDescription ?? "Google sign in did not finish. Try again, or use email." }
+                }
+                busy = false
+            }
         } label: {
-            HStack { Image(systemName: icon); Text(title).fontWeight(.semibold) }.frame(maxWidth: .infinity).padding(.vertical, 14)
+            HStack { BrandIcon("g.circle"); Text(creating ? "Sign up with Google" : "Sign in with Google").fontWeight(.semibold) }.frame(maxWidth: .infinity).padding(.vertical, 14)
                 .background(Color.surface, in: Capsule()).overlay(Capsule().stroke(Color.line, lineWidth: 1)).foregroundStyle(Color.ink)
-        }.buttonStyle(.plain).accessibilityIdentifier("door-\(id)")
+        }.buttonStyle(.plain).disabled(busy).accessibilityIdentifier("door-google")
     }
 
     func go() {

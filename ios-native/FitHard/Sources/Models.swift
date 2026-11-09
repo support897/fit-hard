@@ -112,6 +112,8 @@ struct CalEvent: Codable, Identifiable, Hashable {
 struct Routine: Codable, Identifiable, Hashable {
     var id = UUID(); var name: String; var weekday: Int; var focus: [String]; var exIds: [String]
     var customized = false; var block = 1; var week = 1
+    var kind: String? = nil
+    var trainType: TrainType { TrainType.infer(name: name, kind: kind) }
 }
 struct WallyNote: Codable, Hashable { var day: String; var rule: String }
 struct Reflection: Codable, Hashable { var easier = ""; var change = ""; var next = "" }
@@ -173,6 +175,16 @@ struct AppState: Codable {
     var draftStart: Date? = nil
     var draftRoutine: String? = nil
     var previewAnims = false
+    /// Personalisation round this data has been through. 0 = data from before build 29, 3 = answered the personalisation setup.
+    var personalizationVersion = 0
+    /// Days softened by a Bad check-in, and the plan as it stood before, so a changed answer can restore it.
+    var lightDays: [String] = []
+    var planBackup: [String: [String: String]] = [:]
+    /// day -> meal -> fraction eaten (0.25, 0.5, 0.75, 1.0). A meal in `eaten` with no entry counts as 1.0.
+    var portions: [String: [String: Double]] = [:]
+    /// Machine id -> photo file name in Application Support. The app never recognises a machine from a photo.
+    var machinePhotos: [String: String] = [:]
+    var language = "en"
 
     init() {}
     init(from d: Decoder) throws {
@@ -187,6 +199,8 @@ struct AppState: Codable {
         routines = c.v(.routines, []); wally = c.v(.wally, []); blockStart = c.v(.blockStart, "")
         favs = c.v(.favs, []); shopQty = c.v(.shopQty, [:]); skipped = c.v(.skipped, []); draftStart = try? c.decodeIfPresent(Date.self, forKey: .draftStart)
         draftRoutine = try? c.decodeIfPresent(String.self, forKey: .draftRoutine); previewAnims = c.v(.previewAnims, false)
+        personalizationVersion = c.v(.personalizationVersion, 0); lightDays = c.v(.lightDays, []); planBackup = c.v(.planBackup, [:])
+        portions = c.v(.portions, [:]); machinePhotos = c.v(.machinePhotos, [:]); language = c.v(.language, "en")
     }
 }
 extension KeyedDecodingContainer {
@@ -212,7 +226,7 @@ enum Lists {
     ]
     static let meals = ["breakfast", "lunch", "dinner"]
     static let weekdays = [(2, "Mon"), (3, "Tue"), (4, "Wed"), (5, "Thu"), (6, "Fri"), (7, "Sat"), (1, "Sun")]
-    static let checkins = [("bad", "Bad", "A softer day is planned for you."), ("ok", "Ok", "Your normal plan, as it is."), ("great", "Great", "Full plan, plus one optional extra.")]
+    static let checkins = [("bad", "Bad", "Lighter meals and an easier workout are set for today."), ("ok", "Ok", "Your normal plan, as it is."), ("great", "Great", "Full plan, plus one optional extra.")]
     static let checkinIcons = ["bad": "cloud.rain", "ok": "face.smiling", "great": "sun.max.fill"]
 }
 

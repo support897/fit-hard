@@ -24,14 +24,14 @@ struct HealthView: View {
                         ForEach(store.s.meds) { m in
                             MedRow(med: m)
                             HStack {
-                                Toggle("Reminders paused", isOn: Binding(get: { m.isPaused }, set: { v in if let i = store.s.meds.firstIndex(where: { $0.id == m.id }) { store.s.meds[i].paused = v; Notifier.rebuild(store) } })).font(.caption).tint(Color.sage)
-                                Button(role: .destructive) { store.s.meds.removeAll { $0.id == m.id }; Notifier.rebuild(store) } label: { Text("Stop and remove").font(.caption) }
+                                Toggle("Reminders paused", isOn: Binding(get: { m.isPaused }, set: { v in if let i = store.s.meds.firstIndex(where: { $0.id == m.id }) { store.s.meds[i].paused = v; Notifier.rebuild(store) } })).font(.fh_caption).tint(Color.sage)
+                                Button(role: .destructive) { store.s.meds.removeAll { $0.id == m.id }; Notifier.rebuild(store) } label: { Text("Stop and remove").font(.fh_caption) }
                             }
                         }
                     }
                     Card {
                         SectionTitle(text: "Add what your clinician prescribed")
-                        Text("You type everything. Fit Hard never suggests a name, a dose or a change.").font(.caption).foregroundStyle(Color.muted)
+                        Text("You type everything. Fit Hard never suggests a name, a dose or a change.").font(.fh_caption).foregroundStyle(Color.muted)
                         TextField("Name (as given)", text: $name).accessibilityIdentifier("med-name")
                         HStack { TextField("Dose (as given)", text: $amount).accessibilityIdentifier("med-dose"); TextField("Unit (as given)", text: $unit) }
                         TextField("How taken, as directed (optional)", text: $route)
@@ -39,7 +39,7 @@ struct HealthView: View {
                         TextField("Instructions from your clinician (optional)", text: $instr)
                         TextField("Prescriber (optional)", text: $prescriber)
                         ForEach(times.indices, id: \.self) { i in DatePicker("Reminder \(i + 1)", selection: $times[i], displayedComponents: .hourAndMinute) }
-                        Button("Add another reminder time") { times.append(timeDate("20:00")) }.font(.subheadline.weight(.semibold))
+                        Button("Add another reminder time") { times.append(timeDate("20:00")) }.font(.fh_subheadline_b)
                         Toggle("This was provided by my clinician", isOn: $confirm).tint(Color.sage)
                         BigButton(title: "Add", icon: "plus") {
                             let n = name.trimmingCharacters(in: .whitespaces)
@@ -54,8 +54,8 @@ struct HealthView: View {
                     Card {
                         SectionTitle(text: "Appointments")
                         ForEach(store.s.appts.sorted { $0.date < $1.date }) { a in
-                            HStack { VStack(alignment: .leading) { Text(a.title).font(.subheadline.weight(.semibold)); Text(a.date.formatted(date: .abbreviated, time: .shortened)).font(.caption).foregroundStyle(Color.muted) }
-                                Spacer(); Button { store.s.appts.removeAll { $0.id == a.id }; Notifier.rebuild(store) } label: { Image(systemName: "trash") }.foregroundStyle(Color.muted) }
+                            HStack { VStack(alignment: .leading) { Text(a.title).font(.fh_subheadline_b); Text(a.date.formatted(date: .abbreviated, time: .shortened)).font(.fh_caption).foregroundStyle(Color.muted) }
+                                Spacer(); Button { store.s.appts.removeAll { $0.id == a.id }; Notifier.rebuild(store) } label: { BrandIcon( "trash") }.foregroundStyle(Color.muted) }
                         }
                         TextField("Appointment", text: $apTitle)
                         DatePicker("When", selection: $apDate)
@@ -65,7 +65,7 @@ struct HealthView: View {
                         }
                     }
                     Text("Fit Hard records what you enter. It does not give medical advice, doses or product suggestions. Ask your clinician about any change.")
-                        .font(.footnote).foregroundStyle(Color.muted).padding(.horizontal, 6)
+                        .font(.fh_footnote).foregroundStyle(Color.muted).padding(.horizontal, 6)
                     Button("Erase all health data", role: .destructive) { erase = true }
                 }.padding(16)
             }.background(Color.cream).navigationTitle("Health")

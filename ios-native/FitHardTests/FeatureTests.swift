@@ -9,6 +9,7 @@ final class FeatureTests: XCTestCase {
         var p = Profile(); p.name = "Tess"; p.age = 30; p.heightCm = 180; p.weightKg = 80; p.calcBasis = "male"; p.primaryGoal = "fitter"; p.activity = "light"
         p.setupDone = true; f(&p); return p
     }
+    func daysFromToday(_ n: Int) -> [Int] { let wd = Calendar.current.component(.weekday, from: Date()); return (0..<n).map { (wd - 1 + $0) % 7 + 1 } }
     func ready(_ f: (inout Profile) -> Void = { _ in }) -> Store {
         let st = Store(url: tmp()); st.s.onboarded = true; st.s.profile = profile(f); st.finishSetup(); return st
     }
@@ -157,17 +158,17 @@ final class FeatureTests: XCTestCase {
     // MARK: 4 ROUTINES + PROGRESSION
     func testSplitsFollowTheChosenDaysFromTwoToSix() {
         let want: [Int: [String]] = [2: ["Full body A", "Full body B"], 3: ["Full body A", "Full body B", "Full body C"], 4: ["Upper A", "Lower A", "Upper B", "Lower B"],
-            5: ["Lower A", "Upper A", "Lower B", "Upper B", "Full body"], 6: ["Push A", "Pull A", "Legs A", "Push B", "Pull B", "Legs B"]]
+            5: ["Lower A", "Upper A", "Lower B", "Upper B", "Full body"], 6: ["Lower A", "Upper A", "Lower B", "Upper B", "Full body", "Mobility"]]
         let all = [2, 3, 4, 5, 6, 7, 1]
         for (n, names) in want {
-            let st = ready { $0.trainDays = Array(all.prefix(n)); $0.location = "gym" }
+            let st = ready { $0.trainDays = Array(all.prefix(n)); $0.location = "gym"; $0.primaryGoal = "muscle"; $0.trainType = "strength" }
             XCTAssertEqual(st.s.routines.map { $0.name }, names, "\(n) days")
             XCTAssertEqual(Set(st.s.routines.map { $0.weekday }), Set(all.prefix(n)))
             XCTAssertTrue(st.s.routines.allSatisfy { !$0.exIds.isEmpty })
         }
     }
     func testRoutinesNeverIgnoreEquipmentExperienceOrDuration() {
-        let st = ready { $0.kit = ["dumbbell"]; $0.experience = "beginner"; $0.minutes = 30 }
+        let st = ready { $0.kit = ["dumbbell"]; $0.experience = "beginner"; $0.minutes = 30; $0.primaryGoal = "muscle"; $0.trainType = "strength" }
         for r in st.s.routines {
             XCTAssertLessThanOrEqual(r.exIds.count, 30 / 8 + 1)
             for id in r.exIds { let e = st.cat.exercise(id)!; XCTAssertTrue(["dumbbell", "body only"].contains(e.equipment), "\(e.name) needs \(e.equipment)"); XCTAssertEqual(e.level, "beginner") }
@@ -277,7 +278,7 @@ final class FeatureTests: XCTestCase {
         XCTAssertEqual(Color.catNames.map { $0.0 }, ["training", "meals", "recovery", "medication", "personal"])
     }
     func testTrainingDayShowsTheRealLunchAndWorkoutCompletionUpdatesTheCalendar() {
-        let st = ready { $0.trainDays = Array(1...7) }
+        let st = ready { $0.trainDays = daysFromToday(5) }
         let items = st.calItems(on: st.today)
         XCTAssertTrue(items.contains { $0.cat == "training" && !$0.done })
         let lunch = items.first { $0.id.hasPrefix("meal-") && $0.id.hasSuffix("lunch") }!
@@ -287,7 +288,7 @@ final class FeatureTests: XCTestCase {
         XCTAssertTrue(st.calItems(on: st.today).contains { $0.cat == "training" && $0.done })
     }
     func testSkipMoveAndRegenerateWeek() {
-        let st = ready { $0.trainDays = Array(1...7) }; let r = st.routine(on: st.today)!
+        let st = ready { $0.trainDays = daysFromToday(5) }; let r = st.routine(on: st.today)!
         let tomorrow = dayKey(Calendar.current.date(byAdding: .day, value: 1, to: Date())!)
         st.moveWorkout(from: st.today, routine: r, to: tomorrow)
         XCTAssertNil(st.routine(on: st.today)); XCTAssertTrue(st.calItems(on: tomorrow).filter { $0.cat == "training" && $0.title == r.name }.count >= 1)

@@ -13,7 +13,7 @@ struct RoutinesList: View {
                     Text("No routines yet. Pick your training days and I will build them.").foregroundStyle(Color.muted)
                     BigButton(title: "Build my routines", icon: "sparkles") { store.generateRoutine(); Notifier.rebuild(store) } }
             } else {
-                Text("Block \(store.s.routines.first?.block ?? 1), week \(min(4, store.blockWeek)) of 4").font(.caption).foregroundStyle(Color.muted).frame(maxWidth: .infinity, alignment: .leading)
+                Text("Block \(store.s.routines.first?.block ?? 1), week \(min(4, store.blockWeek)) of 4").font(.fh_caption).foregroundStyle(Color.muted).frame(maxWidth: .infinity, alignment: .leading)
                 ForEach(Array(store.s.routines.enumerated()), id: \.element.id) { i, r in RoutineCard(r: r, index: i) }
                 if store.blockWeek > 4 { BigButton(title: "Start the next 4 week block", icon: "arrow.right.circle") { store.nextBlock(); store.say("New block. Only some exercises change.") } }
             }
@@ -33,10 +33,10 @@ struct RoutineCard: View {
     var body: some View {
         let kcal = WorkoutGenerator.kcalEstimate(minutes: store.s.profile.minutes, weightKg: store.s.profile.weightKg)
         Card {
-            HStack { Text(r.name).font(.system(.title3, design: .serif).bold()); if r.customized { Text("Customized").font(.caption2.bold()).padding(.horizontal, 8).padding(.vertical, 3).background(Color.tint, in: Capsule()) }; Spacer() }
-            Text(r.focus.map { partNames[$0] ?? $0.capitalized }.joined(separator: ", ")).font(.subheadline).foregroundStyle(Color.muted)
-            Text("\(r.exIds.count) exercises · \(store.s.profile.minutes) min" + (kcal.map { " · about \($0) kcal (estimate)" } ?? "")).font(.caption)
-            Text("Last: " + (store.lastCompleted(r)?.formatted(.dateTime.weekday(.abbreviated).day().month()) ?? "not yet") + " · Next: " + (store.nextSession(r)?.formatted(.dateTime.weekday(.abbreviated).day().month()) ?? "none")).font(.caption).foregroundStyle(Color.muted)
+            HStack { Text(r.name).font(.fh_title3_b); TypeBadge(type: r.trainType); if r.customized { Text("Customized").font(.fh_caption2_b).padding(.horizontal, 8).padding(.vertical, 3).background(Color.tint, in: Capsule()) }; Spacer() }
+            Text(r.focus.map { partNames[$0] ?? $0.capitalized }.joined(separator: ", ")).font(.fh_subheadline).foregroundStyle(Color.muted)
+            Text("\(r.exIds.count) exercises · \(store.s.profile.minutes) min" + (kcal.map { " · about \($0) kcal (estimate)" } ?? "")).font(.fh_caption)
+            Text("Last: " + (store.lastCompleted(r)?.formatted(.dateTime.weekday(.abbreviated).day().month()) ?? "not yet") + " · Next: " + (store.nextSession(r)?.formatted(.dateTime.weekday(.abbreviated).day().month()) ?? "none")).font(.fh_caption).foregroundStyle(Color.muted)
             HStack(spacing: 10) {
                 BigButton(title: "START", icon: "play.fill") { store.training = r }.accessibilityIdentifier("start-routine-\(index)")
                 BigButton(title: "VIEW", filled: false) { view = true }.accessibilityIdentifier("view-routine-\(index)")
@@ -58,9 +58,9 @@ struct RoutineDetail: View {
                 Section("Exercises") {
                     ForEach(store.s.routines[i].exIds, id: \.self) { eid in
                         if let e = store.cat.exercise(eid) {
-                            HStack { VStack(alignment: .leading) { Text(e.name).font(.subheadline.weight(.semibold)); Text("\(partNames[e.part] ?? e.part) · \(e.equipment)").font(.caption).foregroundStyle(Color.muted) }
+                            HStack { VStack(alignment: .leading) { Text(e.name).font(.fh_subheadline_b); Text("\(partNames[e.part] ?? e.part) · \(e.equipment)").font(.fh_caption).foregroundStyle(Color.muted) }
                                 Spacer(); HelpButton(exercise: e)
-                                Button { remove(eid, i) } label: { Image(systemName: "minus.circle").frame(width: 36, height: 36) }.foregroundStyle(Color.muted).buttonStyle(.plain) }
+                                Button { remove(eid, i) } label: { BrandIcon( "minus.circle").frame(width: 36, height: 36) }.foregroundStyle(Color.muted).buttonStyle(.plain) }
                         }
                     }.listRowBackground(Color.surface)
                     Button("Add an exercise") { adding = true }

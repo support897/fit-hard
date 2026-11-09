@@ -23,7 +23,7 @@ enum Cloud {
             let name = String((url.split(separator: "?").first ?? "").split(separator: "/").last ?? "")
             log.append(name)
             if name.contains("signInWithPassword") { throw AccountError.msg(friendly("INVALID_LOGIN")) }
-            if name.contains("signUp") { return ["localId": "offline-uid", "idToken": "offline", "refreshToken": "offline"] }
+            if name.contains("signUp") || name.contains("signInWithIdp") { return ["localId": "offline-uid", "idToken": "offline", "refreshToken": "offline", "isNewUser": true] }
             return [:]
         }
         var r = URLRequest(url: URL(string: url)!)
@@ -51,6 +51,15 @@ enum Cloud {
     }
     static func signUp(_ email: String, _ pass: String) async throws -> Session {
         try session(await post("https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=\(key)", ["email": email, "password": pass, "returnSecureToken": true]), email)
+    }
+    /// Apple and Google. Returns the session and whether Firebase had to create the account.
+    static func signInWithIdp(provider: String, idToken: String, accessToken: String?, rawNonce: String?) async throws -> (Session, Bool) {
+        var pb = "id_token=\(idToken)&providerId=\(provider)"
+        if let a = accessToken, !a.isEmpty { pb += "&access_token=\(a)" }
+        if let n = rawNonce, !n.isEmpty { pb += "&nonce=\(n)" }
+        let j = try await post("https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=\(key)",
+                               ["postBody": pb, "requestUri": "http://localhost", "returnSecureToken": true])
+        return (try session(j, (j["email"] as? String) ?? ""), (j["isNewUser"] as? Bool) ?? false)
     }
     static func reset(_ email: String) async throws {
         _ = try await post("https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=\(key)", ["requestType": "PASSWORD_RESET", "email": email])

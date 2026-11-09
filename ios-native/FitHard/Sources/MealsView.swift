@@ -24,10 +24,10 @@ struct MealsView: View {
                 if menu {
                     Color.black.opacity(0.35).ignoresSafeArea().onTapGesture { withAnimation { menu = false } }
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Meals").font(.system(.title2, design: .serif).bold()).padding(.bottom, 8)
+                        Text("Meals").font(.fh_title2_b).padding(.bottom, 8)
                         ForEach(MealsView.sections, id: \.0) { s in
                             Button { section = s.0; withAnimation { menu = false } } label: {
-                                Label(s.1, systemImage: s.2).font(.headline).padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                                BrandLabel(s.1, icon: s.2).font(.fh_headline).padding(12).frame(maxWidth: .infinity, alignment: .leading)
                                     .background(section == s.0 ? Color.tint : Color.clear, in: RoundedRectangle(cornerRadius: 12))
                             }.buttonStyle(.plain).accessibilityIdentifier("menu-\(s.0)")
                         }
@@ -38,7 +38,7 @@ struct MealsView: View {
             }
             .navigationTitle(titleText).navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .navigationBarLeading) {
-                Button { withAnimation { menu.toggle() } } label: { Image(systemName: "line.3.horizontal").frame(width: 44, height: 44) }
+                Button { withAnimation { menu.toggle() } } label: { BrandIcon( "line.3.horizontal").frame(width: 44, height: 44) }
                     .accessibilityLabel("Meals menu").accessibilityIdentifier("meals-menu-button") } }
         }
     }
@@ -47,7 +47,7 @@ struct MealsView: View {
 struct MealLine: View {
     @EnvironmentObject var store: Store
     let r: Recipe
-    var body: some View { Text(store.line(r)).font(.caption).foregroundStyle(Color.muted) }
+    var body: some View { Text(store.line(r)).font(.fh_caption).foregroundStyle(Color.muted) }
 }
 
 struct PlanSection: View {
@@ -58,21 +58,21 @@ struct PlanSection: View {
             VStack(spacing: 14) {
                 WallyBubble()
                 if let t = store.targets {
-                    Card { HStack { VStack(alignment: .leading) { Text("Your daily target").font(.caption).foregroundStyle(Color.muted)
-                        Text("\(t.kcal) kcal · \(t.protein) g protein").font(.headline).accessibilityIdentifier("target-line") }; Spacer() } }
+                    Card { HStack { VStack(alignment: .leading) { Text("Your daily target").font(.fh_caption).foregroundStyle(Color.muted)
+                        Text("\(t.kcal) kcal · \(t.protein) g protein").font(.fh_headline).accessibilityIdentifier("target-line") }; Spacer() } }
                 }
                 ForEach(days, id: \.self) { d in
                     let k = dayKey(d)
                     Card {
-                        Text(d.formatted(.dateTime.weekday(.wide).day().month())).font(.headline)
+                        Text(d.formatted(.dateTime.weekday(.wide).day().month())).font(.fh_headline)
                         ForEach(Lists.meals, id: \.self) { m in
                             if let r = store.s.plan[k]?[m].flatMap({ store.cat.recipe($0) }) {
                                 HStack {
                                     NavigationLink { RecipeDetail(recipe: r) } label: {
-                                        VStack(alignment: .leading, spacing: 2) { Text(m.capitalized).font(.caption).foregroundStyle(Color.muted); Text(r.name).font(.subheadline.weight(.semibold)).multilineTextAlignment(.leading); MealLine(r: r) }
+                                        VStack(alignment: .leading, spacing: 2) { HStack(spacing: 4) { BrandIcon("m-" + m).foregroundStyle(Color.tone("meal." + m)); Text(m.capitalized).font(.fh_caption).foregroundStyle(Color.muted) }; Text(r.name).font(.fh_subheadline_b).multilineTextAlignment(.leading); MealLine(r: r); Text("Why: " + (store.whyThisMeal(r, meal: m, day: k).first ?? "")).font(.fh_caption).foregroundStyle(Color.muted).multilineTextAlignment(.leading) }
                                     }.foregroundStyle(Color.ink)
                                     Spacer()
-                                    Button { store.swap(day: k, meal: m); store.say("Swapped \(m)") } label: { Image(systemName: "arrow.triangle.2.circlepath").frame(width: 44, height: 44) }
+                                    Button { store.swap(day: k, meal: m); store.say("Swapped \(m)") } label: { BrandIcon( "arrow.triangle.2.circlepath").frame(width: 44, height: 44) }
                                         .foregroundStyle(Color.sage).accessibilityLabel("Swap \(m)").accessibilityIdentifier("swap-\(k)-\(m)")
                                 }
                             }
@@ -95,7 +95,7 @@ struct RecipeList: View {
     var body: some View {
         List(list.prefix(300)) { r in
             NavigationLink { RecipeDetail(recipe: r) } label: {
-                VStack(alignment: .leading, spacing: 2) { Text(r.name).font(.subheadline.weight(.semibold)); MealLine(r: r) }
+                VStack(alignment: .leading, spacing: 2) { Text(r.name).font(.fh_subheadline_b); MealLine(r: r) }
             }.listRowBackground(Color.surface)
         }.listStyle(.plain).scrollContentBackground(.hidden).searchable(text: $q, prompt: "Search \(meal)")
     }
@@ -107,7 +107,7 @@ struct SnacksSection: View {
     var body: some View {
         ScrollView { VStack(spacing: 14) {
             Card {
-                Text("There are no snack recipes in the library yet, so Fit Hard does not invent any. Add your own snack and it goes on your calendar.").font(.subheadline).foregroundStyle(Color.muted)
+                Text("There are no snack recipes in the library yet, so Fit Hard does not invent any. Add your own snack and it goes on your calendar.").font(.fh_subheadline).foregroundStyle(Color.muted)
                 TextField("Snack name", text: $name).padding(12).background(Color.cream, in: RoundedRectangle(cornerRadius: 12))
                 DatePicker("Time", selection: $time, displayedComponents: .hourAndMinute)
                 BigButton(title: "Add to today", icon: "plus") {
@@ -116,8 +116,8 @@ struct SnacksSection: View {
                 }
             }
             let snacks = store.s.events.filter { $0.kind == "snack" }.sorted { $0.day > $1.day }
-            ForEach(snacks) { e in Card { HStack { VStack(alignment: .leading) { Text(e.title).font(.subheadline.weight(.semibold)); Text("\(e.day) \(e.time)").font(.caption).foregroundStyle(Color.muted) }
-                Spacer(); Button { store.s.events.removeAll { $0.id == e.id } } label: { Image(systemName: "trash") }.foregroundStyle(Color.muted) } } }
+            ForEach(snacks) { e in Card { HStack { VStack(alignment: .leading) { Text(e.title).font(.fh_subheadline_b); Text("\(e.day) \(e.time)").font(.fh_caption).foregroundStyle(Color.muted) }
+                Spacer(); Button { store.s.events.removeAll { $0.id == e.id } } label: { BrandIcon( "trash") }.foregroundStyle(Color.muted) } } }
         }.padding(16) }
     }
 }
@@ -129,7 +129,7 @@ struct MyRecipes: View {
         if list.isEmpty {
             VStack(spacing: 10) { Spacer(); BundleImage(name: "wally-hello").frame(height: 100); Text("Tap the heart on any recipe to keep it here.").foregroundStyle(Color.muted).multilineTextAlignment(.center); Spacer() }.padding()
         } else {
-            List(list) { r in NavigationLink { RecipeDetail(recipe: r) } label: { VStack(alignment: .leading) { Text(r.name).font(.subheadline.weight(.semibold)); MealLine(r: r) } }.listRowBackground(Color.surface) }
+            List(list) { r in NavigationLink { RecipeDetail(recipe: r) } label: { VStack(alignment: .leading) { Text(r.name).font(.fh_subheadline_b); MealLine(r: r) } }.listRowBackground(Color.surface) }
                 .listStyle(.plain).scrollContentBackground(.hidden)
         }
     }
@@ -139,22 +139,33 @@ struct RecipeDetail: View {
     @EnvironmentObject var store: Store
     let recipe: Recipe
     @State private var picked = false
+    @State private var cooking = false
     var body: some View {
         let lines = RecipeService.lines(for: RecipeService.perServing(recipe), inventory: store.s.inventory)
         let fav = store.s.favs.contains(recipe.id)
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                HStack(spacing: 8) { Label("\(recipe.minutes) min", systemImage: "clock"); Label("\(recipe.kcal) kcal", systemImage: "flame")
-                    if let m = RecipeService.macros(recipe) { Label("\(m.p) g protein", systemImage: "bolt.heart") } }.font(.subheadline).foregroundStyle(Color.muted)
-                if let m = RecipeService.macros(recipe) { Text("Per serving. Carbs \(m.c) g, fat \(m.f) g. Estimated from ingredient reference values.").font(.caption).foregroundStyle(Color.muted) }
-                else { Text("Protein is not available for this recipe.").font(.caption).foregroundStyle(Color.muted) }
-                if !recipe.allergens.isEmpty { Text("Contains: " + recipe.allergens.joined(separator: ", ")).font(.caption).foregroundStyle(Color.amber) }
+                HStack(spacing: 8) { BrandLabel("\(recipe.minutes) min", icon: "clock"); BrandLabel("\(recipe.kcal) kcal", icon: "flame")
+                    if let m = RecipeService.macros(recipe) { BrandLabel("\(m.p) g protein", icon: "bolt.heart") } }.font(.fh_subheadline).foregroundStyle(Color.muted)
+                if let m = RecipeService.macros(recipe) { Text("Per serving. Carbs \(m.c) g, fat \(m.f) g. Estimated from ingredient reference values.").font(.fh_caption).foregroundStyle(Color.muted) }
+                else { Text("Protein is not available for this recipe.").font(.fh_caption).foregroundStyle(Color.muted) }
+                if !recipe.allergens.isEmpty { Text("Contains: " + recipe.allergens.joined(separator: ", ")).font(.fh_caption).foregroundStyle(Color.amber) }
+                Card {
+                    SectionTitle(text: "Why this meal")
+                    ForEach(Array(store.whyThisMeal(recipe, meal: recipe.meal).enumerated()), id: \.offset) { _, line in
+                        HStack(alignment: .top, spacing: 8) { BrandIcon("checkmark").foregroundStyle(Color.sage); Text(line).font(.fh_subheadline) }
+                    }
+                }.accessibilityIdentifier("why-this-meal")
+                BigButton(title: "Cook mode", icon: "flame", filled: false) { cooking = true }.accessibilityIdentifier("cook-mode")
+                if store.s.plan[store.today]?[recipe.meal] == recipe.id {
+                    Card { SectionTitle(text: "Log it lightly"); PortionBar(meal: recipe.meal) }
+                }
                 Card {
                     SectionTitle(text: "Ingredients for one serving")
                     ForEach(lines) { l in
-                        HStack { Image(systemName: l.buy <= 0.001 ? "checkmark.circle.fill" : "cart").foregroundStyle(l.buy <= 0.001 ? Color.sage : Color.amber)
-                            Text("\(l.name.capitalized), \(RecipeService.fmt(l.need)) \(l.unit)").font(.subheadline); Spacer()
-                            Text(l.buy <= 0.001 ? "Have" : "Buy \(RecipeService.fmt(l.buy)) \(l.unit)").font(.caption.weight(.semibold)).foregroundStyle(l.buy <= 0.001 ? Color.sage : Color.amber) }
+                        HStack { BrandIcon( l.buy <= 0.001 ? "checkmark.circle.fill" : "cart").foregroundStyle(l.buy <= 0.001 ? Color.sage : Color.amber)
+                            Text("\(l.name.capitalized), \(RecipeService.fmt(l.need)) \(l.unit)").font(.fh_subheadline); Spacer()
+                            Text(l.buy <= 0.001 ? "Have" : "Buy \(RecipeService.fmt(l.buy)) \(l.unit)").font(.fh_caption_b).foregroundStyle(l.buy <= 0.001 ? Color.sage : Color.amber) }
                     }
                 }
                 Card { SectionTitle(text: "Steps"); ForEach(Array(recipe.steps.enumerated()), id: \.offset) { n, s in
@@ -164,8 +175,9 @@ struct RecipeDetail: View {
                 }
             }.padding(16)
         }.background(Color.cream).navigationTitle(recipe.name).navigationBarTitleDisplayMode(.inline)
+        .fullScreenCover(isPresented: $cooking) { CookMode(recipe: recipe).environmentObject(store) }
         .toolbar { ToolbarItem(placement: .navigationBarTrailing) {
-            Button { if fav { store.s.favs.removeAll { $0 == recipe.id } } else { store.s.favs.append(recipe.id) }; haptic() } label: { Image(systemName: fav ? "heart.fill" : "heart") }.accessibilityLabel("Keep recipe") } }
+            Button { if fav { store.s.favs.removeAll { $0 == recipe.id } } else { store.s.favs.append(recipe.id) }; haptic() } label: { BrandIcon( fav ? "heart.fill" : "heart") }.accessibilityLabel("Keep recipe") } }
     }
 }
 
@@ -194,10 +206,10 @@ struct HaveSection: View {
                 if store.s.inventory.isEmpty { Text("Nothing yet. Add a few things and shopping gets shorter.").foregroundStyle(Color.muted) }
                 ForEach($store.s.inventory) { $it in
                     HStack {
-                        VStack(alignment: .leading) { Text(it.name.capitalized).font(.subheadline.weight(.semibold)); if let e = it.expiry { Text("Use by \(e)").font(.caption).foregroundStyle(Color.muted) } }
+                        VStack(alignment: .leading) { Text(it.name.capitalized).font(.fh_subheadline_b); if let e = it.expiry { Text("Use by \(e)").font(.fh_caption).foregroundStyle(Color.muted) } }
                         Spacer()
                         Stepper("\(RecipeService.fmt(it.qty)) \(it.unit)", value: $it.qty, in: 0...5000, step: it.unit == "g" || it.unit == "ml" ? 50 : 1).fixedSize()
-                        Button { store.s.inventory.removeAll { $0.id == it.id } } label: { Image(systemName: "trash").frame(width: 36, height: 36) }.foregroundStyle(Color.muted)
+                        Button { store.s.inventory.removeAll { $0.id == it.id } } label: { BrandIcon( "trash").frame(width: 36, height: 36) }.foregroundStyle(Color.muted)
                     }
                 }
             }
@@ -214,7 +226,7 @@ struct ShopSection: View {
         let have = lines.filter { $0.buy <= 0.001 }
         let cats = Dictionary(grouping: toBuy, by: { $0.cat }).keys.sorted()
         List {
-            Section { Text("\(toBuy.count) to buy for the next 7 days. Items you already have are left out.").font(.footnote).foregroundStyle(Color.muted) }.listRowBackground(Color.clear)
+            Section { Text("\(toBuy.count) to buy for the next 7 days. Items you already have are left out.").font(.fh_footnote).foregroundStyle(Color.muted) }.listRowBackground(Color.clear)
             ForEach(cats, id: \.self) { c in
                 Section(c) {
                     ForEach(toBuy.filter { $0.cat == c }) { l in
@@ -222,19 +234,19 @@ struct ShopSection: View {
                         VStack(alignment: .leading, spacing: 6) {
                             HStack {
                                 Button { if on { store.s.groceryChecked.removeAll { $0 == l.id } } else { store.s.groceryChecked.append(l.id); haptic(.soft) } } label: {
-                                    Image(systemName: on ? "checkmark.circle.fill" : "circle").font(.title3).foregroundStyle(Color.sage).frame(width: 44, height: 36) }
+                                    BrandIcon( on ? "checkmark.circle.fill" : "circle").font(.fh_title3).foregroundStyle(Color.sage).frame(width: 44, height: 36) }
                                 VStack(alignment: .leading) {
-                                    Text(l.name.capitalized).font(.subheadline.weight(.semibold)).strikethrough(on)
-                                    Text("Need \(RecipeService.fmt(l.need)), have \(RecipeService.fmt(l.have)) \(l.unit)").font(.caption).foregroundStyle(Color.muted)
+                                    Text(l.name.capitalized).font(.fh_subheadline_b).strikethrough(on)
+                                    Text("Need \(RecipeService.fmt(l.need)), have \(RecipeService.fmt(l.have)) \(l.unit)").font(.fh_caption).foregroundStyle(Color.muted)
                                 }
                                 Spacer()
-                                Text("Buy \(RecipeService.fmt(store.buyQty(l))) \(l.unit)").font(.caption.weight(.bold))
+                                Text("Buy \(RecipeService.fmt(store.buyQty(l))) \(l.unit)").font(.fh_caption_b)
                             }
                             HStack {
                                 Stepper("Change amount", value: Binding(get: { store.buyQty(l) }, set: { store.s.shopQty[l.id] = $0 }), in: 0...5000, step: l.unit == "g" || l.unit == "ml" ? 50 : 1).labelsHidden()
                                 Spacer()
-                                Button("I have it") { store.markAvailable(l); haptic() }.font(.caption.weight(.bold)).padding(.horizontal, 10).padding(.vertical, 6).background(Color.tint, in: Capsule())
-                                Button { store.s.shopRemoved.append(l.id) } label: { Image(systemName: "trash").frame(width: 36, height: 30) }.foregroundStyle(Color.muted)
+                                Button("I have it") { store.markAvailable(l); haptic() }.font(.fh_caption_b).padding(.horizontal, 10).padding(.vertical, 6).background(Color.tint, in: Capsule())
+                                Button { store.s.shopRemoved.append(l.id) } label: { BrandIcon( "trash").frame(width: 36, height: 30) }.foregroundStyle(Color.muted)
                             }
                         }.listRowBackground(Color.surface)
                     }
@@ -243,9 +255,9 @@ struct ShopSection: View {
             if !store.s.shopExtra.isEmpty {
                 Section("My own items") {
                     ForEach($store.s.shopExtra) { $it in
-                        HStack { Button { it.done.toggle() } label: { Image(systemName: it.done ? "checkmark.circle.fill" : "circle").font(.title3).foregroundStyle(Color.sage) }
+                        HStack { Button { it.done.toggle() } label: { BrandIcon( it.done ? "checkmark.circle.fill" : "circle").font(.fh_title3).foregroundStyle(Color.sage) }
                             Text("\(it.name.capitalized), \(RecipeService.fmt(it.qty)) \(it.unit)").strikethrough(it.done)
-                            Spacer(); Button { store.s.shopExtra.removeAll { $0.id == it.id } } label: { Image(systemName: "trash") }.foregroundStyle(Color.muted) }
+                            Spacer(); Button { store.s.shopExtra.removeAll { $0.id == it.id } } label: { BrandIcon( "trash") }.foregroundStyle(Color.muted) }
                     }.listRowBackground(Color.surface)
                 }
             }
@@ -258,7 +270,7 @@ struct ShopSection: View {
                     store.s.shopExtra.append(ShopItem(name: n, qty: Double(qty) ?? 1, unit: unit)); name = ""
                 }.accessibilityIdentifier("shop-add")
             }.listRowBackground(Color.surface)
-            if !have.isEmpty { Section("Already covered by your kitchen") { ForEach(have) { l in Label(l.name.capitalized, systemImage: "checkmark").font(.subheadline).foregroundStyle(Color.muted) }.listRowBackground(Color.surface) } }
+            if !have.isEmpty { Section("Already covered by your kitchen") { ForEach(have) { l in BrandLabel(l.name.capitalized, icon: "checkmark").font(.fh_subheadline).foregroundStyle(Color.muted) }.listRowBackground(Color.surface) } }
             if !store.s.shopRemoved.isEmpty { Section { Button("Bring back removed items") { store.s.shopRemoved = [] } }.listRowBackground(Color.surface) }
         }.scrollContentBackground(.hidden).accessibilityIdentifier("shop-list")
     }
@@ -274,20 +286,20 @@ struct NutritionOverview: View {
                 SectionTitle(text: "Today")
                 if let t = t {
                     bar("Calories", e.kcal, t.kcal, "kcal"); bar("Protein", e.p, t.protein, "g")
-                    Text("Carbs about \(t.carbs) g and fat about \(t.fat) g make up the rest.").font(.caption).foregroundStyle(Color.muted)
+                    Text("Carbs about \(t.carbs) g and fat about \(t.fat) g make up the rest.").font(.fh_caption).foregroundStyle(Color.muted)
                 } else if !NutritionService.targetsAllowed(store.s.profile) {
                     Text("Fit Hard does not set calorie targets for you. Please talk with a clinician about food. Your meals still work.").foregroundStyle(Color.muted)
                 } else {
                     Text("Add your age, height and weight in your profile to see daily targets.").foregroundStyle(Color.muted)
-                    Text("Eaten so far: \(e.kcal) kcal").font(.subheadline)
+                    Text("Eaten so far: \(e.kcal) kcal").font(.fh_subheadline)
                 }
             }
-            Card { Text("Targets use the Mifflin St Jeor estimate with your activity level. Protein is kept between 1.4 and 2.0 g per kg. These are estimates, not medical advice. Recipe protein, carbs and fat are estimated from ingredient reference values, and a recipe is only shown with numbers when they agree with its calories.").font(.caption).foregroundStyle(Color.muted) }
+            Card { Text("Targets use the Mifflin St Jeor estimate with your activity level. Protein is kept between 1.4 and 2.0 g per kg. These are estimates, not medical advice. Recipe protein, carbs and fat are estimated from ingredient reference values, and a recipe is only shown with numbers when they agree with its calories.").font(.fh_caption).foregroundStyle(Color.muted) }
         }.padding(16) }
     }
     func bar(_ n: String, _ v: Int, _ g: Int, _ u: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack { Text(n).font(.subheadline.weight(.semibold)); Spacer(); Text("\(v) of \(g) \(u)").font(.caption).foregroundStyle(Color.muted) }
+            HStack { Text(n).font(.fh_subheadline_b); Spacer(); Text("\(v) of \(g) \(u)").font(.fh_caption).foregroundStyle(Color.muted) }
             ProgressView(value: min(1, Double(v) / Double(max(1, g)))).tint(Color.sage)
         }
     }

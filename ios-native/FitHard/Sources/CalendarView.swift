@@ -21,20 +21,28 @@ struct CalendarScreen: View {
             }
         }.background(Color.cream).navigationTitle("Calendar").navigationBarTitleDisplayMode(.inline)
         .toolbar { ToolbarItem(placement: .navigationBarTrailing) {
-            Button { adding = true } label: { Image(systemName: "plus.circle.fill").font(.title2).frame(width: 44, height: 44) }.accessibilityLabel("Add to calendar").accessibilityIdentifier("cal-add") } }
+            Button { adding = true } label: { BrandIcon( "plus.circle.fill").font(.fh_title2).frame(width: 44, height: 44) }.accessibilityLabel("Add to calendar").accessibilityIdentifier("cal-add") } }
         .sheet(isPresented: $adding) { NavigationStack { EventEditor(event: nil, day: sel) } }
         .sheet(item: $editing) { e in NavigationStack { EventEditor(event: e, day: e.day) } }
     }
 }
 
 struct Legend: View {
+    func pill(_ icon: String, _ label: String, _ tone: String) -> some View {
+        HStack(spacing: 4) { BrandIcon(icon).foregroundStyle(Color.tone(tone)); Text(label).font(.fh_caption2_b) }
+            .padding(.horizontal, 8).padding(.vertical, 4).background(Color.tone(tone).opacity(0.18), in: Capsule()).overlay(Capsule().stroke(Color.tone(tone), lineWidth: 1))
+    }
     var body: some View {
-        Flow(spacing: 6) {
-            ForEach(Color.catNames, id: \.0) { c in
-                HStack(spacing: 4) { Image(systemName: c.2).font(.caption2); Text(c.1).font(.caption2.weight(.semibold)) }
-                    .padding(.horizontal, 8).padding(.vertical, 4).background(Color.cat(c.0).opacity(0.18), in: Capsule()).overlay(Capsule().stroke(Color.cat(c.0), lineWidth: 1))
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Training by type").font(.fh_caption_b).foregroundStyle(Color.muted)
+            Flow(spacing: 6) { ForEach(TrainType.allCases, id: \.self) { t in pill(t.icon, t.label, t.tone) } }
+            Text("Food by meal").font(.fh_caption_b).foregroundStyle(Color.muted)
+            Flow(spacing: 6) { ForEach(MealKind.allCases, id: \.self) { m in pill(m.icon, m.label, m.tone) } }
+            Text("Other").font(.fh_caption_b).foregroundStyle(Color.muted)
+            Flow(spacing: 6) {
+                pill("cross.case", "Medication", "medication"); pill("person", "Personal", "personal")
+                HStack(spacing: 4) { BrandIcon("checkmark.circle.fill").font(.fh_caption2); Text("Done").font(.fh_caption2_b) }.padding(.horizontal, 8).padding(.vertical, 4).overlay(Capsule().stroke(Color.line, lineWidth: 1))
             }
-            HStack(spacing: 4) { Image(systemName: "checkmark.circle.fill").font(.caption2); Text("Done").font(.caption2.weight(.semibold)) }.padding(.horizontal, 8).padding(.vertical, 4).overlay(Capsule().stroke(Color.line, lineWidth: 1))
         }.accessibilityIdentifier("cal-legend")
     }
 }
@@ -43,14 +51,14 @@ struct ItemRow: View {
     let it: CalItem
     var body: some View {
         HStack(spacing: 10) {
-            RoundedRectangle(cornerRadius: 3).fill(Color.cat(it.cat)).frame(width: 5)
-            Image(systemName: it.done ? "checkmark.circle.fill" : it.icon).foregroundStyle(Color.cat(it.cat)).frame(width: 24)
+            RoundedRectangle(cornerRadius: 3).fill(Color.tone(it.colorKey)).frame(width: 5)
+            BrandIcon( it.done ? "checkmark.circle.fill" : it.icon).foregroundStyle(Color.tone(it.colorKey)).frame(width: 24)
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(it.time) · \(it.title)").font(.subheadline.weight(.semibold)).strikethrough(it.done && it.cat != "medication").multilineTextAlignment(.leading)
-                if !it.detail.isEmpty { Text(it.detail).font(.caption).foregroundStyle(Color.muted) }
+                Text("\(it.time) · \(it.title)").font(.fh_subheadline_b).strikethrough(it.done && it.cat != "medication").multilineTextAlignment(.leading)
+                if !it.detail.isEmpty { Text(it.detail).font(.fh_caption).foregroundStyle(Color.muted) }
             }
             Spacer(minLength: 0)
-        }.padding(10).background(Color.cat(it.cat).opacity(0.10), in: RoundedRectangle(cornerRadius: 12)).frame(minHeight: 44)
+        }.padding(10).background(Color.tone(it.colorKey).opacity(0.10), in: RoundedRectangle(cornerRadius: 12)).frame(minHeight: 44)
     }
 }
 
@@ -63,15 +71,15 @@ struct DayDetail: View {
         let train = store.routine(on: day)
         ScrollView { VStack(spacing: 12) {
             HStack {
-                Button { shift(-1) } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
-                Spacer(); Text(dateFromKey(day)?.formatted(.dateTime.weekday(.wide).day().month()) ?? day).font(.headline).accessibilityIdentifier("cal-day-title"); Spacer()
-                Button { shift(1) } label: { Image(systemName: "chevron.right").frame(width: 44, height: 44) }
+                Button { shift(-1) } label: { BrandIcon( "chevron.left").frame(width: 44, height: 44) }
+                Spacer(); Text(dateFromKey(day)?.formatted(.dateTime.weekday(.wide).day().month()) ?? day).font(.fh_headline).accessibilityIdentifier("cal-day-title"); Spacer()
+                Button { shift(1) } label: { BrandIcon( "chevron.right").frame(width: 44, height: 44) }
             }
             if train != nil, let lunch = store.s.plan[day]?["lunch"].flatMap({ store.cat.recipe($0) }) {
-                HStack(spacing: 10) { Image(systemName: "fork.knife").foregroundStyle(Color.cat("meals"))
-                    VStack(alignment: .leading, spacing: 2) { Text("Training day lunch").font(.caption).foregroundStyle(Color.muted)
-                        Text("\(store.mealTime("lunch")) · Lunch: \(store.line(lunch))").font(.subheadline.weight(.semibold)).accessibilityIdentifier("lunch-card") }
-                    Spacer() }.padding(12).background(Color.cat("meals").opacity(0.14), in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.cat("meals"), lineWidth: 1))
+                HStack(spacing: 10) { BrandIcon("m-lunch").foregroundStyle(Color.tone("meal.lunch"))
+                    VStack(alignment: .leading, spacing: 2) { Text("Training day lunch").font(.fh_caption).foregroundStyle(Color.muted)
+                        Text("\(store.mealTime("lunch")) · Lunch: \(store.line(lunch))").font(.fh_subheadline_b).accessibilityIdentifier("lunch-card") }
+                    Spacer() }.padding(12).background(Color.tone("meal.lunch").opacity(0.14), in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.tone("meal.lunch"), lineWidth: 1))
             }
             if items.isEmpty { Card { Text("Nothing planned. Tap the plus to add something.").foregroundStyle(Color.muted) } }
             ForEach(items) { it in
@@ -82,15 +90,15 @@ struct DayDetail: View {
                             Button("Start") { store.training = r }.accessibilityIdentifier("cal-start")
                             Button("Skip") { store.skipWorkout(day: day, routine: r) }
                             Button("Move to tomorrow") { store.moveWorkout(from: day, routine: r, to: dayKey(Calendar.current.date(byAdding: .day, value: 1, to: dateFromKey(day) ?? Date()) ?? Date())) }
-                        }.font(.caption.weight(.bold)).padding(.leading, 12)
+                        }.font(.fh_caption_b).padding(.leading, 12)
                     }
                     if it.cat == "meals", it.id.hasPrefix("meal-") {
                         let meal = String(it.id.split(separator: "-").last ?? "")
-                        Button("Swap this meal") { store.swap(day: day, meal: meal) }.font(.caption.weight(.bold)).padding(.leading, 12).accessibilityIdentifier("cal-swap-\(meal)")
+                        Button("Swap this meal") { store.swap(day: day, meal: meal) }.font(.fh_caption_b).padding(.leading, 12).accessibilityIdentifier("cal-swap-\(meal)")
                     }
                 }
             }
-            Button("Regenerate this week") { store.regenerateWeek(); store.say("Week regenerated") }.font(.footnote.weight(.semibold))
+            Button("Regenerate this week") { store.regenerateWeek(); store.say("Week regenerated") }.font(.fh_footnote_b)
         }.padding(16) }
     }
     func shift(_ n: Int) { if let d = dateFromKey(day), let x = Calendar.current.date(byAdding: .day, value: n, to: d) { day = dayKey(x) } }
@@ -111,11 +119,11 @@ struct WeekView: View {
                 let k = dayKey(d)
                 Button { open(k) } label: {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(d.formatted(.dateTime.weekday(.wide).day().month())).font(.subheadline.weight(.bold))
+                        Text(d.formatted(.dateTime.weekday(.wide).day().month())).font(.fh_subheadline_b)
                         let items = store.calItems(on: k)
-                        if items.isEmpty { Text("Free").font(.caption).foregroundStyle(Color.muted) }
+                        if items.isEmpty { Text("Free").font(.fh_caption).foregroundStyle(Color.muted) }
                         ForEach(items.prefix(4)) { ItemRow(it: $0) }
-                        if items.count > 4 { Text("+\(items.count - 4) more").font(.caption).foregroundStyle(Color.muted) }
+                        if items.count > 4 { Text("+\(items.count - 4) more").font(.fh_caption).foregroundStyle(Color.muted) }
                     }.padding(12).frame(maxWidth: .infinity, alignment: .leading).background(Color.surface, in: RoundedRectangle(cornerRadius: 16))
                 }.buttonStyle(.plain).foregroundStyle(Color.ink)
             }
@@ -133,7 +141,7 @@ struct UpcomingView: View {
                     let k = dayKey(d); let items = store.calItems(on: k).filter { !$0.done }
                     if !items.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
-                            Text(i == 0 ? "Today" : d.formatted(.dateTime.weekday(.wide).day().month())).font(.subheadline.weight(.bold))
+                            Text(i == 0 ? "Today" : d.formatted(.dateTime.weekday(.wide).day().month())).font(.fh_subheadline_b)
                             ForEach(items.prefix(5)) { ItemRow(it: $0).onTapGesture { open(k) } }
                         }
                     }
@@ -158,19 +166,19 @@ struct MonthGrid: View {
     var body: some View {
         ScrollView { VStack(spacing: 14) {
             Card {
-                HStack { Button { month = cal.date(byAdding: .month, value: -1, to: month) ?? month } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }; Spacer()
-                    Button { month = Date(); sel = store.today; haptic(.soft) } label: { Text(month.formatted(.dateTime.month(.wide).year())).font(.headline) }.buttonStyle(.plain); Spacer()
-                    Button { month = cal.date(byAdding: .month, value: 1, to: month) ?? month } label: { Image(systemName: "chevron.right").frame(width: 44, height: 44) } }
+                HStack { Button { month = cal.date(byAdding: .month, value: -1, to: month) ?? month } label: { BrandIcon( "chevron.left").frame(width: 44, height: 44) }; Spacer()
+                    Button { month = Date(); sel = store.today; haptic(.soft) } label: { Text(month.formatted(.dateTime.month(.wide).year())).font(.fh_headline) }.buttonStyle(.plain); Spacer()
+                    Button { month = cal.date(byAdding: .month, value: 1, to: month) ?? month } label: { BrandIcon( "chevron.right").frame(width: 44, height: 44) } }
                 let cols = Array(repeating: GridItem(.flexible()), count: 7)
                 let heads = Array(zip([0, 1, 2, 3, 4, 5, 6], ["M", "T", "W", "T", "F", "S", "S"]))
                 LazyVGrid(columns: cols) {
-                    ForEach(heads, id: \.0) { h in Text(h.1).font(.caption).foregroundStyle(Color.muted) }
+                    ForEach(heads, id: \.0) { h in Text(LocalizedStringKey(h.1)).font(.fh_caption).foregroundStyle(Color.muted) }
                     ForEach(Array(days.enumerated()), id: \.offset) { _, d in
                         if let d = d {
-                            let k = dayKey(d); let cats = Array(Set(store.calItems(on: k).map { $0.cat })).sorted()
+                            let k = dayKey(d); let cats = Array(Set(store.calItems(on: k).map { $0.colorKey })).sorted()
                             Button { sel = k; haptic(.soft) } label: {
-                                VStack(spacing: 2) { Text("\(cal.component(.day, from: d))").font(.subheadline.weight(k == store.today ? .bold : .regular))
-                                    HStack(spacing: 2) { ForEach(cats, id: \.self) { c in Circle().fill(Color.cat(c)).frame(width: 5, height: 5) } }.frame(height: 6) }
+                                VStack(spacing: 2) { Text("\(cal.component(.day, from: d))").font(.fh_subheadline.weight(k == store.today ? .bold : .regular))
+                                    HStack(spacing: 2) { ForEach(cats, id: \.self) { c in Circle().fill(Color.tone(c)).frame(width: 5, height: 5) } }.frame(height: 6) }
                                 .frame(maxWidth: .infinity, minHeight: 44).background(k == sel ? Color.tint : Color.clear, in: RoundedRectangle(cornerRadius: 10))
                             }.buttonStyle(.plain).foregroundStyle(Color.ink)
                         } else { Color.clear.frame(height: 44) }
@@ -179,10 +187,10 @@ struct MonthGrid: View {
             }
             let items = store.calItems(on: sel)
             Card {
-                HStack { Text(dateFromKey(sel)?.formatted(.dateTime.weekday(.wide).day().month()) ?? sel).font(.headline); Spacer(); Button("Open day") { open() }.font(.subheadline.weight(.semibold)) }
+                HStack { Text(dateFromKey(sel)?.formatted(.dateTime.weekday(.wide).day().month()) ?? sel).font(.fh_headline); Spacer(); Button("Open day") { open() }.font(.fh_subheadline_b) }
                 if items.isEmpty { Text("Nothing planned. That is fine.").foregroundStyle(Color.muted) }
                 ForEach(items) { ItemRow(it: $0) }
-                ForEach(store.s.habits) { h in Label(h.name, systemImage: h.done.contains(sel) ? "checkmark.circle.fill" : "circle").font(.subheadline).foregroundStyle(h.done.contains(sel) ? Color.sage : Color.ink) }
+                ForEach(store.s.habits) { h in BrandLabel(h.name, icon: h.done.contains(sel) ? "checkmark.circle.fill" : "circle").font(.fh_subheadline).foregroundStyle(h.done.contains(sel) ? Color.sage : Color.ink) }
             }
         }.padding(16) }
     }

@@ -37,7 +37,7 @@ struct BigButton: View {
     let title: String; var icon: String? = nil; var filled = true; let action: () -> Void
     var body: some View {
         Button(action: { haptic(); action() }) {
-            HStack { if let i = icon { Image(systemName: i) }; Text(title).fontWeight(.bold) }
+            HStack { if let i = icon { BrandIcon( i) }; Text(LocalizedStringKey(title)).fontWeight(.bold) }
                 .frame(maxWidth: .infinity).padding(.vertical, 16)
                 .background(filled ? Color.sage : Color.tint, in: Capsule())
                 .foregroundStyle(filled ? Color.surface : Color.ink)
@@ -49,8 +49,8 @@ struct Chip: View {
     let label: String; var icon: String? = nil; let on: Bool; let tap: () -> Void
     var body: some View {
         Button(action: { haptic(.soft); tap() }) {
-            HStack(spacing: 6) { if let i = icon { Image(systemName: i) }; Text(label) }
-                .font(.subheadline.weight(.semibold))
+            HStack(spacing: 6) { if let i = icon { BrandIcon( i) }; Text(LocalizedStringKey(label)) }
+                .font(.fh_subheadline_b)
                 .padding(.horizontal, 14).padding(.vertical, 10)
                 .background(on ? Color.sage : Color.surface, in: Capsule())
                 .overlay(Capsule().stroke(on ? Color.sage : Color.line, lineWidth: 1))
@@ -126,7 +126,7 @@ struct AnimatedFrames: View {
 
 struct SectionTitle: View {
     let text: String
-    var body: some View { Text(text).font(.system(.title3, design: .serif).weight(.bold)).foregroundStyle(Color.ink) }
+    var body: some View { Text(LocalizedStringKey(text)).font(.fh_title3_b).foregroundStyle(Color.ink) }
 }
 
 struct ThemePicker: View {
@@ -141,9 +141,9 @@ struct ThemePicker: View {
                         ZStack {
                             Circle().fill(Color(hex: th.2)).frame(width: 48, height: 48)
                                 .overlay(Circle().stroke(on ? Color.sage : Color.line, lineWidth: on ? 3 : 1))
-                            Text("Aa").font(.subheadline.bold()).foregroundStyle(Color(hex: th.3))
+                            Text("Aa").font(.fh_subheadline_b).foregroundStyle(Color(hex: th.3))
                         }
-                        Text(th.1).font(.caption.weight(.semibold)).foregroundStyle(Color.ink)
+                        Text(LocalizedStringKey(th.1)).font(.fh_caption_b).foregroundStyle(Color.ink)
                     }.frame(maxWidth: .infinity)
                 }.buttonStyle(.plain)
                 .accessibilityLabel("\(th.1) theme").accessibilityIdentifier("theme-\(th.0)")

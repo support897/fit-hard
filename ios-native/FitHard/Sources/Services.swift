@@ -61,13 +61,15 @@ enum RecipeService {
     }
     static func share(_ meal: String, count: Int) -> Double {
         if count <= 2 { return meal == "lunch" ? 0.45 : 0.55 }
-        switch meal { case "breakfast": return 0.25; case "lunch": return 0.35; default: return 0.40 }
+        switch meal { case "breakfast": return 0.30; case "lunch": return 0.35; default: return 0.35 }   // near even, so protein is spread across meals (Schoenfeld and Aragon 2018)
     }
     /// Picks the recipe whose calories (and protein, when known) sit closest to the share of the day's target.
-    static func pick(meal: String, profile p: Profile, targets t: Targets?, count: Int, seed: UInt64, exclude: Set<String>, avoid: String? = nil) -> Recipe? {
+    static func pick(meal: String, profile p: Profile, targets t: Targets?, count: Int, seed: UInt64, exclude: Set<String>, avoid: String? = nil, light: Bool = false, maxKcal: Int? = nil) -> Recipe? {
         var pool = cat.recipes.filter { $0.meal == meal && allowed($0, p) && $0.id != avoid }
         let quick = pool.filter { $0.minutes <= max(p.cookMinutes, 20) + 15 }
         if quick.count >= 12 { pool = quick }
+        if let mk = maxKcal { pool = pool.filter { $0.kcal <= mk }; if pool.isEmpty { return nil } }
+        if light { let easy = pool.filter { $0.minutes <= 20 }; if easy.count >= 6 { pool = easy } }
         let liked = pool.filter { r in !Set(r.cuisines).isDisjoint(with: p.cuisines) }
         if liked.count >= 6 { pool = liked }
         var rng = SeededRNG(state: seed)
@@ -76,7 +78,8 @@ enum RecipeService {
         let tk = Double(t.kcal) * share(meal, count: count), tp = Double(t.protein) * share(meal, count: count)
         func score(_ r: Recipe) -> Double {
             var s = abs(Double(r.kcal) - tk) / max(1, tk)
-            if let m = macros(r) { s += abs(Double(m.p) - tp) / max(1, tp) * 0.6 } else { s += 0.6 }
+            let pw = p.primaryGoal == "lose" ? 1.0 : 0.6   // Lose goal leans on protein dense meals (Jager et al. 2017)
+            if let m = macros(r) { s += abs(Double(m.p) - tp) / max(1, tp) * pw } else { s += pw }
             if exclude.contains(r.id) { s += 0.5 }
             return s
         }
@@ -225,13 +228,43 @@ enum WorkoutGenerator {
         return true
     }
     static let order = ["barbell": 0, "machine": 1, "dumbbell": 2, "cable": 3, "kettlebells": 4, "body only": 5]
+    static func kindOf(_ k: String) -> String { k == "lower" ? "legs" : k }
+    static func cardioWanted(_ p: Profile) -> Bool { p.trainType == "mixed" || p.trainType == "general" || p.primaryGoal == "lose" || p.primaryGoal == "fitter" }
+    static func extraSession(kind: String, name: String, day: Int, p: Profile, exercises: [Exercise], eq: Set<String>, block: Int, index: Int) -> Routine {
+        let cat = kind == "cardio" ? "cardio" : "stretching"
+        var pool = exercises.filter { $0.category == cat && ($0.equipment == "other" || $0.equipment == "body only" || eq.contains($0.equipment)) && levelOk($0.level, p.experience) }
+            .sorted { ($0.anim != nil ? 0 : 1, $0.name) < ($1.anim != nil ? 0 : 1, $1.name) }
+        if pool.isEmpty { pool = exercises.filter { $0.category == cat }.sorted { $0.name < $1.name } }
+        let want = kind == "cardio" ? 2 : 6
+        var picks: [String] = []
+        if kind == "mobility" {
+            for part in ["hamstrings", "quadriceps", "shoulders", "lower back", "chest", "glutes", "calves", "lats"] {
+                if let e = pool.filter({ $0.part == part && !picks.contains($0.id) }).dropFirst(block - 1 > 0 ? (block - 1) % 2 : 0).first ?? pool.first(where: { $0.part == part && !picks.contains($0.id) }) { picks.append(e.id) }
+                if picks.count >= want { break }
+            }
+        } else if !pool.isEmpty {
+            for k in 0..<want { picks.append(pool[(index + k + block - 1) % pool.count].id) }
+            picks = Array(NSOrderedSet(array: picks)) as? [String] ?? picks
+        }
+        let focus = kind == "cardio" ? ["cardio"] : ["mobility"]
+        return Routine(name: name, weekday: day, focus: focus, exIds: picks, customized: false, block: block, week: 1, kind: kind)
+    }
     static func generate(profile p: Profile, exercises: [Exercise], block: Int = 1) -> [Routine] {
         let days = p.trainDays.sorted { ($0 + 5) % 7 < ($1 + 5) % 7 }
-        let sl = slots(days.count)
+        // Rest is planned, not earned: at most 5 lifting days; a 6th chosen day becomes mobility and a 7th stays a planned rest day.
+        let liftDays = Array(days.prefix(5))
+        let mobilityDay: Int? = days.count >= 6 ? days[5] : nil
+        let withCardio = cardioWanted(p) && liftDays.count >= 3
+        let lifts = withCardio ? liftDays.count - 1 : liftDays.count
+        let sl = slots(max(1, lifts))
         let eq = allowedEquipment(p)
-        let n = max(3, min(8, p.minutes / 8))
+        var n = max(3, min(8, p.minutes / 8))
+        if p.experience == "beginner" { n = min(n, 5) }
         var out: [Routine] = []
-        for (i, d) in days.enumerated() {
+        for (i, d) in liftDays.enumerated() {
+            if withCardio && i == liftDays.count - 1 {
+                out.append(extraSession(kind: "cardio", name: "Cardio", day: d, p: p, exercises: exercises, eq: eq, block: block, index: i)); continue
+            }
             let (kind, base) = sl[i % sl.count]
             let name = i >= sl.count ? base.replacingOccurrences(of: " A", with: " C").replacingOccurrences(of: " B", with: " C") : base
             var parts = focusParts[kind] ?? focusParts["full"]!
@@ -252,9 +285,17 @@ enum WorkoutGenerator {
             }
             var focus: [String] = []
             for id in picks { if let e = exercises.first(where: { $0.id == id }), !focus.contains(e.part) { focus.append(e.part) } }
-            out.append(Routine(name: name, weekday: d, focus: focus, exIds: picks, customized: false, block: block, week: 1))
+            out.append(Routine(name: name, weekday: d, focus: focus, exIds: picks, customized: false, block: block, week: 1, kind: kindOf(kind)))
+        }
+        if let md = mobilityDay {
+            out.append(extraSession(kind: "mobility", name: "Mobility", day: md, p: p, exercises: exercises, eq: eq, block: block, index: 0))
         }
         return out
+    }
+    /// Sets per exercise follow the person's experience (Schoenfeld et al. 2017: start modest, add volume with progress).
+    static func setCount(for ex: Exercise?, profile p: Profile) -> Int {
+        if let c = ex?.category, c == "cardio" || c == "stretching" { return 1 }
+        switch p.experience { case "advanced": return 4; case "intermediate": return 3; default: return 2 }
     }
     /// Honest estimate only when body weight is known: about 4.5 METs for resistance training.
     static func kcalEstimate(minutes: Int, weightKg: Double) -> Int? {

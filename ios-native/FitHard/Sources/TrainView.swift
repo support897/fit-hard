@@ -19,10 +19,10 @@ struct ExerciseRow: View {
     var body: some View {
         NavigationLink { ExerciseDetail(e: e) } label: {
             HStack(spacing: 12) {
-                if let a = e.anim, store.s.previewAnims { AnimatedFrames(base: a).frame(width: 64, height: 64).background(Color.tint, in: RoundedRectangle(cornerRadius: 12)) }
-                else { Image(systemName: "figure.strengthtraining.traditional").frame(width: 64, height: 64).background(Color.tint, in: RoundedRectangle(cornerRadius: 12)) }
-                VStack(alignment: .leading) { Text(e.name).font(.subheadline.weight(.semibold)).multilineTextAlignment(.leading); Text(e.partLabel ?? e.part.capitalized).font(.caption).foregroundStyle(Color.muted) }
-                Spacer(); HelpButton(exercise: e); Image(systemName: "chevron.right").foregroundStyle(Color.muted)
+                if let a = store.animBase(e) { AnimatedFrames(base: a).frame(width: 64, height: 64).background(Color.tint, in: RoundedRectangle(cornerRadius: 12)) }
+                else { BrandIcon( "figure.strengthtraining.traditional").frame(width: 64, height: 64).background(Color.tint, in: RoundedRectangle(cornerRadius: 12)) }
+                VStack(alignment: .leading) { Text(e.name).font(.fh_subheadline_b).multilineTextAlignment(.leading); Text(e.partLabel ?? e.part.capitalized).font(.fh_caption).foregroundStyle(Color.muted) }
+                Spacer(); HelpButton(exercise: e); BrandIcon( "chevron.right").foregroundStyle(Color.muted)
             }.padding(12).background(Color.surface, in: RoundedRectangle(cornerRadius: 16))
         }.foregroundStyle(Color.ink)
     }
@@ -39,7 +39,7 @@ struct LibraryView: View {
             ScrollView(.horizontal, showsIndicators: false) { HStack { ForEach(parts, id: \.self) { p in Chip(label: p.capitalized, on: part == p) { part = p } } }.padding(.horizontal, 16) }
             List(list.prefix(200)) { e in
                 NavigationLink { ExerciseDetail(e: e) } label: {
-                    HStack { if let a = e.anim, store.s.previewAnims { AnimatedFrames(base: a).frame(width: 44, height: 44) }; VStack(alignment: .leading) { Text(e.name).font(.subheadline.weight(.semibold)); Text("\(e.partLabel ?? e.part) · \(e.equipment)").font(.caption).foregroundStyle(Color.muted) } }
+                    HStack { if let a = store.animBase(e) { AnimatedFrames(base: a).frame(width: 44, height: 44) }; VStack(alignment: .leading) { Text(e.name).font(.fh_subheadline_b); Text("\(e.partLabel ?? e.part) · \(e.equipment)").font(.fh_caption).foregroundStyle(Color.muted) } }
                 }.listRowBackground(Color.surface)
             }.listStyle(.plain).scrollContentBackground(.hidden)
         }.searchable(text: $q, prompt: "Search \(store.cat.exercises.count) exercises")
@@ -52,9 +52,9 @@ struct ExerciseDetail: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                if e.anim != nil {
-                    Toggle("Show preview animation (not yet quality approved)", isOn: $store.s.previewAnims).font(.caption).tint(Color.sage)
-                    if store.s.previewAnims, let a = e.anim { AnimatedFrames(base: a).frame(height: 260).frame(maxWidth: .infinity).background(Color.surface, in: RoundedRectangle(cornerRadius: 20)) }
+                if e.anim != nil || store.hasCharacterAnim(e) {
+                    if !store.hasCharacterAnim(e) { Toggle("Show preview animation (not yet quality approved)", isOn: $store.s.previewAnims).font(.fh_caption).tint(Color.sage) }
+                    if let a = store.animBase(e) { AnimatedFrames(base: a).frame(height: 260).frame(maxWidth: .infinity).background(Color.surface, in: RoundedRectangle(cornerRadius: 20)) }
                 }
                 Flow { Chip(label: e.partLabel ?? e.part, on: false) {}; Chip(label: e.equipment, on: false) {}; Chip(label: e.level, on: false) {} }
                 HStack { Spacer(); HelpButton(exercise: e) }
@@ -72,9 +72,9 @@ struct HistoryView: View {
         else {
             List(list) { w in
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(w.date.formatted(.dateTime.weekday(.wide).day().month())).font(.headline)
+                    Text(w.date.formatted(.dateTime.weekday(.wide).day().month())).font(.fh_headline)
                     ForEach(w.entries) { en in
-                        Text("\(store.cat.exercise(en.exerciseId)?.name ?? en.exerciseId): " + en.sets.map { "\($0.reps)×\($0.kg.formatted())" }.joined(separator: ", ")).font(.caption).foregroundStyle(Color.muted)
+                        Text("\(store.cat.exercise(en.exerciseId)?.name ?? en.exerciseId): " + en.sets.map { "\($0.reps)×\($0.kg.formatted())" }.joined(separator: ", ")).font(.fh_caption).foregroundStyle(Color.muted)
                     }
                 }.listRowBackground(Color.surface)
             }.listStyle(.plain).scrollContentBackground(.hidden)

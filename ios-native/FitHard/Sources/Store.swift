@@ -65,7 +65,7 @@ final class Store: ObservableObject {
         if seeded && !s.onboarded {
             s.profile.name = "Tester"; s.profile.goals = ["Get stronger"]; s.profile.primaryGoal = "strength"; s.profile.needs = ["meals", "gym", "calendar"]
             s.profile.age = 30; s.profile.heightCm = 170; s.profile.weightKg = 70; s.profile.character = "nonbinary"
-            s.onboarded = true; finishSetup()
+            s.onboarded = true; finishSetup(); s.personalizationVersion = Store.personalizationRound
         }
         if seeded || skipDoor { bypassDoor = true }
         if custom != nil || seeded || doorTest || skipDoor { return }
@@ -116,6 +116,7 @@ final class Store: ObservableObject {
             if !force && s.plan[key] != nil && i == 0 && !(s.plan[key]?.isEmpty ?? true) && s.profile.setupDone { continue }
             var row: [String: String] = [:]
             for (mi, meal) in mealTypes.enumerated() {
+                if i == 0, (s.eaten[key] ?? []).contains(meal), let kept = s.plan[key]?[meal] { row[meal] = kept; used.insert(kept); continue }
                 if let pick = RecipeService.pick(meal: meal, profile: s.profile, targets: targets, count: mealTypes.count,
                                                  seed: seed &+ UInt64(i * 31 + mi * 7 + 1), exclude: used) {
                     row[meal] = pick.id; used.insert(pick.id)
@@ -136,11 +137,11 @@ final class Store: ObservableObject {
     func setMeal(day: String, meal: String, recipe: Recipe) { s.plan[day, default: [:]][meal] = recipe.id }
     func toggleEaten(_ meal: String) {
         var e = s.eaten[today] ?? []
-        if let i = e.firstIndex(of: meal) { e.remove(at: i) } else { e.append(meal); haptic() }
+        if let i = e.firstIndex(of: meal) { e.remove(at: i); s.portions[today]?[meal] = nil } else { e.append(meal); haptic() }
         s.eaten[today] = e
     }
     var kcalToday: Int {
-        (s.eaten[today] ?? []).compactMap { m in s.plan[today]?[m].flatMap { cat.recipe($0)?.kcal } }.reduce(0, +)
+        Int((s.eaten[today] ?? []).compactMap { m in s.plan[today]?[m].flatMap { cat.recipe($0) }.map { Double($0.kcal) * portion(m) } }.reduce(0, +).rounded())
     }
     func groceries() -> [(category: String, items: [(key: String, label: String)])] {
         var agg: [String: (qty: Double, unit: String, cat: String)] = [:]
@@ -234,16 +235,18 @@ final class Store: ObservableObject {
         if s.profile.needs.isEmpty { s.profile.needs = ["meals", "gym", "calendar"] }
         if s.profile.goals.isEmpty { s.profile.goals = ["Feel fitter"] }
         if s.profile.primaryGoal.isEmpty { s.profile.primaryGoal = "fitter" }
-        generatePlan(); generateRoutine()
+        let rerun = s.onboarded
+        generatePlan(force: rerun); generateRoutine()
+        if rerun { reapplyLightIfNeeded() }
     }
     /// Editing the profile anywhere calls this, so the plan, routines and reminders all follow the one profile.
     func profileChanged() {
         s.profile.vegetarian = s.profile.diet == "vegetarian" || s.profile.diet == "vegan"
-        generatePlan(force: true); generateRoutine(); Notifier.rebuild(self)
+        generatePlan(force: true); generateRoutine(); reapplyLightIfNeeded(); Notifier.rebuild(self)
     }
     var todaysExercises: [Exercise] {
         let wd = Calendar.current.component(.weekday, from: Date())
-        return (s.routine[String(wd)] ?? []).compactMap { cat.exercise($0) }
+        return (routine(on: today)?.exIds ?? s.routine[String(wd)] ?? []).compactMap { cat.exercise($0) }
     }
     var workedOutToday: Bool { s.workouts.contains { dayKey($0.date) == today } }
     func lastSets(for id: String) -> [SetLog]? {

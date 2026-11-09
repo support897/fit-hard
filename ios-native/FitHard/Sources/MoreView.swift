@@ -22,19 +22,19 @@ struct MoreView: View {
         NavigationStack {
             Form {
                 Section {
-                    NavigationLink { ProfileScreen() } label: { HStack(spacing: 12) { AvatarView(size: 48); VStack(alignment: .leading) { Text(store.s.profile.name.isEmpty ? "My profile" : store.s.profile.name).font(.headline); Text("Goals, body, training, food, character").font(.caption).foregroundStyle(Color.muted) } } }.accessibilityIdentifier("my-profile")
+                    NavigationLink { ProfileScreen() } label: { HStack(spacing: 12) { AvatarView(size: 48); VStack(alignment: .leading) { Text(store.s.profile.name.isEmpty ? "My profile" : store.s.profile.name).font(.fh_headline); Text("Goals, body, training, food, character").font(.fh_caption).foregroundStyle(Color.muted) } } }.accessibilityIdentifier("my-profile")
                 }.themedRows()
                 Section("Explore") {
-                    NavigationLink { ProgressScreen() } label: { Label("Progress", systemImage: "chart.line.uptrend.xyaxis") }
+                    NavigationLink { ProgressScreen() } label: { BrandLabel("Progress", icon: "chart.line.uptrend.xyaxis") }
                     if store.s.profile.needs.contains("peptides") || !store.s.meds.isEmpty {
-                        NavigationLink { HealthView().content } label: { Label("Health log and appointments", systemImage: "cross.case") }
+                        NavigationLink { HealthView().content } label: { BrandLabel("Health log and appointments", icon: "cross.case") }
                     }
-                    NavigationLink { TreatsScreen() } label: { Label("Treats", systemImage: "heart") }
+                    NavigationLink { TreatsScreen() } label: { BrandLabel("Treats", icon: "heart") }
                     
                 }.themedRows()
                 Section("Reminders") {
                     if notif == .denied {
-                        Button { if let u = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(u) } } label: { Label("Notifications are off. Tap to allow in Settings", systemImage: "bell.slash") }
+                        Button { if let u = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(u) } } label: { BrandLabel("Notifications are off. Tap to allow in Settings", icon: "bell.slash") }
                     }
                     Toggle("Workout days", isOn: on("workout"))
                     if on("workout").wrappedValue {
@@ -70,6 +70,7 @@ struct MoreView: View {
                 }.themedRows()
                 Section("Look") {
                     ThemePicker()
+                    Picker("Language", selection: $store.s.language) { Text("English").tag("en"); Text("Spanish").tag("es") }.accessibilityIdentifier("language-picker")
                     TextField("Your name", text: $store.s.profile.name)
                 }.themedRows()
                 AccountSection()
@@ -77,7 +78,7 @@ struct MoreView: View {
                     if let d = try? JSONEncoder().encode(store.s), let s = String(data: d, encoding: .utf8) { ShareLink("Export my data", item: s) }
                     Button("Erase everything and start again", role: .destructive) { reset = true }
                 }.themedRows()
-                Section { Text("Fit Hard 2.0").font(.footnote).foregroundStyle(Color.muted) }
+                Section { Text("Fit Hard 2.0").font(.fh_footnote).foregroundStyle(Color.muted) }
             }
             .scrollContentBackground(.hidden).background(Color.cream).navigationTitle("More")
             .environment(\.defaultMinListRowHeight, 44)
@@ -126,13 +127,13 @@ struct ProfileScreen: View {
             HStack(spacing: 10) {
                 ForEach([("boy", "Boy"), ("girl", "Girl"), ("nonbinary", "Non-binary")], id: \.0) { c in
                     Button { store.s.profile.character = c.0; haptic() } label: {
-                        VStack(spacing: 4) { BundleImage(name: "avatar-\(c.0)").frame(height: 70).clipShape(RoundedRectangle(cornerRadius: 12)); Text(c.1).font(.caption.weight(.bold)) }
+                        VStack(spacing: 4) { BundleImage(name: "avatar-\(c.0)").frame(height: 70).clipShape(RoundedRectangle(cornerRadius: 12)); Text(LocalizedStringKey(c.1)).font(.fh_caption_b) }
                             .padding(6).frame(maxWidth: .infinity).background(store.s.profile.character == c.0 ? Color.tint : Color.surface, in: RoundedRectangle(cornerRadius: 14))
                             .overlay(RoundedRectangle(cornerRadius: 14).stroke(store.s.profile.character == c.0 ? Color.sage : Color.line, lineWidth: store.s.profile.character == c.0 ? 3 : 1))
                     }.buttonStyle(.plain).accessibilityIdentifier("pchar-\(c.0)")
                 }
             }
-            Text("Only changes how you look. Your plan stays the same.").font(.caption).foregroundStyle(Color.muted)
+            Text("Only changes how you look. Your plan stays the same.").font(.fh_caption).foregroundStyle(Color.muted)
             SectionTitle(text: "Main goal")
             Flow { ForEach(Array(Lists.goals.enumerated()), id: \.offset) { i, g in Chip(label: g, on: store.s.profile.primaryGoal == Lists.goalIds[i]) { store.s.profile.primaryGoal = Lists.goalIds[i] } } }
             SectionTitle(text: "Body")
@@ -150,7 +151,7 @@ struct ProfileScreen: View {
             Flow { ForEach(Lists.allergens, id: \.id) { a in Chip(label: a.label, on: store.s.profile.allergens.contains(a.id)) {
                 if let i = store.s.profile.allergens.firstIndex(of: a.id) { store.s.profile.allergens.remove(at: i) } else { store.s.profile.allergens.append(a.id) } } } }
             BigButton(title: "Save and update my plan", icon: "sparkles") { store.profileChanged(); store.say("Your plan is updated") }.accessibilityIdentifier("profile-save")
-            Text("Your workout history stays exactly as it is.").font(.caption).foregroundStyle(Color.muted)
+            Text("Your workout history stays exactly as it is.").font(.fh_caption).foregroundStyle(Color.muted)
         }.padding(16) }.background(Color.cream).navigationTitle("My profile").navigationBarTitleDisplayMode(.inline)
     }
 }

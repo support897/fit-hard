@@ -70,8 +70,8 @@ struct WallyBubble: View {
             let m = WallyEngine.message(store.s, cat: store.cat, avoid: prev)
             HStack(spacing: 12) {
                 BundleImage(name: m.image).frame(width: 64, height: 64)
-                Text(m.text).font(.subheadline).foregroundStyle(Color.ink).frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("wally-text")
-                Menu { Button("Talk to me less") { store.s.settings.wallyQuiet = true } } label: { Image(systemName: "ellipsis").frame(width: 36, height: 36) }.foregroundStyle(Color.muted)
+                Text(m.text).font(.fh_subheadline).foregroundStyle(Color.ink).frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("wally-text")
+                Menu { Button("Talk to me less") { store.s.settings.wallyQuiet = true } } label: { BrandIcon( "ellipsis").frame(width: 36, height: 36) }.foregroundStyle(Color.muted)
             }.padding(12).background(Color.tint, in: RoundedRectangle(cornerRadius: 18))
             .onAppear { if store.s.wally.last?.day != store.today || store.s.wally.last?.rule != m.rule { store.s.wally.append(WallyNote(day: store.today, rule: m.rule)); if store.s.wally.count > 60 { store.s.wally.removeFirst() } } }
         }
@@ -84,7 +84,7 @@ struct HelpButton: View {
     @State private var show = false
     var body: some View {
         Button { show = true; haptic(.soft) } label: {
-            Text("?").font(.title3.bold()).frame(width: 44, height: 44).background(Color.sage, in: Circle()).foregroundStyle(Color.surface)
+            Text("?").font(.fh_title3_b).frame(width: 44, height: 44).background(Color.sage, in: Circle()).foregroundStyle(Color.surface)
         }.buttonStyle(.plain).accessibilityLabel("Help for \(exercise.name)").accessibilityIdentifier("help-button")
         .sheet(isPresented: $show) { HelpSheet(exercise: exercise) }
     }
@@ -98,15 +98,15 @@ struct HelpSheet: View {
             HStack(alignment: .top) {
                 BundleImage(name: "wally-hello").frame(width: 80, height: 80)
                 Spacer()
-                Button { dismiss() } label: { Image(systemName: "xmark.circle.fill").font(.title).foregroundStyle(Color.muted) }.accessibilityLabel("Close help").accessibilityIdentifier("help-close")
+                Button { dismiss() } label: { BrandIcon( "xmark.circle.fill").font(.fh_title).foregroundStyle(Color.muted) }.accessibilityLabel("Close help").accessibilityIdentifier("help-close")
             }
             if let h = HelpText.help(for: exercise.id) {
                 let lines = HelpText.display(h)
                 ScrollView { VStack(alignment: .leading, spacing: 10) {
-                    Text(lines[0]).font(.headline).accessibilityIdentifier("help-title")
-                    Text(lines[1]).font(.title3.weight(.semibold))
-                    ForEach(Array(lines.dropFirst(2).dropLast()), id: \.self) { Text($0).font(.body) }
-                    Text(lines[lines.count - 1]).font(.title3.weight(.semibold)).foregroundStyle(Color.sage)
+                    Text(lines[0]).font(.fh_headline).accessibilityIdentifier("help-title")
+                    Text(lines[1]).font(.fh_title3_b)
+                    ForEach(Array(lines.dropFirst(2).dropLast()), id: \.self) { Text($0).font(.fh_body) }
+                    Text(lines[lines.count - 1]).font(.fh_title3_b).foregroundStyle(Color.sage)
                 } }
             } else { Text("Help for this exercise is coming soon.").foregroundStyle(Color.muted) }
             Spacer(minLength: 0)
@@ -120,7 +120,7 @@ struct AvatarView: View {
     var size: CGFloat = 36
     var body: some View {
         let c = store.s.profile.character
-        Group { if c.isEmpty { Image(systemName: "person.crop.circle").resizable().scaledToFit().foregroundStyle(Color.muted) } else { BundleImage(name: "avatar-\(c)") } }
+        Group { if c.isEmpty { BrandIcon( "person.crop.circle").resizable().scaledToFit().foregroundStyle(Color.muted) } else { BundleImage(name: "avatar-\(c)") } }
             .frame(width: size, height: size).clipShape(Circle()).overlay(Circle().stroke(Color.line, lineWidth: 1))
             .accessibilityLabel("Your character").accessibilityIdentifier("avatar")
     }
