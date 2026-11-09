@@ -18,6 +18,7 @@ extension Font {
         .custom(bold ? "ZillaSlab-Bold" : "ZillaSlab-SemiBold", size: size, relativeTo: s)
     }
     static var fh_largeTitle: Font { zilla(34, bold: true, relativeTo: .largeTitle) }
+    static var fh_largeTitle_b: Font { zilla(34, bold: true, relativeTo: .largeTitle) }
     static var fh_title: Font { zilla(28, bold: true, relativeTo: .title) }
     static var fh_title2: Font { zilla(22, bold: true, relativeTo: .title2) }
     static var fh_title3: Font { zilla(20, relativeTo: .title3) }
