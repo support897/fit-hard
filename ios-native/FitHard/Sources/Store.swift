@@ -61,7 +61,7 @@ final class Store: ObservableObject {
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
             url = dir.appendingPathComponent("fithard-state.json")
         }
-        if let d = try? Data(contentsOf: url), let st = try? JSONDecoder().decode(AppState.self, from: d) { s = st } else { s = AppState() }
+        if let d = try? Data(contentsOf: url), let st = try? JSONDecoder().decode(AppState.self, from: d) { s = st } else { var fresh = AppState(); if Locale.preferredLanguages.first?.hasPrefix("es") == true { fresh.language = "es" }; s = fresh }
         if seeded && !s.onboarded {
             s.profile.name = "Tester"; s.profile.goals = ["Get stronger"]; s.profile.primaryGoal = "strength"; s.profile.needs = ["meals", "gym", "calendar"]
             s.profile.age = 30; s.profile.heightCm = 170; s.profile.weightKg = 70; s.profile.character = "nonbinary"
