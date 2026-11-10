@@ -246,10 +246,15 @@ final class Catalog {
     private let byId: [String: Recipe]
     private let exById: [String: Exercise]
     init() {
-        func load<T: Decodable>(_ name: String, _ type: T.Type) -> T? {
+        let spanish = Locale.preferredLanguages.first?.hasPrefix("es") ?? false
+        func loadFile<T: Decodable>(_ name: String, _ type: T.Type) -> T? {
             guard let url = Bundle.main.url(forResource: name, withExtension: "json"),
                   let d = try? Data(contentsOf: url) else { return nil }
             return try? JSONDecoder().decode(T.self, from: d)
+        }
+        func load<T: Decodable>(_ name: String, _ type: T.Type) -> T? {
+            if spanish, let v: T = loadFile(name + "-es", type) { return v }
+            return loadFile(name, type)
         }
         recipes = load("recipes", [Recipe].self) ?? []
         exercises = load("exercises", [Exercise].self) ?? []
