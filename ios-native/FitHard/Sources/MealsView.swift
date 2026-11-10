@@ -6,7 +6,7 @@ struct MealsView: View {
     @State private var menu = false
     static let sections: [(String, String, String)] = [("plan", "My Meal Plan", "calendar"), ("breakfast", "Breakfast", "sunrise"), ("lunch", "Lunch", "sun.max"), ("dinner", "Dinner", "moon.stars"),
         ("snacks", "Snacks", "carrot"), ("mine", "My Recipes", "heart"), ("have", "Ingredients I Have", "refrigerator"), ("shop", "Shopping List", "cart"), ("nutrition", "Nutrition Overview", "chart.pie")]
-    var titleText: String { MealsView.sections.first { $0.0 == section }?.1 ?? "Meals" }
+    var titleText: String { NSLocalizedString(MealsView.sections.first { $0.0 == section }?.1 ?? "Meals", comment: "") }
     var body: some View {
         NavigationStack {
             ZStack(alignment: .leading) {

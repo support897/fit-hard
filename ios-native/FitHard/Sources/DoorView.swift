@@ -49,7 +49,7 @@ struct DoorView: View {
     }
 
     func field(_ t: String, text: Binding<String>) -> some View {
-        TextField(t, text: text).padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.line))
+        TextField(NSLocalizedString(t, comment: ""), text: text).padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.line))
     }
     @State private var rawNonce = ""
     func appleButton() -> some View {
