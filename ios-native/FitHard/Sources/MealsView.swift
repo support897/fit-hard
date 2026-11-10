@@ -146,10 +146,10 @@ struct RecipeDetail: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 8) { BrandLabel("\(recipe.minutes) min", icon: "clock"); BrandLabel("\(recipe.kcal) kcal", icon: "flame")
-                    if let m = RecipeService.macros(recipe) { BrandLabel("\(m.p) g protein", icon: "bolt.heart") } }.font(.fh_subheadline).foregroundStyle(Color.muted)
+                    if let m = RecipeService.macros(recipe) { BrandLabel(String(format: NSLocalizedString("%lld g protein", comment: ""), m.p), icon: "bolt.heart") } }.font(.fh_subheadline).foregroundStyle(Color.muted)
                 if let m = RecipeService.macros(recipe) { Text(String(format: NSLocalizedString("Per serving. Carbs %lld g, fat %lld g. Estimated from ingredient reference values.", comment: ""), m.c, m.f)).font(.fh_caption).foregroundStyle(Color.muted) }
                 else { Text("Protein is not available for this recipe.").font(.fh_caption).foregroundStyle(Color.muted) }
-                if !recipe.allergens.isEmpty { Text("Contains: " + recipe.allergens.joined(separator: ", ")).font(.fh_caption).foregroundStyle(Color.amber) }
+                if !recipe.allergens.isEmpty { Text(NSLocalizedString("Contains: ", comment: "") + recipe.allergens.map { allergenName($0) }.joined(separator: ", ")).font(.fh_caption).foregroundStyle(Color.amber) }
                 Card {
                     SectionTitle(text: "Why this meal")
                     ForEach(Array(store.whyThisMeal(recipe, meal: recipe.meal).enumerated()), id: \.offset) { _, line in
@@ -170,7 +170,7 @@ struct RecipeDetail: View {
                 }
                 Card { SectionTitle(text: "Steps"); ForEach(Array(recipe.steps.enumerated()), id: \.offset) { n, s in
                     HStack(alignment: .top) { Text("\(n + 1)").bold().frame(width: 26, height: 26).background(Color.tint, in: Circle()); Text(s) } } }
-                BigButton(title: picked ? "Added to today" : "Use for today's \(recipe.meal)", icon: picked ? "checkmark" : "plus") {
+                BigButton(title: picked ? NSLocalizedString("Added to today", comment: "") : String(format: NSLocalizedString("Use for today's %@", comment: ""), (MealKind(rawValue: recipe.meal)?.label ?? recipe.meal).lowercased()), icon: picked ? "checkmark" : "plus") {
                     store.setMeal(day: store.today, meal: recipe.meal, recipe: recipe); picked = true; store.say("Added to today")
                 }
             }.padding(16)

@@ -1,5 +1,6 @@
 import XCTest
 import SwiftUI
+import UIKit
 @testable import Fit_Hard
 
 @MainActor
@@ -193,5 +194,22 @@ final class Build29Tests: XCTestCase {
     func testNonceIsRandomAndHashIsHex() {
         XCTAssertNotEqual(Providers.nonce(), Providers.nonce()); XCTAssertEqual(Providers.nonce(32).count, 32)
         XCTAssertEqual(Providers.sha256("abc"), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+    }
+
+    // Build 31: Spanish stragglers and the Health door.
+    func testAllergenNamesNeverShowRawKeys() {
+        for k in ["egg", "gluten", "milk", "peanut", "sesame", "soy", "tree_nut"] {
+            XCTAssertFalse(allergenName(k).contains("_"), k)
+            XCTAssertFalse(allergenName(k).hasPrefix("allergen."), k)
+        }
+    }
+    func testTrainAndMealLabelsGoThroughLocalization() {
+        XCTAssertEqual(TrainType.full.label, NSLocalizedString("Full body", comment: ""))
+        XCTAssertEqual(MealKind.breakfast.label, NSLocalizedString("Breakfast", comment: ""))
+    }
+    func testHealthViewCanBeBuiltEmbeddedWithTheStoreFromTheEnvironment() {
+        let host = UIHostingController(rootView: NavigationStack { HealthView(embedded: true) }.environmentObject(Store(url: tmp())))
+        host.loadViewIfNeeded()
+        XCTAssertNotNil(host.view)
     }
 }

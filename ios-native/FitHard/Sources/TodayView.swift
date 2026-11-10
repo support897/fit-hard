@@ -11,7 +11,8 @@ struct TodayView: View {
     var greeting: String {
         let h = Calendar.current.component(.hour, from: Date())
         let g = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"
-        return store.s.profile.name.isEmpty ? g : "\(g), \(store.s.profile.name)"
+        let gl = NSLocalizedString(g, comment: "")
+        return store.s.profile.name.isEmpty ? gl : "\(gl), \(store.s.profile.name)"
     }
 
     var body: some View {
@@ -120,7 +121,7 @@ struct TodayView: View {
                     HStack {
                         Button { store.toggleEaten(m) } label: { BrandIcon( done ? "checkmark.circle.fill" : "circle").font(.fh_title2).foregroundStyle(Color.sage) }
                         NavigationLink { RecipeDetail(recipe: r) } label: {
-                            VStack(alignment: .leading) { HStack(spacing: 4) { BrandIcon("m-" + m).foregroundStyle(Color.tone("meal." + m)); Text(m.capitalized).font(.fh_caption).foregroundStyle(Color.muted) }; Text(r.name).font(.fh_subheadline_b).strikethrough(done).multilineTextAlignment(.leading); Text(store.line(r)).font(.fh_caption).foregroundStyle(Color.muted); Text("Why: " + (store.whyThisMeal(r, meal: m).first ?? "")).font(.fh_caption).foregroundStyle(Color.muted).multilineTextAlignment(.leading) }
+                            VStack(alignment: .leading) { HStack(spacing: 4) { BrandIcon("m-" + m).foregroundStyle(Color.tone("meal." + m)); Text(MealKind(rawValue: m)?.label ?? m.capitalized).font(.fh_caption).foregroundStyle(Color.muted) }; Text(r.name).font(.fh_subheadline_b).strikethrough(done).multilineTextAlignment(.leading); Text(store.line(r)).font(.fh_caption).foregroundStyle(Color.muted); Text(NSLocalizedString("Why: ", comment: "") + (store.whyThisMeal(r, meal: m).first ?? "")).font(.fh_caption).foregroundStyle(Color.muted).multilineTextAlignment(.leading) }
                         }.foregroundStyle(Color.ink)
                         Spacer()
                     }

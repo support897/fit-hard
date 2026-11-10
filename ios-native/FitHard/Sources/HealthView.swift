@@ -13,7 +13,9 @@ struct HealthView: View {
     @State private var apDate = Date().addingTimeInterval(86400)
     @State private var erase = false
 
-    var body: some View { NavigationStack { content } }
+    /// True when pushed from a screen that already has a navigation stack (More). The view must be built as a real View so its store comes from the environment.
+    var embedded = false
+    var body: some View { if embedded { content } else { NavigationStack { content } } }
     var content: some View {
         Group {
             ScrollView {

@@ -41,7 +41,8 @@ extension Font {
 // MARK: Training types and the two colour families (one source of truth)
 enum TrainType: String, CaseIterable {
     case cardio, legs, upper, full, push, pull, core, mobility, rest
-    var label: String {
+    var label: String { NSLocalizedString(english, comment: "") }
+    private var english: String {
         switch self {
         case .cardio: return "Cardio"; case .legs: return "Legs"; case .upper: return "Upper body"; case .full: return "Full body"
         case .push: return "Push"; case .pull: return "Pull"; case .core: return "Core"; case .mobility: return "Mobility"; case .rest: return "Rest"
@@ -65,7 +66,7 @@ enum TrainType: String, CaseIterable {
 }
 enum MealKind: String, CaseIterable {
     case breakfast, lunch, dinner, snacks
-    var label: String { rawValue.capitalized }
+    var label: String { NSLocalizedString(rawValue.capitalized, comment: "") }
     var icon: String { "m-" + rawValue }
     var tone: String { "meal." + rawValue }
 }
@@ -291,6 +292,8 @@ extension Store {
 // Display names for data keys (equipment, level, unit), from Labels.strings.
 func equipName(_ k: String) -> String { let v = NSLocalizedString("equip." + k, tableName: "Labels", comment: ""); return v.hasPrefix("equip.") ? k : v }
 func levelName(_ k: String) -> String { let v = NSLocalizedString("level." + k, tableName: "Labels", comment: ""); return v.hasPrefix("level.") ? k : v }
+/// Allergen display name from the data key (never a raw key with underscores).
+func allergenName(_ k: String) -> String { let v = NSLocalizedString("allergen." + k, tableName: "Labels", comment: ""); return v.hasPrefix("allergen.") ? k.replacingOccurrences(of: "_", with: " ") : v }
 func unitName(_ k: String) -> String { let v = NSLocalizedString("unit." + k, tableName: "Labels", comment: ""); return v.hasPrefix("unit.") ? k : v }
 
 func partName(_ k: String) -> String { if k == "all" { return NSLocalizedString("All", comment: "") }; let v = NSLocalizedString("part." + k, tableName: "Labels", comment: ""); return v.hasPrefix("part.") ? k.capitalized : v }

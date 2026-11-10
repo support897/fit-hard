@@ -180,9 +180,9 @@ struct SetupView: View {
             title(String(format: NSLocalizedString("Ready, %@?", comment: ""), store.s.profile.name))
             Card {
                 summaryRow("Goal", Lists.goals[max(0, Lists.goalIds.firstIndex(of: store.s.profile.primaryGoal) ?? 0)])
-                summaryRow("Training", "\(store.s.profile.trainDays.count) days, \(store.s.profile.minutes) min")
-                summaryRow("Where", store.s.profile.location.capitalized)
-                if let t = NutritionService.targets(store.s.profile) { summaryRow("Daily target", "\(t.kcal) kcal, \(t.protein) g protein") }
+                summaryRow("Training", String(format: NSLocalizedString("%lld days, %lld min", comment: ""), store.s.profile.trainDays.count, store.s.profile.minutes))
+                summaryRow("Where", NSLocalizedString(store.s.profile.location.capitalized, comment: ""))
+                if let t = NutritionService.targets(store.s.profile) { summaryRow("Daily target", String(format: NSLocalizedString("%lld kcal, %lld g protein", comment: ""), t.kcal, t.protein)) }
                 else { summaryRow("Daily target", "Add age, height and weight in Profile any time") }
             }
             title("Reminders")
@@ -191,7 +191,7 @@ struct SetupView: View {
         }
     }
 
-    func summaryRow(_ a: String, _ b: String) -> some View { HStack { Text(a).foregroundStyle(Color.muted); Spacer(); Text(b).font(.fh_subheadline_b) } }
+    func summaryRow(_ a: String, _ b: String) -> some View { HStack { Text(NSLocalizedString(a, comment: "")).foregroundStyle(Color.muted); Spacer(); Text(NSLocalizedString(b, comment: "")).font(.fh_subheadline_b) } }
     func toggleRow(_ t: String, _ b: Binding<Bool>) -> some View { Toggle(t, isOn: b).tint(Color.sage).padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 14)) }
     func reminderRow(_ id: String, _ label: String, _ icon: String) -> some View {
         Toggle(isOn: Binding(get: { store.s.settings.on.contains(id) }, set: { v in

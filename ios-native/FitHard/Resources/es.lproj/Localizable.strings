@@ -638,3 +638,8 @@
 " · you planned %lld. Fewer is fine too." = " · planeaste %lld. Menos también está bien.";
 ", lighter" = ", más ligero";
 "%lld g protein and %lld kcal." = "%lld g de proteína y %lld kcal.";
+
+"Email" = "Correo electrónico";
+"%lld days, %lld min" = "%lld días, %lld min";
+"%lld kcal, %lld g protein" = "%lld kcal, %lld g de proteína";
+"Use for today's %@" = "Usar como %@ de hoy";

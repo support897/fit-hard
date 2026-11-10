@@ -79,3 +79,12 @@
 "focus.neck" = "Neck";
 "focus.cardio" = "Cardio";
 "focus.mobility" = "Mobility";
+
+/* Allergen names */
+"allergen.egg" = "egg";
+"allergen.gluten" = "gluten";
+"allergen.milk" = "milk";
+"allergen.peanut" = "peanut";
+"allergen.sesame" = "sesame";
+"allergen.soy" = "soy";
+"allergen.tree_nut" = "tree nut";
