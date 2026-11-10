@@ -34,13 +34,13 @@ struct Legend: View {
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Training by type").font(.fh_caption_b).foregroundStyle(Color.muted)
+            Text("Training").font(.fh_caption_b).foregroundStyle(Color.muted)
             Flow(spacing: 6) { ForEach(TrainType.allCases, id: \.self) { t in pill(t.icon, t.label, t.tone) } }
-            Text("Food by meal").font(.fh_caption_b).foregroundStyle(Color.muted)
+            Text("Meals").font(.fh_caption_b).foregroundStyle(Color.muted)
             Flow(spacing: 6) { ForEach(MealKind.allCases, id: \.self) { m in pill(m.icon, m.label, m.tone) } }
             Text("Other").font(.fh_caption_b).foregroundStyle(Color.muted)
             Flow(spacing: 6) {
-                pill("cross.case", "Medication", "medication"); pill("person", "Personal", "personal")
+                pill("moon", "Recovery", "recovery"); pill("cross.case", "Medication", "medication"); pill("person", "Personal", "personal")
                 HStack(spacing: 4) { BrandIcon("checkmark.circle.fill").font(.fh_caption2); Text("Done").font(.fh_caption2_b) }.padding(.horizontal, 8).padding(.vertical, 4).overlay(Capsule().stroke(Color.line, lineWidth: 1))
             }
         }.accessibilityIdentifier("cal-legend")
