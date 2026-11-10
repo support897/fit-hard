@@ -94,7 +94,7 @@ struct TodayView: View {
     func missedCard(_ r: Routine) -> some View {
         Card {
             SectionTitle(text: "Yesterday's session")
-            Text("\(r.name) did not happen. That is fine, plans change. Do it today, or let it go.").font(.fh_subheadline).foregroundStyle(Color.ink)
+            Text(String(format: NSLocalizedString("%@ did not happen. That is fine, plans change. Do it today, or let it go.", comment: ""), r.name)).font(.fh_subheadline).foregroundStyle(Color.ink)
             HStack(spacing: 10) {
                 BigButton(title: "Do it today", filled: true) { store.doMissedSessionToday(r) }.accessibilityIdentifier("missed-today")
                 BigButton(title: "Let it go", filled: false) { store.letMissedSessionGo(r) }.accessibilityIdentifier("missed-skip")

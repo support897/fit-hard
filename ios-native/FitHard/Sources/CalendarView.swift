@@ -78,7 +78,7 @@ struct DayDetail: View {
             if train != nil, let lunch = store.s.plan[day]?["lunch"].flatMap({ store.cat.recipe($0) }) {
                 HStack(spacing: 10) { BrandIcon("m-lunch").foregroundStyle(Color.tone("meal.lunch"))
                     VStack(alignment: .leading, spacing: 2) { Text("Training day lunch").font(.fh_caption).foregroundStyle(Color.muted)
-                        Text("\(store.mealTime("lunch")) · Lunch: \(store.line(lunch))").font(.fh_subheadline_b).accessibilityIdentifier("lunch-card") }
+                        Text("\(store.mealTime("lunch")) · \(NSLocalizedString("Lunch", comment: "")): \(store.line(lunch))").font(.fh_subheadline_b).accessibilityIdentifier("lunch-card") }
                     Spacer() }.padding(12).background(Color.tone("meal.lunch").opacity(0.14), in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.tone("meal.lunch"), lineWidth: 1))
             }
             if items.isEmpty { Card { Text("Nothing planned. Tap the plus to add something.").foregroundStyle(Color.muted) } }
@@ -123,7 +123,7 @@ struct WeekView: View {
                         let items = store.calItems(on: k)
                         if items.isEmpty { Text("Free").font(.fh_caption).foregroundStyle(Color.muted) }
                         ForEach(items.prefix(4)) { ItemRow(it: $0) }
-                        if items.count > 4 { Text("+\(items.count - 4) more").font(.fh_caption).foregroundStyle(Color.muted) }
+                        if items.count > 4 { Text(String(format: NSLocalizedString("+%lld more", comment: ""), items.count - 4)).font(.fh_caption).foregroundStyle(Color.muted) }
                     }.padding(12).frame(maxWidth: .infinity, alignment: .leading).background(Color.surface, in: RoundedRectangle(cornerRadius: 16))
                 }.buttonStyle(.plain).foregroundStyle(Color.ink)
             }

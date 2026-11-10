@@ -79,19 +79,19 @@ extension Store {
         let share = RecipeService.share(meal, count: mealTypes.count)
         if let t = targets {
             let want = Int(Double(t.kcal) * share)
-            out.append("\(r.kcal) kcal, near the \(want) kcal planned for \(meal) out of your \(t.kcal) kcal day.")
-            if let m = RecipeService.macros(r) { out.append("\(m.p) g protein. Your day aims for \(t.protein) g, spread across \(mealTypes.count) meals.") }
+            out.append(String(format: NSLocalizedString("%lld kcal, near the %lld kcal planned for %@ out of your %lld kcal day.", comment: ""), r.kcal, want, NSLocalizedString(MealKind(rawValue: meal)?.label ?? meal, comment: ""), t.kcal))
+            if let m = RecipeService.macros(r) { out.append(String(format: NSLocalizedString("%lld g protein. Your day aims for %lld g, spread across %lld meals.", comment: ""), m.p, t.protein, mealTypes.count)) }
         } else if let m = RecipeService.macros(r) {
-            out.append("\(m.p) g protein and \(r.kcal) kcal.")
+            out.append(String(format: NSLocalizedString("%lld g protein and %lld kcal.", comment: ""), m.p, r.kcal))
         }
-        if p.cookMinutes > 0 && r.minutes <= p.cookMinutes { out.append("Ready in \(r.minutes) min, inside the \(p.cookMinutes) min you set for cooking.") }
+        if p.cookMinutes > 0 && r.minutes <= p.cookMinutes { out.append(String(format: NSLocalizedString("Ready in %lld min, inside the %lld min you set for cooking.", comment: ""), r.minutes, p.cookMinutes)) }
         let liked = Set(r.cuisines).intersection(p.cuisines)
-        if !liked.isEmpty { out.append("Matches a cuisine you like: \(liked.sorted().joined(separator: ", ")).") }
-        if !p.allergens.isEmpty && !r.allergens.contains(where: { p.allergens.contains($0) }) { out.append("Has none of the allergens you listed.") }
-        if p.diet == "vegan" && RecipeService.allowed(r, p) { out.append("Fits your vegan choice.") }
-        else if (p.vegetarian || p.diet == "vegetarian") && !r.meat { out.append("Fits your vegetarian choice.") }
-        if s.lightDays.contains(day ?? today), s.plan[day ?? today]?[meal] == r.id { out.append("Picked lighter and quicker because you checked in as Bad today.") }
-        if out.isEmpty { out.append("A suitable \(meal) from your recipes.") }
+        if !liked.isEmpty { out.append(String(format: NSLocalizedString("Matches a cuisine you like: %@.", comment: ""), liked.sorted().map { cuisineName($0) }.joined(separator: ", "))) }
+        if !p.allergens.isEmpty && !r.allergens.contains(where: { p.allergens.contains($0) }) { out.append(NSLocalizedString("Has none of the allergens you listed.", comment: "")) }
+        if p.diet == "vegan" && RecipeService.allowed(r, p) { out.append(NSLocalizedString("Fits your vegan choice.", comment: "")) }
+        else if (p.vegetarian || p.diet == "vegetarian") && !r.meat { out.append(NSLocalizedString("Fits your vegetarian choice.", comment: "")) }
+        if s.lightDays.contains(day ?? today), s.plan[day ?? today]?[meal] == r.id { out.append(NSLocalizedString("Picked lighter and quicker because you checked in as Bad today.", comment: "")) }
+        if out.isEmpty { out.append(NSLocalizedString("A suitable \(meal) from your recipes.", comment: "")) }
         return out
     }
 }

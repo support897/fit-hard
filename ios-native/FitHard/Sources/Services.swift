@@ -167,11 +167,11 @@ enum ProgressionEngine {
     static func next(ex: Exercise, history: [Entry], goal: String) -> NextTarget {
         let (lo, hi) = range(for: ex, goal: goal)
         guard let last = history.first, !last.sets.isEmpty else {
-            return NextTarget(kg: 0, lo: lo, hi: hi, note: "First time. Pick a weight you can lift \(lo) times with 2 reps left.", increase: false)
+            return NextTarget(kg: 0, lo: lo, hi: hi, note: String(format: NSLocalizedString("First time. Pick a weight you can lift %lld times with 2 reps left.", comment: ""), lo), increase: false)
         }
         let kg = last.sets.map { $0.kg }.max() ?? 0
         if last.painFlag == true {
-            return NextTarget(kg: kg, lo: lo, hi: hi, note: "You noted pain. Keep it light and gentle. If it stays, ask a professional.", increase: false)
+            return NextTarget(kg: kg, lo: lo, hi: hi, note: NSLocalizedString("You noted pain. Keep it light and gentle. If it stays, ask a professional.", comment: ""), increase: false)
         }
         let done = last.sets.filter { $0.done != false }
         let complete = done.count == last.sets.count && done.count >= 2
@@ -179,16 +179,16 @@ enum ProgressionEngine {
         let effortOk = done.allSatisfy { ($0.rpe ?? 8) <= 9 } && (last.difficulty ?? 3) <= 4
         if allTop && effortOk {
             let nk = kg + step(ex, kg)
-            return NextTarget(kg: nk, lo: lo, hi: hi, note: "You hit \(hi) on every set. Try \(RecipeService.fmt(nk)) kg.", increase: true)
+            return NextTarget(kg: nk, lo: lo, hi: hi, note: String(format: NSLocalizedString("You hit %lld on every set. Try %@ kg.", comment: ""), hi, RecipeService.fmt(nk)), increase: true)
         }
         if history.count >= 2 {
             let a = history[0].sets.reduce(0) { $0 + $1.reps }, b = history[1].sets.reduce(0) { $0 + $1.reps }
             if a < b && (history[0].sets.map { $0.kg }.max() ?? 0) >= (history[1].sets.map { $0.kg }.max() ?? 0) {
-                return NextTarget(kg: kg, lo: lo, hi: hi, note: "A bit lower last time. Stay here. A lighter week is an option, your call.", increase: false)
+                return NextTarget(kg: kg, lo: lo, hi: hi, note: NSLocalizedString("A bit lower last time. Stay here. A lighter week is an option, your call.", comment: ""), increase: false)
             }
         }
-        if !complete { return NextTarget(kg: kg, lo: lo, hi: hi, note: "Finish all your sets at \(RecipeService.fmt(kg)) kg first.", increase: false) }
-        return NextTarget(kg: kg, lo: lo, hi: hi, note: "Aim for \(hi) reps on every set, then add weight.", increase: false)
+        if !complete { return NextTarget(kg: kg, lo: lo, hi: hi, note: String(format: NSLocalizedString("Finish all your sets at %@ kg first.", comment: ""), RecipeService.fmt(kg)), increase: false) }
+        return NextTarget(kg: kg, lo: lo, hi: hi, note: String(format: NSLocalizedString("Aim for %lld reps on every set, then add weight.", comment: ""), hi), increase: false)
     }
 }
 
@@ -203,12 +203,12 @@ enum WorkoutGenerator {
     ]
     static func slots(_ n: Int) -> [(String, String)] {
         switch n {
-        case 1: return [("full", "Full body")]
-        case 2: return [("full", "Full body A"), ("full", "Full body B")]
-        case 3: return [("full", "Full body A"), ("full", "Full body B"), ("full", "Full body C")]
-        case 4: return [("upper", "Upper A"), ("lower", "Lower A"), ("upper", "Upper B"), ("lower", "Lower B")]
-        case 5: return [("lower", "Lower A"), ("upper", "Upper A"), ("lower", "Lower B"), ("upper", "Upper B"), ("full", "Full body")]
-        default: return [("push", "Push A"), ("pull", "Pull A"), ("legs", "Legs A"), ("push", "Push B"), ("pull", "Pull B"), ("legs", "Legs B")]
+        case 1: return [("full", NSLocalizedString("Full body", comment: ""))]
+        case 2: return [("full", NSLocalizedString("Full body A", comment: "")), ("full", NSLocalizedString("Full body B", comment: ""))]
+        case 3: return [("full", NSLocalizedString("Full body A", comment: "")), ("full", NSLocalizedString("Full body B", comment: "")), ("full", NSLocalizedString("Full body C", comment: ""))]
+        case 4: return [("upper", NSLocalizedString("Upper A", comment: "")), ("lower", NSLocalizedString("Lower A", comment: "")), ("upper", NSLocalizedString("Upper B", comment: "")), ("lower", NSLocalizedString("Lower B", comment: ""))]
+        case 5: return [("lower", NSLocalizedString("Lower A", comment: "")), ("upper", NSLocalizedString("Upper A", comment: "")), ("lower", NSLocalizedString("Lower B", comment: "")), ("upper", NSLocalizedString("Upper B", comment: "")), ("full", NSLocalizedString("Full body", comment: ""))]
+        default: return [("push", NSLocalizedString("Push A", comment: "")), ("pull", NSLocalizedString("Pull A", comment: "")), ("legs", NSLocalizedString("Legs A", comment: "")), ("push", NSLocalizedString("Push B", comment: "")), ("pull", NSLocalizedString("Pull B", comment: "")), ("legs", NSLocalizedString("Legs B", comment: ""))]
         }
     }
     static func allowedEquipment(_ p: Profile) -> Set<String> {
@@ -263,7 +263,7 @@ enum WorkoutGenerator {
         var out: [Routine] = []
         for (i, d) in liftDays.enumerated() {
             if withCardio && i == liftDays.count - 1 {
-                out.append(extraSession(kind: "cardio", name: "Cardio", day: d, p: p, exercises: exercises, eq: eq, block: block, index: i)); continue
+                out.append(extraSession(kind: "cardio", name: NSLocalizedString("Cardio", comment: ""), day: d, p: p, exercises: exercises, eq: eq, block: block, index: i)); continue
             }
             let (kind, base) = sl[i % sl.count]
             let name = i >= sl.count ? base.replacingOccurrences(of: " A", with: " C").replacingOccurrences(of: " B", with: " C") : base
@@ -288,7 +288,7 @@ enum WorkoutGenerator {
             out.append(Routine(name: name, weekday: d, focus: focus, exIds: picks, customized: false, block: block, week: 1, kind: kindOf(kind)))
         }
         if let md = mobilityDay {
-            out.append(extraSession(kind: "mobility", name: "Mobility", day: md, p: p, exercises: exercises, eq: eq, block: block, index: 0))
+            out.append(extraSession(kind: "mobility", name: NSLocalizedString("Mobility", comment: ""), day: md, p: p, exercises: exercises, eq: eq, block: block, index: 0))
         }
         return out
     }

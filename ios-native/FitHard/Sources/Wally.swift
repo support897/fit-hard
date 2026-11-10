@@ -13,13 +13,13 @@ enum WallyEngine {
         let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: now) ?? now
         let last7 = s.workouts.filter { $0.date >= weekAgo }.count
         if s.workouts.isEmpty && s.checkins.isEmpty {
-            cands.append(WallyMsg(rule: "welcome", text: "Welcome, \(name). Tell me how you feel, then we start gently.", image: "wally-welcome"))
+            cands.append(WallyMsg(rule: "welcome", text: String(format: NSLocalizedString("Welcome, %@. Tell me how you feel, then we start gently.", comment: ""), name), image: "wally-welcome"))
         }
         if s.checkins[key] == "bad" {
-            cands.append(WallyMsg(rule: "bad", text: "A softer day is fine. Do what feels right. Rest counts.", image: "wally-rest"))
+            cands.append(WallyMsg(rule: "bad", text: NSLocalizedString("A softer day is fine. Do what feels right. Rest counts.", comment: ""), image: "wally-rest"))
         }
         if !s.profile.trainDays.isEmpty && last7 >= s.profile.trainDays.count {
-            cands.append(WallyMsg(rule: "week", text: "You trained \(last7) times this week. That is real progress.", image: "wally-celebrate"))
+            cands.append(WallyMsg(rule: "week", text: String(format: NSLocalizedString("You trained %lld times this week. That is real progress.", comment: ""), last7), image: "wally-celebrate"))
         }
         // Progress: any exercise in your routines ready for more weight
         for r in s.routines {
@@ -28,7 +28,7 @@ enum WallyEngine {
                 let hist = s.workouts.sorted { $0.date > $1.date }.compactMap { $0.entries.first(where: { $0.exerciseId == id && !$0.sets.isEmpty }) }
                 let t = ProgressionEngine.next(ex: ex, history: hist, goal: goal)
                 if t.increase {
-                    cands.append(WallyMsg(rule: "progress", text: "You hit \(t.hi) reps on \(ex.name) every set. Try \(RecipeService.fmt(t.kg)) kg next.", image: "wally-celebrate"))
+                    cands.append(WallyMsg(rule: "progress", text: String(format: NSLocalizedString("You hit %lld reps on %@ every set. Try %@ kg next.", comment: ""), t.hi, ex.name, RecipeService.fmt(t.kg)), image: "wally-celebrate"))
                     break
                 }
             }
@@ -37,26 +37,26 @@ enum WallyEngine {
             var p = 0
             for m in s.eaten[key] ?? [] { if let r = s.plan[key]?[m].flatMap({ cat.recipe($0) }) { p += RecipeService.macros(r)?.p ?? 0 } }
             if !(s.eaten[key] ?? []).isEmpty && Double(p) < 0.6 * Double(t.protein) {
-                cands.append(WallyMsg(rule: "protein", text: "Protein is at \(p) of \(t.protein) g. A protein rich dinner would help.", image: "wally-hello"))
+                cands.append(WallyMsg(rule: "protein", text: String(format: NSLocalizedString("Protein is at %lld of %lld g. A protein rich dinner would help.", comment: ""), p, t.protein), image: "wally-hello"))
             }
         }
         if hour >= 14 {
             let have = s.water[key] ?? 0
             if Double(have) < 0.4 * Double(max(500, s.profile.waterGoal)) {
-                cands.append(WallyMsg(rule: "water", text: "A glass of water? You are at \(have) of \(s.profile.waterGoal) ml.", image: "wally-hello"))
+                cands.append(WallyMsg(rule: "water", text: String(format: NSLocalizedString("A glass of water? You are at %lld of %lld ml.", comment: ""), have, s.profile.waterGoal), image: "wally-hello"))
             }
         }
         if let y = Calendar.current.date(byAdding: .day, value: -1, to: now) {
             let wd = Calendar.current.component(.weekday, from: y)
             if s.routines.contains(where: { $0.weekday == wd }) && !s.workouts.contains(where: { dayKey($0.date) == dayKey(y) }) && !s.workouts.isEmpty {
-                cands.append(WallyMsg(rule: "missed", text: "No stress about yesterday. Today is a fresh start.", image: "wally-hello"))
+                cands.append(WallyMsg(rule: "missed", text: NSLocalizedString("No stress about yesterday. Today is a fresh start.", comment: ""), image: "wally-hello"))
             }
         }
         let wd = Calendar.current.component(.weekday, from: now)
         if let r = s.routines.first(where: { $0.weekday == wd }), !s.workouts.contains(where: { dayKey($0.date) == key }) {
-            cands.append(WallyMsg(rule: "training", text: "Today is \(r.name). \(r.exIds.count) exercises, about \(s.profile.minutes) minutes.", image: "wally-hello"))
+            cands.append(WallyMsg(rule: "training", text: String(format: NSLocalizedString("Today is %@. %lld exercises, about %lld minutes.", comment: ""), r.name, r.exIds.count, s.profile.minutes), image: "wally-hello"))
         }
-        cands.append(WallyMsg(rule: "rest", text: "Rest is part of the plan. Enjoy today.", image: "wally-rest"))
+        cands.append(WallyMsg(rule: "rest", text: NSLocalizedString("Rest is part of the plan. Enjoy today.", comment: ""), image: "wally-rest"))
         let urgent: Set<String> = ["bad", "training", "welcome"]
         return cands.first(where: { $0.rule != avoid || urgent.contains($0.rule) }) ?? cands[cands.count - 1]
     }

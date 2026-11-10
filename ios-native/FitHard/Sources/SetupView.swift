@@ -47,7 +47,7 @@ struct SetupView: View {
                         Text("Welcome back. Answer again so your meals, training and calendar fit you. Everything you saved stays.").font(.fh_subheadline).foregroundStyle(Color.ink).padding(.bottom, 6).accessibilityIdentifier("setup-welcome-back")
                     }
                     ProgressView(value: Double(step + 1), total: Double(SetupView.total)).tint(Color.sage)
-                    Text("Step \(step + 1) of \(SetupView.total)").font(.fh_caption).foregroundStyle(Color.muted).accessibilityIdentifier("setup-step")
+                    Text(String(format: NSLocalizedString("Step %lld of %lld", comment: ""), step + 1, SetupView.total)).font(.fh_caption).foregroundStyle(Color.muted).accessibilityIdentifier("setup-step")
                 }.padding(.horizontal, 24).padding(.top, 12)
                 ScrollView { VStack(alignment: .leading, spacing: 16) { page }.padding(24).frame(maxWidth: .infinity, alignment: .leading) }
                 HStack(spacing: 12) {
@@ -72,7 +72,7 @@ struct SetupView: View {
         switch step {
         case 0:
             BundleImage(name: "wally-hello").frame(height: 110).frame(maxWidth: .infinity)
-            title("Hi \(store.s.profile.name). What is your main goal?")
+            title(String(format: NSLocalizedString("Hi %@. What is your main goal?", comment: ""), store.s.profile.name))
             ForEach(Array(Lists.goals.enumerated()), id: \.offset) { i, g in
                 Chip(label: g, icon: Lists.goalIcons[i], on: store.s.profile.primaryGoal == Lists.goalIds[i]) {
                     store.s.profile.primaryGoal = Lists.goalIds[i]
@@ -177,7 +177,7 @@ struct SetupView: View {
             TextField("Any injury or sore spot? (optional)", text: p.injury).padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 14))
             if !NutritionService.targetsAllowed(store.s.profile) { Text("We will not set calorie targets for you. Please talk with a clinician about food. Meals and workouts still work.").font(.fh_footnote).foregroundStyle(Color.amber) }
         default:
-            title("Ready, \(store.s.profile.name)?")
+            title(String(format: NSLocalizedString("Ready, %@?", comment: ""), store.s.profile.name))
             Card {
                 summaryRow("Goal", Lists.goals[max(0, Lists.goalIds.firstIndex(of: store.s.profile.primaryGoal) ?? 0)])
                 summaryRow("Training", "\(store.s.profile.trainDays.count) days, \(store.s.profile.minutes) min")
@@ -199,8 +199,8 @@ struct SetupView: View {
             BrandLabel(label, icon: icon).font(.fh_headline)
         }.tint(Color.sage).padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 16))
     }
-    func title(_ t: String) -> some View { Text(t).font(.fh_title_b).foregroundStyle(Color.ink) }
-    func hint(_ t: String) -> some View { Text(t).font(.fh_subheadline).foregroundStyle(Color.muted) }
+    func title(_ t: String) -> some View { Text(LocalizedStringKey(t)).font(.fh_title_b).foregroundStyle(Color.ink) }
+    func hint(_ t: String) -> some View { Text(LocalizedStringKey(t)).font(.fh_subheadline).foregroundStyle(Color.muted) }
     func toggle<T: Equatable>(_ arr: Binding<[T]>, _ v: T) {
         var a = arr.wrappedValue
         if let i = a.firstIndex(of: v) { a.remove(at: i) } else { a.append(v) }
@@ -227,7 +227,7 @@ struct SetupView: View {
             Spacer()
             BundleImage(name: "wally-celebrate").frame(height: 160)
             ProgressView().tint(Color.sage)
-            Text("Building your plan, \(store.s.profile.name)").font(.fh_title2_b).foregroundStyle(Color.ink)
+            Text(String(format: NSLocalizedString("Building your plan, %@", comment: ""), store.s.profile.name)).font(.fh_title2_b).foregroundStyle(Color.ink)
             Text("Meals, workouts and reminders").foregroundStyle(Color.muted)
             Spacer()
         }.padding()

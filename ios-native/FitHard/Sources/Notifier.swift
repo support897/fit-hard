@@ -21,9 +21,9 @@ enum Notifier {
 
     static func registerCategories() {
         let med = UNNotificationCategory(identifier: "FH_MED", actions: [
-            UNNotificationAction(identifier: "TAKEN", title: "Taken", options: []), UNNotificationAction(identifier: "SKIP", title: "Skip", options: [])], intentIdentifiers: [], options: [])
+            UNNotificationAction(identifier: "TAKEN", title: NSLocalizedString("Taken", comment: ""), options: []), UNNotificationAction(identifier: "SKIP", title: NSLocalizedString("Skip", comment: ""), options: [])], intentIdentifiers: [], options: [])
         let other = UNNotificationCategory(identifier: "FH_GENERIC", actions: [
-            UNNotificationAction(identifier: "OPEN", title: "Open", options: [.foreground]), UNNotificationAction(identifier: "SNOOZE", title: "Snooze 10 min", options: [])], intentIdentifiers: [], options: [])
+            UNNotificationAction(identifier: "OPEN", title: NSLocalizedString("Open", comment: ""), options: [.foreground]), UNNotificationAction(identifier: "SNOOZE", title: NSLocalizedString("Snooze 10 min", comment: ""), options: [])], intentIdentifiers: [], options: [])
         center.setNotificationCategories([med, other])
     }
 
@@ -73,34 +73,34 @@ enum Notifier {
         if on.contains("workout") {
             for r in s.routines {
                 let t = quiet(mins(s.profile.workoutTime) - qs.lead, qs)
-                add("gym-\(r.weekday)", "workout", "Workout time\(name)", "\(r.name) is ready. Tap to start.", comps(t, weekday: r.weekday), repeats: true)
+                add("gym-\(r.weekday)", "workout", name.isEmpty ? NSLocalizedString("Workout time", comment: "") : String(format: NSLocalizedString("Workout time, %@", comment: ""), s.profile.name), String(format: NSLocalizedString("%@ is ready. Tap to start.", comment: ""), r.name), comps(t, weekday: r.weekday), repeats: true)
             }
         }
         if on.contains("recovery") {
             let trainDays = Set(s.routines.map { $0.weekday })
             for wd in 1...7 where !trainDays.contains(wd) {
-                add("recovery-\(wd)", "recovery", "Recovery day", "A short walk or a stretch is plenty today.", comps(quiet(19 * 60, qs), weekday: wd), repeats: true)
+                add("recovery-\(wd)", "recovery", NSLocalizedString("Recovery day", comment: ""), NSLocalizedString("A short walk or a stretch is plenty today.", comment: ""), comps(quiet(19 * 60, qs), weekday: wd), repeats: true)
             }
         }
-        if on.contains("water") { add("water", "calendar", "A glass of water?", "One tap to log it.", comps(quiet(mins(qs.waterTime), qs)), repeats: true) }
+        if on.contains("water") { add("water", "calendar", NSLocalizedString("A glass of water?", comment: ""), NSLocalizedString("One tap to log it.", comment: ""), comps(quiet(mins(qs.waterTime), qs)), repeats: true) }
         if on.contains("meals") {
             for (k, t, label) in [("breakfast", qs.breakfast, "Breakfast"), ("lunch", qs.lunch, "Lunch"), ("dinner", qs.dinner, "Dinner")] {
-                add("meal-\(k)", "meal", "\(label) time", "Your recipe is ready.", comps(quiet(mins(t), qs)), repeats: true)
+                add("meal-\(k)", "meal", String(format: NSLocalizedString("%@ time", comment: ""), NSLocalizedString(label, comment: "")), NSLocalizedString("Your recipe is ready.", comment: ""), comps(quiet(mins(t), qs)), repeats: true)
             }
         }
         if on.contains("shopping") {
-            add("shop-weekly", "shopping", "Shopping list", "Your list for the week is ready.", comps(quiet(10 * 60, qs), weekday: 1), repeats: true)
+            add("shop-weekly", "shopping", NSLocalizedString("Shopping list", comment: ""), NSLocalizedString("Your list for the week is ready.", comment: ""), comps(quiet(10 * 60, qs), weekday: 1), repeats: true)
         }
         if on.contains("health") {
             for med in s.meds where !med.isPaused {
                 for (i, t) in med.allTimes.enumerated() {
-                    let body = qs.detailsOnLock ? "Time to check in on \(med.name)." : "Open Fit Hard to check in."
-                    add("med-\(med.id.uuidString)-\(i)", "medication", "Your check-in", body, comps(mins(t)), repeats: true)   // times the user chose are never moved
+                    let body = qs.detailsOnLock ? String(format: NSLocalizedString("Time to check in on %@.", comment: ""), med.name) : NSLocalizedString("Open Fit Hard to check in.", comment: "")
+                    add("med-\(med.id.uuidString)-\(i)", "medication", NSLocalizedString("Your check-in", comment: ""), body, comps(mins(t)), repeats: true)   // times the user chose are never moved
                 }
             }
             for a in s.appts where a.date > now {
-                let title = "Appointment reminder"
-                let body = qs.detailsOnLock ? a.title : "You have an appointment coming up."
+                let title = NSLocalizedString("Appointment reminder", comment: "")
+                let body = qs.detailsOnLock ? a.title : NSLocalizedString("You have an appointment coming up.", comment: "")
                 if let day = Calendar.current.date(byAdding: .day, value: -1, to: a.date), day > now {
                     add("appt-\(a.id.uuidString)-d", "calendar", title, body, Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: day), repeats: false)
                 }
@@ -114,13 +114,13 @@ enum Notifier {
                 guard let day = t.day, let d = dateFromKey(day), let time = t.time else { continue }
                 let (h, m) = hm(time)
                 guard let when = Calendar.current.date(bySettingHour: h, minute: m, second: 0, of: d), when > now else { continue }
-                add("task-\(t.id.uuidString)", "calendar", "To do", t.title, Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: when), repeats: false)
+                add("task-\(t.id.uuidString)", "calendar", NSLocalizedString("To do", comment: ""), t.title, Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: when), repeats: false)
             }
             for e in s.events where e.remind && !e.done {
                 guard let d = dateFromKey(e.day) else { continue }
                 let (h, m) = hm(e.time)
                 guard let base = Calendar.current.date(bySettingHour: h, minute: m, second: 0, of: d), let when = Calendar.current.date(byAdding: .minute, value: -qs.lead, to: base), when > now else { continue }
-                add("ev-\(e.id.uuidString)", "calendar", e.title, "Starts at \(e.time).", Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: when), repeats: false)
+                add("ev-\(e.id.uuidString)", "calendar", e.title, String(format: NSLocalizedString("Starts at %@.", comment: ""), e.time), Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: when), repeats: false)
             }
         }
         return out
@@ -136,7 +136,7 @@ enum Notifier {
             let matches: Bool
             if r.repeats { matches = c.weekday == nil || c.weekday == wd } else { matches = c.day == Calendar.current.component(.day, from: now) && c.month == Calendar.current.component(.month, from: now) }
             guard matches, let h = c.hour, let m = c.minute, h * 60 + m >= nowMin - 30 else { continue }
-            rows.append((h * 60 + m, r.title == "Your check-in" ? "Your check-in" : r.title))
+            rows.append((h * 60 + m, r.title == NSLocalizedString("Your check-in", comment: "") ? NSLocalizedString("Your check-in", comment: "") : r.title))
         }
         return rows.sorted { $0.0 < $1.0 }.map { (String(format: "%02d:%02d", $0.0 / 60, $0.0 % 60), $0.1) }
     }

@@ -287,3 +287,13 @@ extension Store {
     }
     func hasCharacterAnim(_ ex: Exercise) -> Bool { CharacterAnim.base(for: ex, character: s.profile.character) != nil }
 }
+
+// Display names for data keys (equipment, level, unit), from Labels.strings.
+func equipName(_ k: String) -> String { let v = NSLocalizedString("equip." + k, tableName: "Labels", comment: ""); return v.hasPrefix("equip.") ? k : v }
+func levelName(_ k: String) -> String { let v = NSLocalizedString("level." + k, tableName: "Labels", comment: ""); return v.hasPrefix("level.") ? k : v }
+func unitName(_ k: String) -> String { let v = NSLocalizedString("unit." + k, tableName: "Labels", comment: ""); return v.hasPrefix("unit.") ? k : v }
+
+func partName(_ k: String) -> String { if k == "all" { return NSLocalizedString("All", comment: "") }; let v = NSLocalizedString("part." + k, tableName: "Labels", comment: ""); return v.hasPrefix("part.") ? k.capitalized : v }
+func cuisineName(_ k: String) -> String { let v = NSLocalizedString("cuisine." + k, tableName: "Labels", comment: ""); return v.hasPrefix("cuisine.") ? k : v }
+
+func focusName(_ k: String) -> String { let v = NSLocalizedString("focus." + k, tableName: "Labels", comment: ""); return v.hasPrefix("focus.") ? (partNames[k] ?? k) : v }

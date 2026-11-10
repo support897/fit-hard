@@ -36,13 +36,13 @@ struct LibraryView: View {
     var list: [Exercise] { store.cat.exercises.filter { (part == "all" || $0.part == part) && (q.isEmpty || $0.name.localizedCaseInsensitiveContains(q)) } }
     var body: some View {
         VStack(spacing: 8) {
-            ScrollView(.horizontal, showsIndicators: false) { HStack { ForEach(parts, id: \.self) { p in Chip(label: p.capitalized, on: part == p) { part = p } } }.padding(.horizontal, 16) }
+            ScrollView(.horizontal, showsIndicators: false) { HStack { ForEach(parts, id: \.self) { p in Chip(label: partName(p), on: part == p) { part = p } } }.padding(.horizontal, 16) }
             List(list.prefix(200)) { e in
                 NavigationLink { ExerciseDetail(e: e) } label: {
-                    HStack { if let a = store.animBase(e) { AnimatedFrames(base: a).frame(width: 44, height: 44) }; VStack(alignment: .leading) { Text(e.name).font(.fh_subheadline_b); Text("\(e.partLabel ?? e.part) · \(e.equipment)").font(.fh_caption).foregroundStyle(Color.muted) } }
+                    HStack { if let a = store.animBase(e) { AnimatedFrames(base: a).frame(width: 44, height: 44) }; VStack(alignment: .leading) { Text(e.name).font(.fh_subheadline_b); Text("\(e.partLabel ?? e.part) · \(equipName(e.equipment))").font(.fh_caption).foregroundStyle(Color.muted) } }
                 }.listRowBackground(Color.surface)
             }.listStyle(.plain).scrollContentBackground(.hidden)
-        }.searchable(text: $q, prompt: "Search \(store.cat.exercises.count) exercises")
+        }.searchable(text: $q, prompt: String(format: NSLocalizedString("Search %lld exercises", comment: ""), store.cat.exercises.count))
     }
 }
 
@@ -56,7 +56,7 @@ struct ExerciseDetail: View {
                     if !store.hasCharacterAnim(e) { Toggle("Show preview animation (not yet quality approved)", isOn: $store.s.previewAnims).font(.fh_caption).tint(Color.sage) }
                     if let a = store.animBase(e) { AnimatedFrames(base: a).frame(height: 260).frame(maxWidth: .infinity).background(Color.surface, in: RoundedRectangle(cornerRadius: 20)) }
                 }
-                Flow { Chip(label: e.partLabel ?? e.part, on: false) {}; Chip(label: e.equipment, on: false) {}; Chip(label: e.level, on: false) {} }
+                Flow { Chip(label: e.partLabel ?? e.part, on: false) {}; Chip(label: equipName(e.equipment), on: false) {}; Chip(label: levelName(e.level), on: false) {} }
                 HStack { Spacer(); HelpButton(exercise: e) }
                 Card { SectionTitle(text: "How"); Text(e.cue) }
             }.padding(16)

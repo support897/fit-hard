@@ -26,7 +26,7 @@ extension Color {
 extension Store {
     func mealTime(_ meal: String) -> String { meal == "breakfast" ? s.settings.breakfast : meal == "lunch" ? s.settings.lunch : s.settings.dinner }
     func line(_ r: Recipe) -> String {
-        let p = RecipeService.macros(r).map { "\($0.p) g protein" } ?? "protein not available"
+        let p = RecipeService.macros(r).map { String(format: NSLocalizedString("%lld g protein", comment: ""), $0.p) } ?? NSLocalizedString("protein not available", comment: "")
         return "\(r.kcal) kcal · \(p) · \(r.minutes) min"
     }
     func routine(on day: String) -> Routine? {
@@ -35,7 +35,7 @@ extension Store {
         guard var r = s.routines.first(where: { $0.weekday == wd }) else { return nil }
         if s.skipped.contains("\(day)|\(r.id.uuidString)") { return nil }
         // A Bad check-in makes that day's workout an easier one: the first three exercises, two sets each (see TrainingMode).
-        if s.lightDays.contains(day), r.trainType != .mobility, r.exIds.count > 3 { r.exIds = Array(r.exIds.prefix(3)); r.name += ", lighter" }
+        if s.lightDays.contains(day), r.trainType != .mobility, r.exIds.count > 3 { r.exIds = Array(r.exIds.prefix(3)); r.name += NSLocalizedString(", lighter", comment: "") }
         return r
     }
     func calItems(on day: String) -> [CalItem] {
@@ -43,12 +43,12 @@ extension Store {
         for meal in Lists.meals {
             if let r = s.plan[day]?[meal].flatMap({ cat.recipe($0) }) {
                 let done = day == today ? (s.eaten[day] ?? []).contains(meal) : (s.eaten[day] ?? []).contains(meal)
-                out.append(CalItem(id: "meal-\(day)-\(meal)", time: mealTime(meal), title: "\(meal.capitalized): \(r.name)", detail: line(r), cat: "meals", icon: "m-" + meal, done: done, eventID: nil, routineID: nil, tone: "meal." + meal))
+                out.append(CalItem(id: "meal-\(day)-\(meal)", time: mealTime(meal), title: "\(NSLocalizedString(MealKind(rawValue: meal)?.label ?? meal.capitalized, comment: "")): \(r.name)", detail: line(r), cat: "meals", icon: "m-" + meal, done: done, eventID: nil, routineID: nil, tone: "meal." + meal))
             }
         }
         if let r = routine(on: day) {
             let done = s.workouts.contains { dayKey($0.date) == day }
-            out.append(CalItem(id: "train-\(day)-\(r.id)", time: s.profile.workoutTime, title: r.name, detail: "\(r.trainType.label) · \(r.exIds.count) exercises · \(s.profile.minutes) min", cat: "training", icon: r.trainType.icon, done: done, eventID: nil, routineID: r.id, tone: r.trainType.tone))
+            out.append(CalItem(id: "train-\(day)-\(r.id)", time: s.profile.workoutTime, title: r.name, detail: String(format: NSLocalizedString("%@ · %lld exercises · %lld min", comment: ""), NSLocalizedString(r.trainType.label, comment: ""), r.exIds.count, s.profile.minutes), cat: "training", icon: r.trainType.icon, done: done, eventID: nil, routineID: r.id, tone: r.trainType.tone))
         }
         for e in s.events where e.day == day {
             var icon = e.cat == "training" ? "dumbbell" : e.cat == "meals" ? "fork.knife" : e.cat == "recovery" ? "moon" : e.cat == "medication" ? "cross.case" : "person"
@@ -65,26 +65,26 @@ extension Store {
         }
         // Rest is planned, not earned: a day with no session shows as a planned rest day.
         if s.onboarded, routine(on: day) == nil, !s.restDays.contains(day), !s.events.contains(where: { $0.day == day && $0.cat == "training" }) {
-            out.append(CalItem(id: "plannedrest-\(day)", time: "08:00", title: "Rest", detail: "Planned rest day", cat: "recovery", icon: TrainType.rest.icon, done: false, eventID: nil, routineID: nil, tone: TrainType.rest.tone))
+            out.append(CalItem(id: "plannedrest-\(day)", time: "08:00", title: NSLocalizedString("Rest", comment: ""), detail: NSLocalizedString("Planned rest day", comment: ""), cat: "recovery", icon: TrainType.rest.icon, done: false, eventID: nil, routineID: nil, tone: TrainType.rest.tone))
         }
-        if s.restDays.contains(day) { out.append(CalItem(id: "rest-\(day)", time: "08:00", title: "Rest day", detail: "Recovery counts", cat: "recovery", icon: "moon", done: true, eventID: nil, routineID: nil)) }
+        if s.restDays.contains(day) { out.append(CalItem(id: "rest-\(day)", time: "08:00", title: NSLocalizedString("Rest day", comment: ""), detail: NSLocalizedString("Recovery counts", comment: ""), cat: "recovery", icon: "moon", done: true, eventID: nil, routineID: nil)) }
         for m in s.meds where !m.isPaused {
             for t in m.allTimes {
                 let st = s.medLogs.last(where: { $0.medId == m.id && $0.day == day })?.status
-                out.append(CalItem(id: "med-\(m.id)-\(t)-\(day)", time: t, title: "Check in: \(m.name)", detail: st ?? "", cat: "medication", icon: "cross.case", done: st == "taken", eventID: nil, routineID: nil))
+                out.append(CalItem(id: "med-\(m.id)-\(t)-\(day)", time: t, title: String(format: NSLocalizedString("Check in: %@", comment: ""), m.name), detail: st ?? "", cat: "medication", icon: "cross.case", done: st == "taken", eventID: nil, routineID: nil))
             }
         }
         for t in s.tasks where t.day == day {
-            out.append(CalItem(id: "task-\(t.id)", time: t.time ?? "09:00", title: t.title, detail: "To do", cat: "personal", icon: "checklist", done: t.done, eventID: nil, routineID: nil))
+            out.append(CalItem(id: "task-\(t.id)", time: t.time ?? "09:00", title: t.title, detail: NSLocalizedString("To do", comment: ""), cat: "personal", icon: "checklist", done: t.done, eventID: nil, routineID: nil))
         }
         for a in s.appts where dayKey(a.date) == day {
-            out.append(CalItem(id: "appt-\(a.id)", time: timeString(a.date), title: a.title, detail: "Appointment", cat: "personal", icon: "calendar", done: false, eventID: nil, routineID: nil))
+            out.append(CalItem(id: "appt-\(a.id)", time: timeString(a.date), title: a.title, detail: NSLocalizedString("Appointment", comment: ""), cat: "personal", icon: "calendar", done: false, eventID: nil, routineID: nil))
         }
         return out.sorted { ($0.time, $0.id) < ($1.time, $1.id) }
     }
     /// Adds an event unless the same title, day and time already exist.
     @discardableResult func addEvent(_ e: CalEvent) -> Bool {
-        if s.events.contains(where: { $0.title == e.title && $0.day == e.day && $0.time == e.time }) { say("Already on your calendar"); return false }
+        if s.events.contains(where: { $0.title == e.title && $0.day == e.day && $0.time == e.time }) { say(NSLocalizedString("Already on your calendar", comment: "")); return false }
         s.events.append(e); Notifier.rebuild(self); return true
     }
     func skipWorkout(day: String, routine r: Routine) { s.skipped.append("\(day)|\(r.id.uuidString)"); Notifier.rebuild(self) }

@@ -57,7 +57,7 @@ struct TrainingMode: View {
                 VStack(spacing: 0) {
                     Text("Exercise \(idx + 1) of \(ids.count)").font(.fh_subheadline_b).accessibilityIdentifier("train-progress")
                     TimelineView(.periodic(from: .now, by: 1)) { ctx in
-                        let e = Int(ctx.date.timeIntervalSince(start)); Text(String(format: "%d:%02d elapsed", e / 60, e % 60)).font(.fh_caption).foregroundStyle(Color.muted)
+                        let e = Int(ctx.date.timeIntervalSince(start)); Text(String(format: NSLocalizedString("%d:%02d elapsed", comment: ""), e / 60, e % 60)).font(.fh_caption).foregroundStyle(Color.muted)
                     }
                 }
                 Spacer()
@@ -75,9 +75,9 @@ struct TrainingMode: View {
         Text(ex.name).font(.fh_title_b).accessibilityIdentifier("train-exercise")
         Picker("Mode", selection: $store.s.profile.trainMode) { Text("Timer only").tag("timer"); Text("Guided").tag("guided"); Text("Hybrid").tag("hybrid") }.pickerStyle(.segmented).accessibilityIdentifier("train-mode")
         Card {
-            Text("\(entries[idx].sets.count) sets · \(t.lo) to \(t.hi) reps · rest \(restLen) s").font(.fh_subheadline_b)
-            Text(t.kg > 0 ? "Target: \(RecipeService.fmt(t.kg)) kg. \(t.note)" : t.note).font(.fh_caption).foregroundStyle(Color.muted)
-            if let l = store.history(for: ex.id).first?.sets.first { Text("Last time: \(l.reps) reps at \(RecipeService.fmt(l.kg)) kg").font(.fh_caption).foregroundStyle(Color.muted) }
+            Text(String(format: NSLocalizedString("%lld sets · %lld to %lld reps · rest %lld s", comment: ""), entries[idx].sets.count, t.lo, t.hi, restLen)).font(.fh_subheadline_b)
+            Text(t.kg > 0 ? String(format: NSLocalizedString("Target: %@ kg. %@", comment: ""), RecipeService.fmt(t.kg), t.note) : t.note).font(.fh_caption).foregroundStyle(Color.muted)
+            if let l = store.history(for: ex.id).first?.sets.first { Text(String(format: NSLocalizedString("Last time: %lld reps at %@ kg", comment: ""), l.reps, RecipeService.fmt(l.kg))).font(.fh_caption).foregroundStyle(Color.muted) }
         }
         let mode = store.s.profile.trainMode
         if mode != "timer" {
@@ -96,12 +96,12 @@ struct TrainingMode: View {
         // Sets
         Card {
             HStack { Text("Sets").font(.fh_headline); Spacer()
-                if let s = setStart { TimelineView(.periodic(from: .now, by: 1)) { ctx in Text("Set running \(Int(ctx.date.timeIntervalSince(s))) s").font(.fh_caption).foregroundStyle(Color.sage) } } }
+                if let s = setStart { TimelineView(.periodic(from: .now, by: 1)) { ctx in Text(String(format: NSLocalizedString("Set running %lld s", comment: ""), Int(ctx.date.timeIntervalSince(s)))).font(.fh_caption).foregroundStyle(Color.sage) } } }
             ForEach(entries[idx].sets.indices, id: \.self) { i in
                 HStack(spacing: 8) {
                     Button { entries[idx].sets[i].done = !(entries[idx].sets[i].done ?? false); if entries[idx].sets[i].done == true { startRest() }; haptic() } label: {
                         BrandIcon( entries[idx].sets[i].done == true ? "checkmark.square.fill" : "square").font(.fh_title2).foregroundStyle(Color.sage).frame(width: 44, height: 44)
-                    }.accessibilityLabel("Set \(i + 1) done").accessibilityIdentifier("set-done-\(i)")
+                    }.accessibilityLabel(String(format: NSLocalizedString("Set %lld done", comment: ""), i + 1)).accessibilityIdentifier("set-done-\(i)")
                     VStack(alignment: .leading, spacing: 2) {
                         Stepper("\(RecipeService.fmt(entries[idx].sets[i].kg)) kg", value: $entries[idx].sets[i].kg, in: 0...500, step: 2.5)
                         Stepper("\(entries[idx].sets[i].reps) reps", value: $entries[idx].sets[i].reps, in: 0...60)
@@ -127,7 +127,7 @@ struct TrainingMode: View {
             TimelineView(.periodic(from: .now, by: 1)) { ctx in
                 let left = pausedLeft ?? max(0, Int((restEnd ?? ctx.date).timeIntervalSince(ctx.date).rounded(.up)))
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(left > 0 ? "Rest \(left / 60):" + String(format: "%02d", left % 60) : "Rest is over. Ready when you are.").font(.fh_title2_b).accessibilityIdentifier("rest-left")
+                    Text(left > 0 ? String(format: NSLocalizedString("Rest %d:%02d", comment: ""), left / 60, left % 60) : NSLocalizedString("Rest is over. Ready when you are.", comment: "")).font(.fh_title2_b).accessibilityIdentifier("rest-left")
                     HStack {
                         Button(pausedLeft == nil ? "Pause" : "Resume") {
                             if let p = pausedLeft { restEnd = Date().addingTimeInterval(Double(p)); pausedLeft = nil } else { pausedLeft = left; restEnd = nil }
@@ -189,5 +189,5 @@ struct TrainingMode: View {
             }.accessibilityIdentifier("train-save")
         }.padding(16) }
     }
-    func row(_ a: String, _ b: String) -> some View { HStack { Text(a).foregroundStyle(Color.muted); Spacer(); Text(b).font(.fh_headline) } }
+    func row(_ a: String, _ b: String) -> some View { HStack { Text(LocalizedStringKey(a)).foregroundStyle(Color.muted); Spacer(); Text(b).font(.fh_headline) } }
 }

@@ -27,7 +27,7 @@ struct ProgressScreen: View {
                 SectionTitle(text: "Your journey")
                 Text("\(store.activeWeeks)").font(.zilla(44, bold: true)).foregroundStyle(Color.sage)
                 Text("active weeks, ever. They never reset.").font(.fh_subheadline).foregroundStyle(Color.muted)
-                if store.currentRun > 1 { Text("\(store.currentRun) weeks in a row right now").font(.fh_caption).foregroundStyle(Color.muted) }
+                if store.currentRun > 1 { Text(String(format: NSLocalizedString("%lld weeks in a row right now", comment: ""), store.currentRun)).font(.fh_caption).foregroundStyle(Color.muted) }
                 Chart(wk) { BarMark(x: .value("Week", $0.start, unit: .weekOfYear), y: .value("Workouts", $0.sessions)).foregroundStyle(Color.sage).cornerRadius(4) }
                     .frame(height: 120).chartYAxis(.hidden)
                 Text("Last 8 weeks, oldest on the left.").font(.fh_caption).foregroundStyle(Color.muted)
@@ -36,7 +36,7 @@ struct ProgressScreen: View {
                 SectionTitle(text: "Milestones")
                 if ms.earned.isEmpty { Text("Your first one is waiting. No rush.").foregroundStyle(Color.muted) }
                 ForEach(ms.earned, id: \.self) { BrandLabel($0, icon: "star.fill").foregroundStyle(Color.ink) }
-                if let n = ms.next { Text("Next, whenever you like: \(n)").font(.fh_caption).foregroundStyle(Color.muted) }
+                if let n = ms.next { Text(String(format: NSLocalizedString("Next, whenever you like: %@", comment: ""), n)).font(.fh_caption).foregroundStyle(Color.muted) }
             }
             Card {
                 SectionTitle(text: "Personal bests"); Text("Compared only with your own earlier sets.").font(.fh_caption).foregroundStyle(Color.muted)
@@ -58,7 +58,7 @@ struct ProgressScreen: View {
                 Card {
                     Picker("Exercise", selection: Binding(get: { pick }, set: { exId = $0 })) { ForEach(ex) { Text($0.name).tag($0.id) } }
                     Chart(pts) { LineMark(x: .value("Date", $0.date), y: .value("Top set", $0.value)).foregroundStyle(Color.sage); PointMark(x: .value("Date", $0.date), y: .value("Top set", $0.value)).foregroundStyle(Color.sage) }.frame(height: 160)
-                    ForEach(pts.reversed().prefix(10)) { Text("\($0.date.formatted(date: .abbreviated, time: .omitted)): \($0.reps) reps, \($0.value.formatted())") .font(.fh_caption) }
+                    ForEach(pts.reversed().prefix(10)) { Text(String(format: NSLocalizedString("%@: %lld reps, %@", comment: ""), $0.date.formatted(date: .abbreviated, time: .omitted), $0.reps, $0.value.formatted())) .font(.fh_caption) }
                 }
             }
         }
@@ -155,7 +155,7 @@ struct TreatsScreen: View {
                             Button { store.s.treats.removeAll { $0.id == t.id } } label: { BrandIcon( "xmark.circle") }.foregroundStyle(Color.muted) }
                     }
                     let known = store.s.treats.filter { $0.day == d }.compactMap { $0.kcal }.reduce(0, +)
-                    Text("About \(known) kcal. All fine.").font(.fh_caption).foregroundStyle(Color.muted)
+                    Text(String(format: NSLocalizedString("About %lld kcal. All fine.", comment: ""), known)).font(.fh_caption).foregroundStyle(Color.muted)
                 }
             }
         }.padding(16) }.background(Color.cream).navigationTitle("Treats").navigationBarTitleDisplayMode(.inline)
@@ -179,7 +179,7 @@ struct FridgeScreen: View {
             ForEach(Array(m.prefix(25).enumerated()), id: \.offset) { _, row in
                 let (r, hit, total) = row
                 NavigationLink { RecipeDetail(recipe: r) } label: {
-                    HStack { VStack(alignment: .leading) { Text(r.name).font(.fh_subheadline_b); Text("You have \(hit) of \(total) ingredients").font(.fh_caption).foregroundStyle(Color.muted) }; Spacer(); BrandIcon( "chevron.right") }
+                    HStack { VStack(alignment: .leading) { Text(r.name).font(.fh_subheadline_b); Text(String(format: NSLocalizedString("You have %lld of %lld ingredients", comment: ""), hit, total)).font(.fh_caption).foregroundStyle(Color.muted) }; Spacer(); BrandIcon( "chevron.right") }
                         .padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 16))
                 }.foregroundStyle(Color.ink)
             }
@@ -209,7 +209,7 @@ struct LibraryPicker: View {
     @State private var q = ""
     var body: some View {
         List(store.cat.exercises.filter { q.isEmpty || $0.name.localizedCaseInsensitiveContains(q) }.prefix(150)) { e in
-            Button { pick(e.id) } label: { VStack(alignment: .leading) { Text(e.name).foregroundStyle(Color.ink); Text("\(e.partLabel ?? e.part) · \(e.equipment)").font(.fh_caption).foregroundStyle(Color.muted) } }
+            Button { pick(e.id) } label: { VStack(alignment: .leading) { Text(e.name).foregroundStyle(Color.ink); Text("\(e.partLabel ?? e.part) · \(equipName(e.equipment))").font(.fh_caption).foregroundStyle(Color.muted) } }
         }.searchable(text: $q, prompt: "Search exercises")
     }
 }
@@ -225,7 +225,7 @@ struct HabitsView: View {
                 if store.s.habits.isEmpty { Text("Add one small habit.").foregroundStyle(Color.muted) }
                 ForEach(store.s.habits) { h in
                     HStack { Button { store.toggleHabit(h) } label: { BrandIcon( store.habitDone(h) ? "checkmark.circle.fill" : "circle").font(.fh_title2).foregroundStyle(Color.sage) }
-                        VStack(alignment: .leading) { Text(h.name); Text("\(h.done.count) days done, ever").font(.fh_caption).foregroundStyle(Color.muted) }
+                        VStack(alignment: .leading) { Text(h.name); Text(String(format: NSLocalizedString("%lld days done, ever", comment: ""), h.done.count)).font(.fh_caption).foregroundStyle(Color.muted) }
                         Spacer(); Button { store.s.habits.removeAll { $0.id == h.id } } label: { BrandIcon( "trash") }.foregroundStyle(Color.muted) }
                 }
                 HStack { TextField("New habit", text: $name).submitLabel(.done).onSubmit(add); if !name.isEmpty { Button("Add", action: add).bold() } }
@@ -276,7 +276,7 @@ struct ChallengeCard: View {
             SectionTitle(text: "Your challenge")
             if let c = store.s.challenge {
                 let n = min(store.challengeDayNumber, c.days)
-                Text("Day \(n) of \(c.days). Tasks tick themselves from what you already log.").font(.fh_caption).foregroundStyle(Color.muted)
+                Text(String(format: NSLocalizedString("Day %lld of %lld. Tasks tick themselves from what you already log.", comment: ""), n, c.days)).font(.fh_caption).foregroundStyle(Color.muted)
                 ForEach(c.tasks, id: \.self) { t in BrandLabel(labels[t] ?? t, icon: store.challengeDone(t, day: store.today) ? "checkmark.circle.fill" : "circle").foregroundStyle(store.challengeDone(t, day: store.today) ? Color.sage : Color.ink) }
                 Text("Missing a day never ends it. Rest counts.").font(.fh_caption).foregroundStyle(Color.muted)
                 Button("End challenge") { store.endChallenge() }.font(.fh_footnote).foregroundStyle(Color.muted)

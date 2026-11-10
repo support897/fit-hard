@@ -46,7 +46,7 @@ struct RootView: View {
                 }
             }
             if let t = store.toast {
-                Text(t).font(.fh_subheadline_b).padding(.horizontal, 16).padding(.vertical, 10)
+                Text(LocalizedStringKey(t)).font(.fh_subheadline_b).padding(.horizontal, 16).padding(.vertical, 10)
                     .background(Color.ink, in: Capsule()).foregroundStyle(Color.cream)
                     .padding(.bottom, 100).transition(.move(edge: .bottom).combined(with: .opacity))
             }

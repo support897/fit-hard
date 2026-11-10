@@ -7,7 +7,7 @@ struct AccountSection: View {
     var body: some View {
         Section("Account") {
             if let x = store.session {
-                Text("Signed in as \(x.email)")
+                Text(String(format: NSLocalizedString("Signed in as %@", comment: ""), x.email))
             } else {
                 Text("Test mode. No account on this launch.").font(.fh_footnote).foregroundStyle(Color.muted)
             }

@@ -20,9 +20,9 @@ struct DoorView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 BundleImage(name: "wally-welcome").frame(height: 130).frame(maxWidth: .infinity)
-                Text(creating ? "Create your account" : "Welcome back").font(.fh_largeTitle_b).foregroundStyle(Color.ink)
+                Text(LocalizedStringKey(creating ? "Create your account" : "Welcome back")).font(.fh_largeTitle_b).foregroundStyle(Color.ink)
                     .accessibilityIdentifier("door-title")
-                Text(creating ? "One account keeps your plan safe and on every phone." : "Sign in to pick up where you left off.").font(.fh_subheadline).foregroundStyle(Color.muted)
+                Text(LocalizedStringKey(creating ? "One account keeps your plan safe and on every phone." : "Sign in to pick up where you left off.")).font(.fh_subheadline).foregroundStyle(Color.muted)
                 VStack(spacing: 10) {
                     appleButton()
                     googleButton()
@@ -34,8 +34,8 @@ struct DoorView: View {
                 field("Email", text: $email).textContentType(.emailAddress).keyboardType(.emailAddress).textInputAutocapitalization(.never).autocorrectionDisabled()
                 SecureField(creating ? "Choose a password (8+ characters)" : "Password", text: $pass).textContentType(creating ? .newPassword : .password)
                     .padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.line))
-                if !err.isEmpty { Text(err).font(.fh_footnote_b).foregroundStyle(Color.amber).accessibilityIdentifier("door-error") }
-                if !info.isEmpty { Text(info).font(.fh_footnote).foregroundStyle(Color.sage) }
+                if !err.isEmpty { Text(LocalizedStringKey(err)).font(.fh_footnote_b).foregroundStyle(Color.amber).accessibilityIdentifier("door-error") }
+                if !info.isEmpty { Text(LocalizedStringKey(info)).font(.fh_footnote).foregroundStyle(Color.sage) }
                 BigButton(title: busy ? "One moment" : (creating ? "Create account" : "Sign in")) { go() }
                     .disabled(busy || !valid).opacity(valid ? 1 : 0.4).accessibilityIdentifier("door-go")
                 HStack {
@@ -89,7 +89,7 @@ struct DoorView: View {
                 busy = false
             }
         } label: {
-            HStack { BrandIcon("g.circle"); Text(creating ? "Sign up with Google" : "Sign in with Google").fontWeight(.semibold) }.frame(maxWidth: .infinity).padding(.vertical, 14)
+            HStack { BrandIcon("g.circle"); Text(LocalizedStringKey(creating ? "Sign up with Google" : "Sign in with Google")).fontWeight(.semibold) }.frame(maxWidth: .infinity).padding(.vertical, 14)
                 .background(Color.surface, in: Capsule()).overlay(Capsule().stroke(Color.line, lineWidth: 1)).foregroundStyle(Color.ink)
         }.buttonStyle(.plain).disabled(busy).accessibilityIdentifier("door-google")
     }

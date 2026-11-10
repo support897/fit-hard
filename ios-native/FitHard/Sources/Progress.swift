@@ -21,7 +21,7 @@ extension Store {
         guard let cur = weeks(1).last else { return "" }
         let planned = s.profile.trainDays.count
         if cur.sessions == 0 { return "A fresh week. Your next step is ready when you are." }
-        return "\(cur.sessions) workout\(cur.sessions == 1 ? "" : "s") this week" + (planned > 0 ? " · you planned \(planned). Fewer is fine too." : "")
+        return String(format: NSLocalizedString(cur.sessions == 1 ? "%lld workout this week" : "%lld workouts this week", comment: ""), cur.sessions) + (planned > 0 ? String(format: NSLocalizedString(" · you planned %lld. Fewer is fine too.", comment: ""), planned) : "")
     }
     var activeWeeks: Int { weeks(52).filter { $0.sessions > 0 || $0.rest > 0 }.count }
     var currentRun: Int {

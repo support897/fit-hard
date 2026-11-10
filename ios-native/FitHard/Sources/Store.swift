@@ -160,7 +160,7 @@ final class Store: ObservableObject {
         for (k, v) in agg {
             let name = String(k.split(separator: "|").first ?? "")
             let q = v.qty >= 10 ? String(Int(v.qty.rounded())) : String(format: "%.1f", v.qty).replacingOccurrences(of: ".0", with: "")
-            out[v.cat, default: []].append((k, "\(name.capitalized), \(q) \(v.unit)"))
+            out[v.cat, default: []].append((k, "\(name.capitalized), \(q) \(unitName(v.unit))"))
         }
         return out.keys.sorted().map { c in (c, out[c]!.sorted { $0.1 < $1.1 }.map { (key: $0.0, label: $0.1) }) }
     }
@@ -268,13 +268,13 @@ final class Store: ObservableObject {
     struct Step { let icon: String; let title: String; let tab: Int }
     var nextStep: Step {
         let hour = Calendar.current.component(.hour, from: Date())
-        if s.checkins[today] == nil { return Step(icon: "heart", title: "How are you feeling?", tab: 0) }
-        if !todaysExercises.isEmpty && !workedOutToday && hour >= 6 { return Step(icon: "dumbbell", title: "Today's workout is ready", tab: 2) }
+        if s.checkins[today] == nil { return Step(icon: "heart", title: NSLocalizedString("How are you feeling?", comment: ""), tab: 0) }
+        if !todaysExercises.isEmpty && !workedOutToday && hour >= 6 { return Step(icon: "dumbbell", title: NSLocalizedString("Today's workout is ready", comment: ""), tab: 2) }
         if let m = Lists.meals.first(where: { !(s.eaten[today] ?? []).contains($0) && s.plan[today]?[$0] != nil }) {
-            return Step(icon: "fork.knife", title: "Next up: \(m)", tab: 1)
+            return Step(icon: "fork.knife", title: String(format: NSLocalizedString("Next up: %@", comment: ""), NSLocalizedString(MealKind(rawValue: m)?.label ?? m, comment: "")), tab: 1)
         }
-        if waterToday < s.profile.waterGoal { return Step(icon: "drop", title: "A glass of water?", tab: 0) }
-        return Step(icon: "sparkles", title: "All done. Rest is part of the plan.", tab: 0)
+        if waterToday < s.profile.waterGoal { return Step(icon: "drop", title: NSLocalizedString("A glass of water?", comment: ""), tab: 0) }
+        return Step(icon: "sparkles", title: NSLocalizedString("All done. Rest is part of the plan.", comment: ""), tab: 0)
     }
 
     func resetAll() {

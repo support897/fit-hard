@@ -59,7 +59,7 @@ struct PlanSection: View {
                 WallyBubble()
                 if let t = store.targets {
                     Card { HStack { VStack(alignment: .leading) { Text("Your daily target").font(.fh_caption).foregroundStyle(Color.muted)
-                        Text("\(t.kcal) kcal · \(t.protein) g protein").font(.fh_headline).accessibilityIdentifier("target-line") }; Spacer() } }
+                        Text(String(format: NSLocalizedString("%lld kcal · %lld g protein", comment: ""), t.kcal, t.protein)).font(.fh_headline).accessibilityIdentifier("target-line") }; Spacer() } }
                 }
                 ForEach(days, id: \.self) { d in
                     let k = dayKey(d)
@@ -69,10 +69,10 @@ struct PlanSection: View {
                             if let r = store.s.plan[k]?[m].flatMap({ store.cat.recipe($0) }) {
                                 HStack {
                                     NavigationLink { RecipeDetail(recipe: r) } label: {
-                                        VStack(alignment: .leading, spacing: 2) { HStack(spacing: 4) { BrandIcon("m-" + m).foregroundStyle(Color.tone("meal." + m)); Text(m.capitalized).font(.fh_caption).foregroundStyle(Color.muted) }; Text(r.name).font(.fh_subheadline_b).multilineTextAlignment(.leading); MealLine(r: r); Text("Why: " + (store.whyThisMeal(r, meal: m, day: k).first ?? "")).font(.fh_caption).foregroundStyle(Color.muted).multilineTextAlignment(.leading) }
+                                        VStack(alignment: .leading, spacing: 2) { HStack(spacing: 4) { BrandIcon("m-" + m).foregroundStyle(Color.tone("meal." + m)); Text(NSLocalizedString(MealKind(rawValue: m)?.label ?? m.capitalized, comment: "")).font(.fh_caption).foregroundStyle(Color.muted) }; Text(r.name).font(.fh_subheadline_b).multilineTextAlignment(.leading); MealLine(r: r); Text(NSLocalizedString("Why: ", comment: "") + (store.whyThisMeal(r, meal: m, day: k).first ?? "")).font(.fh_caption).foregroundStyle(Color.muted).multilineTextAlignment(.leading) }
                                     }.foregroundStyle(Color.ink)
                                     Spacer()
-                                    Button { store.swap(day: k, meal: m); store.say("Swapped \(m)") } label: { BrandIcon( "arrow.triangle.2.circlepath").frame(width: 44, height: 44) }
+                                    Button { store.swap(day: k, meal: m); store.say(String(format: NSLocalizedString("Swapped %@", comment: ""), NSLocalizedString(MealKind(rawValue: m)?.label ?? m, comment: ""))) } label: { BrandIcon( "arrow.triangle.2.circlepath").frame(width: 44, height: 44) }
                                         .foregroundStyle(Color.sage).accessibilityLabel("Swap \(m)").accessibilityIdentifier("swap-\(k)-\(m)")
                                 }
                             }
@@ -147,7 +147,7 @@ struct RecipeDetail: View {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 8) { BrandLabel("\(recipe.minutes) min", icon: "clock"); BrandLabel("\(recipe.kcal) kcal", icon: "flame")
                     if let m = RecipeService.macros(recipe) { BrandLabel("\(m.p) g protein", icon: "bolt.heart") } }.font(.fh_subheadline).foregroundStyle(Color.muted)
-                if let m = RecipeService.macros(recipe) { Text("Per serving. Carbs \(m.c) g, fat \(m.f) g. Estimated from ingredient reference values.").font(.fh_caption).foregroundStyle(Color.muted) }
+                if let m = RecipeService.macros(recipe) { Text(String(format: NSLocalizedString("Per serving. Carbs %lld g, fat %lld g. Estimated from ingredient reference values.", comment: ""), m.c, m.f)).font(.fh_caption).foregroundStyle(Color.muted) }
                 else { Text("Protein is not available for this recipe.").font(.fh_caption).foregroundStyle(Color.muted) }
                 if !recipe.allergens.isEmpty { Text("Contains: " + recipe.allergens.joined(separator: ", ")).font(.fh_caption).foregroundStyle(Color.amber) }
                 Card {
@@ -164,8 +164,8 @@ struct RecipeDetail: View {
                     SectionTitle(text: "Ingredients for one serving")
                     ForEach(lines) { l in
                         HStack { BrandIcon( l.buy <= 0.001 ? "checkmark.circle.fill" : "cart").foregroundStyle(l.buy <= 0.001 ? Color.sage : Color.amber)
-                            Text("\(l.name.capitalized), \(RecipeService.fmt(l.need)) \(l.unit)").font(.fh_subheadline); Spacer()
-                            Text(l.buy <= 0.001 ? "Have" : "Buy \(RecipeService.fmt(l.buy)) \(l.unit)").font(.fh_caption_b).foregroundStyle(l.buy <= 0.001 ? Color.sage : Color.amber) }
+                            Text("\(l.name.capitalized), \(RecipeService.fmt(l.need)) \(unitName(l.unit))").font(.fh_subheadline); Spacer()
+                            Text(l.buy <= 0.001 ? NSLocalizedString("Have", comment: "") : String(format: NSLocalizedString("Buy %@ %@", comment: ""), RecipeService.fmt(l.buy), unitName(l.unit))).font(.fh_caption_b).foregroundStyle(l.buy <= 0.001 ? Color.sage : Color.amber) }
                     }
                 }
                 Card { SectionTitle(text: "Steps"); ForEach(Array(recipe.steps.enumerated()), id: \.offset) { n, s in
@@ -206,9 +206,9 @@ struct HaveSection: View {
                 if store.s.inventory.isEmpty { Text("Nothing yet. Add a few things and shopping gets shorter.").foregroundStyle(Color.muted) }
                 ForEach($store.s.inventory) { $it in
                     HStack {
-                        VStack(alignment: .leading) { Text(it.name.capitalized).font(.fh_subheadline_b); if let e = it.expiry { Text("Use by \(e)").font(.fh_caption).foregroundStyle(Color.muted) } }
+                        VStack(alignment: .leading) { Text(it.name.capitalized).font(.fh_subheadline_b); if let e = it.expiry { Text(String(format: NSLocalizedString("Use by %@", comment: ""), e)).font(.fh_caption).foregroundStyle(Color.muted) } }
                         Spacer()
-                        Stepper("\(RecipeService.fmt(it.qty)) \(it.unit)", value: $it.qty, in: 0...5000, step: it.unit == "g" || it.unit == "ml" ? 50 : 1).fixedSize()
+                        Stepper("\(RecipeService.fmt(it.qty)) \(unitName(it.unit))", value: $it.qty, in: 0...5000, step: it.unit == "g" || it.unit == "ml" ? 50 : 1).fixedSize()
                         Button { store.s.inventory.removeAll { $0.id == it.id } } label: { BrandIcon( "trash").frame(width: 36, height: 36) }.foregroundStyle(Color.muted)
                     }
                 }
@@ -226,7 +226,7 @@ struct ShopSection: View {
         let have = lines.filter { $0.buy <= 0.001 }
         let cats = Dictionary(grouping: toBuy, by: { $0.cat }).keys.sorted()
         List {
-            Section { Text("\(toBuy.count) to buy for the next 7 days. Items you already have are left out.").font(.fh_footnote).foregroundStyle(Color.muted) }.listRowBackground(Color.clear)
+            Section { Text(String(format: NSLocalizedString("%lld to buy for the next 7 days. Items you already have are left out.", comment: ""), toBuy.count)).font(.fh_footnote).foregroundStyle(Color.muted) }.listRowBackground(Color.clear)
             ForEach(cats, id: \.self) { c in
                 Section(c) {
                     ForEach(toBuy.filter { $0.cat == c }) { l in
@@ -237,10 +237,10 @@ struct ShopSection: View {
                                     BrandIcon( on ? "checkmark.circle.fill" : "circle").font(.fh_title3).foregroundStyle(Color.sage).frame(width: 44, height: 36) }
                                 VStack(alignment: .leading) {
                                     Text(l.name.capitalized).font(.fh_subheadline_b).strikethrough(on)
-                                    Text("Need \(RecipeService.fmt(l.need)), have \(RecipeService.fmt(l.have)) \(l.unit)").font(.fh_caption).foregroundStyle(Color.muted)
+                                    Text(String(format: NSLocalizedString("Need %@, have %@ %@", comment: ""), RecipeService.fmt(l.need), RecipeService.fmt(l.have), unitName(l.unit))).font(.fh_caption).foregroundStyle(Color.muted)
                                 }
                                 Spacer()
-                                Text("Buy \(RecipeService.fmt(store.buyQty(l))) \(l.unit)").font(.fh_caption_b)
+                                Text(String(format: NSLocalizedString("Buy %@ %@", comment: ""), RecipeService.fmt(store.buyQty(l)), unitName(l.unit))).font(.fh_caption_b)
                             }
                             HStack {
                                 Stepper("Change amount", value: Binding(get: { store.buyQty(l) }, set: { store.s.shopQty[l.id] = $0 }), in: 0...5000, step: l.unit == "g" || l.unit == "ml" ? 50 : 1).labelsHidden()
@@ -256,7 +256,7 @@ struct ShopSection: View {
                 Section("My own items") {
                     ForEach($store.s.shopExtra) { $it in
                         HStack { Button { it.done.toggle() } label: { BrandIcon( it.done ? "checkmark.circle.fill" : "circle").font(.fh_title3).foregroundStyle(Color.sage) }
-                            Text("\(it.name.capitalized), \(RecipeService.fmt(it.qty)) \(it.unit)").strikethrough(it.done)
+                            Text("\(it.name.capitalized), \(RecipeService.fmt(it.qty)) \(unitName(it.unit))").strikethrough(it.done)
                             Spacer(); Button { store.s.shopExtra.removeAll { $0.id == it.id } } label: { BrandIcon( "trash") }.foregroundStyle(Color.muted) }
                     }.listRowBackground(Color.surface)
                 }
@@ -286,12 +286,12 @@ struct NutritionOverview: View {
                 SectionTitle(text: "Today")
                 if let t = t {
                     bar("Calories", e.kcal, t.kcal, "kcal"); bar("Protein", e.p, t.protein, "g")
-                    Text("Carbs about \(t.carbs) g and fat about \(t.fat) g make up the rest.").font(.fh_caption).foregroundStyle(Color.muted)
+                    Text(String(format: NSLocalizedString("Carbs about %lld g and fat about %lld g make up the rest.", comment: ""), t.carbs, t.fat)).font(.fh_caption).foregroundStyle(Color.muted)
                 } else if !NutritionService.targetsAllowed(store.s.profile) {
                     Text("Fit Hard does not set calorie targets for you. Please talk with a clinician about food. Your meals still work.").foregroundStyle(Color.muted)
                 } else {
                     Text("Add your age, height and weight in your profile to see daily targets.").foregroundStyle(Color.muted)
-                    Text("Eaten so far: \(e.kcal) kcal").font(.fh_subheadline)
+                    Text(String(format: NSLocalizedString("Eaten so far: %lld kcal", comment: ""), e.kcal)).font(.fh_subheadline)
                 }
             }
             Card { Text("Targets use the Mifflin St Jeor estimate with your activity level. Protein is kept between 1.4 and 2.0 g per kg. These are estimates, not medical advice. Recipe protein, carbs and fat are estimated from ingredient reference values, and a recipe is only shown with numbers when they agree with its calories.").font(.fh_caption).foregroundStyle(Color.muted) }
@@ -299,7 +299,7 @@ struct NutritionOverview: View {
     }
     func bar(_ n: String, _ v: Int, _ g: Int, _ u: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            HStack { Text(n).font(.fh_subheadline_b); Spacer(); Text("\(v) of \(g) \(u)").font(.fh_caption).foregroundStyle(Color.muted) }
+            HStack { Text(NSLocalizedString(n, comment: "")).font(.fh_subheadline_b); Spacer(); Text(String(format: NSLocalizedString("%lld of %lld %@", comment: ""), v, g, u)).font(.fh_caption).foregroundStyle(Color.muted) }
             ProgressView(value: min(1, Double(v) / Double(max(1, g)))).tint(Color.sage)
         }
     }

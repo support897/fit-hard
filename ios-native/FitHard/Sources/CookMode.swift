@@ -38,13 +38,13 @@ struct CookMode: View {
     @ViewBuilder var content: some View {
         if step < 0 {
             Text("Ingredients").font(.fh_title2)
-            Stepper("Servings: \(servings)", value: $servings, in: 1...12).font(.fh_headline)
+            Stepper(String(format: NSLocalizedString("Servings: %lld", comment: ""), servings), value: $servings, in: 1...12).font(.fh_headline)
             let lines = RecipeService.perServing(recipe).map { Ingredient(name: $0.name, qty: $0.qty * Double(servings), unit: $0.unit, category: $0.category) }
             ForEach(Array(lines.enumerated()), id: \.offset) { _, l in
-                Text("\(l.name.capitalized), \(RecipeService.fmt(l.qty)) \(l.unit)").font(.fh_title3)
+                Text("\(l.name.capitalized), \(RecipeService.fmt(l.qty)) \(unitName(l.unit))").font(.fh_title3)
             }
         } else {
-            Text("Step \(step + 1) of \(recipe.steps.count)").font(.fh_subheadline_b).foregroundStyle(Color.muted)
+            Text(String(format: NSLocalizedString("Step %lld of %lld", comment: ""), step + 1, recipe.steps.count)).font(.fh_subheadline_b).foregroundStyle(Color.muted)
             Text(recipe.steps[step]).font(.fh_title3).fixedSize(horizontal: false, vertical: true).accessibilityIdentifier("cook-step")
             if let mins = CookMode.minutes(in: recipe.steps[step]) { timer(mins) }
         }

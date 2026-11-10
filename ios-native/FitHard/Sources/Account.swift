@@ -127,10 +127,10 @@ extension Store {
     }
     func backupNow() async {
         guard var x = session, cloudReady, let d = try? JSONEncoder().encode(s), let js = String(data: d, encoding: .utf8) else { return }
-        do { try await Cloud.save(x, json: js); syncNote = "Backed up just now" }
+        do { try await Cloud.save(x, json: js); syncNote = NSLocalizedString("Backed up just now", comment: "") }
         catch {
-            if let n = try? await Cloud.refresh(x) { x = n; storeSession(n); do { try await Cloud.save(n, json: js); syncNote = "Backed up just now"; return } catch {} }
-            syncNote = "Will back up when you are online"
+            if let n = try? await Cloud.refresh(x) { x = n; storeSession(n); do { try await Cloud.save(n, json: js); syncNote = NSLocalizedString("Backed up just now", comment: ""); return } catch {} }
+            syncNote = NSLocalizedString("Will back up when you are online", comment: "")
         }
     }
     /// After sign-in: read the cloud copy first. If it exists and this phone is brand new, adopt it; never overwrite on a failed read.
@@ -149,12 +149,12 @@ extension Store {
             var remote: String? = nil
             do { remote = try await Cloud.load(cur) } catch { cur = try await Cloud.refresh(cur); storeSession(cur); remote = try await Cloud.load(cur) }
             if let r = remote, let d = r.data(using: .utf8), let st = try? JSONDecoder().decode(AppState.self, from: d), st.onboarded, !s.onboarded {
-                s = st; syncNote = "Welcome back. Your plan is restored."
+                s = st; syncNote = NSLocalizedString("Welcome back. Your plan is restored.", comment: "")
                 Notifier.rebuild(self)
             }
             cloudReady = true
             await backupNow()
-        } catch { syncNote = "Could not reach your backup. Your changes stay safe on this phone." }
+        } catch { syncNote = NSLocalizedString("Could not reach your backup. Your changes stay safe on this phone.", comment: "") }
     }
     func signOutKeep() async {
         await backupNow()
