@@ -26,7 +26,7 @@ struct MoreView: View {
                 }.themedRows()
                 Section("Explore") {
                     NavigationLink { ProgressScreen() } label: { BrandLabel("Progress", icon: "chart.line.uptrend.xyaxis") }
-                    if store.s.profile.needs.contains("peptides") || !store.s.meds.isEmpty {
+                    if store.s.profile.needs.contains("peptides") || store.s.profile.primaryGoal == "doses" || store.s.profile.goals.contains("Keep track of my doses") || !store.s.meds.isEmpty {
                         NavigationLink { HealthView().content } label: { BrandLabel("Health log and appointments", icon: "cross.case") }
                     }
                     NavigationLink { TreatsScreen() } label: { BrandLabel("Treats", icon: "heart") }
