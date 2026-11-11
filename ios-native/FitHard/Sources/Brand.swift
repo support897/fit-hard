@@ -79,7 +79,7 @@ extension Color {
         "meal.breakfast": (0xC98A00, 0xFFC84D), "meal.lunch": (0xB8467A, 0xF28DB2), "meal.dinner": (0x9A3B2B, 0xE58A78), "meal.snacks": (0xC06DAB, 0xE9A6DA)
     ]
     static func tone(_ key: String) -> Color {
-        let dark = Color.pal == 1 || Color.pal == 2
+        let dark = Color.isDark
         if let t = toneTable[key] { return Color(hex: dark ? t.1 : t.0) }
         return Color.cat(key)
     }
@@ -116,12 +116,15 @@ struct IconShape: Shape {
 }
 
 enum Glyphs {
-    struct G { let d: String; var dots = ""; var fill = false }
+    struct G { let d: String; var dots = ""; var fill = false; var hi = "" }
     static let heart = "M12 20 C 5 15 3.5 11.5 3.5 8.8 C 3.5 6.5 5.3 5 7.4 5 C 9.4 5 11 6.2 12 8 C 13 6.2 14.6 5 16.6 5 C 18.7 5 20.5 6.5 20.5 8.8 C 20.5 11.5 19 15 12 20 Z"
     static let moon = "M18.5 14.5 C 17 15.4 15.5 15.8 14 15.8 C 9.8 15.8 6.7 12.6 6.7 8.6 C 6.7 7 7.2 5.5 8 4.3 C 5 5.5 3.5 8.2 3.5 11.3 C 3.5 16 7.2 19.7 11.8 19.7 C 15 19.7 17.6 17.7 18.5 14.5 Z"
     static let sun = "O 12 12 4 M12 2.5 V5 M12 19 V21.5 M2.5 12 H5 M19 12 H21.5 M5.3 5.3 L7 7 M17 17 L18.7 18.7 M18.7 5.3 L17 7 M7 17 L5.3 18.7"
     static let flame = "M12 3 C 13 7 18 9 18 14.5 C 18 18 15.3 20.5 12 20.5 C 8.7 20.5 6 18 6 14.5 C 6 12 7.3 10.5 8.5 9 C 9 10.5 9.7 11.2 10.5 11.5 C 10.5 8 11 5.5 12 3 Z"
     static let drop = "M12 3.5 C 12 3.5 5.5 11 5.5 15 C 5.5 18.6 8.4 21 12 21 C 15.6 21 18.5 18.6 18.5 15 C 18.5 11 12 3.5 12 3.5 Z"
+    /// Plain figure outline used by every muscle zone mark (head is the one filled dot).
+    static let front = "M7.5 6.8 H16.5 L15.5 14 H8.5 Z M7.5 6.8 L5.2 13.8 M16.5 6.8 L18.8 13.8 M8.6 14 L8.2 21.6 H10.6 L11.8 14 M15.4 14 L15.8 21.6 H13.4 L12.2 14"
+    static let head = "O 12 3.4 1.9"
     static let star = "M12 3.5 L14.6 9 L20.5 9.7 L16.1 13.7 L17.3 19.5 L12 16.6 L6.7 19.5 L7.9 13.7 L3.5 9.7 L9.4 9 Z"
     static let table: [String: G] = [
         "circle": G(d: "O 12 12 9"),
@@ -175,6 +178,42 @@ enum Glyphs {
         "g.circle": G(d: "O 12 12 9 M15.6 10 C 14.9 8.8 13.6 8.2 12.3 8.2 C 9.9 8.2 8.2 9.8 8.2 12 C 8.2 14.2 9.9 15.8 12.3 15.8 C 14.3 15.8 15.6 14.6 15.8 12.6 H12.4"),
         "scalemass": G(d: "M4.5 6.5 H19.5 V19.5 H4.5 Z M7.5 10.5 C 9 8.8 15 8.8 16.5 10.5", dots: "O 12 13.5 1.2"),
         "cart": G(d: "M3.5 5 H6 L8 15 H18 L20 8 H7", dots: "O 10 19 1.4 O 17 19 1.4"),
+        // Build 32 additions: UI marks
+        "mail": G(d: "M3.5 6 H20.5 V18 H3.5 Z M3.5 7.5 L12 13.5 L20.5 7.5", dots: "O 12 13.5 0.9"),
+        "tracker": G(d: "M6.5 4.5 H17.5 V20.5 H6.5 Z M9.5 4.5 V3 H14.5 V4.5 M9.5 10 H14.5 M9.5 13.5 H14.5", dots: "O 11.8 17.3 1.1"),
+        "footsteps": G(d: "M7 4 C 9 4 9.6 7 9 9.2 C 8.6 10.7 6.8 11 6 10 C 4.8 8.5 5.4 4 7 4 Z M7 12.5 H8.8 V14 H7 Z M15 9.5 C 17 9.5 17.6 12.5 17 14.7 C 16.6 16.2 14.8 16.5 14 15.5 C 12.8 14 13.4 9.5 15 9.5 Z M15 18 H16.8 V19.5 H15 Z"),
+        "streak": G(d: flame, dots: "O 12 16.5 1.3"),
+        "pencil": G(d: "M5 19 L6 15 L16 5 L19 8 L9 18 Z M14 7 L17 10"),
+        // Muscle zones: a figure with the worked zone filled. Front figure for chest, shoulders, abs, arms, quads, neck. Back figure for the rest.
+        "p-chest": G(d: Glyphs.front, dots: Glyphs.head, hi: "M8.6 7.6 H15.4 L15 10.6 H9 Z"),
+        "p-shoulders": G(d: Glyphs.front, dots: Glyphs.head, hi: "M6.4 6.4 H9 V8.9 H6.2 Z M15 6.4 H17.6 L17.8 8.9 H15 Z"),
+        "p-abdominals": G(d: Glyphs.front, dots: Glyphs.head, hi: "M9.4 11 H14.6 L14.2 14 H9.8 Z"),
+        "p-biceps": G(d: Glyphs.front, dots: Glyphs.head, hi: "M5.4 8.8 L7.4 8.8 L6.9 11.8 L5 11.4 Z M18.6 8.8 L16.6 8.8 L17.1 11.8 L19 11.4 Z"),
+        "p-forearms": G(d: Glyphs.front, dots: Glyphs.head, hi: "M4.8 12 L6.6 12.3 L5.8 15.2 L4.2 14.6 Z M19.2 12 L17.4 12.3 L18.2 15.2 L19.8 14.6 Z"),
+        "p-quadriceps": G(d: Glyphs.front, dots: Glyphs.head, hi: "M8.7 14.6 L11.5 14.6 L11 19 L8.5 19 Z M15.3 14.6 L12.5 14.6 L13 19 L15.5 19 Z"),
+        "p-adductors": G(d: Glyphs.front, dots: Glyphs.head, hi: "M11 14.6 H13 L12.6 18.2 H11.4 Z"),
+        "p-abductors": G(d: Glyphs.front, dots: Glyphs.head, hi: "M7.4 13.4 L8.8 13.4 L8.6 17.4 L7.3 17.4 Z M16.6 13.4 L15.2 13.4 L15.4 17.4 L16.7 17.4 Z"),
+        "p-neck": G(d: Glyphs.front, dots: Glyphs.head, hi: "M10.6 5 H13.4 V6.8 H10.6 Z"),
+        "p-traps": G(d: Glyphs.front, dots: Glyphs.head, hi: "M9.6 5.4 H14.4 L16.4 7.6 H7.6 Z"),
+        "p-lats": G(d: Glyphs.front, dots: Glyphs.head, hi: "M8.2 8.2 L10.8 9.2 L10.4 12.8 L8.8 12.6 Z M15.8 8.2 L13.2 9.2 L13.6 12.8 L15.2 12.6 Z"),
+        "p-middleback": G(d: Glyphs.front, dots: Glyphs.head, hi: "M10.2 7.8 H13.8 V11.6 H10.2 Z"),
+        "p-lowerback": G(d: Glyphs.front, dots: Glyphs.head, hi: "M9.4 11.8 H14.6 L14.2 14.2 H9.8 Z"),
+        "p-triceps": G(d: Glyphs.front, dots: Glyphs.head, hi: "M5.2 8.8 L7.2 8.8 L7 12 L4.9 11.6 Z M18.8 8.8 L16.8 8.8 L17 12 L19.1 11.6 Z"),
+        "p-glutes": G(d: Glyphs.front, dots: Glyphs.head, hi: "M8.6 14.2 H15.4 L14.8 17 H9.2 Z"),
+        "p-hamstrings": G(d: Glyphs.front, dots: Glyphs.head, hi: "M8.7 17.2 H11.5 L11.3 20.2 H8.6 Z M15.3 17.2 H12.5 L12.7 20.2 H15.4 Z"),
+        "p-calves": G(d: Glyphs.front, dots: Glyphs.head, hi: "M8.4 19.4 H10.9 L10.7 21.6 H8.2 Z M15.6 19.4 H13.1 L13.3 21.6 H15.8 Z"),
+        // Tools
+        "e-barbell": G(d: "M2.5 12 H21.5 M5 7.5 V16.5 M8 9 V15 M19 7.5 V16.5 M16 9 V15"),
+        "e-ez": G(d: "M3 12 H8 L10 9.5 L14 14.5 L16 12 H21 M4.5 9 V15 M19.5 9 V15"),
+        "e-dumbbell": G(d: "M3.5 9.5 V14.5 M6.5 7.5 V16.5 M17.5 7.5 V16.5 M20.5 9.5 V14.5 M6.5 12 H17.5"),
+        "e-cable": G(d: "M4 3.5 H13 M13 3.5 V15 M7 3.5 V8 M5.5 8 H8.5 V12 H5.5 Z M13 15 H17 M17 12.5 V17.5"),
+        "e-machine": G(d: "M4.5 3.5 V20.5 M4.5 6 H10.5 M4.5 10 H10.5 M4.5 14 H10.5 M4.5 18 H10.5 M13.5 8 H19.5 V20.5 H13.5 Z"),
+        "e-body": G(d: "M3.5 17 L8.5 12.5 L14 13.5 L20.5 17 M8.5 12.5 L7.5 9.5", dots: "O 6.8 7.6 1.5"),
+        "e-kettlebell": G(d: "M8.5 10.5 C 8.5 5.5 15.5 5.5 15.5 10.5 M6 14.5 C 6 11 18 11 18 14.5 C 18 18.5 15 20.5 12 20.5 C 9 20.5 6 18.5 6 14.5 Z"),
+        "e-band": G(d: "M4 8 C 9 3 15 3 20 8 M4 16 C 9 21 15 21 20 16 M4 8 V16 M20 8 V16"),
+        "e-ball": G(d: "O 12 12 8.5 M4 10 C 9 12 15 12 20 10 M4 14 C 9 12 15 12 20 14"),
+        "e-roller": G(d: "M6 7 H18 C 19.5 7 20.5 9 20.5 12 C 20.5 15 19.5 17 18 17 H6 C 4.5 17 3.5 15 3.5 12 C 3.5 9 4.5 7 6 7 Z M18 7 C 16.5 7 15.5 9 15.5 12 C 15.5 15 16.5 17 18 17"),
+        "e-bench": G(d: "M3.5 11 H20.5 V14 H3.5 Z M6 14 V19 M18 14 V19"),
         // Training types
         "t-cardio": G(d: heart + " M7 12 H10 L11.5 9 L13.5 15 L15 12 H17"),
         "t-legs": G(d: "M9 3.5 C 8 8 8.5 11 10.5 13.5 L9 20.5 H14 M15 3.5 C 16 8 15.5 11 14 13.5 L14.5 17", dots: "O 14.5 19.5 1.1"),
@@ -215,10 +254,14 @@ struct BrandIcon: View {
     func resizable() -> BrandIcon { var c = self; c.fixed = nil; return c }
     var body: some View {
         let g = Glyphs.resolve(name)
+        // Luxe: a soft Mist body behind closed shapes, a fine round stroke, the worked zone in Sage, and the family dot in Wally Taupe (tiny accent only).
+        let closed = (g.d.contains("Z") || g.d.hasPrefix("O")) && name != "circle" && name != "square" && !name.hasPrefix("p-")
         ZStack {
             if g.fill || name.hasSuffix(".fill") { IconShape(d: g.d).opacity(0.2) }
-            IconShape(d: g.d).stroke(style: StrokeStyle(lineWidth: 1.9, lineCap: .round, lineJoin: .round))
-            if !g.dots.isEmpty { IconShape(d: g.dots) }
+            else if closed { IconShape(d: g.d).fill(Color.mist.opacity(0.4)) }
+            if !g.hi.isEmpty { IconShape(d: g.hi).fill(Color.sage) }
+            IconShape(d: g.d).stroke(style: StrokeStyle(lineWidth: name.hasPrefix("p-") ? 1.2 : 1.7, lineCap: .round, lineJoin: .round))
+            if !g.dots.isEmpty { IconShape(d: g.dots).fill(Color.taupe) }
         }
         .aspectRatio(1, contentMode: .fit)
         .modifier(IconSize(side: fixed))
@@ -300,3 +343,39 @@ func partName(_ k: String) -> String { if k == "all" { return NSLocalizedString(
 func cuisineName(_ k: String) -> String { let v = NSLocalizedString("cuisine." + k, tableName: "Labels", comment: ""); return v.hasPrefix("cuisine.") ? k : v }
 
 func focusName(_ k: String) -> String { let v = NSLocalizedString("focus." + k, tableName: "Labels", comment: ""); return v.hasPrefix("focus.") ? (partNames[k] ?? k) : v }
+
+// MARK: Per exercise icons. 17 muscle zones and 11 tools combine, so every exercise carries its own designed mark.
+enum ExerciseGlyph {
+    static func part(_ p: String) -> String {
+        switch p {
+        case "chest": return "p-chest"; case "shoulders": return "p-shoulders"; case "abdominals": return "p-abdominals"; case "biceps": return "p-biceps"
+        case "triceps": return "p-triceps"; case "forearms": return "p-forearms"; case "quadriceps": return "p-quadriceps"; case "hamstrings": return "p-hamstrings"
+        case "glutes": return "p-glutes"; case "calves": return "p-calves"; case "lats": return "p-lats"; case "middle back": return "p-middleback"
+        case "lower back": return "p-lowerback"; case "traps": return "p-traps"; case "adductors": return "p-adductors"; case "abductors": return "p-abductors"
+        case "neck": return "p-neck"; default: return "t-full"
+        }
+    }
+    static func tool(_ e: String) -> String {
+        switch e {
+        case "barbell": return "e-barbell"; case "e-z curl bar", "bar": return "e-ez"; case "dumbbell": return "e-dumbbell"; case "cable": return "e-cable"
+        case "machine": return "e-machine"; case "body only": return "e-body"; case "kettlebells": return "e-kettlebell"; case "bands", "belt or band": return "e-band"
+        case "medicine ball", "exercise ball": return "e-ball"; case "foam roll": return "e-roller"; default: return "e-bench"
+        }
+    }
+}
+struct ExerciseIcon: View {
+    let exercise: Exercise
+    var size: CGFloat = 56
+    var body: some View {
+        ZStack(alignment: .bottomTrailing) {
+            ZStack {
+                Circle().fill(Color.tint)
+                Circle().stroke(Color.sage.opacity(0.55), lineWidth: max(1, size / 56))
+                Circle().inset(by: size * 0.07).stroke(Color.mist.opacity(0.8), lineWidth: 0.7)
+                BrandIcon(ExerciseGlyph.part(exercise.part)).resizable().foregroundStyle(Color.ink).padding(size * 0.2)
+            }.frame(width: size, height: size)
+            BrandIcon(ExerciseGlyph.tool(exercise.equipment)).resizable().foregroundStyle(Color.ink).padding(size * 0.08)
+                .frame(width: size * 0.4, height: size * 0.4).background(Color.surface, in: Circle()).overlay(Circle().stroke(Color.sage, lineWidth: 1))
+        }.frame(width: size, height: size).accessibilityHidden(true)
+    }
+}

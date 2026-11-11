@@ -17,25 +17,31 @@ final class SmokeTests: XCTestCase {
     func any(_ app: XCUIApplication, _ id: String) -> XCUIElement { app.descendants(matching: .any).matching(identifier: id).firstMatch }
 
     // MARK: 1 The door
-    func testDoorIsTheFirstScreenAndNothingElseShowsBeforeIt() {
+    func testDoorFirstPageShowsOnlyGoogleAppleAndASmallEmailButton() {
         let app = door()
         XCTAssertTrue(any(app, "door-title").waitForExistence(timeout: 15))
-        XCTAssertTrue(app.staticTexts["Create your account"].exists)
-        XCTAssertTrue(app.buttons["door-apple"].exists || app.buttons["Sign up with Apple"].exists || app.buttons["Continue with Apple"].exists); XCTAssertTrue(app.buttons["door-google"].exists)
-        XCTAssertTrue(app.textFields["Your name"].exists); XCTAssertTrue(app.textFields["Email"].exists)
+        XCTAssertTrue(app.buttons["door-google"].exists); XCTAssertTrue(any(app, "door-apple").exists); XCTAssertTrue(any(app, "door-email").exists)
+        XCTAssertFalse(app.textFields["Email"].exists, "email lives on its own page")
+        XCTAssertFalse(app.secureTextFields.firstMatch.exists)
         XCTAssertFalse(app.tabBars.firstMatch.exists, "no app content before the door")
         XCTAssertFalse(app.buttons["setup-next"].exists, "no setup before the door")
         shot(app, "door-first")
+        any(app, "door-email").tap()
+        XCTAssertTrue(app.textFields["Email"].waitForExistence(timeout: 5)); XCTAssertTrue(app.textFields["Your name"].exists)
+        shot(app, "door-email-page")
+        // Swipe law: sliding back from the left edge returns to the first page.
+        let edge = app.coordinate(withNormalizedOffset: CGVector(dx: 0.01, dy: 0.5)); edge.press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5)))
+        XCTAssertTrue(any(app, "door-title").waitForExistence(timeout: 5))
     }
     func testFailedSignInStaysOnSignInAndShowsAnError() {
         let app = door()
-        XCTAssertTrue(any(app, "door-toggle").waitForExistence(timeout: 15)); any(app, "door-toggle").tap()
-        XCTAssertTrue(app.staticTexts["Welcome back"].waitForExistence(timeout: 5))
+        XCTAssertTrue(any(app, "door-email").waitForExistence(timeout: 15)); any(app, "door-email").tap()
+        XCTAssertTrue(any(app, "door-toggle").waitForExistence(timeout: 5)); app.buttons["Sign in"].tap()
         let e = app.textFields["Email"]; e.tap(); e.typeText("nobody@example.com")
         let p = app.secureTextFields["Password"]; p.tap(); p.typeText("wrongpass")
         any(app, "door-go").tap()
         XCTAssertTrue(app.staticTexts["That email or password is not right."].waitForExistence(timeout: 8))
-        XCTAssertTrue(app.staticTexts["Welcome back"].exists, "still a sign in, not a sign up")
+        XCTAssertFalse(app.textFields["Your name"].exists, "still a sign in, not a sign up")
         XCTAssertFalse(app.tabBars.firstMatch.exists); XCTAssertFalse(any(app, "setup-step").exists, "no account was created")
         shot(app, "door-failed-signin")
     }
@@ -54,6 +60,7 @@ final class SmokeTests: XCTestCase {
     func testSignUpThenFullSetupThenSignOut() {
         let app = door()
         addUIInterruptionMonitor(withDescription: "notif") { a in for b in ["Allow", "OK"] where a.buttons[b].exists { a.buttons[b].tap(); return true }; return false }
+        XCTAssertTrue(any(app, "door-email").waitForExistence(timeout: 15)); any(app, "door-email").tap()
         let name = app.textFields["Your name"]; XCTAssertTrue(name.waitForExistence(timeout: 15)); name.tap(); name.typeText("Uitest")
         let e = app.textFields["Email"]; e.tap(); e.typeText("uitest@example.com")
         let p = app.secureTextFields["Choose a password (8+ characters)"]; p.tap(); p.typeText("my own password")
@@ -98,7 +105,7 @@ final class SmokeTests: XCTestCase {
     func testTourAllScreensInAllThemes() {
         let app = seeded()
         XCTAssertTrue(app.tabBars.buttons["Today"].waitForExistence(timeout: 20))
-        for theme in ["burrow", "white", "black", "brown"] {
+        for theme in ["white", "dark", "beige", "brand"] {
             setTheme(app, theme); shot(app, "\(theme)-more")
             for t in ["Today", "Meals", "Train", "Calendar"] { app.tabBars.buttons[t].tap(); sleep(1); shot(app, "\(theme)-\(t.lowercased())") }
         }
@@ -134,22 +141,23 @@ final class SmokeTests: XCTestCase {
         let start = any(app, "start-routine-0"); XCTAssertTrue(start.waitForExistence(timeout: 10)); shot(app, "train-routines")
         XCTAssertTrue(any(app, "view-routine-0").exists)
         start.tap()
-        XCTAssertTrue(any(app, "train-progress").waitForExistence(timeout: 10)); XCTAssertTrue(any(app, "train-progress").label.contains("Exercise 1 of"))
+        XCTAssertTrue(any(app, "peptide-skip").waitForExistence(timeout: 10), "peptides are asked on start"); shot(app, "training-peptides")
+        any(app, "peptide-skip").tap()
+        XCTAssertTrue(any(app, "train-progress").waitForExistence(timeout: 10)); XCTAssertTrue(any(app, "train-progress").label.hasPrefix("1/"))
+        XCTAssertTrue(any(app, "train-total-time").exists, "total workout time is pinned on top")
         shot(app, "training-1")
-        for mode in ["Timer only", "Guided", "Hybrid"] {
-            app.buttons[mode].tap()
-            let help = any(app, "help-button"); XCTAssertTrue(help.waitForExistence(timeout: 5), "help in \(mode)")
-            help.tap(); XCTAssertTrue(any(app, "help-title").waitForExistence(timeout: 5), "help opens in \(mode)")
-            XCTAssertTrue(any(app, "help-title").label.hasPrefix("MASCOT HELP: "))
-            if mode == "Guided" { shot(app, "training-help") }
-            for t in app.staticTexts.allElementsBoundByIndex where t.exists { XCTAssertFalse(t.label.contains("-") || t.label.contains("\u{2014}") || t.label.contains("\u{2013}") || t.label.contains("\u{2022}"), "dash in help text: \(t.label)") }
-            any(app, "help-close").tap(); XCTAssertTrue(any(app, "train-exercise").waitForExistence(timeout: 5), "back in the workout")
-        }
+        let help = any(app, "help-button"); XCTAssertTrue(help.waitForExistence(timeout: 5), "how to question mark")
+        help.tap(); XCTAssertTrue(any(app, "help-title").waitForExistence(timeout: 5), "help opens")
+        XCTAssertTrue(any(app, "help-title").label.hasPrefix("MASCOT HELP: "))
+        shot(app, "training-help")
+        for t in app.staticTexts.allElementsBoundByIndex where t.exists { XCTAssertFalse(t.label.contains("-") || t.label.contains("\u{2014}") || t.label.contains("\u{2013}") || t.label.contains("\u{2022}"), "dash in help text: \(t.label)") }
+        any(app, "help-close").tap(); XCTAssertTrue(any(app, "train-exercise").waitForExistence(timeout: 5), "back in the workout")
         any(app, "start-set").tap(); any(app, "start-set").tap()
         XCTAssertTrue(any(app, "rest-left").waitForExistence(timeout: 5)); shot(app, "training-rest")
         any(app, "rest-pause").tap(); any(app, "rest-pause").tap(); any(app, "skip-rest").tap()
         XCTAssertFalse(any(app, "rest-left").exists)
-        any(app, "set-done-1").tap(); XCTAssertTrue(any(app, "skip-rest").waitForExistence(timeout: 5)); any(app, "skip-rest").tap()
+        any(app, "track-button").tap(); XCTAssertTrue(any(app, "set-done-1").waitForExistence(timeout: 5)); any(app, "set-done-1").tap(); shot(app, "training-tracker"); any(app, "track-done").tap()
+        XCTAssertTrue(any(app, "skip-rest").waitForExistence(timeout: 5)); any(app, "skip-rest").tap()
         while any(app, "train-next").label == "Next exercise" { any(app, "train-next").tap() }
         any(app, "train-next").tap()
         XCTAssertTrue(any(app, "train-summary").waitForExistence(timeout: 5)); shot(app, "training-summary")

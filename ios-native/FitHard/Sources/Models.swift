@@ -55,6 +55,8 @@ struct Profile: Codable {
     var trainMode = "hybrid"              // timer | guided | hybrid
     var setupDone = false
     var profileVersion = 2
+    /// Workouts per week the home page counts toward. Saved together with the days pick (0 = follow the days pick).
+    var weekGoal = 0
     init() {}
     init(from d: Decoder) throws {
         let c = try d.container(keyedBy: CodingKeys.self)
@@ -66,7 +68,7 @@ struct Profile: Codable {
         trainType = c.v(.trainType, "strength"); location = c.v(.location, "gym"); bodyFocus = c.v(.bodyFocus, [:]); kit = c.v(.kit, [])
         diet = c.v(.diet, "any"); dislikes = c.v(.dislikes, []); mealsPerDay = c.v(.mealsPerDay, 3); cookMinutes = c.v(.cookMinutes, 30); budget = c.v(.budget, "medium")
         minor = c.v(.minor, false); pregnant = c.v(.pregnant, false); edConcern = c.v(.edConcern, false); clinicianLimits = c.v(.clinicianLimits, false)
-        injury = c.v(.injury, ""); trainMode = c.v(.trainMode, "hybrid"); setupDone = c.v(.setupDone, false); profileVersion = c.v(.profileVersion, 2)
+        injury = c.v(.injury, ""); trainMode = c.v(.trainMode, "hybrid"); setupDone = c.v(.setupDone, false); profileVersion = c.v(.profileVersion, 2); weekGoal = c.v(.weekGoal, 0)
     }
 }
 
@@ -128,13 +130,17 @@ struct Settings: Codable {
     var dinner = "18:30"
     var detailsOnLock = false
     var appearance = "system"   // legacy, unused
-    var theme = "burrow"        // burrow | white | black | brown
+    var theme = "white"         // white (default) | dark | beige | brand
     var quietFrom = "22:00"; var quietTo = "07:00"; var lead = 10; var wallyQuiet = false
     init() {}
+    /// Older saves used burrow, black and brown. They map onto the four themes of build 32.
+    static func normalTheme(_ t: String) -> String {
+        switch t { case "white", "dark", "beige", "brand": return t; case "black", "brown": return "dark"; case "burrow": return "beige"; default: return "white" }
+    }
     init(from d: Decoder) throws {
         let c = try d.container(keyedBy: CodingKeys.self)
         on = c.v(.on, ["workout", "tasks", "health"]); waterTime = c.v(.waterTime, "12:00"); breakfast = c.v(.breakfast, "08:00")
-        lunch = c.v(.lunch, "12:30"); dinner = c.v(.dinner, "18:30"); detailsOnLock = c.v(.detailsOnLock, false); appearance = c.v(.appearance, "system"); theme = c.v(.theme, "burrow")
+        lunch = c.v(.lunch, "12:30"); dinner = c.v(.dinner, "18:30"); detailsOnLock = c.v(.detailsOnLock, false); appearance = c.v(.appearance, "system"); theme = Settings.normalTheme(c.v(.theme, "white"))
         quietFrom = c.v(.quietFrom, "22:00"); quietTo = c.v(.quietTo, "07:00"); lead = c.v(.lead, 10); wallyQuiet = c.v(.wallyQuiet, false)
     }
 }
@@ -185,6 +191,11 @@ struct AppState: Codable {
     /// Machine id -> photo file name in Application Support. The app never recognises a machine from a photo.
     var machinePhotos: [String: String] = [:]
     var language = "en"
+    /// Firebase uid this saved state belongs to. A different signed-in user never inherits it.
+    var ownerUid = ""
+    /// Day -> hours slept, and day -> steps. Typed in by the user.
+    var sleep: [String: Double] = [:]
+    var steps: [String: Int] = [:]
 
     init() {}
     init(from d: Decoder) throws {
@@ -201,6 +212,7 @@ struct AppState: Codable {
         draftRoutine = try? c.decodeIfPresent(String.self, forKey: .draftRoutine); previewAnims = c.v(.previewAnims, false)
         personalizationVersion = c.v(.personalizationVersion, 0); lightDays = c.v(.lightDays, []); planBackup = c.v(.planBackup, [:])
         portions = c.v(.portions, [:]); machinePhotos = c.v(.machinePhotos, [:]); language = c.v(.language, "en")
+        ownerUid = c.v(.ownerUid, ""); sleep = c.v(.sleep, [:]); steps = c.v(.steps, [:])
     }
 }
 extension KeyedDecodingContainer {

@@ -58,7 +58,7 @@ struct RoutineDetail: View {
                 Section("Exercises") {
                     ForEach(store.s.routines[i].exIds, id: \.self) { eid in
                         if let e = store.cat.exercise(eid) {
-                            HStack { VStack(alignment: .leading) { Text(e.name).font(.fh_subheadline_b); Text("\\(focusName(e.part)) · \\(equipName(e.equipment))").font(.fh_caption).foregroundStyle(Color.muted) }
+                            HStack { ExerciseIcon(exercise: e, size: 40); VStack(alignment: .leading) { Text(e.name).font(.fh_subheadline_b); Text("\(focusName(e.part)) · \(equipName(e.equipment))").font(.fh_caption).foregroundStyle(Color.muted) }
                                 Spacer(); HelpButton(exercise: e)
                                 Button { remove(eid, i) } label: { BrandIcon( "minus.circle").frame(width: 36, height: 36) }.foregroundStyle(Color.muted).buttonStyle(.plain) }
                         }

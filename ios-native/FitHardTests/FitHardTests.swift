@@ -71,7 +71,7 @@ final class FitHardTests: XCTestCase {
         XCTAssertNoThrow(try JSONDecoder().decode(AppState.self, from: Data("{}".utf8)))
         let old = #"{"onboarded":true,"profile":{"name":"Old"},"water":{"2024-01-01":250},"settings":{"waterTime":"10:00"}}"#
         let s = try JSONDecoder().decode(AppState.self, from: Data(old.utf8))
-        XCTAssertEqual(s.profile.name, "Old"); XCTAssertEqual(s.settings.theme, "burrow"); XCTAssertTrue(s.draft.isEmpty)
+        XCTAssertEqual(s.profile.name, "Old"); XCTAssertEqual(s.settings.theme, "white"); XCTAssertTrue(s.draft.isEmpty)
     }
 
     func testWaterNeverNegative() {
@@ -155,7 +155,7 @@ final class FitHardTests: XCTestCase {
     func ratio(_ a: Color, _ b: Color) -> Double { let x = lum(a), y = lum(b); return (max(x, y) + 0.05) / (min(x, y) + 0.05) }
     func testPaletteContrastMeetsWCAGInEveryTheme() {
         defer { Color.pal = 0 }
-        for (i, name) in ["white", "black", "brown", "burrow"].enumerated() {
+        for (i, name) in ["white", "dark", "beige", "brand"].enumerated() {
             Color.pal = UInt(i)
             XCTAssertGreaterThanOrEqual(ratio(.ink, .cream), 7, "\(name) body text on background")
             XCTAssertGreaterThanOrEqual(ratio(.ink, .surface), 7, "\(name) body text on cards")

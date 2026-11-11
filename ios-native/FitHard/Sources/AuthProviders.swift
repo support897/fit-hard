@@ -45,7 +45,7 @@ extension Store {
             try? await Cloud.deleteAccount(x)
             throw AccountError.msg("There is no Fit Hard account for that ID yet. Tap Create a new account first.")
         }
-        if isNew && !name.isEmpty { s.profile.name = name }
         await connect(x)
+        if isNew && !name.isEmpty { s.profile.name = name }
     }
 }

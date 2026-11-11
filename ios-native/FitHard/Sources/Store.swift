@@ -228,7 +228,7 @@ final class Store: ObservableObject {
         if s.profile.kit.isEmpty { s.profile.kit = s.profile.location == "home" ? ["dumbbell", "bands", "kettlebells", "bench or box"] : ["barbell", "dumbbell", "machine", "cable", "kettlebells", "bench or box", "e-z curl bar"] }
     }
     func finishSetup() {
-        s.profile.setupDone = true; s.profile.profileVersion = 2
+        s.profile.setupDone = true; s.profile.profileVersion = 2; saveWeekGoal()
         s.profile.vegetarian = s.profile.diet == "vegetarian" || s.profile.diet == "vegan"
         s.profile.equipment = s.profile.location == "home" ? "home" : "gym"
         if s.profile.kit.isEmpty { s.profile.kit = s.profile.location == "home" ? ["dumbbell", "bands", "kettlebells", "bench or box"] : ["barbell", "dumbbell", "machine", "cable", "kettlebells", "bench or box", "e-z curl bar"] }
@@ -242,6 +242,7 @@ final class Store: ObservableObject {
     /// Editing the profile anywhere calls this, so the plan, routines and reminders all follow the one profile.
     func profileChanged() {
         s.profile.vegetarian = s.profile.diet == "vegetarian" || s.profile.diet == "vegan"
+        saveWeekGoal()
         generatePlan(force: true); generateRoutine(); reapplyLightIfNeeded(); Notifier.rebuild(self)
     }
     var todaysExercises: [Exercise] {

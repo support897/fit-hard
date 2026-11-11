@@ -13,7 +13,7 @@ enum WallyEngine {
         let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: now) ?? now
         let last7 = s.workouts.filter { $0.date >= weekAgo }.count
         if s.workouts.isEmpty && s.checkins.isEmpty {
-            cands.append(WallyMsg(rule: "welcome", text: String(format: NSLocalizedString("Welcome, %@. Tell me how you feel, then we start gently.", comment: ""), name), image: "wally-welcome"))
+            cands.append(WallyMsg(rule: "welcome", text: name.trimmingCharacters(in: .whitespaces).isEmpty ? NSLocalizedString("Welcome. Tell me how you feel, then we start gently.", comment: "") : String(format: NSLocalizedString("Welcome, %@. Tell me how you feel, then we start gently.", comment: ""), name), image: "wally-welcome"))
         }
         if s.checkins[key] == "bad" {
             cands.append(WallyMsg(rule: "bad", text: NSLocalizedString("A softer day is fine. Do what feels right. Rest counts.", comment: ""), image: "wally-rest"))
@@ -91,6 +91,7 @@ struct HelpButton: View {
 }
 
 struct HelpSheet: View {
+    @EnvironmentObject var store: Store
     let exercise: Exercise
     @Environment(\.dismiss) var dismiss
     var body: some View {
@@ -100,6 +101,7 @@ struct HelpSheet: View {
                 Spacer()
                 Button { dismiss() } label: { BrandIcon( "xmark.circle.fill").font(.fh_title).foregroundStyle(Color.muted) }.accessibilityLabel("Close help").accessibilityIdentifier("help-close")
             }
+            if let a = store.animBase(exercise) { AnimatedFrames(base: a).frame(height: 150).frame(maxWidth: .infinity) }
             if let h = HelpText.help(for: exercise.id) {
                 let lines = HelpText.display(h)
                 ScrollView { VStack(alignment: .leading, spacing: 10) {

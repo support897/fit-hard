@@ -209,7 +209,7 @@ struct LibraryPicker: View {
     @State private var q = ""
     var body: some View {
         List(store.cat.exercises.filter { q.isEmpty || $0.name.localizedCaseInsensitiveContains(q) }.prefix(150)) { e in
-            Button { pick(e.id) } label: { VStack(alignment: .leading) { Text(e.name).foregroundStyle(Color.ink); Text("\(e.partLabel ?? e.part) · \(equipName(e.equipment))").font(.fh_caption).foregroundStyle(Color.muted) } }
+            Button { pick(e.id) } label: { HStack { ExerciseIcon(exercise: e, size: 40); VStack(alignment: .leading) { Text(e.name).foregroundStyle(Color.ink); Text("\(e.partLabel ?? e.part) · \(equipName(e.equipment))").font(.fh_caption).foregroundStyle(Color.muted) } } }
         }.searchable(text: $q, prompt: "Search exercises")
     }
 }

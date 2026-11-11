@@ -4,17 +4,22 @@ extension Color {
     init(hex: UInt32) {
         self.init(red: Double((hex >> 16) & 255) / 255, green: Double((hex >> 8) & 255) / 255, blue: Double(hex & 255) / 255)
     }
-    /// Fixed palettes: white (default), black, brown. Contrast checked for body text >= 7:1, buttons >= 4.5:1.
-    static var pal: UInt = 0
+    /// Four themes: White (default), Dark (Ink based), Beige (Cream), Brand (Sage lead). Contrast kept for body text and buttons.
+    /// Brand colours (Burrow board v2): Cream FAEED6, Ink 3E2F26, Sage 52695A, Mist A9BFA5, Tint DCE7D8, Wally Taupe AC9278 (tiny accents only).
+    static var pal: UInt = 0      // 0 white, 1 dark, 2 beige, 3 brand
     static func pick(_ w: UInt32, _ k: UInt32, _ b: UInt32, _ r: UInt32) -> Color { Color(hex: pal == 1 ? k : pal == 2 ? b : pal == 3 ? r : w) }
-    static var cream: Color { pick(0xFFFFFF, 0x000000, 0x3A281D, 0xFAEED6) }
-    static var surface: Color { pick(0xF3F5F3, 0x1B1B1B, 0x4B362A, 0xFFFDF7) }
-    static var ink: Color { pick(0x161616, 0xFFFFFF, 0xFFF6E8, 0x3E2F26) }
-    static var muted: Color { pick(0x4F4F4F, 0xC4C4C4, 0xE6D3B8, 0x6E5D4B) }
-    static var sage: Color { pick(0x1F6B47, 0x8EDDAE, 0xC4E0B2, 0x52695A) }
-    static var tint: Color { pick(0xDDEEE3, 0x1E3B2B, 0x5E4838, 0xDCE7D8) }
-    static var line: Color { pick(0xC9D0CB, 0x3D3D3D, 0x735845, 0xE4D3B8) }
-    static var amber: Color { pick(0x9A4F12, 0xFFB26B, 0xFFC084, 0xA86A38) }
+    static var isDark: Bool { pal == 1 }
+    static var cream: Color { pick(0xFFFFFF, 0x241A14, 0xFAEED6, 0xEAF1E7) }
+    static var surface: Color { pick(0xF3F5F3, 0x3E2F26, 0xFFFDF7, 0xF8FBF6) }
+    static var ink: Color { pick(0x3E2F26, 0xFAEED6, 0x3E2F26, 0x2F3A33) }
+    static var muted: Color { pick(0x5B4C41, 0xD8C7AE, 0x6E5D4B, 0x55645A) }
+    static var sage: Color { pick(0x52695A, 0xA9BFA5, 0x52695A, 0x52695A) }
+    static var tint: Color { pick(0xDCE7D8, 0x52695A, 0xDCE7D8, 0xCADBC6) }
+    static var line: Color { pick(0xD9DDD6, 0x5A483B, 0xE4D3B8, 0xB5C9B1) }
+    static var amber: Color { pick(0x8F5A2E, 0xE0A56B, 0xA86A38, 0x8F5A2E) }
+    /// Mist and Wally Taupe. Taupe is for tiny accents only, never a big fill.
+    static var mist: Color { Color(hex: 0xA9BFA5) }
+    static var taupe: Color { Color(hex: 0xAC9278) }
 }
 
 extension View {
@@ -97,7 +102,7 @@ struct BundleImage: View {
         let img = Image(uiImage: ui).resizable().scaledToFit()
         return Group {
             if !onWhite { img }
-            else if Color.pal == 1 || Color.pal == 2 { img.padding(4).background(Color.white, in: RoundedRectangle(cornerRadius: 14)) }
+            else if Color.isDark { img.padding(4).background(Color.white, in: RoundedRectangle(cornerRadius: 14)) }
             else { img.blendMode(.multiply) }
         }
     }
@@ -131,7 +136,8 @@ struct SectionTitle: View {
 
 struct ThemePicker: View {
     @EnvironmentObject var store: Store
-    let opts: [(String, String, UInt32, UInt32)] = [("burrow", "Burrow", 0xFAEED6, 0x3E2F26), ("white", "White", 0xFFFFFF, 0x161616), ("black", "Black", 0x000000, 0xFFFFFF), ("brown", "Brown", 0x3A281D, 0xFFF6E8)]
+    /// id, label, background, text, accent
+    let opts: [(String, String, UInt32, UInt32, UInt32)] = [("white", "White", 0xFFFFFF, 0x3E2F26, 0x52695A), ("dark", "Dark", 0x241A14, 0xFAEED6, 0xA9BFA5), ("beige", "Beige", 0xFAEED6, 0x3E2F26, 0x52695A), ("brand", "Brand", 0x52695A, 0xFAEED6, 0xA9BFA5)]
     var body: some View {
         HStack(spacing: 12) {
             ForEach(opts, id: \.0) { th in
@@ -142,6 +148,7 @@ struct ThemePicker: View {
                             Circle().fill(Color(hex: th.2)).frame(width: 48, height: 48)
                                 .overlay(Circle().stroke(on ? Color.sage : Color.line, lineWidth: on ? 3 : 1))
                             Text("Aa").font(.fh_subheadline_b).foregroundStyle(Color(hex: th.3))
+                            Circle().fill(Color(hex: th.4)).frame(width: 8, height: 8).offset(x: 14, y: 14)
                         }
                         Text(LocalizedStringKey(th.1)).font(.fh_caption_b).foregroundStyle(Color.ink)
                     }.frame(maxWidth: .infinity)

@@ -212,4 +212,61 @@ final class Build29Tests: XCTestCase {
         host.loadViewIfNeeded()
         XCTAssertNotNil(host.view)
     }
+
+    // MARK: Build 32
+    func esBundle() -> Bundle { Bundle(path: Bundle.main.path(forResource: "es", ofType: "lproj")!)! }
+
+    func testThemesAreFourAndWhiteIsTheDefaultAndThePickTravelsWithTheAccount() throws {
+        XCTAssertEqual(Settings().theme, "white")
+        XCTAssertEqual(Settings.normalTheme("black"), "dark"); XCTAssertEqual(Settings.normalTheme("brown"), "dark"); XCTAssertEqual(Settings.normalTheme("burrow"), "beige")
+        var st = AppState(); st.settings.theme = "brand"
+        let back = try JSONDecoder().decode(AppState.self, from: JSONEncoder().encode(st))
+        XCTAssertEqual(back.settings.theme, "brand", "the theme is part of the saved record, so a fresh install restore brings it back")
+    }
+    func testDoorWordsFollowTheChosenLanguageBothWays() {
+        let es = esBundle()
+        XCTAssertEqual(es.localizedString(forKey: "Email", value: nil, table: nil), "Correo electrónico")
+        XCTAssertEqual(NSLocalizedString("Email", comment: ""), "Email", "English shows Email")
+        for k in ["Use email", "Continue with Google", "Create account", "Sign in", "Your name", "Email", "Password", "Choose a password (8+ characters)", "One moment", "Forgot password?"] {
+            XCTAssertNotEqual(es.localizedString(forKey: k, value: "MISSING", table: nil), "MISSING", "door string not in Spanish: \(k)")
+        }
+    }
+    func testASecondAccountOnTheSamePhoneNeverInheritsTheFirstOnesNameOrData() async {
+        Cloud.forceOffline = true; defer { Cloud.forceOffline = false }
+        let st = Store(url: tmp())
+        st.s.ownerUid = "uidA"; st.s.profile.name = "Alex"; st.s.onboarded = true; st.s.settings.theme = "dark"
+        await st.connect(Session(uid: "uidB", email: "b@example.com", idToken: "t", refreshToken: "r"))
+        XCTAssertEqual(st.s.ownerUid, "uidB"); XCTAssertFalse(st.hasName, "no name is carried over"); XCTAssertEqual(st.s.profile.name, ""); XCTAssertFalse(st.s.onboarded)
+        XCTAssertEqual(st.s.settings.theme, "white")
+    }
+    func testHomeWeekGoalFollowsTheSavedDaysPickAndStreakCountsLoggedDays() {
+        let st = Store(url: tmp())
+        st.s.profile.trainDays = [2, 4, 6, 7]; st.saveWeekGoal()
+        XCTAssertEqual(st.weekGoalCount, 4); XCTAssertEqual(st.s.profile.weekGoal, 4)
+        st.s.profile.trainDays = [2]
+        XCTAssertEqual(st.weekGoalCount, 4, "the goal changes only when the pick is saved")
+        st.saveWeekGoal(); XCTAssertEqual(st.weekGoalCount, 1)
+        let y = Calendar.current.date(byAdding: .day, value: -1, to: Date())!
+        st.s.water[dayKey()] = 250; st.s.water[dayKey(y)] = 250
+        XCTAssertEqual(st.streak, 2); XCTAssertGreaterThan(st.consistency, 0)
+    }
+    func testFourTrackersKeepThisWeekAndLastWeek() {
+        let st = Store(url: tmp())
+        st.logTracker(.weight, value: 70.5); st.logTracker(.sleep, value: 7.5); st.logTracker(.steps, value: 8000); st.logTracker(.water, value: 1500)
+        for t in Store.Tracker.allCases { XCTAssertNotEqual(st.trackerText(t, offset: 0), "-", "\(t)") }
+        XCTAssertEqual(st.trackerText(.sleep, offset: -1), "-"); XCTAssertEqual(st.s.body.last?.weight, 70.5)
+    }
+    func testPeptideAnswerIsFreeTextLoggedOnlyWithNoReminderAndNoDuplicate() {
+        let st = Store(url: tmp())
+        st.logPeptide("  my own entry  "); st.logPeptide("MY OWN ENTRY"); st.logPeptide("   ")
+        XCTAssertEqual(st.s.meds.count, 1); XCTAssertEqual(st.s.meds[0].name, "my own entry")
+        XCTAssertTrue(st.s.meds[0].isPaused, "no reminder is set"); XCTAssertEqual(st.s.meds[0].amount, "", "no dose is ever filled in")
+        XCTAssertEqual(st.medStatus(st.s.meds[0]), "taken")
+    }
+    func testEveryExerciseHasADesignedIconMark() {
+        for ex in Catalog.shared.exercises {
+            XCTAssertNotNil(Glyphs.table[ExerciseGlyph.part(ex.part)], "zone mark for \(ex.part)")
+            XCTAssertNotNil(Glyphs.table[ExerciseGlyph.tool(ex.equipment)], "tool mark for \(ex.equipment)")
+        }
+    }
 }

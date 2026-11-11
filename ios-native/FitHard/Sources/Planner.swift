@@ -11,7 +11,7 @@ struct CalItem: Identifiable, Hashable {
 
 extension Color {
     static func cat(_ c: String) -> Color {
-        let dark = Color.pal == 1 || Color.pal == 2
+        let dark = Color.isDark
         switch c {
         case "training": return Color(hex: dark ? 0x7BD389 : 0x2F7A44)
         case "meals": return Color(hex: dark ? 0xF28DB2 : 0xB8467A)

@@ -137,19 +137,22 @@ extension Store {
     /// The one place the door signs in or creates. Sign in only signs in: a wrong password is an error, never a new account.
     func door(creating: Bool, name: String, email: String, pass: String) async throws {
         let x = creating ? try await Cloud.signUp(email, pass) : try await Cloud.signIn(email, pass)
-        if creating { s.profile.name = name }
         await connect(x)
-        if !creating && s.profile.name.isEmpty && !name.isEmpty { s.profile.name = name }
+        // The name is saved to THIS user's own profile, after the account state is settled, so it cannot cross accounts.
+        if creating && !name.isEmpty { s.profile.name = name }
     }
     func connect(_ x: Session) async {
+        // Saved state belongs to one account. If this phone still holds another account's state, clear it first.
+        if !s.ownerUid.isEmpty && s.ownerUid != x.uid { Notifier.cancelAll(); s = AppState() }
+        s.ownerUid = x.uid
         storeSession(x); cloudReady = false
         if Cloud.offline { return }
         do {
             var cur = x
             var remote: String? = nil
             do { remote = try await Cloud.load(cur) } catch { cur = try await Cloud.refresh(cur); storeSession(cur); remote = try await Cloud.load(cur) }
-            if let r = remote, let d = r.data(using: .utf8), let st = try? JSONDecoder().decode(AppState.self, from: d), st.onboarded, !s.onboarded {
-                s = st; syncNote = NSLocalizedString("Welcome back. Your plan is restored.", comment: "")
+            if let r = remote, let d = r.data(using: .utf8), let st = try? JSONDecoder().decode(AppState.self, from: d), !s.onboarded {
+                s = st; s.ownerUid = x.uid; syncNote = NSLocalizedString("Welcome back. Your plan is restored.", comment: "")
                 Notifier.rebuild(self)
             }
             cloudReady = true

@@ -643,3 +643,34 @@
 "%lld days, %lld min" = "%lld días, %lld min";
 "%lld kcal, %lld g protein" = "%lld kcal, %lld g de proteína";
 "Use for today's %@" = "Usar como %@ de hoy";
+
+/* Build 32 */
+"Last week" = "Semana pasada";
+"Sleep" = "Sueño";
+"day streak" = "día de racha";
+"days streak" = "días de racha";
+"Consistency" = "Constancia";
+"Finish your profile" = "Termina tu perfil";
+"Week goal reached. Rest is part of the plan." = "Meta de la semana lograda. El descanso es parte del plan.";
+"%lld more to reach your goal of %lld this week." = "Faltan %lld para tu meta de %lld esta semana.";
+"%lld of %lld workouts this week" = "%lld de %lld entrenamientos esta semana";
+"Skip for now" = "Saltar por ahora";
+"Close" = "Cerrar";
+"Hi. What is your main goal?" = "Hola. ¿Cuál es tu objetivo principal?";
+"Ready?" = "¿Empezamos?";
+"Building your plan" = "Creando tu plan";
+"Welcome. Tell me how you feel, then we start gently." = "Te damos la bienvenida. Dime cómo te sientes y empezamos con calma.";
+"Use email" = "Usar correo";
+"Continue with Google" = "Continuar con Google";
+"Password" = "Contraseña";
+"Peptides today?" = "¿Péptidos hoy?";
+"Type it yourself (optional)" = "Escríbelo tú (opcional)";
+"Start workout" = "Empezar entrenamiento";
+"Track weight and reps" = "Registrar peso y repeticiones";
+"%lld of %lld sets done" = "%lld de %lld series hechas";
+"White" = "Blanco";
+"Dark" = "Oscuro";
+"Beige" = "Beige";
+"Brand" = "Marca";
+"Pause" = "Pausa";
+"Resume" = "Seguir";

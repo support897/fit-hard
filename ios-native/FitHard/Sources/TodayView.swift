@@ -7,18 +7,23 @@ struct TodayView: View {
     @State private var newTask = ""
     @State private var showTask = false
     @State private var denied = false
+    @State private var finishing = false
+    @State private var tracking: Store.Tracker? = nil
 
     var greeting: String {
         let h = Calendar.current.component(.hour, from: Date())
         let g = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening"
         let gl = NSLocalizedString(g, comment: "")
-        return store.s.profile.name.isEmpty ? gl : "\(gl), \(store.s.profile.name)"
+        return store.hasName ? "\(gl), \(store.s.profile.name.trimmingCharacters(in: .whitespaces))" : gl
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
+                    heroCard
+                    if !store.s.profile.setupDone { finishProfileLink }
+                    trackerCard
                     WallyBubble()
                     if denied { inAppReminders }
                     nextCard
@@ -37,6 +42,68 @@ struct TodayView: View {
             .navigationTitle(greeting)
             .onAppear { Notifier.status { denied = ($0 == .denied) } }
             .toolbar { ToolbarItem(placement: .navigationBarTrailing) { AvatarView(size: 34) } }
+            .sheet(item: $tracking) { t in TrackerEntry(tracker: t).environmentObject(store) }
+            .fullScreenCover(isPresented: $finishing) { SetupView(onClose: { finishing = false }).environmentObject(store).tint(Color.sage).foregroundStyle(Color.ink) }
+            .onChange(of: store.s.profile.setupDone) { done in if done { finishing = false } }
+        }
+    }
+
+    /// Streak, the week goal and consistency. The goal count, bar and message follow the saved days pick on every theme.
+    var heroCard: some View {
+        let goal = store.weekGoalCount, done = store.workoutsThisWeek
+        let frac = min(1, Double(done) / Double(max(1, goal)))
+        let c = store.consistency
+        return Card {
+            HStack(spacing: 18) {
+                ZStack {
+                    Circle().stroke(Color.tint, lineWidth: 12)
+                    Circle().trim(from: 0, to: frac).stroke(Color.sage, style: StrokeStyle(lineWidth: 12, lineCap: .round)).rotationEffect(.degrees(-90))
+                    VStack(spacing: 2) { Text("\(done)/\(goal)").font(.fh_title2_b).foregroundStyle(Color.ink); BrandIcon("dumbbell").foregroundStyle(Color.sage) }
+                }.frame(width: 108, height: 108).animation(.easeOut, value: done).accessibilityElement(children: .ignore)
+                .accessibilityLabel(String(format: NSLocalizedString("%lld of %lld workouts this week", comment: ""), done, goal)).accessibilityIdentifier("week-goal")
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 8) {
+                        BrandIcon("flame").foregroundStyle(Color.sage)
+                        Text("\(store.streak)").font(.fh_title_b).foregroundStyle(Color.ink)
+                        Text(LocalizedStringKey(store.streak == 1 ? "day streak" : "days streak")).font(.fh_caption).foregroundStyle(Color.muted)
+                    }.accessibilityIdentifier("streak")
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack { Text("Consistency").font(.fh_caption).foregroundStyle(Color.muted); Spacer(); Text("\(c)%").font(.fh_caption_b).foregroundStyle(Color.ink) }
+                        ProgressView(value: Double(c), total: 100).tint(Color.sage)
+                    }
+                }
+            }
+            Text(done >= goal ? NSLocalizedString("Week goal reached. Rest is part of the plan.", comment: "") : String(format: NSLocalizedString("%lld more to reach your goal of %lld this week.", comment: ""), goal - done, goal))
+                .font(.fh_subheadline_b).foregroundStyle(Color.ink).accessibilityIdentifier("week-message")
+        }
+    }
+
+    var finishProfileLink: some View {
+        Button { haptic(); finishing = true } label: {
+            HStack(spacing: 10) { BrandIcon("sparkles").foregroundStyle(Color.sage); Text("Finish your profile").font(.fh_subheadline_b); Spacer(); BrandIcon("chevron.right") }
+                .padding(14).frame(maxWidth: .infinity).background(Color.tint, in: RoundedRectangle(cornerRadius: 16)).foregroundStyle(Color.ink)
+        }.buttonStyle(.plain).accessibilityIdentifier("finish-profile")
+    }
+
+    /// Weight, water, sleep and steps, this week and last week. Tap a row to type today's number.
+    var trackerCard: some View {
+        Card {
+            HStack {
+                Spacer()
+                Text("This week").font(.fh_caption_b).foregroundStyle(Color.muted).frame(width: 78, alignment: .trailing)
+                Text("Last week").font(.fh_caption_b).foregroundStyle(Color.muted).frame(width: 78, alignment: .trailing)
+            }
+            ForEach(Store.Tracker.allCases) { t in
+                Button { haptic(.soft); tracking = t } label: {
+                    HStack(spacing: 10) {
+                        BrandIcon(t.icon).foregroundStyle(Color.sage)
+                        Text(LocalizedStringKey(t.title)).font(.fh_subheadline_b).foregroundStyle(Color.ink)
+                        Spacer()
+                        Text(store.trackerText(t, offset: 0)).font(.fh_subheadline_b).foregroundStyle(Color.ink).frame(width: 78, alignment: .trailing)
+                        Text(store.trackerText(t, offset: -1)).font(.fh_subheadline).foregroundStyle(Color.muted).frame(width: 78, alignment: .trailing)
+                    }.padding(.vertical, 4)
+                }.buttonStyle(.plain).accessibilityIdentifier("tracker-\(t.rawValue)")
+            }
         }
     }
 
@@ -137,6 +204,7 @@ struct TodayView: View {
             if ex.isEmpty || store.isRestToday { Text("Planned rest day. Recovery is part of the plan.").foregroundStyle(Color.muted) }
             else if store.workedOutToday { BrandLabel("Done today", icon: "checkmark.seal.fill").foregroundStyle(Color.sage) }
             else {
+                HStack(spacing: -8) { ForEach(Array(ex.prefix(4).enumerated()), id: \.offset) { _, e in ExerciseIcon(exercise: e, size: 44) } }
                 Text(ex.prefix(3).map { $0.name }.joined(separator: " · ") + (ex.count > 3 ? " +\(ex.count - 3)" : "")).font(.fh_subheadline).foregroundStyle(Color.muted)
                 BigButton(title: "Start", icon: "play.fill") { if let r = store.routine(on: store.today) { store.training = r } else { go(2) } }.accessibilityIdentifier("today-start")
             }
@@ -190,5 +258,27 @@ struct MedRow: View {
                 }
             }
         }
+    }
+}
+
+/// One number typed in by the user for today. Nothing is suggested.
+struct TrackerEntry: View {
+    @EnvironmentObject var store: Store
+    @Environment(\.dismiss) var dismiss
+    let tracker: Store.Tracker
+    @State private var text = ""
+    var body: some View {
+        VStack(spacing: 18) {
+            HStack(spacing: 10) { BrandIcon(tracker.icon).foregroundStyle(Color.sage); Text(LocalizedStringKey(tracker.title)).font(.fh_title2_b).foregroundStyle(Color.ink); Spacer() }
+            HStack {
+                TextField("0", text: $text).keyboardType(.decimalPad).font(.fh_title_b).accessibilityIdentifier("tracker-field")
+                Text(tracker.unit).foregroundStyle(Color.muted)
+            }.padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.line))
+            BigButton(title: "Save", icon: "checkmark") {
+                if let v = Double(text.replacingOccurrences(of: ",", with: ".")) { store.logTracker(tracker, value: v) }
+                dismiss()
+            }.accessibilityIdentifier("tracker-save")
+            Spacer()
+        }.padding(24).background(Color.cream.ignoresSafeArea()).presentationDetents([.height(300)])
     }
 }

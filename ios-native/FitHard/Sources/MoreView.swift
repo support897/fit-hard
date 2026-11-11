@@ -112,7 +112,7 @@ struct DaysPicker: View {
         ScrollView { VStack(alignment: .leading, spacing: 14) {
             Flow { ForEach(Lists.weekdays, id: \.0) { d in Chip(label: d.1, on: store.s.profile.trainDays.contains(d.0)) {
                 if let i = store.s.profile.trainDays.firstIndex(of: d.0) { store.s.profile.trainDays.remove(at: i) } else { store.s.profile.trainDays.append(d.0) } } } }
-            BigButton(title: "Update my workouts", icon: "sparkles") { store.generateRoutine(); Notifier.rebuild(store); store.say("Workouts updated") }
+            BigButton(title: "Update my workouts", icon: "sparkles") { store.saveWeekGoal(); store.generateRoutine(); Notifier.rebuild(store); store.say("Workouts updated") }
         }.padding(16) }.background(Color.cream).navigationTitle("Training days")
     }
 }

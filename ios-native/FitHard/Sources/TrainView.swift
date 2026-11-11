@@ -39,7 +39,7 @@ struct LibraryView: View {
             ScrollView(.horizontal, showsIndicators: false) { HStack { ForEach(parts, id: \.self) { p in Chip(label: partName(p), on: part == p) { part = p } } }.padding(.horizontal, 16) }
             List(list.prefix(200)) { e in
                 NavigationLink { ExerciseDetail(e: e) } label: {
-                    HStack { if let a = store.animBase(e) { AnimatedFrames(base: a).frame(width: 44, height: 44) }; VStack(alignment: .leading) { Text(e.name).font(.fh_subheadline_b); Text("\(e.partLabel ?? e.part) · \(equipName(e.equipment))").font(.fh_caption).foregroundStyle(Color.muted) } }
+                    HStack { ExerciseIcon(exercise: e, size: 44); if let a = store.animBase(e) { AnimatedFrames(base: a).frame(width: 44, height: 44) }; VStack(alignment: .leading) { Text(e.name).font(.fh_subheadline_b); Text("\(e.partLabel ?? e.part) · \(equipName(e.equipment))").font(.fh_caption).foregroundStyle(Color.muted) } }
                 }.listRowBackground(Color.surface)
             }.listStyle(.plain).scrollContentBackground(.hidden)
         }.searchable(text: $q, prompt: String(format: NSLocalizedString("Search %lld exercises", comment: ""), store.cat.exercises.count))
@@ -52,6 +52,7 @@ struct ExerciseDetail: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
+                ExerciseIcon(exercise: e, size: 84).frame(maxWidth: .infinity)
                 if e.anim != nil || store.hasCharacterAnim(e) {
                     if !store.hasCharacterAnim(e) { Toggle("Show preview animation (not yet quality approved)", isOn: $store.s.previewAnims).font(.fh_caption).tint(Color.sage) }
                     if let a = store.animBase(e) { AnimatedFrames(base: a).frame(height: 260).frame(maxWidth: .infinity).background(Color.surface, in: RoundedRectangle(cornerRadius: 20)) }

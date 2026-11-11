@@ -19,10 +19,10 @@ struct Themed: View {
     @State private var tab = 0
     var body: some View {
         let th = store.s.settings.theme
-        let _ = { Color.pal = th == "black" ? 1 : th == "brown" ? 2 : th == "burrow" ? 3 : 0 }()
+        let _ = { Color.pal = th == "dark" ? 1 : th == "beige" ? 2 : th == "brand" ? 3 : 0 }()
         // .id(th) rebuilds every screen so no view keeps the old theme's colours; the tab is kept outside so you stay on it.
         RootView(tab: $tab).id(th).environment(\.locale, Locale(identifier: store.s.language)).tint(Color.sage).foregroundStyle(Color.ink)
-            .preferredColorScheme((th == "white" || th == "burrow") ? .light : .dark)
+            .preferredColorScheme(th == "dark" ? .dark : .light)
     }
 }
 
@@ -53,4 +53,13 @@ struct RootView: View {
         }.animation(.spring(response: 0.35), value: store.toast)
         .fullScreenCover(item: $store.training) { r in TrainingMode(routine: r).environmentObject(store).tint(Color.sage).foregroundStyle(Color.ink) }
     }
+}
+
+/// Swipe law: sliding from the left edge goes back one page on every pushed screen, even where a custom back button hides the system one.
+extension UINavigationController: UIGestureRecognizerDelegate {
+    override open func viewDidLoad() {
+        super.viewDidLoad()
+        interactivePopGestureRecognizer?.delegate = self
+    }
+    public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool { viewControllers.count > 1 }
 }

@@ -21,6 +21,8 @@ struct SetupView: View {
     @State private var building = false
     @State private var dislikeText = ""
     @State private var showWhy = false
+    /// Set when setup is opened from the finish-your-profile link on the front page.
+    var onClose: (() -> Void)? = nil
     static let total = 11
     static let parts: [(String, String)] = [("chest", "Chest"), ("lats", "Back"), ("shoulders", "Shoulders"), ("biceps", "Biceps"), ("triceps", "Triceps"),
         ("abdominals", "Core"), ("quadriceps", "Front legs"), ("hamstrings", "Back legs"), ("glutes", "Glutes"), ("calves", "Calves")]
@@ -43,7 +45,12 @@ struct SetupView: View {
         VStack(spacing: 0) {
             if building { buildingView } else {
                 VStack(alignment: .leading, spacing: 4) {
-                    if store.s.onboarded {
+                    HStack {
+                        Spacer()
+                        Button(LocalizedStringKey(onClose != nil ? "Close" : "Skip for now")) { if let c = onClose { c() } else { skip() } }
+                            .font(.fh_subheadline_b).foregroundStyle(Color.sage).accessibilityIdentifier("setup-skip")
+                    }
+                    if store.s.onboarded && store.s.profile.setupDone && onClose == nil {
                         Text("Welcome back. Answer again so your meals, training and calendar fit you. Everything you saved stays.").font(.fh_subheadline).foregroundStyle(Color.ink).padding(.bottom, 6).accessibilityIdentifier("setup-welcome-back")
                     }
                     ProgressView(value: Double(step + 1), total: Double(SetupView.total)).tint(Color.sage)
@@ -57,6 +64,17 @@ struct SetupView: View {
                 }.padding(.horizontal, 24).padding(.bottom, 16)
             }
         }.background(Color.cream.ignoresSafeArea())
+        // Swipe law: sliding from the left edge goes back one step.
+        .gesture(DragGesture(minimumDistance: 24).onEnded { v in if !building && step > 0 && v.startLocation.x < 40 && v.translation.width > 70 { go(step - 1) } })
+    }
+
+    /// Setup stays skippable. A skipped profile still gets a gentle default plan, and the finish-your-profile link stays on the front page.
+    func skip() {
+        if store.s.onboarded { store.s.personalizationVersion = Store.personalizationRound; return }
+        building = true
+        store.finishSetup()
+        store.s.profile.setupDone = false
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { store.s.onboarded = true; store.s.personalizationVersion = Store.personalizationRound; Notifier.rebuild(store) }
     }
 
     func go(_ s: Int) {
@@ -72,7 +90,7 @@ struct SetupView: View {
         switch step {
         case 0:
             BundleImage(name: "wally-hello").frame(height: 110).frame(maxWidth: .infinity)
-            title(String(format: NSLocalizedString("Hi %@. What is your main goal?", comment: ""), store.s.profile.name))
+            title(store.hasName ? String(format: NSLocalizedString("Hi %@. What is your main goal?", comment: ""), store.s.profile.name) : NSLocalizedString("Hi. What is your main goal?", comment: ""))
             ForEach(Array(Lists.goals.enumerated()), id: \.offset) { i, g in
                 Chip(label: g, icon: Lists.goalIcons[i], on: store.s.profile.primaryGoal == Lists.goalIds[i]) {
                     store.s.profile.primaryGoal = Lists.goalIds[i]
@@ -177,7 +195,7 @@ struct SetupView: View {
             TextField("Any injury or sore spot? (optional)", text: p.injury).padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 14))
             if !NutritionService.targetsAllowed(store.s.profile) { Text("We will not set calorie targets for you. Please talk with a clinician about food. Meals and workouts still work.").font(.fh_footnote).foregroundStyle(Color.amber) }
         default:
-            title(String(format: NSLocalizedString("Ready, %@?", comment: ""), store.s.profile.name))
+            title(store.hasName ? String(format: NSLocalizedString("Ready, %@?", comment: ""), store.s.profile.name) : NSLocalizedString("Ready?", comment: ""))
             Card {
                 summaryRow("Goal", Lists.goals[max(0, Lists.goalIds.firstIndex(of: store.s.profile.primaryGoal) ?? 0)])
                 summaryRow("Training", String(format: NSLocalizedString("%lld days, %lld min", comment: ""), store.s.profile.trainDays.count, store.s.profile.minutes))
@@ -227,7 +245,7 @@ struct SetupView: View {
             Spacer()
             BundleImage(name: "wally-celebrate").frame(height: 160)
             ProgressView().tint(Color.sage)
-            Text(String(format: NSLocalizedString("Building your plan, %@", comment: ""), store.s.profile.name)).font(.fh_title2_b).foregroundStyle(Color.ink)
+            Text(store.hasName ? String(format: NSLocalizedString("Building your plan, %@", comment: ""), store.s.profile.name) : NSLocalizedString("Building your plan", comment: "")).font(.fh_title2_b).foregroundStyle(Color.ink)
             Text("Meals, workouts and reminders").foregroundStyle(Color.muted)
             Spacer()
         }.padding()

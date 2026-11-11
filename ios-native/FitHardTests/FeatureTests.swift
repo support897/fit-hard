@@ -30,8 +30,8 @@ final class FeatureTests: XCTestCase {
         Cloud.forceOffline = true; Cloud.log = []
         defer { Cloud.forceOffline = false; Cloud.log = [] }
         let st = Store(url: tmp())
-        try await st.door(creating: true, name: "Ilse", email: "new@example.com", pass: "my own password")
-        XCTAssertNotNil(st.session); XCTAssertEqual(st.s.profile.name, "Ilse")
+        try await st.door(creating: true, name: "Sam", email: "new@example.com", pass: "my own password")
+        XCTAssertNotNil(st.session); XCTAssertEqual(st.s.profile.name, "Sam")
         XCTAssertEqual(Cloud.log.filter { $0.contains("signUp") }.count, 1)
         st.s.onboarded = true
         await st.signOutKeep()
