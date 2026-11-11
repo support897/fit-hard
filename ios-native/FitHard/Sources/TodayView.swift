@@ -191,6 +191,7 @@ struct TodayView: View {
                             VStack(alignment: .leading) { HStack(spacing: 4) { BrandIcon("m-" + m).foregroundStyle(Color.tone("meal." + m)); Text(MealKind(rawValue: m)?.label ?? m.capitalized).font(.fh_caption).foregroundStyle(Color.muted) }; Text(r.name).font(.fh_subheadline_b).strikethrough(done).multilineTextAlignment(.leading); Text(store.line(r)).font(.fh_caption).foregroundStyle(Color.muted); Text(NSLocalizedString("Why: ", comment: "") + (store.whyThisMeal(r, meal: m).first ?? "")).font(.fh_caption).foregroundStyle(Color.muted).multilineTextAlignment(.leading) }
                         }.foregroundStyle(Color.ink)
                         Spacer()
+                        WatchReelButton(recipe: r)
                     }
                 }
             }

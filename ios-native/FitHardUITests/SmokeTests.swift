@@ -125,6 +125,22 @@ final class SmokeTests: XCTestCase {
         let swap = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'swap-'")).firstMatch
         XCTAssertTrue(swap.waitForExistence(timeout: 5)); shot(app, "meals-plan"); swap.tap()
     }
+    func testWatchEntryOpensAFullScreenReelThatKeepsMovingAndCanBePausedSteppedAndClosed() {
+        let app = seeded(); app.tabBars.buttons["Meals"].tap()
+        any(app, "meals-menu-button").tap(); any(app, "menu-plan").tap()
+        let watch = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'watch-reel-'")).firstMatch
+        XCTAssertTrue(watch.waitForExistence(timeout: 10), "every meal with steps has a Watch entry"); shot(app, "reel-realapp-meal-screen-watch-entry")
+        watch.tap()
+        XCTAssertTrue(any(app, "reel-caption").waitForExistence(timeout: 5)); XCTAssertTrue(any(app, "reel-progress").exists)
+        shot(app, "reel-realapp-step-a")
+        any(app, "reel-tap-next").tap(); sleep(1)
+        shot(app, "reel-realapp-step-b")
+        any(app, "reel-pause").tap(); XCTAssertEqual(any(app, "reel-pause").label, "Resume")
+        any(app, "reel-pause").tap(); XCTAssertEqual(any(app, "reel-pause").label, "Pause")
+        any(app, "reel-tap-back").tap()
+        any(app, "reel-close").tap()
+        XCTAssertTrue(app.navigationBars["My Meal Plan"].waitForExistence(timeout: 5), "close returns to the meal")
+    }
     func testIngredientsIHaveCanBeAdded() {
         let app = seeded(); app.tabBars.buttons["Meals"].tap()
         any(app, "meals-menu-button").tap(); any(app, "menu-have").tap()

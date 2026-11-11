@@ -674,3 +674,7 @@
 "Brand" = "Marca";
 "Pause" = "Pausa";
 "Resume" = "Seguir";
+
+/* Build 33 */
+"Watch" = "Ver";
+"Close reel" = "Cerrar video";

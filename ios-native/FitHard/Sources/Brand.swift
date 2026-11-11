@@ -141,6 +141,7 @@ enum Glyphs {
         "xmark.circle.fill": G(d: "O 12 12 9 M9 9 L15 15 M15 9 L9 15", fill: true),
         "chevron.right": G(d: "M9 5 L16 12 L9 19"), "chevron.left": G(d: "M15 5 L8 12 L15 19"),
         "play.fill": G(d: "M8 5 L19 12 L8 19 Z", fill: true),
+        "pause.fill": G(d: "M7 5 H10.5 V19 H7 Z M13.5 5 H17 V19 H13.5 Z", fill: true),
         "trash": G(d: "M5 7 H19 M9 7 V4.5 H15 V7 M7 7 L8 20 H16 L17 7", dots: "O 12 13.5 1.3"),
         "calendar": G(d: "M4 6 H20 V20 H4 Z M4 10 H20 M8 3.5 V7.5 M16 3.5 V7.5", dots: "O 12 15 1.4"),
         "calendar.badge.plus": G(d: "M4 6 H20 V20 H4 Z M4 10 H20 M8 3.5 V7.5 M16 3.5 V7.5 M12 12.5 V17.5 M9.5 15 H14.5"),

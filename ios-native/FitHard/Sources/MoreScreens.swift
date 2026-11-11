@@ -179,7 +179,7 @@ struct FridgeScreen: View {
             ForEach(Array(m.prefix(25).enumerated()), id: \.offset) { _, row in
                 let (r, hit, total) = row
                 NavigationLink { RecipeDetail(recipe: r) } label: {
-                    HStack { VStack(alignment: .leading) { Text(r.name).font(.fh_subheadline_b); Text(String(format: NSLocalizedString("You have %lld of %lld ingredients", comment: ""), hit, total)).font(.fh_caption).foregroundStyle(Color.muted) }; Spacer(); BrandIcon( "chevron.right") }
+                    HStack { VStack(alignment: .leading) { Text(r.name).font(.fh_subheadline_b); Text(String(format: NSLocalizedString("You have %lld of %lld ingredients", comment: ""), hit, total)).font(.fh_caption).foregroundStyle(Color.muted) }; Spacer(); WatchReelButton(recipe: r); BrandIcon( "chevron.right") }
                         .padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 16))
                 }.foregroundStyle(Color.ink)
             }

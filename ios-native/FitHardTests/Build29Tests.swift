@@ -269,4 +269,32 @@ final class Build29Tests: XCTestCase {
             XCTAssertNotNil(Glyphs.table[ExerciseGlyph.tool(ex.equipment)], "tool mark for \(ex.equipment)")
         }
     }
+
+    // MARK: Build 33 meal reels
+    func testReelMatchesStepsByWhatTheyAreInEnglishAndSpanish() {
+        let cases: [(String, String)] = [
+            ("Wash the carrots and broccoli.", "reel-wash"), ("Lava las zanahorias.", "reel-wash"),
+            ("Chop the tomato.", "reel-chop"), ("Slice the bread.", "reel-chop"), ("Corta el tomate.", "reel-chop"), ("Pica la cebolla.", "reel-chop"),
+            ("Stir the sauce.", "reel-stir"), ("Fry the onion.", "reel-stir"), ("Fr\u{00ED}e la cebolla.", "reel-stir"), ("Incorpora la salsa.", "reel-stir"),
+            ("Serve right away.", "reel-serve"), ("Sirve enseguida.", "reel-serve")]
+        for (text, pic) in cases { XCTAssertEqual(ReelLibrary.match(text)?.picture, pic, text) }
+        XCTAssertNil(ReelLibrary.match("Toast the bread until golden."))
+    }
+    func testReelFallbackUsesServeForTheLastStepAndStirForTheRestAndNeverBlocks() {
+        let f = ReelLibrary.frames(for: ["Toast the bread.", "Chop the tomato.", "Bake until golden."])
+        XCTAssertEqual(f.map { $0.picture }, ["reel-stir", "reel-chop", "reel-serve"])
+        XCTAssertEqual(f.map { $0.matched }, [false, true, false])
+        XCTAssertEqual(ReelLibrary.missingVerbs(in: ["Toast the bread.", "Chop the tomato.", "Bake until golden."]), ["toast", "bake"])
+        XCTAssertTrue(ReelLibrary.frames(for: []).isEmpty)
+    }
+    func testEveryRecipeWithStepsGetsAReelWithItsOwnWordsAndRealPictures() {
+        for r in Catalog.shared.recipes where !r.steps.isEmpty {
+            let f = ReelLibrary.frames(for: r.steps)
+            XCTAssertEqual(f.count, r.steps.count, r.id)
+            XCTAssertEqual(f.map { $0.text }, r.steps, "captions are the recipe's own words: \(r.id)")
+            XCTAssertGreaterThan(ReelLibrary.duration(r.steps[0]), 3)
+        }
+        for name in ["reel-wash", "reel-chop", "reel-stir", "reel-serve"] { XCTAssertNotNil(ReelImages.image(name), "picture missing from the bundle: \(name)") }
+        for e in ReelLibrary.entries { XCTAssertNotNil(ReelImages.image(e.picture), e.picture) }
+    }
 }

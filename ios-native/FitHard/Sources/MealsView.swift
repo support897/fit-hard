@@ -72,6 +72,7 @@ struct PlanSection: View {
                                         VStack(alignment: .leading, spacing: 2) { HStack(spacing: 4) { BrandIcon("m-" + m).foregroundStyle(Color.tone("meal." + m)); Text(NSLocalizedString(MealKind(rawValue: m)?.label ?? m.capitalized, comment: "")).font(.fh_caption).foregroundStyle(Color.muted) }; Text(r.name).font(.fh_subheadline_b).multilineTextAlignment(.leading); MealLine(r: r); Text(NSLocalizedString("Why: ", comment: "") + (store.whyThisMeal(r, meal: m, day: k).first ?? "")).font(.fh_caption).foregroundStyle(Color.muted).multilineTextAlignment(.leading) }
                                     }.foregroundStyle(Color.ink)
                                     Spacer()
+                                    WatchReelButton(recipe: r)
                                     Button { store.swap(day: k, meal: m); store.say(String(format: NSLocalizedString("Swapped %@", comment: ""), NSLocalizedString(MealKind(rawValue: m)?.label ?? m, comment: ""))) } label: { BrandIcon( "arrow.triangle.2.circlepath").frame(width: 44, height: 44) }
                                         .foregroundStyle(Color.sage).accessibilityLabel("Swap \(m)").accessibilityIdentifier("swap-\(k)-\(m)")
                                 }
@@ -95,7 +96,7 @@ struct RecipeList: View {
     var body: some View {
         List(list.prefix(300)) { r in
             NavigationLink { RecipeDetail(recipe: r) } label: {
-                VStack(alignment: .leading, spacing: 2) { Text(r.name).font(.fh_subheadline_b); MealLine(r: r) }
+                HStack { VStack(alignment: .leading, spacing: 2) { Text(r.name).font(.fh_subheadline_b); MealLine(r: r) }; Spacer(); WatchReelButton(recipe: r) }
             }.listRowBackground(Color.surface)
         }.listStyle(.plain).scrollContentBackground(.hidden).searchable(text: $q, prompt: "Search \(meal)")
     }
@@ -129,7 +130,7 @@ struct MyRecipes: View {
         if list.isEmpty {
             VStack(spacing: 10) { Spacer(); BundleImage(name: "wally-hello").frame(height: 100); Text("Tap the heart on any recipe to keep it here.").foregroundStyle(Color.muted).multilineTextAlignment(.center); Spacer() }.padding()
         } else {
-            List(list) { r in NavigationLink { RecipeDetail(recipe: r) } label: { VStack(alignment: .leading) { Text(r.name).font(.fh_subheadline_b); MealLine(r: r) } }.listRowBackground(Color.surface) }
+            List(list) { r in NavigationLink { RecipeDetail(recipe: r) } label: { HStack { VStack(alignment: .leading) { Text(r.name).font(.fh_subheadline_b); MealLine(r: r) }; Spacer(); WatchReelButton(recipe: r) } }.listRowBackground(Color.surface) }
                 .listStyle(.plain).scrollContentBackground(.hidden)
         }
     }
@@ -156,6 +157,7 @@ struct RecipeDetail: View {
                         HStack(alignment: .top, spacing: 8) { BrandIcon("checkmark").foregroundStyle(Color.sage); Text(line).font(.fh_subheadline) }
                     }
                 }.accessibilityIdentifier("why-this-meal")
+                WatchReelButton(recipe: recipe, big: true)
                 BigButton(title: "Cook mode", icon: "flame", filled: false) { cooking = true }.accessibilityIdentifier("cook-mode")
                 if store.s.plan[store.today]?[recipe.meal] == recipe.id {
                     Card { SectionTitle(text: "Log it lightly"); PortionBar(meal: recipe.meal) }
@@ -301,6 +303,240 @@ struct NutritionOverview: View {
         VStack(alignment: .leading, spacing: 4) {
             HStack { Text(NSLocalizedString(n, comment: "")).font(.fh_subheadline_b); Spacer(); Text(String(format: NSLocalizedString("%lld of %lld %@", comment: ""), v, g, u)).font(.fh_caption).foregroundStyle(Color.muted) }
             ProgressView(value: min(1, Double(v) / Double(max(1, g)))).tint(Color.sage)
+        }
+    }
+}
+
+// MARK: Meal reels (build 33)
+
+/// One step of a reel: the recipe's own words, and the library picture chosen for it.
+struct ReelFrame: Equatable {
+    let index: Int
+    let text: String
+    let picture: String
+    let matched: Bool
+    let verb: String
+}
+
+/// One library picture and the step verbs it stands for, in English and Spanish. A new picture later is one new entry here, nothing else changes.
+struct ReelEntry {
+    let kind: String
+    let picture: String
+    let verbs: [String]
+}
+
+enum ReelLibrary {
+    static let entries: [ReelEntry] = [
+        ReelEntry(kind: "washing", picture: "reel-wash", verbs: ["wash", "rinse", "lava", "enjuaga"]),
+        ReelEntry(kind: "chopping", picture: "reel-chop", verbs: ["chop", "slice", "cut", "dice", "mince", "halve", "corta", "pica", "parte", "rebana", "trocea"]),
+        ReelEntry(kind: "stirring", picture: "reel-stir", verbs: ["stir", "mix", "whisk", "fry", "scramble", "sear", "toss", "saute", "incorpora", "revuelve", "mezcla", "bate", "frie", "saltea", "sella"]),
+        ReelEntry(kind: "serving", picture: "reel-serve", verbs: ["serve", "sirve"])
+    ]
+    static let stirPicture = "reel-stir"
+    static let servePicture = "reel-serve"
+
+    /// The leading verb of a step, lower case, accents removed.
+    static func verb(_ step: String) -> String {
+        let folded = step.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "en"))
+        let word = folded.lowercased().split(whereSeparator: { !$0.isLetter }).first.map(String.init)
+        return word ?? ""
+    }
+    static func match(_ step: String) -> ReelEntry? {
+        let v = verb(step)
+        return entries.first { $0.verbs.contains(v) }
+    }
+    /// Every step of a recipe in order. No match: the serve picture for the last step, the stir picture for any other.
+    static func frames(for steps: [String]) -> [ReelFrame] {
+        steps.enumerated().map { i, s in
+            if let e = match(s) { return ReelFrame(index: i, text: s, picture: e.picture, matched: true, verb: verb(s)) }
+            return ReelFrame(index: i, text: s, picture: i == steps.count - 1 ? servePicture : stirPicture, matched: false, verb: verb(s))
+        }
+    }
+    /// Verbs of steps that have no picture of their own yet.
+    static func missingVerbs(in steps: [String]) -> [String] {
+        frames(for: steps).filter { !$0.matched && !$0.verb.isEmpty }.map { $0.verb }
+    }
+    /// Seconds a step stays on screen, a little longer for longer words.
+    static func duration(_ text: String) -> Double { min(7.0, max(3.5, 2.5 + Double(text.count) / 18.0)) }
+}
+
+/// Decoded once, so a moving picture never reloads from disk.
+enum ReelImages {
+    private static let cache = NSCache<NSString, UIImage>()
+    static func image(_ name: String) -> UIImage? {
+        if let c = cache.object(forKey: name as NSString) { return c }
+        let p = Bundle.main.path(forResource: name, ofType: "webp", inDirectory: "media") ?? Bundle.main.path(forResource: name, ofType: "webp")
+        guard let path = p, let ui = UIImage(contentsOfFile: path) else { return nil }
+        cache.setObject(ui, forKey: name as NSString)
+        return ui
+    }
+}
+
+/// The Watch entry. Shows only when the recipe has steps.
+struct WatchReelButton: View {
+    let recipe: Recipe
+    var big = false
+    @State private var open = false
+    @EnvironmentObject var store: Store
+    var body: some View {
+        if !recipe.steps.isEmpty {
+            Group {
+                if big {
+                    BigButton(title: "Watch", icon: "play.fill", filled: true) { open = true }
+                } else {
+                    Button { open = true } label: {
+                        HStack(spacing: 4) { BrandIcon("play.fill").frame(width: 14, height: 14); Text("Watch").font(.fh_caption_b) }
+                            .padding(.horizontal, 12).frame(minHeight: 36)
+                            .background(Color.sage, in: Capsule()).foregroundStyle(Color.surface)
+                    }.buttonStyle(.borderless)
+                }
+            }
+            .accessibilityIdentifier(big ? "watch-reel" : "watch-reel-\(recipe.id)")
+            .fullScreenCover(isPresented: $open) { ReelPlayer(recipe: recipe) }
+        }
+    }
+}
+
+/// Full screen vertical reel. Every picture moves the whole time it is on screen: a slow zoom with a gentle drift, and a soft fade into the next one.
+struct ReelPlayer: View {
+    let recipe: Recipe
+    @Environment(\.dismiss) var dismiss
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
+    @State private var base: Double = 0
+    @State private var anchor: Date? = Date()
+    @State private var holding = false
+    @State private var userPaused = false
+
+    static let fade = 0.7
+    static let cream = Color(red: 0.98, green: 0.93, blue: 0.84)
+    static let ink = Color(red: 0.243, green: 0.184, blue: 0.149)
+
+    var frames: [ReelFrame] { ReelLibrary.frames(for: recipe.steps) }
+    var durations: [Double] { frames.map { ReelLibrary.duration($0.text) } }
+    var total: Double { max(0.1, durations.reduce(0, +)) }
+    func start(_ i: Int) -> Double { durations.prefix(i).reduce(0, +) }
+
+    func position(_ now: Date) -> Double {
+        let raw = anchor == nil ? base : base + now.timeIntervalSince(anchor!)
+        return raw.truncatingRemainder(dividingBy: total)
+    }
+    func current(_ p: Double) -> (index: Int, local: Double) {
+        let d = durations
+        var acc = 0.0
+        for i in 0..<d.count {
+            if p < acc + d[i] { return (i, p - acc) }
+            acc += d[i]
+        }
+        return (max(0, d.count - 1), d.last ?? 0)
+    }
+    var paused: Bool { userPaused || holding }
+    func setPaused(_ on: Bool, now: Date = Date()) {
+        if on, let a = anchor { base = (base + now.timeIntervalSince(a)).truncatingRemainder(dividingBy: total); anchor = nil }
+        else if !on, anchor == nil { anchor = now }
+    }
+    func jump(to index: Int) {
+        let n = frames.count
+        let i = ((index % n) + n) % n
+        base = start(i)
+        anchor = paused ? nil : Date()
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                ReelPlayer.cream.ignoresSafeArea()
+                TimelineView(.animation(minimumInterval: nil, paused: anchor == nil)) { ctx in
+                    stage(now: ctx.date, size: geo.size)
+                }
+                tapZones
+                controls
+            }
+        }.background(ReelPlayer.cream.ignoresSafeArea()).statusBarHidden(true)
+    }
+
+    @ViewBuilder func stage(now: Date, size: CGSize) -> some View {
+        let fr = frames
+        if fr.isEmpty { Color.clear } else {
+            let p = position(now)
+            let cur = current(p)
+            let d = durations[cur.index]
+            let remaining = d - cur.local
+            let f = remaining < ReelPlayer.fade ? 1 - remaining / ReelPlayer.fade : 0
+            let nextIndex = (cur.index + 1) % fr.count
+            ZStack {
+                layer(fr[cur.index], local: cur.local, dur: d, size: size)
+                if f > 0 { layer(fr[nextIndex], local: -remaining, dur: durations[nextIndex], size: size).opacity(f) }
+                VStack(spacing: 0) {
+                    HStack(spacing: 4) {
+                        ForEach(0..<fr.count, id: \.self) { k in
+                            let fill: Double = k < cur.index ? 1 : (k == cur.index ? min(1, max(0, cur.local / d)) : 0)
+                            GeometryReader { g in
+                                ZStack(alignment: .leading) {
+                                    Capsule().fill(ReelPlayer.ink.opacity(0.18))
+                                    Capsule().fill(Color.sage).frame(width: g.size.width * fill)
+                                }
+                            }.frame(height: 4)
+                        }
+                    }.padding(.horizontal, 16).padding(.top, 10)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(String(format: NSLocalizedString("Step %lld of %lld", comment: ""), cur.index + 1, fr.count))
+                        .accessibilityIdentifier("reel-progress")
+                    Spacer()
+                }
+            }.frame(width: size.width, height: size.height)
+        }
+    }
+
+    /// One step picture with its caption. `local` runs from -fade (fading in) up to the step length, and the zoom never stops over that whole span.
+    func layer(_ fr: ReelFrame, local: Double, dur: Double, size: CGSize) -> some View {
+        let prog = min(1, max(0, (local + ReelPlayer.fade) / (dur + ReelPlayer.fade)))
+        let amp = reduceMotion ? 0.04 : 0.16
+        let scale = 1.03 + amp * prog
+        let drift = (reduceMotion ? 4.0 : 18.0) * (prog - 0.5) * (fr.index % 2 == 0 ? 1 : -1)
+        return ZStack(alignment: .bottom) {
+            if let ui = ReelImages.image(fr.picture) {
+                Image(uiImage: ui).resizable().scaledToFill()
+                    .frame(width: size.width, height: size.height).clipped()
+                    .scaleEffect(scale).offset(x: drift, y: -drift / 2)
+                    .frame(width: size.width, height: size.height).clipped()
+            } else { ReelPlayer.cream }
+            Text(verbatim: fr.text)
+                .font(.fh_title3).multilineTextAlignment(.center).foregroundStyle(ReelPlayer.ink)
+                .padding(.horizontal, 18).padding(.vertical, 14)
+                .background(ReelPlayer.cream.opacity(0.88), in: RoundedRectangle(cornerRadius: 18))
+                .padding(.horizontal, 20).padding(.bottom, 56)
+                .accessibilityIdentifier("reel-caption")
+        }.frame(width: size.width, height: size.height)
+    }
+
+    var tapZones: some View {
+        HStack(spacing: 0) {
+            zone(id: "reel-tap-back") { jump(to: current(position(Date())).index - 1) }
+            zone(id: "reel-tap-next") { jump(to: current(position(Date())).index + 1) }
+        }
+    }
+    func zone(id: String, tap: @escaping () -> Void) -> some View {
+        Color.clear.contentShape(Rectangle())
+            .onTapGesture(perform: tap)
+            .onLongPressGesture(minimumDuration: 0.25, maximumDistance: 60, perform: {}, onPressingChanged: { down in holding = down; setPaused(userPaused || down) })
+            .accessibilityLabel(LocalizedStringKey(id == "reel-tap-back" ? "Back" : "Next step"))
+            .accessibilityIdentifier(id)
+    }
+
+    var controls: some View {
+        VStack {
+            Spacer()
+            HStack {
+                Button { userPaused.toggle(); setPaused(userPaused || holding) } label: {
+                    BrandIcon(paused ? "play.fill" : "pause.fill").foregroundStyle(ReelPlayer.ink).frame(width: 26, height: 26)
+                        .frame(width: 48, height: 48).background(ReelPlayer.cream.opacity(0.9), in: Circle())
+                }.accessibilityLabel(LocalizedStringKey(paused ? "Resume" : "Pause")).accessibilityIdentifier("reel-pause")
+                Spacer()
+                Button { dismiss() } label: {
+                    BrandIcon("xmark").foregroundStyle(ReelPlayer.ink).frame(width: 22, height: 22)
+                        .frame(width: 48, height: 48).background(ReelPlayer.cream.opacity(0.9), in: Circle())
+                }.accessibilityLabel("Close reel").accessibilityIdentifier("reel-close")
+            }.padding(.horizontal, 16).padding(.bottom, 4)
         }
     }
 }

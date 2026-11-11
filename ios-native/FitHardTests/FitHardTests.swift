@@ -62,9 +62,9 @@ final class FitHardTests: XCTestCase {
     func testStateRestoredAfterRestart() {
         let u = tmp()
         let a = Store(url: u)
-        a.s.onboarded = true; a.s.profile.name = "Ilse"; a.s.profile.allergens = ["gluten"]; a.addWater(500)
+        a.s.onboarded = true; a.s.profile.name = "Sam"; a.s.profile.allergens = ["gluten"]; a.addWater(500)
         let b = Store(url: u)
-        XCTAssertEqual(b.s.profile.name, "Ilse"); XCTAssertEqual(b.s.profile.allergens, ["gluten"]); XCTAssertEqual(b.waterToday, 500)
+        XCTAssertEqual(b.s.profile.name, "Sam"); XCTAssertEqual(b.s.profile.allergens, ["gluten"]); XCTAssertEqual(b.waterToday, 500)
     }
 
     func testOlderOrEmptySavedDataStillLoads() throws {
