@@ -237,7 +237,22 @@ struct SetupView: View {
         store.finishSetup()
         let finish = { store.s.onboarded = true; store.s.personalizationVersion = Store.personalizationRound; Notifier.rebuild(store) }
         if store.s.settings.on.isEmpty { DispatchQueue.main.asyncAfter(deadline: .now() + 1.4, execute: finish) }
-        else { Notifier.ask { _ in DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: finish) } }
+        else {
+            // Race the authorisation ask against a timeout: whichever lands
+            // first runs the finish, exactly once. A stalled callback can no
+            // longer hold the finish, and a late one cannot run it twice.
+            // The ask itself is unchanged; its answer still governs
+            // notifications through the normal rebuilds. Both arrivals run
+            // on the main queue (ask hops to main before calling back).
+            var finished = false
+            let runOnce = {
+                if finished { return }
+                finished = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: finish)
+            }
+            Notifier.ask { _ in runOnce() }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0, execute: runOnce)
+        }
     }
 
     var buildingView: some View {
