@@ -158,6 +158,7 @@ struct TrainingMode: View {
                 }
             }.accessibilityElement(children: .ignore)
             .accessibilityLabel(String(format: NSLocalizedString("%lld of %lld sets done", comment: ""), entries[idx].sets.filter { $0.done == true }.count, entries[idx].sets.count))
+            if resting { WallyStrip() }
             Spacer(minLength: 0)
             controls(ex)
         }.padding(.horizontal, 16)

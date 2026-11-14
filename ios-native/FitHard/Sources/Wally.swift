@@ -96,6 +96,31 @@ struct WallyBubble: View {
     }
 }
 
+/// The slim Wally who sits with you between sets (build 36, item F, the "during"):
+/// the work screen itself stays clean for the lift, and in the rests he is there —
+/// one kind line, tap him and he reacts, same written set as the bubble. Quiet and
+/// reduced motion are respected exactly as in the bubble.
+struct WallyStrip: View {
+    @EnvironmentObject var store: Store
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
+    @State private var reaction: Int? = nil
+    var body: some View {
+        if store.s.settings.wallyQuiet { EmptyView() } else {
+            HStack(spacing: 10) {
+                Button {
+                    reaction = ((reaction ?? -1) + 1) % WallyBubble.reactions.count; haptic(.soft)
+                } label: {
+                    BundleImage(name: "wally-rest").frame(width: 40, height: 40)
+                        .scaleEffect(reaction != nil && !reduceMotion ? 1.12 : 1.0)
+                        .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.5), value: reaction)
+                }.buttonStyle(.plain).accessibilityLabel("Wally").accessibilityIdentifier("wally-strip-tap")
+                Text(reaction.map { WallyBubble.reactions[$0] } ?? NSLocalizedString("Rest is part of the plan. Breathe.", comment: ""))
+                    .font(.fh_caption).foregroundStyle(Color.muted).frame(maxWidth: .infinity, alignment: .leading)
+            }.padding(.horizontal, 12).padding(.vertical, 6).background(Color.tint.opacity(0.6), in: RoundedRectangle(cornerRadius: 14)).accessibilityIdentifier("wally-strip")
+        }
+    }
+}
+
 // MARK: The round question mark on every exercise
 struct HelpButton: View {
     let exercise: Exercise

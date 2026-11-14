@@ -20,7 +20,7 @@ struct TrainView: View {
             }
             .background(Color.cream).navigationTitle("Train")
             .toolbar { ToolbarItem(placement: .navigationBarTrailing) {
-                Button { showAll = true } label: { BrandIcon("plus").font(.fh_title3_b).frame(width: 40, height: 40) }
+                Button { showAll = true } label: { HStack(spacing: 4) { BrandIcon("plus").font(.fh_subheadline_b); Text("All workouts").font(.fh_subheadline_b) } }
                     .accessibilityLabel("All workouts and more").accessibilityIdentifier("train-plus")
             } }
             .sheet(isPresented: $showAll) { TrainAllSheet().environmentObject(store) }
@@ -184,7 +184,7 @@ struct LibraryView: View {
                     // Build 36, item G: no leftover icon circle beside the real picture. The row
                     // carries the real picture when there is one; the designed brand icon stands
                     // only where no real picture exists, never beside one, never a blank row.
-                    HStack { if let a = store.animBase(e) { AnimatedFrames(base: a).frame(width: 44, height: 44) } else { ExerciseIcon(exercise: e, size: 44) }; VStack(alignment: .leading) { Text(e.name).font(.fh_subheadline_b); Text("\(e.partLabel ?? e.part) · \(equipName(e.equipment))").font(.fh_caption).foregroundStyle(Color.muted) }; Spacer(); ExerciseHeart(e: e) }
+                    HStack { if let a = store.animBase(e) { AnimatedFrames(base: a).frame(width: 44, height: 44) } else { ExerciseIcon(exercise: e, size: 44) }; VStack(alignment: .leading) { Text(e.name).font(.fh_subheadline_b); Text("\(e.partLabel ?? e.part) · \(equipName(e.equipment))").font(.fh_caption).foregroundStyle(Color.muted) }; Spacer(); ExerciseHeart(e: e); BrandIcon("chevron.right").foregroundStyle(Color.muted) }
                 }.listRowBackground(Color.surface)
             }.listStyle(.plain).scrollContentBackground(.hidden)
         }.searchable(text: $q, prompt: String(format: NSLocalizedString("Search %lld exercises", comment: ""), store.cat.exercises.count))
