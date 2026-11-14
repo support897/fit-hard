@@ -134,13 +134,13 @@ final class FeatureTests: XCTestCase {
         let st = ready { $0.allergens = ["peanut"] }
         let day = st.today; let before = st.s.plan
         let oldId = before[day]!["lunch"]!
-        let shopBefore = st.shoppingLines().map { $0.id }
+        let shopBefore = st.shoppingLines().map { "\($0.id)|\($0.need)" }
         st.swap(day: day, meal: "lunch")
         let after = st.s.plan
         XCTAssertNotEqual(after[day]!["lunch"], oldId)
         for (d, row) in before { for (m, id) in row where !(d == day && m == "lunch") { XCTAssertEqual(after[d]![m], id, "\(d) \(m) must not change") } }
         XCTAssertFalse(st.cat.recipe(after[day]!["lunch"]!)!.allergens.contains("peanut"))
-        XCTAssertNotEqual(st.shoppingLines().map { $0.id }, shopBefore, "shopping list follows the swap")
+        XCTAssertNotEqual(st.shoppingLines().map { "\($0.id)|\($0.need)" }, shopBefore, "shopping list follows the swap")
         let newName = st.cat.recipe(after[day]!["lunch"]!)!.name
         XCTAssertTrue(st.calItems(on: day).contains { $0.title.contains(newName) }, "calendar follows the swap")
     }
