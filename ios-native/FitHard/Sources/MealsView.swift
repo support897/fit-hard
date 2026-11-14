@@ -406,6 +406,7 @@ struct ReelPlayer: View {
     @State private var anchor: Date? = Date()
     @State private var holding = false
     @State private var userPaused = false
+    @State private var lastTapStepAt: Date = .distantPast
 
     static let fade = 0.7
     static let cream = Color(red: 0.98, green: 0.93, blue: 0.84)
@@ -509,10 +510,21 @@ struct ReelPlayer: View {
         }.frame(width: size.width, height: size.height)
     }
 
+    /// F-34-1 fix: one tap moves exactly one step. Every tap step routes through here and a second
+    /// tap landing inside a short window of the accepted one is ignored, so a doubly delivered
+    /// gesture can never step twice. The target is read from the position at the tap moment and
+    /// jump() lands at the very start of that one step, paused or playing.
+    func tapStep(_ delta: Int) {
+        let now = Date()
+        guard now.timeIntervalSince(lastTapStepAt) > 0.35 else { return }
+        lastTapStepAt = now
+        jump(to: current(position(now)).index + delta)
+    }
+
     var tapZones: some View {
         HStack(spacing: 0) {
-            zone(id: "reel-tap-back") { jump(to: current(position(Date())).index - 1) }
-            zone(id: "reel-tap-next") { jump(to: current(position(Date())).index + 1) }
+            zone(id: "reel-tap-back") { tapStep(-1) }
+            zone(id: "reel-tap-next") { tapStep(1) }
         }
     }
     func zone(id: String, tap: @escaping () -> Void) -> some View {
