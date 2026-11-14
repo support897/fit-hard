@@ -57,6 +57,9 @@ struct Profile: Codable {
     var profileVersion = 2
     /// Workouts per week the home page counts toward. Saved together with the days pick (0 = follow the days pick).
     var weekGoal = 0
+    /// Training block length in weeks (build 36, item C). 0 = auto: 6 for beginners, 4 otherwise.
+    /// The research shape of record: core moves stay stable for the whole block, the last week deloads.
+    var blockWeeks = 0
     init() {}
     init(from d: Decoder) throws {
         let c = try d.container(keyedBy: CodingKeys.self)
@@ -68,7 +71,7 @@ struct Profile: Codable {
         trainType = c.v(.trainType, "strength"); location = c.v(.location, "gym"); bodyFocus = c.v(.bodyFocus, [:]); kit = c.v(.kit, [])
         diet = c.v(.diet, "any"); dislikes = c.v(.dislikes, []); mealsPerDay = c.v(.mealsPerDay, 3); cookMinutes = c.v(.cookMinutes, 30); budget = c.v(.budget, "medium")
         minor = c.v(.minor, false); pregnant = c.v(.pregnant, false); edConcern = c.v(.edConcern, false); clinicianLimits = c.v(.clinicianLimits, false)
-        injury = c.v(.injury, ""); trainMode = c.v(.trainMode, "hybrid"); setupDone = c.v(.setupDone, false); profileVersion = c.v(.profileVersion, 2); weekGoal = c.v(.weekGoal, 0)
+        injury = c.v(.injury, ""); trainMode = c.v(.trainMode, "hybrid"); setupDone = c.v(.setupDone, false); profileVersion = c.v(.profileVersion, 2); weekGoal = c.v(.weekGoal, 0); blockWeeks = c.v(.blockWeeks, 0)
     }
 }
 
@@ -94,6 +97,15 @@ struct Entry: Codable, Hashable, Identifiable { var id = UUID(); var exerciseId:
 struct WorkoutLog: Codable, Identifiable, Hashable {
     var id = UUID(); var date = Date(); var entries: [Entry]
     var seconds: Int? = nil; var routineId: String? = nil; var routineName: String? = nil
+}
+/// One finished training block, snapshotted by nextBlock() from the logs alone (build 36, item C).
+/// Only what was actually logged is in here: sessions in the block's dates, total work, and the
+/// best set per exercise. Blocks that ended before this record existed have no snapshot, and
+/// Results says so instead of inventing a compare.
+struct BlockSummary: Codable, Hashable {
+    var block: Int; var ended: String
+    var sessions: Int; var totalWork: Double
+    var best: [String: [Double]] = [:]   // exerciseId -> [kg, reps]
 }
 
 struct Treat: Codable, Identifiable, Hashable { var id = UUID(); var day: String; var name: String; var kcal: Int? = nil }
@@ -204,6 +216,12 @@ struct AppState: Codable {
     /// The person's own giving total in cents, private, shown only to them (item 10).
     /// Filled only by a verified giving record, never typed in and never guessed.
     var kindnessGivenCents = 0
+    /// Finished training blocks, snapshotted at each block change (build 36, item C).
+    var blockHistory: [BlockSummary] = []
+    /// Days the person tapped back to the full plan: that day's adaptation stands down.
+    var fullPlanDays: [String] = []
+    /// Day -> routine id, set by Swap today on the Train screen (build 36, item C).
+    var dayRoutine: [String: String] = [:]
 
     init() {}
     init(from d: Decoder) throws {
@@ -222,6 +240,7 @@ struct AppState: Codable {
         personalizationVersion = c.v(.personalizationVersion, 0); lightDays = c.v(.lightDays, []); planBackup = c.v(.planBackup, [:])
         portions = c.v(.portions, [:]); machinePhotos = c.v(.machinePhotos, [:]); language = c.v(.language, "en")
         ownerUid = c.v(.ownerUid, ""); sleep = c.v(.sleep, [:]); steps = c.v(.steps, [:]); kindnessGivenCents = c.v(.kindnessGivenCents, 0)
+        blockHistory = c.v(.blockHistory, []); fullPlanDays = c.v(.fullPlanDays, []); dayRoutine = c.v(.dayRoutine, [:])
     }
 }
 extension KeyedDecodingContainer {

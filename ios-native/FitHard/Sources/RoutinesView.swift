@@ -15,9 +15,9 @@ struct RoutinesList: View {
                     Text("No routines yet. Pick your training days and I will build them.").foregroundStyle(Color.muted)
                     BigButton(title: "Build my routines", icon: "sparkles") { store.generateRoutine(); Notifier.rebuild(store) } }
             } else {
-                Text(String(format: NSLocalizedString("Block %lld, week %lld of 4", comment: ""), store.s.routines.first?.block ?? 1, min(4, store.blockWeek))).font(.fh_caption).foregroundStyle(Color.muted).frame(maxWidth: .infinity, alignment: .leading)
+                Text(String(format: NSLocalizedString("Block %lld, week %lld of %lld", comment: ""), store.s.routines.first?.block ?? 1, min(store.blockLength, store.blockWeek), store.blockLength)).font(.fh_caption).foregroundStyle(Color.muted).frame(maxWidth: .infinity, alignment: .leading)
                 ForEach(Array(shown.enumerated()), id: \.element.id) { i, r in RoutineCard(r: r, index: i) }
-                if store.blockWeek > 4 { BigButton(title: "Start the next 4 week block", icon: "arrow.right.circle") { store.nextBlock(); store.say("New block. Only some exercises change.") } }
+                if store.blockWeek > store.blockLength { BigButton(title: String(format: NSLocalizedString("Start the next %lld week block", comment: ""), store.blockLength), icon: "arrow.right.circle") { store.nextBlock(); store.say("New block. Only some exercises change.") } }
             }
             BigButton(title: "Quick workout, no equipment", icon: "bolt", filled: false) {
                 let ids = store.cat.exercises.filter { $0.equipment == "body only" && ($0.category ?? "strength") == "strength" && $0.level == "beginner" }.sorted { ($0.anim != nil ? 0 : 1, $0.name) < ($1.anim != nil ? 0 : 1, $1.name) }.prefix(5).map { $0.id }

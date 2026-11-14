@@ -8,9 +8,9 @@ struct ProgressScreen: View {
     @State private var pendingDay: String? = nil
     var body: some View {
         VStack(spacing: 0) {
-            Picker("", selection: $mode) { Text("Overview").tag(0); Text("Strength").tag(1); Text("Body").tag(2); Text("Review").tag(3) }.pickerStyle(.segmented).padding(16)
+            Picker("", selection: $mode) { Text("Overview").tag(0); Text("Strength").tag(1); Text("Results").tag(2); Text("Body").tag(3); Text("Review").tag(4) }.pickerStyle(.segmented).padding(16)
             ScrollView { VStack(spacing: 14) {
-                switch mode { case 0: overview; case 1: strength; case 2: BodyScreen(); default: ReviewScreen() }
+                switch mode { case 0: overview; case 1: strength; case 2: ResultsView(); case 3: BodyScreen(); default: ReviewScreen() }
             }.padding(16) }
         }.background(Color.cream).navigationTitle("Progress").navigationBarTitleDisplayMode(.inline)
     }
@@ -59,6 +59,73 @@ struct ProgressScreen: View {
                     Picker("Exercise", selection: Binding(get: { pick }, set: { exId = $0 })) { ForEach(ex) { Text($0.name).tag($0.id) } }
                     Chart(pts) { LineMark(x: .value("Date", $0.date), y: .value("Top set", $0.value)).foregroundStyle(Color.sage); PointMark(x: .value("Date", $0.date), y: .value("Top set", $0.value)).foregroundStyle(Color.sage) }.frame(height: 160)
                     ForEach(pts.reversed().prefix(10)) { Text(String(format: NSLocalizedString("%@: %lld reps, %@", comment: ""), $0.date.formatted(date: .abbreviated, time: .omitted), $0.reps, $0.value.formatted())) .font(.fh_caption) }
+                }
+            }
+        }
+    }
+}
+
+/// Results (build 36, item C): the numbers the block system makes possible, all read
+/// from the person's own logged sessions and nothing else. Because the main moves stay
+/// stable for a whole block, these compares are like with like. A number with no log
+/// behind it is never shown: the empty states say what will fill them.
+struct ResultsView: View {
+    @EnvironmentObject var store: Store
+    var mainIds: [String] {
+        var ids: [String] = []
+        for r in store.s.routines { for id in r.exIds where !ids.contains(id) { ids.append(id) } }
+        return ids
+    }
+    func topLine(_ e: Entry) -> String {
+        guard let top = e.sets.max(by: { ($0.kg, $0.reps) < ($1.kg, $1.reps) }) else { return "" }
+        return top.kg > 0 ? String(format: NSLocalizedString("%lld reps at %@ kg", comment: ""), top.reps, RecipeService.fmt(top.kg)) : String(format: NSLocalizedString("%lld reps", comment: ""), top.reps)
+    }
+    var body: some View {
+        VStack(spacing: 14) {
+            Card {
+                SectionTitle(text: "Your results")
+                if store.s.workouts.isEmpty { Text("They build from the workouts you log. Nothing here is guessed.").foregroundStyle(Color.muted) }
+                else {
+                    HStack(spacing: 18) {
+                        VStack { Text("\(store.s.workouts.count)").font(.zilla(30, bold: true)).foregroundStyle(Color.sage); Text("workouts done").font(.fh_caption).foregroundStyle(Color.muted) }
+                        VStack { Text("\(store.streak)").font(.zilla(30, bold: true)).foregroundStyle(Color.sage); Text(store.streak == 1 ? "day streak" : "days streak").font(.fh_caption).foregroundStyle(Color.muted) }
+                        VStack { Text(Int(store.totalWorkAll.rounded()).formatted()).font(.zilla(30, bold: true)).foregroundStyle(Color.sage); Text("kg moved").font(.fh_caption).foregroundStyle(Color.muted) }
+                    }
+                }
+            }
+            if !store.s.workouts.isEmpty {
+                Card {
+                    SectionTitle(text: "Main exercises")
+                    Text("First logged top set beside the latest, per main exercise.").font(.fh_caption).foregroundStyle(Color.muted)
+                    ForEach(mainIds, id: \.self) { id in
+                        let h = store.history(for: id)
+                        if let latest = h.first, let earliest = h.last, let ex = store.cat.exercise(id) {
+                            HStack { Text(ex.name).font(.fh_subheadline_b); Spacer()
+                                Text(h.count > 1 ? "\(topLine(earliest)) → \(topLine(latest))" : topLine(latest)).font(.fh_caption).foregroundStyle(Color.muted) }
+                        }
+                    }
+                }
+                Card {
+                    SectionTitle(text: "Best sets")
+                    let pbs = store.personalBests().filter { mainIds.contains($0.id) }
+                    if pbs.isEmpty { Text("They appear when you log sets.").foregroundStyle(Color.muted) }
+                    ForEach(pbs) { Text("**\($0.name)**: \($0.text)") }
+                }
+            }
+            Card {
+                SectionTitle(text: "Block by block")
+                let hist = store.s.blockHistory
+                if hist.count >= 2, let a = hist.dropLast().last, let b = hist.last {
+                    Text(String(format: NSLocalizedString("Block %lld: %lld sessions, %@ kg moved. Block %lld: %lld sessions, %@ kg moved.", comment: ""), a.block, a.sessions, Int(a.totalWork.rounded()).formatted(), b.block, b.sessions, Int(b.totalWork.rounded()).formatted())).font(.fh_subheadline)
+                    ForEach(mainIds, id: \.self) { id in
+                        if let x = a.best[id], let y = b.best[id], let ex = store.cat.exercise(id) {
+                            Text("**\(ex.name)**: \(Int(x[1])) × \(RecipeService.fmt(x[0])) kg → \(Int(y[1])) × \(RecipeService.fmt(y[0])) kg").font(.fh_caption)
+                        }
+                    }
+                } else if let a = hist.last {
+                    Text(String(format: NSLocalizedString("Block %lld finished: %lld sessions, %@ kg moved. The next block end brings the first compare.", comment: ""), a.block, a.sessions, Int(a.totalWork.rounded()).formatted())).font(.fh_subheadline)
+                } else {
+                    Text("Your first block compare lands at the end of this block.").foregroundStyle(Color.muted)
                 }
             }
         }

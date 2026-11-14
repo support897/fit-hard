@@ -213,8 +213,11 @@ final class Store: ObservableObject {
         guard let d = dateFromKey(s.blockStart) else { return 1 }
         return (Calendar.current.dateComponents([.day], from: d, to: Date()).day ?? 0) / 7 + 1
     }
-    /// A new 4 week block changes only some exercises, and never touches a routine the user has edited.
+    /// A new block changes only some exercises, and never touches a routine the user has edited.
+    /// The ending block is snapshotted from its logs first (build 36, item C), so Results can
+    /// compare like with like.
     func nextBlock() {
+        snapshotBlock()
         let nb = (s.routines.first?.block ?? 1) + 1
         let fresh = WorkoutGenerator.generate(profile: s.profile, exercises: cat.exercises, block: nb, hearts: heartedExerciseIds)
         var out: [Routine] = []

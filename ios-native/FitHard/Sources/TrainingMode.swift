@@ -63,12 +63,27 @@ struct TrainingMode: View {
             entries = store.s.draft; start = store.s.draftStart ?? Date()
             idx = entries.firstIndex(where: { $0.sets.contains { $0.done != true } }) ?? 0
         } else {
+            // Build 36, item C: the day's adaptation shapes the session before it starts —
+            // fewer sets and a lighter load on a light day, half sets at 60 percent on a
+            // deload week, one extra set on the first exercise on a push day. A restored
+            // draft (the branch above) is the person's own work in progress and is never
+            // reshaped under them.
+            let adapt = store.todaysAdaptation()
             entries = ids.map { id in
                 let ex = store.cat.exercise(id)
                 let t = ex.map { ProgressionEngine.next(ex: $0, history: store.history(for: id), goal: store.s.profile.primaryGoal) }
                 var n = WorkoutGenerator.setCount(for: ex, profile: store.s.profile)
                 if store.s.lightDays.contains(store.today) { n = min(n, 2) }
-                return Entry(exerciseId: id, sets: Array(repeating: SetLog(reps: t?.lo ?? 10, kg: t?.kg ?? 0, done: false), count: n))
+                var kg = t?.kg ?? 0
+                switch adapt.kind {
+                case .light: n = max(1, Int((Double(n) * 0.6).rounded(.up))); kg = kg > 0 ? (kg * 0.9 * 4).rounded() / 4 : kg
+                case .deload: n = max(1, Int((Double(n) / 2).rounded(.up))); kg = kg > 0 ? (kg * 0.6 * 4).rounded() / 4 : kg
+                case .push, .asPlanned: break
+                }
+                return Entry(exerciseId: id, sets: Array(repeating: SetLog(reps: t?.lo ?? 10, kg: kg, done: false), count: n))
+            }
+            if adapt.kind == .push, !entries.isEmpty, let lastSet = entries[0].sets.last {
+                entries[0].sets.append(SetLog(reps: lastSet.reps, kg: lastSet.kg, done: false))
             }
             start = Date(); store.s.draft = entries; store.s.draftStart = start; store.s.draftRoutine = routine.id.uuidString
         }

@@ -160,6 +160,9 @@ final class SmokeTests: XCTestCase {
     func testStartRoutineThenRunATrainingSessionWithHelpInEveryMode() {
         let app = seeded()
         app.tabBars.buttons["Train"].tap()
+        // Build 36: Train main shows today only; the full list lives behind the + button.
+        XCTAssertTrue(any(app, "train-plus").waitForExistence(timeout: 10))
+        any(app, "train-plus").tap()
         let start = any(app, "start-routine-0"); XCTAssertTrue(start.waitForExistence(timeout: 10)); shot(app, "train-routines")
         XCTAssertTrue(any(app, "view-routine-0").exists)
         start.tap()

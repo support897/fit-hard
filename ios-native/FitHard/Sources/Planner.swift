@@ -32,6 +32,14 @@ extension Store {
     func routine(on day: String) -> Routine? {
         guard let d = dateFromKey(day) else { return nil }
         let wd = Calendar.current.component(.weekday, from: d)
+        // Swap today (build 36, item C): a routine the person picked for this exact day wins
+        // over the weekday plan. It is their call for one day; the block itself is untouched.
+        if let rid = s.dayRoutine[day], let picked = s.routines.first(where: { $0.id.uuidString == rid }) {
+            var r = picked
+            if s.skipped.contains("\(day)|\(r.id.uuidString)") { return nil }
+            if s.lightDays.contains(day), r.trainType != .mobility, r.exIds.count > 3 { r.exIds = Array(r.exIds.prefix(3)); r.name += NSLocalizedString(", lighter", comment: "") }
+            return r
+        }
         guard var r = s.routines.first(where: { $0.weekday == wd }) else { return nil }
         if s.skipped.contains("\(day)|\(r.id.uuidString)") { return nil }
         // A Bad check-in makes that day's workout an easier one: the first three exercises, two sets each (see TrainingMode).

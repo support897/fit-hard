@@ -129,6 +129,8 @@ struct SettingsView: View {
                 Stepper("Weight \(store.s.profile.weightKg == 0 ? "not set" : RecipeService.fmt(store.s.profile.weightKg) + " kg")", value: p.weightKg, in: 0...250, step: 0.5)
                 Picker("Level", selection: p.experience) { Text("New").tag("beginner"); Text("Some").tag("intermediate"); Text("Lots").tag("advanced") }.pickerStyle(.segmented)
                 Picker("Length", selection: p.minutes) { ForEach([20, 30, 45, 60], id: \.self) { Text("\($0) min").tag($0) } }.pickerStyle(.segmented)
+                Picker("Block length", selection: p.blockWeeks) { Text("Auto").tag(0); Text("4 weeks").tag(4); Text("6 weeks").tag(6) }.pickerStyle(.segmented).accessibilityIdentifier("block-length")
+                Text("Your main moves stay the same for the whole block, stepping up a little each week. The last week is a lighter deload week. Auto means 6 weeks when you are new, 4 after that.").font(.fh_caption).foregroundStyle(Color.muted)
                 Picker("Training where", selection: Binding(get: { store.s.profile.location }, set: { store.s.profile.location = $0; store.s.profile.equipment = $0 == "home" ? "home" : "gym"; store.s.profile.kit = []; store.finishSetupKit(); store.generateRoutine(); Notifier.rebuild(store) })) {
                     Text("Gym").tag("gym"); Text("Home").tag("home"); Text("Both").tag("both") }
                 Stepper("Water goal: \(store.s.profile.waterGoal) ml", value: $store.s.profile.waterGoal, in: 1000...4000, step: 250)
