@@ -215,7 +215,8 @@ final class SmokeTests: XCTestCase {
     func testKindnessItemStandsFirstAndOpensThePage() {
         let app = seeded(); app.tabBars.buttons["More"].tap()
         let item = any(app, "kindness-item"); XCTAssertTrue(item.waitForExistence(timeout: 10))
-        XCTAssertLessThan(item.frame.minY, any(app, "my-profile").frame.minY, "the kindness item stands above everything else")
+        let profile = any(app, "my-profile"); XCTAssertTrue(profile.waitForExistence(timeout: 5), "both rows stand before their frames are compared (a frame read before layout settles reads zero and fails the order check on a healthy app)")
+        XCTAssertLessThan(item.frame.minY, profile.frame.minY, "the kindness item stands above everything else")
         item.tap()
         XCTAssertTrue(any(app, "kindness-give").waitForExistence(timeout: 5))
         XCTAssertTrue(any(app, "kindness-counter").exists)
