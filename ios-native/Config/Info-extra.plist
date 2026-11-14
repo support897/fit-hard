@@ -18,6 +18,8 @@
 		<string>en</string>
 		<string>es</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Fit Hard uses the camera so you can photograph a gym machine and match it to the catalogue.</string>
 	<key>GIDClientID</key>
 	<string>391027322388-reldvu6krq2mdpqqjkhrvqmgjl01icqk.apps.googleusercontent.com</string>
 </dict>

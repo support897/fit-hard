@@ -192,7 +192,8 @@ struct AppState: Codable {
     var planBackup: [String: [String: String]] = [:]
     /// day -> meal -> fraction eaten (0.25, 0.5, 0.75, 1.0). A meal in `eaten` with no entry counts as 1.0.
     var portions: [String: [String: Double]] = [:]
-    /// Machine id -> photo file name in Application Support. The app never recognises a machine from a photo.
+    /// Machine id -> photo file name in Application Support. A saved photo is the person's own
+    /// reference picture for that machine when they photograph it again (build 35, item 1).
     var machinePhotos: [String: String] = [:]
     var language = "en"
     /// Firebase uid this saved state belongs to. A different signed-in user never inherits it.

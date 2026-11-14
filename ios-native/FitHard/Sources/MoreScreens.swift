@@ -194,7 +194,10 @@ struct MachineScreen: View {
     @State private var q = ""
     var body: some View {
         List {
-            Section { Text("Find the machine by name, then confirm it's the one in front of you. Fit Hard never guesses from a photo.").font(.fh_footnote).foregroundStyle(Color.muted) }
+            Section {
+                NavigationLink { MachinePhotoMatchView() } label: { BrandLabel("Photo a machine", icon: "camera") }.accessibilityIdentifier("photo-a-machine")
+                Text("Take a photo and Fit Hard will try to match it, or find the machine by name. It compares pictures, so always check the name it shows you.").font(.fh_footnote).foregroundStyle(Color.muted)
+            }
             ForEach(store.cat.machines.filter { q.isEmpty || $0.name.localizedCaseInsensitiveContains(q) }) { m in
                 NavigationLink(m.name) { MachineDetail(m: m) }
             }

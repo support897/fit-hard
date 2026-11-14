@@ -167,6 +167,7 @@ enum Glyphs {
         "ellipsis": G(d: "", dots: "O 6 12 1.6 O 12 12 1.6 O 18 12 1.6"),
         "ellipsis.circle": G(d: "O 12 12 9", dots: "O 8 12 1.1 O 12 12 1.1 O 16 12 1.1"),
         "gearshape": G(d: "O 12 12 6.2 M12 3.2 V5.6 M12 18.4 V20.8 M3.2 12 H5.6 M18.4 12 H20.8 M5.8 5.8 L7.5 7.5 M16.5 16.5 L18.2 18.2 M18.2 5.8 L16.5 7.5 M7.5 16.5 L5.8 18.2", dots: "O 12 12 1.5"),
+        "camera": G(d: "M3.5 8 H8 L10 5.5 H14 L16 8 H20.5 V19 H3.5 Z O 12 13 3.4", dots: "O 12 13 1.2"),
         "line.3.horizontal": G(d: "M4 7 H20 M4 12 H20 M4 17 H20"),
         "face.smiling": G(d: "O 12 12 9 M8.5 14 C 9.5 16.5 14.5 16.5 15.5 14", dots: "O 9 10 1 O 15 10 1"),
         "flag.checkered": G(d: "M6 3.5 V21 M6 5 H19 L16.5 9 L19 13 H6", dots: "O 11 9 1.2"),

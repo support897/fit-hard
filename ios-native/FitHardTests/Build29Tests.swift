@@ -292,6 +292,17 @@ final class Build29Tests: XCTestCase {
         XCTAssertEqual(loved.flatMap { $0.exIds }, ["z9"])
         XCTAssertEqual(plain.count, loved.count)
     }
+    func testMachineMatchConfidenceIsHonest() {
+        // Item 1: a match is called confident only when it is close AND clearly ahead.
+        // Anything else must land in the not sure state, never presented as fact.
+        let a = Catalog.Machine(id: "a", name: "A", exerciseIds: [])
+        let b = Catalog.Machine(id: "b", name: "B", exerciseIds: [])
+        XCTAssertTrue(MachineMatcher.isConfident([(a, 0.30), (b, 0.60)]))
+        XCTAssertTrue(MachineMatcher.isConfident([(a, 0.30)]))
+        XCTAssertFalse(MachineMatcher.isConfident([(a, 0.30), (b, 0.35)]), "too close to call")
+        XCTAssertFalse(MachineMatcher.isConfident([(a, 0.80), (b, 0.95)]), "nothing is close")
+        XCTAssertFalse(MachineMatcher.isConfident([]))
+    }
     func testEveryExerciseHasADesignedIconMark() {
         for ex in Catalog.shared.exercises {
             XCTAssertNotNil(Glyphs.table[ExerciseGlyph.part(ex.part)], "zone mark for \(ex.part)")
