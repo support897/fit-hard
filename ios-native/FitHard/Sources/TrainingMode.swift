@@ -3,7 +3,7 @@ import SwiftUI
 /// Training mode (build 32, reshaped in 35). Total time is pinned on top and counts up. The exercise opens on a whole screen
 /// with its real picture and a countdown, a "?" how-to, and an optional weight and reps tracker. The workout opens at once:
 /// doses are never asked here (her ruling, 13 Nov) — they live in My doses, and after the workout one small line shows only
-/// when a dose is still unconfirmed (that line rides Item 6, after her word on the My doses design).
+/// when a dose is still unconfirmed (Item 6, built as drawn 14 Nov).
 struct TrainingMode: View {
     @EnvironmentObject var store: Store
     @Environment(\.dismiss) var dismiss
@@ -20,6 +20,7 @@ struct TrainingMode: View {
     @State private var loaded = false
     @State private var tracking = false
     @State private var showKindness = false
+    @State private var showDoses = false
     @State private var confirmQuit = false
     @State private var focus: FocusKind = .none
     enum FocusKind { case none, picture, timer }
@@ -43,6 +44,7 @@ struct TrainingMode: View {
         }
         .sheet(isPresented: $tracking) { trackSheet }
         .sheet(isPresented: $showKindness) { NavigationStack { KindnessView() } }
+        .sheet(isPresented: $showDoses) { NavigationStack { HealthView(embedded: true) } }
         // Swipe law: sliding from the left edge goes back one page.
         .gesture(DragGesture(minimumDistance: 24).onEnded { v in if v.startLocation.x < 40 && v.translation.width > 70 { swipeBack() } })
     }
@@ -269,6 +271,14 @@ struct TrainingMode: View {
                         VStack(alignment: .leading) { Text(ex.name).font(.fh_subheadline_b); Text(sim.note).font(.fh_caption).foregroundStyle(Color.muted) }
                     }
                 }
+            }
+            // One small dose line after the workout, and only when a dose is still unconfirmed (Item 6 design, frame 4).
+            // The workout start shows nothing about doses at all.
+            if !store.unconfirmedDosesToday().isEmpty {
+                Button { showDoses = true } label: {
+                    HStack(spacing: 8) { BrandIcon("cross.case").foregroundStyle(Color.taupe); Text("One dose is still to confirm today.").font(.fh_caption).foregroundStyle(Color.muted); Spacer(); Text("My doses").font(.fh_caption_b).foregroundStyle(Color.sage) }
+                        .padding(12).background(Color.surface, in: RoundedRectangle(cornerRadius: 14))
+                }.buttonStyle(.plain).accessibilityIdentifier("workout-doses-row")
             }
             // One quiet kindness row at the happy end (donations pack of record). It never blocks, never badges, never asks twice.
             Button { showKindness = true } label: {

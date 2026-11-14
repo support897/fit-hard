@@ -265,6 +265,28 @@ final class Build29Tests: XCTestCase {
         st.logMed(st.s.meds[0], "taken")
         XCTAssertEqual(st.medStatus(st.s.meds[0]), "taken")
     }
+    func testMyDosesNextDoseAndCalendarTimesStayApart() {
+        // Item 6, built as drawn: the next dose is the next unmarked one, and the calendar keeps
+        // the due time and the taken time apart on the same line.
+        let st = Store(url: tmp())
+        st.s.meds.append(Med(name: "Morning mix", amount: "One scoop", time: "08:00", frequency: "Once a day", times: ["08:00"]))
+        st.s.meds.append(Med(name: "Vitamin D drops", amount: "Two drops", time: "20:00", frequency: "Once a day", times: ["20:00"]))
+        XCTAssertEqual(st.nextDoseToday()?.med.name, "Morning mix")
+        XCTAssertEqual(st.unconfirmedDosesToday().count, 2)
+        st.logMed(st.s.meds[0], "taken")
+        XCTAssertEqual(st.nextDoseToday()?.med.name, "Vitamin D drops")
+        XCTAssertEqual(st.unconfirmedDosesToday().count, 1)
+        let items = st.calItems(on: st.today)
+        let morning = items.first { $0.id.hasPrefix("med-") && $0.title.contains("Morning mix") }
+        XCTAssertNotNil(morning, "the morning dose stands on the calendar")
+        XCTAssertTrue(morning!.title.hasPrefix("Dose · "), "its own kind, not a generic check in")
+        XCTAssertTrue(morning!.detail.contains("Due 08:00 · Taken "), "due and taken times stand apart")
+        let evening = items.first { $0.id.hasPrefix("med-") && $0.title.contains("Vitamin D") }
+        XCTAssertTrue(evening!.detail.contains("not marked yet"), "the unmarked dose says so plainly")
+        st.logMed(st.s.meds[1], "taken")
+        XCTAssertNil(st.nextDoseToday(), "every dose marked means no next dose")
+        XCTAssertTrue(st.unconfirmedDosesToday().isEmpty, "the workout done line stays hidden then")
+    }
     func testHeartsSavePerPersonAndUnheartEasesOff() {
         // Item 2: hearts live in the person's own state, survive a restart, and one tap removes them.
         let u = tmp(); let a = Store(url: u)

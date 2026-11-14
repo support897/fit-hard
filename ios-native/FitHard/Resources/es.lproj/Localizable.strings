@@ -31,7 +31,6 @@
 "Settings" = "Ajustes";
 "Name and account" = "Nombre y cuenta";
 "Theme, reminders and your plan live in Settings." = "El tema, los recordatorios y tu plan están en Ajustes.";
-"Your character" = "Tu personaje";
 "Only changes how you look. Your plan stays the same." = "Solo cambia tu aspecto. Tu plan queda igual.";
 "See the picture full screen" = "Ver la imagen en pantalla completa";
 "See the timer full screen" = "Ver el temporizador en pantalla completa";
@@ -706,3 +705,26 @@
 /* Build 33 */
 "Watch" = "Ver";
 "Close reel" = "Cerrar video";
+"Next dose" = "Próxima dosis";
+"Today at %@" = "Hoy a las %@";
+"Add a dose" = "Añadir una dosis";
+"Add this dose" = "Añadir esta dosis";
+"All my doses" = "Todas mis dosis";
+"Taken today at %@" = "Tomada hoy a las %@";
+"Due %@ · Taken %@" = "Debida %@ · Tomada %@";
+"Due %@ · Skipped" = "Debida %@ · Saltada";
+"Due %@ · not marked yet" = "Debida %@ · aún sin marcar";
+"Dose · %@" = "Dosis · %@";
+"One dose is still to confirm today." = "Queda una dosis por confirmar hoy.";
+"My doses" = "Mis dosis";
+"Remind me later" = "Recuérdamelo más tarde";
+"Skipped" = "Saltada";
+"Mondays" = "Los lunes";
+"Every day" = "Cada día";
+"I will remind you again in 10 minutes" = "Te lo recordaré de nuevo en 10 minutos";
+"Name (as your clinician gave it)" = "Nombre (como te lo dio tu médico)";
+"Amount (exactly as given)" = "Cantidad (exactamente como te la dieron)";
+"Unit (ml, drops, scoops…)" = "Unidad (ml, gotas, cucharadas…)";
+"Add another time" = "Añadir otra hora";
+"Notes from your clinician (optional)" = "Notas de tu médico (opcional)";
+"You type everything. Fit Hard never suggests a name, a dose or a change. What you enter is only ever what your clinician told you." = "Tú escribes todo. Fit Hard nunca sugiere un nombre, una dosis o un cambio. Lo que escribes es solo lo que te dijo tu médico.";

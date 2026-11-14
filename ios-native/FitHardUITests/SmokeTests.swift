@@ -212,6 +212,23 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["The wall is just starting."].waitForExistence(timeout: 5))
     }
 
+    // MARK: My doses (item 6: the home as drawn, the add form, the three kind buttons)
+    func testMyDosesHomeAddAndMarkTaken() {
+        let app = seeded(); app.tabBars.buttons["More"].tap()
+        any(app, "my-doses").tap()
+        XCTAssertTrue(any(app, "doses-add").waitForExistence(timeout: 10))
+        any(app, "doses-add").tap()
+        let name = any(app, "med-name"); XCTAssertTrue(name.waitForExistence(timeout: 5)); name.tap(); name.typeText("Vitamin D drops")
+        app.switches["This was provided by my clinician"].tap()
+        any(app, "med-add").tap()
+        XCTAssertTrue(app.staticTexts["Vitamin D drops"].waitForExistence(timeout: 5), "the new dose stands on the home")
+        let taken = app.buttons["Taken"].firstMatch
+        XCTAssertTrue(taken.waitForExistence(timeout: 5), "the three kind buttons stand on the dose card")
+        XCTAssertTrue(app.buttons["Skipped"].exists); XCTAssertTrue(app.buttons["Remind me later"].exists)
+        taken.tap()
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Taken today at'")).firstMatch.waitForExistence(timeout: 5))
+    }
+
     // MARK: Profile and Settings (item 9: Me is identity only, every setting lives in Settings)
     func testProfileScreenChangesTheCharacter() {
         let app = seeded(); app.tabBars.buttons["More"].tap()

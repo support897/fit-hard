@@ -71,7 +71,16 @@ extension Store {
         for m in s.meds where !m.isPaused {
             for t in m.allTimes {
                 let st = s.medLogs.last(where: { $0.medId == m.id && $0.day == day })?.status
-                out.append(CalItem(id: "med-\(m.id)-\(t)-\(day)", time: t, title: String(format: NSLocalizedString("Check in: %@", comment: ""), m.name), detail: st ?? "", cat: "medication", icon: "cross.case", done: st == "taken", eventID: nil, routineID: nil))
+                // Due time and taken time always stand apart (Item 6 design, frame 3).
+                let detail: String
+                if st == "taken", let at = medTakenAt(m, day: day) {
+                    detail = String(format: NSLocalizedString("Due %@ · Taken %@", comment: ""), t, timeString(at))
+                } else if st == "not_taken" {
+                    detail = String(format: NSLocalizedString("Due %@ · Skipped", comment: ""), t)
+                } else {
+                    detail = String(format: NSLocalizedString("Due %@ · not marked yet", comment: ""), t)
+                }
+                out.append(CalItem(id: "med-\(m.id)-\(t)-\(day)", time: t, title: String(format: NSLocalizedString("Dose · %@", comment: ""), m.name), detail: detail, cat: "medication", icon: "cross.case", done: st == "taken", eventID: nil, routineID: nil))
             }
         }
         for t in s.tasks where t.day == day {

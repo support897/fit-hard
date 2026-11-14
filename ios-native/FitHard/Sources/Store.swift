@@ -277,6 +277,22 @@ final class Store: ObservableObject {
         s.medLogs.append(MedLog(medId: m.id, day: today, status: status))
         haptic()
     }
+    /// The time a dose was marked taken today, if the person marked it.
+    func medTakenAt(_ m: Med, day: String? = nil) -> Date? {
+        s.medLogs.last(where: { $0.medId == m.id && $0.day == (day ?? today) && $0.status == "taken" })?.at
+    }
+    /// Doses still unconfirmed today: no taken mark yet (a skip still counts as unconfirmed).
+    func unconfirmedDosesToday() -> [Med] {
+        s.meds.filter { !$0.isPaused && medStatus($0) != "taken" }
+    }
+    /// The next unmarked dose today, earliest time first; nil when every dose is marked.
+    func nextDoseToday() -> (med: Med, time: String)? {
+        var best: (Med, String)? = nil
+        for m in s.meds where !m.isPaused && medStatus(m) != "taken" {
+            for t in m.allTimes where best == nil || t < best!.1 { best = (m, t) }
+        }
+        return best
+    }
     func eraseHealth() { s.meds = []; s.medLogs = []; s.appts = [] ; Notifier.rebuild(self) }
 
     // MARK: Today's next step
