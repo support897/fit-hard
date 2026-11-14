@@ -279,7 +279,7 @@ final class Build29Tests: XCTestCase {
         let items = st.calItems(on: st.today)
         let morning = items.first { $0.id.hasPrefix("med-") && $0.title.contains("Morning mix") }
         XCTAssertNotNil(morning, "the morning dose stands on the calendar")
-        XCTAssertTrue(morning!.title.hasPrefix("Dose · "), "its own kind, not a generic check in")
+        XCTAssertTrue(morning!.title.hasPrefix("Supplement · "), "its own kind, not a generic check in")
         XCTAssertTrue(morning!.detail.contains("Due 08:00 · Taken "), "due and taken times stand apart")
         let evening = items.first { $0.id.hasPrefix("med-") && $0.title.contains("Vitamin D") }
         XCTAssertTrue(evening!.detail.contains("not marked yet"), "the unmarked dose says so plainly")
