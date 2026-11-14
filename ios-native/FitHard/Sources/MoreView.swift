@@ -20,6 +20,21 @@ struct MoreView: View {
                     NavigationLink { HealthView(embedded: true) } label: { BrandLabel("My supplements and peptides", icon: "cross.case") }.accessibilityIdentifier("my-doses")
                 }.themedRows()
                 Section {
+                    // Build 36, item B (her words, 14 Nov): Photo a machine is its own menu item, big
+                    // and easy to find, with its own designed camera glyph. It opens the matcher
+                    // directly; the honest matching shape inside stands as built in 35.
+                    NavigationLink { MachinePhotoMatchView() } label: {
+                        HStack(spacing: 14) {
+                            BrandIcon("camera").font(.fh_title2).frame(width: 52, height: 52).background(Color.tint, in: RoundedRectangle(cornerRadius: 14)).foregroundStyle(Color.sage)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Photo a machine").font(.fh_headline)
+                                Text("Point your camera at a gym machine and Fit Hard will try to name it.").font(.fh_caption).foregroundStyle(Color.muted)
+                            }
+                            Spacer(); BrandIcon("chevron.right").foregroundStyle(Color.muted)
+                        }.padding(.vertical, 6)
+                    }.accessibilityIdentifier("photo-a-machine-menu")
+                }.themedRows()
+                Section {
                     NavigationLink { ProfileScreen() } label: { HStack(spacing: 12) { AvatarView(size: 48); VStack(alignment: .leading) { Text(store.s.profile.name.isEmpty ? "My profile" : store.s.profile.name).font(.fh_headline); Text("Name and account").font(.fh_caption).foregroundStyle(Color.muted) } } }.accessibilityIdentifier("my-profile")
                 }.themedRows()
                 Section("Explore") {

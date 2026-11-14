@@ -32,6 +32,7 @@ struct TodayView: View {
                     if let missed = store.missedSession { missedCard(missed) }
                     mealsCard
                     workoutCard
+                    photoCard
                     medsCard
                     habitsCard
                     tasksCard
@@ -214,6 +215,20 @@ struct TodayView: View {
 
     /// Build 36, item D: the supplements card stands on Today only when something is due
     /// today and not yet marked. It never marks anything itself; the rows are the person's taps.
+    /// Build 36, item B: Photo a machine stands on Today as its own card, one tap to the matcher.
+    var photoCard: some View {
+        NavigationLink { MachinePhotoMatchView() } label: {
+            HStack(spacing: 14) {
+                BrandIcon("camera").font(.fh_title2).frame(width: 52, height: 52).background(Color.surface, in: RoundedRectangle(cornerRadius: 14)).foregroundStyle(Color.sage)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Photo a machine").font(.fh_headline)
+                    Text("Point your camera at a gym machine and Fit Hard will try to name it.").font(.fh_caption).foregroundStyle(Color.muted)
+                }
+                Spacer(); BrandIcon("chevron.right")
+            }.padding(16).frame(maxWidth: .infinity).background(Color.tint, in: RoundedRectangle(cornerRadius: 20)).foregroundStyle(Color.ink)
+        }.buttonStyle(.plain).accessibilityIdentifier("photo-a-machine-today")
+    }
+
     var medsCard: some View {
         let due = store.unconfirmedDosesToday()
         return Group {
