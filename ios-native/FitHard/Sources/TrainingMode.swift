@@ -281,7 +281,7 @@ struct TrainingMode: View {
             // The workout start shows nothing about doses at all.
             if !store.unconfirmedDosesToday().isEmpty {
                 Button { showDoses = true } label: {
-                    HStack(spacing: 8) { BrandIcon("cross.case").foregroundStyle(Color.taupe); Text("One dose is still to confirm today.").font(.fh_caption).foregroundStyle(Color.muted); Spacer(); Text("My doses").font(.fh_caption_b).foregroundStyle(Color.sage) }
+                    HStack(spacing: 8) { BrandIcon("cross.case").foregroundStyle(Color.taupe); Text("One item is still to confirm today.").font(.fh_caption).foregroundStyle(Color.muted); Spacer(); Text("Supplements and peptides").font(.fh_caption_b).foregroundStyle(Color.sage) }
                         .padding(12).background(Color.surface, in: RoundedRectangle(cornerRadius: 14))
                 }.buttonStyle(.plain).accessibilityIdentifier("workout-doses-row")
             }

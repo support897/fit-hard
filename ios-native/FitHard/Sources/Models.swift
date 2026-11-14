@@ -237,7 +237,7 @@ enum Lists {
         Need(id: "meals", label: "Meal plans", icon: "fork.knife"),
         Need(id: "calories", label: "Calorie counts", icon: "flame"),
         Need(id: "gym", label: "Gym routines", icon: "dumbbell"),
-        Need(id: "peptides", label: "Dose tracking", icon: "pills"),
+        Need(id: "peptides", label: "Supplement tracking", icon: "pills"),
         Need(id: "calendar", label: "Calendar and habits", icon: "calendar")
     ]
     static let cuisines = ["Mexican", "Greek", "Mediterranean", "Italian", "Asian", "Indian", "American", "Australian", "Healthy", "Comfort", "Quick"]

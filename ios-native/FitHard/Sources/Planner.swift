@@ -80,7 +80,7 @@ extension Store {
                 } else {
                     detail = String(format: NSLocalizedString("Due %@ · not marked yet", comment: ""), t)
                 }
-                out.append(CalItem(id: "med-\(m.id)-\(t)-\(day)", time: t, title: String(format: NSLocalizedString("Dose · %@", comment: ""), m.name), detail: detail, cat: "medication", icon: "cross.case", done: st == "taken", eventID: nil, routineID: nil))
+                out.append(CalItem(id: "med-\(m.id)-\(t)-\(day)", time: t, title: String(format: NSLocalizedString("Supplement · %@", comment: ""), m.name), detail: detail, cat: "medication", icon: "cross.case", done: st == "taken", eventID: nil, routineID: nil))
             }
         }
         for t in s.tasks where t.day == day {

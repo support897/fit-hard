@@ -205,7 +205,7 @@ struct SetupView: View {
             }
             title("Reminders")
             reminderRow("workout", "Workout days", "dumbbell"); reminderRow("meals", "Meal times", "fork.knife")
-            reminderRow("water", "Water, once a day", "drop"); reminderRow("health", "Doses and appointments", "cross.case")
+            reminderRow("water", "Water, once a day", "drop"); reminderRow("health", "Supplements and appointments", "cross.case")
         }
     }
 

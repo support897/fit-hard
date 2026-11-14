@@ -130,7 +130,7 @@
 "Meal plans" = "Planes de comidas";
 "Calorie counts" = "Conteo de calorías";
 "Gym routines" = "Rutinas de gimnasio";
-"Dose tracking" = "Seguimiento de dosis";
+"Supplement tracking" = "Seguimiento de suplementos";
 "Calendar and habits" = "Calendario y hábitos";
 "Overview" = "Resumen";
 "Strength" = "Fuerza";
@@ -217,7 +217,7 @@
 "Quiet from" = "Silencio desde";
 "Quiet until" = "Silencio hasta";
 "Remind me before" = "Avísame antes";
-"Doses and appointments" = "Dosis y citas";
+"Supplements and appointments" = "Suplementos y citas";
 "Show health details on lock screen" = "Mostrar detalles de salud en la pantalla bloqueada";
 "My plan" = "Mi plan";
 "Training where" = "Dónde entrenar";
@@ -349,7 +349,7 @@
 "Core" = "Core";
 "Mobility" = "Movilidad";
 "Snacks" = "Meriendas";
-"Medication" = "Medicación";
+"Supplements" = "Suplementos";
 "Personal" = "Personal";
 "Start cooking" = "Empezar a cocinar";
 "Next step" = "Siguiente paso";
@@ -623,7 +623,7 @@
 "Leave this workout?" = "¿Salir de este entrenamiento?";
 "Add a name and tick the box" = "Agrega un nombre y marca la casilla";
 "As directed" = "Como fue indicado";
-"Erase all doses, history and appointments?" = "¿Borrar todas las dosis, el historial y las citas?";
+"Erase all supplements, history and appointments?" = "¿Borrar todos los suplementos, el historial y las citas?";
 "Once a day" = "Una vez al día";
 "Twice a day" = "Dos veces al día";
 "Reminders set for the day before and an hour before" = "Recordatorios puestos para el día antes y una hora antes";
@@ -659,7 +659,7 @@
 "Full plan, plus one optional extra." = "Plan completo, más un extra opcional.";
 "Your normal plan, as it is." = "Tu plan normal, tal como es.";
 "Tree nuts" = "Frutos secos de árbol";
-"Medication check in" = "Registro de medicación";
+"Supplement check in" = "Registro de suplemento";
 "%lld workout this week" = "%lld entrenamiento esta semana";
 "%lld workouts this week" = "%lld entrenamientos esta semana";
 " · you planned %lld. Fewer is fine too." = " · planeaste %lld. Menos también está bien.";
@@ -705,18 +705,19 @@
 /* Build 33 */
 "Watch" = "Ver";
 "Close reel" = "Cerrar video";
-"Next dose" = "Próxima dosis";
+"Next due" = "Siguiente";
 "Today at %@" = "Hoy a las %@";
-"Add a dose" = "Añadir una dosis";
-"Add this dose" = "Añadir esta dosis";
-"All my doses" = "Todas mis dosis";
+"Add a supplement or peptide" = "Añadir un suplemento o péptido";
+"Add this one" = "Añadir este";
+"All my supplements and peptides" = "Todos mis suplementos y péptidos";
 "Taken today at %@" = "Tomada hoy a las %@";
 "Due %@ · Taken %@" = "Debida %@ · Tomada %@";
 "Due %@ · Skipped" = "Debida %@ · Saltada";
 "Due %@ · not marked yet" = "Debida %@ · aún sin marcar";
-"Dose · %@" = "Dosis · %@";
-"One dose is still to confirm today." = "Queda una dosis por confirmar hoy.";
-"My doses" = "Mis dosis";
+"Supplement · %@" = "Suplemento · %@";
+"One item is still to confirm today." = "Aún queda un elemento por confirmar hoy.";
+"My supplements and peptides" = "Mis suplementos y péptidos";
+"Supplements and peptides" = "Suplementos y péptidos";
 "Remind me later" = "Recuérdamelo más tarde";
 "Skipped" = "Saltada";
 "Mondays" = "Los lunes";

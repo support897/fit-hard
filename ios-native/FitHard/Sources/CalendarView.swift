@@ -48,7 +48,7 @@ struct Legend: View {
             Flow(spacing: 6) { ForEach(MealKind.allCases, id: \.self) { m in pill(m.icon, m.label, m.tone) } }
             Text("Other").font(.fh_caption_b).foregroundStyle(Color.muted)
             Flow(spacing: 6) {
-                pill("moon", "Recovery", "recovery"); pill("cross.case", "Medication", "medication"); pill("person", "Personal", "personal")
+                pill("moon", "Recovery", "recovery"); pill("cross.case", "Supplements", "medication"); pill("person", "Personal", "personal")
                 HStack(spacing: 4) { BrandIcon("checkmark.circle.fill").font(.fh_caption2); Text("Done").font(.fh_caption2_b) }.padding(.horizontal, 8).padding(.vertical, 4).overlay(Capsule().stroke(Color.line, lineWidth: 1))
             }
         }.accessibilityIdentifier("cal-legend")
@@ -211,7 +211,7 @@ struct EventEditor: View {
     let day: String
     @State private var kind = "workout"; @State private var title = ""; @State private var date = Date(); @State private var time = Date()
     @State private var minutes = 30; @State private var notes = ""; @State private var remind = true; @State private var done = false
-    static let kinds: [(String, String, String)] = [("workout", "Workout", "training"), ("meal", "Meal", "meals"), ("snack", "Snack", "meals"), ("cardio", "Cardio", "training"), ("rest", "Rest day", "recovery"), ("personal", "Personal", "personal"), ("custom", "Reminder", "personal"), ("medication", "Medication check in", "medication")]
+    static let kinds: [(String, String, String)] = [("workout", "Workout", "training"), ("meal", "Meal", "meals"), ("snack", "Snack", "meals"), ("cardio", "Cardio", "training"), ("rest", "Rest day", "recovery"), ("personal", "Personal", "personal"), ("custom", "Reminder", "personal"), ("medication", "Supplement check in", "medication")]
     var body: some View {
         Form {
             Section("What") {

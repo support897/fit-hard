@@ -32,7 +32,7 @@ struct TodayView: View {
                     if let missed = store.missedSession { missedCard(missed) }
                     mealsCard
                     workoutCard
-                    if !store.s.meds.isEmpty { medsCard }
+                    medsCard
                     habitsCard
                     tasksCard
                     ChallengeCard()
@@ -212,10 +212,20 @@ struct TodayView: View {
         }
     }
 
+    /// Build 36, item D: the supplements card stands on Today only when something is due
+    /// today and not yet marked. It never marks anything itself; the rows are the person's taps.
     var medsCard: some View {
-        Card {
-            SectionTitle(text: "Check-in")
-            ForEach(store.s.meds) { m in MedRow(med: m) }
+        let due = store.unconfirmedDosesToday()
+        return Group {
+            if !due.isEmpty {
+                Card {
+                    SectionTitle(text: "Supplements and peptides")
+                    ForEach(due) { m in MedRow(med: m) }
+                    NavigationLink { HealthView(embedded: true) } label: {
+                        HStack { Text("See all").font(.fh_subheadline_b).foregroundStyle(Color.sage); Spacer(); BrandIcon("chevron.right").foregroundStyle(Color.muted) }
+                    }.accessibilityIdentifier("today-supplements")
+                }
+            }
         }
     }
 

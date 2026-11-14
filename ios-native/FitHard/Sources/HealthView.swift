@@ -22,7 +22,7 @@ struct HealthView: View {
                             HStack(spacing: 12) {
                                 BrandIcon("cross.case").foregroundStyle(Color.taupe).font(.fh_title2)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text("Next dose").font(.fh_caption_b).foregroundStyle(Color.muted)
+                                    Text("Next due").font(.fh_caption_b).foregroundStyle(Color.muted)
                                     Text(next.med.name).font(.fh_headline)
                                     Text("Today at \(next.time)").font(.fh_subheadline).foregroundStyle(Color.muted)
                                 }
@@ -34,12 +34,12 @@ struct HealthView: View {
                         SectionTitle(text: "Today")
                         if store.s.meds.isEmpty { Text("Nothing added yet.").foregroundStyle(Color.muted) }
                         ForEach(store.s.meds) { m in DoseCard(med: m) }
-                        BigButton(title: "Add a dose", icon: "plus", filled: false) { showAdd = true }
+                        BigButton(title: "Add a supplement or peptide", icon: "plus", filled: false) { showAdd = true }
                             .accessibilityIdentifier("doses-add")
                     }
                     if !store.s.meds.isEmpty {
                         Card {
-                            SectionTitle(text: "All my doses")
+                            SectionTitle(text: "All my supplements and peptides")
                             ForEach(store.s.meds) { m in
                                 HStack {
                                     VStack(alignment: .leading, spacing: 2) {
@@ -73,9 +73,9 @@ struct HealthView: View {
                         .font(.fh_footnote).foregroundStyle(Color.muted).padding(.horizontal, 6)
                     Button("Erase all health data", role: .destructive) { erase = true }
                 }.padding(16)
-            }.background(Color.cream).navigationTitle("My doses")
+            }.background(Color.cream).navigationTitle("My supplements and peptides")
             .sheet(isPresented: $showAdd) { NavigationStack { AddDoseSheet() }.environmentObject(store) }
-            .confirmationDialog("Erase all doses, history and appointments?", isPresented: $erase, titleVisibility: .visible) {
+            .confirmationDialog("Erase all supplements, history and appointments?", isPresented: $erase, titleVisibility: .visible) {
                 Button("Erase", role: .destructive) { store.eraseHealth() }
             }
         }
@@ -176,7 +176,7 @@ struct AddDoseSheet: View {
                 Button("Add another time") { times.append(timeDate("20:00")) }.font(.fh_subheadline_b)
                 TextField("Notes from your clinician (optional)", text: $instr)
                 Toggle("This was provided by my clinician", isOn: $confirm).tint(Color.sage)
-                BigButton(title: "Add this dose", icon: "plus") {
+                BigButton(title: "Add this one", icon: "plus") {
                     let n = name.trimmingCharacters(in: .whitespaces)
                     guard confirm, !n.isEmpty else { store.say("Add a name and tick the box"); return }
                     let ts = times.map { timeString($0) }
@@ -185,6 +185,6 @@ struct AddDoseSheet: View {
                     Notifier.rebuild(store); store.say("Added"); dismiss()
                 }.accessibilityIdentifier("med-add")
             }.padding(16)
-        }.background(Color.cream).navigationTitle("Add a dose")
+        }.background(Color.cream).navigationTitle("Add a supplement or peptide")
     }
 }

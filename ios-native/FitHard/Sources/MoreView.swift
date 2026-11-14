@@ -15,14 +15,15 @@ struct MoreView: View {
                     NavigationLink { KindnessView() } label: { BrandLabel("Join the AI kindness revolution", icon: "heart.fill") }.accessibilityIdentifier("kindness-item")
                 }.themedRows()
                 Section {
+                    // Build 36, item D (her words, 14 Nov): supplements and peptides stand high in the
+                    // menu as their own item, easy to find — never buried. Kindness stays first above.
+                    NavigationLink { HealthView(embedded: true) } label: { BrandLabel("My supplements and peptides", icon: "cross.case") }.accessibilityIdentifier("my-doses")
+                }.themedRows()
+                Section {
                     NavigationLink { ProfileScreen() } label: { HStack(spacing: 12) { AvatarView(size: 48); VStack(alignment: .leading) { Text(store.s.profile.name.isEmpty ? "My profile" : store.s.profile.name).font(.fh_headline); Text("Name and account").font(.fh_caption).foregroundStyle(Color.muted) } } }.accessibilityIdentifier("my-profile")
                 }.themedRows()
                 Section("Explore") {
                     NavigationLink { ProgressScreen() } label: { BrandLabel("Progress", icon: "chart.line.uptrend.xyaxis") }
-                    // My doses is its own menu for everyone (Item 6 as drawn): a person given a dose at any
-                    // time can always reach it, not only those who named doses in setup. Build 35 fix round:
-                    // CI run 64 proved the old build-29 condition hid the link from a plain profile.
-                    NavigationLink { HealthView(embedded: true) } label: { BrandLabel("My doses", icon: "cross.case") }.accessibilityIdentifier("my-doses")
                     NavigationLink { TreatsScreen() } label: { BrandLabel("Treats", icon: "heart") }
 
                 }.themedRows()
@@ -100,7 +101,7 @@ struct SettingsView: View {
                 DatePicker("Quiet from", selection: timeBinding(\.quietFrom), displayedComponents: .hourAndMinute)
                 DatePicker("Quiet until", selection: timeBinding(\.quietTo), displayedComponents: .hourAndMinute)
                 Picker("Remind me before", selection: Binding(get: { store.s.settings.lead }, set: { store.s.settings.lead = $0; Notifier.rebuild(store) })) { ForEach([0, 10, 30, 60], id: \.self) { Text($0 == 0 ? "On time" : "\($0) min before").tag($0) } }
-                Toggle("Doses and appointments", isOn: on("health"))
+                Toggle("Supplements and appointments", isOn: on("health"))
                 Toggle("Show health details on lock screen", isOn: Binding(get: { store.s.settings.detailsOnLock }, set: { store.s.settings.detailsOnLock = $0; Notifier.rebuild(store) }))
             }.themedRows()
             Section("My plan") {
