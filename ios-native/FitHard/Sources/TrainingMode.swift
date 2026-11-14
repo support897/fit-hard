@@ -131,7 +131,12 @@ struct TrainingMode: View {
                     .accessibilityLabel("See the picture full screen").accessibilityIdentifier("train-picture")
             } else { ExerciseIcon(exercise: ex, size: 124) }
             Text(ex.name).font(.fh_title_b).multilineTextAlignment(.center).foregroundStyle(Color.ink).accessibilityIdentifier("train-exercise")
-            ring.onTapGesture { focus = .timer }.accessibilityLabel("See the timer full screen").accessibilityIdentifier("train-timer")
+            // The ring stays a container (.contain): a plain label + identifier on the ring itself
+            // overwrote its own children's identifiers — the probe tree dump (CI run 67) showed the
+            // timer text carrying 'train-timer' and no work-left / rest-left element anywhere, which
+            // is why the training test's rest step could never be found (CI runs 64 and 65).
+            ring.accessibilityElement(children: .contain)
+                .onTapGesture { focus = .timer }.accessibilityLabel("See the timer full screen").accessibilityIdentifier("train-timer")
             HStack(spacing: 8) {
                 ForEach(entries[idx].sets.indices, id: \.self) { i in
                     Circle().fill(entries[idx].sets[i].done == true ? Color.sage : Color.tint).frame(width: 12, height: 12).overlay(Circle().stroke(Color.sage, lineWidth: 1))

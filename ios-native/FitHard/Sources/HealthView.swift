@@ -148,7 +148,7 @@ struct DoseCard: View {
                         .padding(.horizontal, 12).padding(.vertical, 8).background(Color.surface, in: Capsule())
                 }
             }
-        }.accessibilityIdentifier("dose-\(med.id.uuidString)")
+        }.accessibilityElement(children: .contain).accessibilityIdentifier("dose-\(med.id.uuidString)")
     }
 }
 
