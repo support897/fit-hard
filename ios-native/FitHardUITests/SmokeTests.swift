@@ -199,7 +199,7 @@ final class SmokeTests: XCTestCase {
         let app = seeded()
         app.tabBars.buttons["Calendar"].tap()
         XCTAssertTrue(any(app, "cal-legend").waitForExistence(timeout: 10))
-        for l in ["Training", "Meals", "Recovery", "Medication", "Personal"] { XCTAssertTrue(app.staticTexts[l].exists, l) }
+        for l in ["Training", "Meals", "Recovery", "Supplements", "Personal"] { XCTAssertTrue(app.staticTexts[l].exists, l) }
         shot(app, "cal-month")
         any(app, "cal-add").tap()
         let t = any(app, "ev-title"); XCTAssertTrue(t.waitForExistence(timeout: 5)); t.tap(); t.typeText("Stretch time")
