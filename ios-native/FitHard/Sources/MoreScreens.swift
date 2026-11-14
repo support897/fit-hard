@@ -82,6 +82,7 @@ struct ResultsView: View {
     }
     var body: some View {
         VStack(spacing: 14) {
+            WallyBubble()
             Card {
                 SectionTitle(text: "Your results")
                 if store.s.workouts.isEmpty { Text("They build from the workouts you log. Nothing here is guessed.").foregroundStyle(Color.muted) }

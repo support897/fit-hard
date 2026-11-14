@@ -11,6 +11,7 @@ struct TrainView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
+                    WallyBubble()
                     if store.s.routines.isEmpty { buildCard }
                     else if let r = store.routine(on: store.today) { dayCard(r) }
                     else { restCard }
@@ -180,7 +181,10 @@ struct LibraryView: View {
             ScrollView(.horizontal, showsIndicators: false) { HStack { ForEach(parts, id: \.self) { p in Chip(label: partName(p), on: part == p) { part = p } } }.padding(.horizontal, 16) }
             List(list.prefix(200)) { e in
                 NavigationLink { ExerciseDetail(e: e) } label: {
-                    HStack { ExerciseIcon(exercise: e, size: 44); if let a = store.animBase(e) { AnimatedFrames(base: a).frame(width: 44, height: 44) }; VStack(alignment: .leading) { Text(e.name).font(.fh_subheadline_b); Text("\(e.partLabel ?? e.part) · \(equipName(e.equipment))").font(.fh_caption).foregroundStyle(Color.muted) }; Spacer(); ExerciseHeart(e: e) }
+                    // Build 36, item G: no leftover icon circle beside the real picture. The row
+                    // carries the real picture when there is one; the designed brand icon stands
+                    // only where no real picture exists, never beside one, never a blank row.
+                    HStack { if let a = store.animBase(e) { AnimatedFrames(base: a).frame(width: 44, height: 44) } else { ExerciseIcon(exercise: e, size: 44) }; VStack(alignment: .leading) { Text(e.name).font(.fh_subheadline_b); Text("\(e.partLabel ?? e.part) · \(equipName(e.equipment))").font(.fh_caption).foregroundStyle(Color.muted) }; Spacer(); ExerciseHeart(e: e) }
                 }.listRowBackground(Color.surface)
             }.listStyle(.plain).scrollContentBackground(.hidden)
         }.searchable(text: $q, prompt: String(format: NSLocalizedString("Search %lld exercises", comment: ""), store.cat.exercises.count))
@@ -193,8 +197,8 @@ struct ExerciseDetail: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                ExerciseIcon(exercise: e, size: 84).frame(maxWidth: .infinity)
                 if let a = store.animBase(e) { AnimatedFrames(base: a).frame(height: 260).frame(maxWidth: .infinity).background(Color.surface, in: RoundedRectangle(cornerRadius: 20)) }
+                else { ExerciseIcon(exercise: e, size: 84).frame(maxWidth: .infinity) }
                 Flow { Chip(label: e.partLabel ?? e.part, on: false) {}; Chip(label: equipName(e.equipment), on: false) {}; Chip(label: levelName(e.level), on: false) {} }
                 HStack { Spacer(); ExerciseHeart(e: e); HelpButton(exercise: e) }
                 Card { SectionTitle(text: "How"); Text(e.cue) }
@@ -207,7 +211,7 @@ struct HistoryView: View {
     @EnvironmentObject var store: Store
     var body: some View {
         let list = store.s.workouts.sorted { $0.date > $1.date }
-        if list.isEmpty { Spacer(); Text("Your workouts show up here.").foregroundStyle(Color.muted); Spacer() }
+        if list.isEmpty { Spacer(); BundleImage(name: "wally-hello").frame(height: 90); Text("Your workouts show up here.").foregroundStyle(Color.muted); Spacer() }
         else {
             List(list) { w in
                 VStack(alignment: .leading, spacing: 4) {

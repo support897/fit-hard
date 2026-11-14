@@ -17,6 +17,7 @@ struct HealthView: View {
         Group {
             ScrollView {
                 VStack(spacing: 14) {
+                    WallyBubble()
                     if let next = store.nextDoseToday() {
                         Card {
                             HStack(spacing: 12) {

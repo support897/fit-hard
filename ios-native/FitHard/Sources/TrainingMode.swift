@@ -279,6 +279,7 @@ struct TrainingMode: View {
         return ScrollView { VStack(spacing: 14) {
             BundleImage(name: "wally-celebrate").frame(height: 120)
             Text("Workout done").font(.fh_largeTitle_b).accessibilityIdentifier("train-summary")
+            WallyBubble()
             Card {
                 row("Time", String(format: "%d:%02d", secs / 60, secs % 60)); row("Sets done", "\(done.count)"); row("Volume", "\(RecipeService.fmt(vol)) kg")
                 row("Exercises", "\(entries.filter { $0.sets.contains { $0.done == true } }.count) of \(entries.count)")

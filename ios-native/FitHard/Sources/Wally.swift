@@ -64,15 +64,33 @@ enum WallyEngine {
 
 struct WallyBubble: View {
     @EnvironmentObject var store: Store
+    @Environment(\.accessibilityReduceMotion) var reduceMotion
+    /// Build 36, item F: tapping Wally makes him react — a little bounce (never when
+    /// reduced motion is on) and a kind line from this written set. He never nags,
+    /// never blocks a tap, and his words never touch medicine or doses.
+    @State private var reaction: Int? = nil
+    static let reactions: [String] = [
+        "You found me. I am always in your corner.",
+        "That tickles. Ready when you are.",
+        "We go at your pace. Always.",
+        "Small steps count. They add up.",
+        "I am glad you are here."
+    ]
     var body: some View {
         if store.s.settings.wallyQuiet { EmptyView() } else {
             let prev = store.s.wally.last(where: { $0.day != store.today })?.rule
             let m = WallyEngine.message(store.s, cat: store.cat, avoid: prev)
             HStack(spacing: 12) {
-                BundleImage(name: m.image).frame(width: 64, height: 64)
-                Text(m.text).font(.fh_subheadline).foregroundStyle(Color.ink).frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("wally-text")
+                Button {
+                    reaction = ((reaction ?? -1) + 1) % Self.reactions.count; haptic(.soft)
+                } label: {
+                    BundleImage(name: m.image).frame(width: 64, height: 64)
+                        .scaleEffect(reaction != nil && !reduceMotion ? 1.1 : 1.0)
+                        .animation(reduceMotion ? nil : .spring(response: 0.35, dampingFraction: 0.5), value: reaction)
+                }.buttonStyle(.plain).accessibilityLabel("Wally").accessibilityIdentifier("wally-tap")
+                Text(reaction.map { Self.reactions[$0] } ?? m.text).font(.fh_subheadline).foregroundStyle(Color.ink).frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("wally-text")
                 Menu { Button("Talk to me less") { store.s.settings.wallyQuiet = true } } label: { BrandIcon( "ellipsis").frame(width: 36, height: 36) }.foregroundStyle(Color.muted)
-            }.padding(12).background(Color.tint, in: RoundedRectangle(cornerRadius: 18))
+            }.padding(12).background(Color.tint, in: RoundedRectangle(cornerRadius: 18)).accessibilityIdentifier("wally-bubble")
             .onAppear { if store.s.wally.last?.day != store.today || store.s.wally.last?.rule != m.rule { store.s.wally.append(WallyNote(day: store.today, rule: m.rule)); if store.s.wally.count > 60 { store.s.wally.removeFirst() } } }
         }
     }

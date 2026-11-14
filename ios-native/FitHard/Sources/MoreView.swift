@@ -92,6 +92,8 @@ struct SettingsView: View {
                     Text("Only changes how you look. Your plan stays the same.").font(.fh_caption).foregroundStyle(Color.muted)
                 }
                 Picker("Language", selection: $store.s.language) { Text("English").tag("en"); Text("Spanish").tag("es") }.accessibilityIdentifier("language-picker")
+                Toggle("Wally", isOn: Binding(get: { !store.s.settings.wallyQuiet }, set: { store.s.settings.wallyQuiet = !$0 })).tint(Color.sage).accessibilityIdentifier("wally-toggle")
+                Text("Wally greets you, cheers real progress and keeps you company. Turn this off and he stays quiet.").font(.fh_caption).foregroundStyle(Color.muted)
             }.themedRows()
             Section("Reminders") {
                 if notif == .denied {

@@ -776,3 +776,19 @@
 "4 weeks" = "4 semanas";
 "6 weeks" = "6 semanas";
 "%lld exercises · about %lld min" = "%lld ejercicios · unos %lld min";
+/* Build 36, items E and F */
+"Pick your gift" = "Elige tu regalo";
+"Choose your own amount" = "Elige tu propia cantidad";
+"Stay anonymous" = "Quedarme anónimo";
+"Your name (optional)" = "Tu nombre (opcional)";
+"A message (optional)" = "Un mensaje (opcional)";
+"Your pick: $%@ · %@" = "Tu elección: $%@ · %@";
+"anonymous" = "anónimo";
+"no name" = "sin nombre";
+"You pick everything here. The giving page opens with it all filled in, and paying happens there." = "Aquí eliges todo. La página de donación se abre con todo ya puesto, y el pago se hace allí.";
+"You found me. I am always in your corner." = "Me encontraste. Siempre estoy de tu parte.";
+"That tickles. Ready when you are." = "Eso hace cosquillas. Listo cuando tú lo estés.";
+"We go at your pace. Always." = "Vamos a tu ritmo. Siempre.";
+"Small steps count. They add up." = "Los pasos pequeños cuentan. Y se van sumando.";
+"I am glad you are here." = "Me alegra que estés aquí.";
+"Wally greets you, cheers real progress and keeps you company. Turn this off and he stays quiet." = "Wally te saluda, celebra tu progreso real y te hace compañía. Apágalo y se queda callado.";

@@ -30,6 +30,35 @@ struct RainbowArcs: View {
 struct KindnessView: View {
     @EnvironmentObject var store: Store
     @Environment(\.openURL) var openURL
+    // Build 36, item E (her ask reshaped by Apple's own rules, HQ 14 Nov): everything is
+    // PICKED here in the app — the amount card, the name, the message, the anonymous
+    // choice — and Give carries those exact picks to the giving page already filled in.
+    // Only the pay tap itself sits on the page, because Apple's guidelines allow in-app
+    // fundraising collection only to approved nonprofits (3.2.1(vi)) and require everyone
+    // else to collect outside the app (3.2.2(iv)). No wording here promises in-app payment.
+    @State private var picked: Int? = nil        // cents, from the amount cards of record
+    @State private var custom: String = ""       // dollars as typed; a typed amount always wins
+    @State private var donorName: String = ""
+    @State private var donorMessage: String = ""
+    @State private var anonymous: Bool = false
+    static let cards: [(Int, String)] = [(300, "$3"), (500, "$5"), (1000, "$10"), (2000, "$20")]
+    /// The amount that will ride to the giving page: the typed one when there is one,
+    /// else the picked card, else nothing (no amount is ever forced or pre picked).
+    var amountCents: Int? {
+        let t = custom.trimmingCharacters(in: .whitespaces)
+        if let d = Double(t.replacingOccurrences(of: ",", with: ".")), d > 0 { return Int((d * 100).rounded()) }
+        return picked
+    }
+    var giveURL: URL {
+        var c = URLComponents(url: KindnessLinks.givingPage, resolvingAgainstBaseURL: false)
+        var q: [URLQueryItem] = []
+        if let a = amountCents { q.append(URLQueryItem(name: "amount", value: String(a))) }
+        if anonymous { q.append(URLQueryItem(name: "anon", value: "1")) }
+        else if !donorName.trimmingCharacters(in: .whitespaces).isEmpty { q.append(URLQueryItem(name: "name", value: donorName.trimmingCharacters(in: .whitespaces))) }
+        if !donorMessage.trimmingCharacters(in: .whitespaces).isEmpty { q.append(URLQueryItem(name: "message", value: donorMessage.trimmingCharacters(in: .whitespaces))) }
+        if !q.isEmpty { c?.queryItems = q }
+        return c?.url ?? KindnessLinks.givingPage
+    }
     var body: some View {
         ScrollView { VStack(spacing: 14) {
             BundleImage(name: "wally-celebrate").frame(height: 130)
@@ -47,7 +76,33 @@ struct KindnessView: View {
                     Text("Just for your eyes.").font(.fh_caption).foregroundStyle(Color.muted)
                 } }
             }
-            BigButton(title: "Give to keep it free", icon: "heart") { openURL(KindnessLinks.givingPage) }.accessibilityIdentifier("kindness-give")
+            Card {
+                SectionTitle(text: "Pick your gift")
+                HStack(spacing: 10) {
+                    ForEach(Self.cards, id: \.0) { card in
+                        Button { picked = card.0; custom = ""; haptic() } label: {
+                            Text(card.1).font(.fh_headline)
+                                .frame(maxWidth: .infinity, minHeight: 52)
+                                .background(picked == card.0 && custom.isEmpty ? Color.sage.opacity(0.3) : Color.surface, in: RoundedRectangle(cornerRadius: 14))
+                                .overlay(RoundedRectangle(cornerRadius: 14).stroke(picked == card.0 && custom.isEmpty ? Color.sage : Color.line, lineWidth: picked == card.0 && custom.isEmpty ? 2 : 1))
+                        }.buttonStyle(.plain).foregroundStyle(Color.ink).accessibilityIdentifier("kindness-amount-\(card.0)")
+                    }
+                }
+                HStack {
+                    Text("$").foregroundStyle(Color.muted)
+                    TextField("Choose your own amount", text: $custom).keyboardType(.decimalPad).accessibilityIdentifier("kindness-custom")
+                }.padding(12).background(Color.surface, in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.line))
+                Toggle("Stay anonymous", isOn: $anonymous).tint(Color.sage).accessibilityIdentifier("kindness-anon")
+                if !anonymous {
+                    TextField("Your name (optional)", text: $donorName).padding(12).background(Color.surface, in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.line)).accessibilityIdentifier("kindness-name")
+                }
+                TextField("A message (optional)", text: $donorMessage).padding(12).background(Color.surface, in: RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.line)).accessibilityIdentifier("kindness-message")
+                if let a = amountCents {
+                    Text(String(format: NSLocalizedString("Your pick: $%@ · %@", comment: ""), String(format: "%.2f", Double(a) / 100), anonymous ? NSLocalizedString("anonymous", comment: "") : (donorName.trimmingCharacters(in: .whitespaces).isEmpty ? NSLocalizedString("no name", comment: "") : donorName.trimmingCharacters(in: .whitespaces)))).font(.fh_caption).foregroundStyle(Color.muted)
+                }
+            }
+            BigButton(title: "Give to keep it free", icon: "heart") { openURL(giveURL) }.accessibilityIdentifier("kindness-give")
+            Text("You pick everything here. The giving page opens with it all filled in, and paying happens there.").font(.fh_footnote).foregroundStyle(Color.muted).multilineTextAlignment(.center)
             Text("Give only if you want. Fit Hard stays free for all.").font(.fh_footnote).foregroundStyle(Color.muted)
         }.padding(16) }
         .background(Color.cream).navigationTitle("Kindness").navigationBarTitleDisplayMode(.inline)
