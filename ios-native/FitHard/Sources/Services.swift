@@ -249,7 +249,11 @@ enum WorkoutGenerator {
         let focus = kind == "cardio" ? ["cardio"] : ["mobility"]
         return Routine(name: name, weekday: day, focus: focus, exIds: picks, customized: false, block: block, week: 1, kind: kind)
     }
-    static func generate(profile p: Profile, exercises: [Exercise], block: Int = 1) -> [Routine] {
+    static func generate(profile p: Profile, exercises: [Exercise], block: Int = 1, hearts: Set<String> = []) -> [Routine] {
+        // Her own algorithm (build 35, item 2): hearted exercises sort first in their part pool, and
+        // their kin (same equipment, so same machine and style) sort next. The tilt only reorders
+        // pools: slots, rest days and the no repeat guards below are untouched, so balance stands.
+        let heartKit = Set(exercises.filter { hearts.contains($0.id) }.map { $0.equipment })
         let days = p.trainDays.sorted { ($0 + 5) % 7 < ($1 + 5) % 7 }
         // Rest is planned, not earned: at most 5 lifting days; a 6th chosen day becomes mobility and a 7th stays a planned rest day.
         let liftDays = Array(days.prefix(5))
@@ -278,7 +282,7 @@ enum WorkoutGenerator {
             for (k, part) in want.enumerated() {
                 let pool = exercises.filter {
                     $0.part == part && eq.contains($0.equipment) && levelOk($0.level, p.experience) && ($0.category ?? "strength") == "strength" && !picks.contains($0.id)
-                }.sorted { (($0.anim != nil ? 0 : 1), order[$0.equipment] ?? 9, $0.name) < (($1.anim != nil ? 0 : 1), order[$1.equipment] ?? 9, $1.name) }
+                }.sorted { ((hearts.contains($0.id) ? 0 : 1, heartKit.contains($0.equipment) ? 0 : 1, $0.anim != nil ? 0 : 1, order[$0.equipment] ?? 9, $0.name) < (hearts.contains($1.id) ? 0 : 1, heartKit.contains($1.equipment) ? 0 : 1, $1.anim != nil ? 0 : 1, order[$1.equipment] ?? 9, $1.name)) }
                 if pool.isEmpty { continue }
                 let span = min(pool.count, 6)
                 picks.append(pool[(i + k + (k % 3 == 0 ? block - 1 : 0)) % span].id)

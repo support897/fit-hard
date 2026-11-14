@@ -265,6 +265,33 @@ final class Build29Tests: XCTestCase {
         st.logMed(st.s.meds[0], "taken")
         XCTAssertEqual(st.medStatus(st.s.meds[0]), "taken")
     }
+    func testHeartsSavePerPersonAndUnheartEasesOff() {
+        // Item 2: hearts live in the person's own state, survive a restart, and one tap removes them.
+        let u = tmp(); let a = Store(url: u)
+        a.toggleFavExercise("ex-1"); a.toggleFavExercise("ex-2")
+        let rid = UUID(); a.s.routines.append(Routine(id: rid, name: "Mine", weekday: 2, focus: [], exIds: ["ex-9"]))
+        a.toggleFavRoutine(rid)
+        let b = Store(url: u)
+        XCTAssertEqual(b.s.favExercises, ["ex-1", "ex-2"]); XCTAssertEqual(b.s.favRoutines, [rid.uuidString])
+        XCTAssertTrue(b.heartedExerciseIds.contains("ex-9"), "a hearted routine feeds the tilt too")
+        b.toggleFavExercise("ex-1"); XCTAssertEqual(b.s.favExercises, ["ex-2"])
+    }
+    func testGeneratorTiltsTowardHeartedExercises() {
+        // Item 2, her own algorithm: with no hearts the alphabetically first pool exercise is picked;
+        // hearting the last one by name brings it into the plan. Balance shape is unchanged: same
+        // number of routines and picks either way.
+        func quad(_ id: String, _ name: String) -> Exercise {
+            Exercise(id: id, name: name, part: "quadriceps", partLabel: "Front legs", equipment: "body only", level: "beginner", category: "strength", cue: "Go", anim: nil)
+        }
+        let pool = [quad("a1", "Alpha squat"), quad("a2", "Bravo squat"), quad("a3", "Charlie squat"),
+                    quad("a4", "Delta squat"), quad("a5", "Echo squat"), quad("z9", "Zulu squat")]
+        var p = Profile(); p.trainDays = [3]; p.minutes = 24; p.experience = "beginner"; p.trainType = "strength"
+        let plain = WorkoutGenerator.generate(profile: p, exercises: pool)
+        let loved = WorkoutGenerator.generate(profile: p, exercises: pool, hearts: ["z9"])
+        XCTAssertEqual(plain.flatMap { $0.exIds }, ["a1"])
+        XCTAssertEqual(loved.flatMap { $0.exIds }, ["z9"])
+        XCTAssertEqual(plain.count, loved.count)
+    }
     func testEveryExerciseHasADesignedIconMark() {
         for ex in Catalog.shared.exercises {
             XCTAssertNotNil(Glyphs.table[ExerciseGlyph.part(ex.part)], "zone mark for \(ex.part)")

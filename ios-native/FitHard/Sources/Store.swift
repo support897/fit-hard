@@ -179,9 +179,23 @@ final class Store: ObservableObject {
         default: return ["machine", "barbell", "dumbbell", "cable", "body only", "kettlebells", "e-z curl bar", "bench or box"]
         }
     }
+    /// Hearts (item 2): the person's hearted exercises, plus every exercise inside a hearted
+    /// routine, so a hearted routine also feeds the tilt when the plan is next built.
+    var heartedExerciseIds: Set<String> {
+        var ids = Set(s.favExercises)
+        for r in s.routines where s.favRoutines.contains(r.id.uuidString) { ids.formUnion(r.exIds) }
+        return ids
+    }
+    func toggleFavExercise(_ id: String) {
+        if let i = s.favExercises.firstIndex(of: id) { s.favExercises.remove(at: i) } else { s.favExercises.append(id) }
+    }
+    func toggleFavRoutine(_ id: UUID) {
+        let k = id.uuidString
+        if let i = s.favRoutines.firstIndex(of: k) { s.favRoutines.remove(at: i) } else { s.favRoutines.append(k) }
+    }
     func generateRoutine() {
         let block = max(1, s.routines.first?.block ?? 1)
-        let rs = WorkoutGenerator.generate(profile: s.profile, exercises: cat.exercises, block: block)
+        let rs = WorkoutGenerator.generate(profile: s.profile, exercises: cat.exercises, block: block, hearts: heartedExerciseIds)
         s.routines = rs
         syncRoutineDays()
         if s.blockStart.isEmpty { s.blockStart = dayKey() }
@@ -202,7 +216,7 @@ final class Store: ObservableObject {
     /// A new 4 week block changes only some exercises, and never touches a routine the user has edited.
     func nextBlock() {
         let nb = (s.routines.first?.block ?? 1) + 1
-        let fresh = WorkoutGenerator.generate(profile: s.profile, exercises: cat.exercises, block: nb)
+        let fresh = WorkoutGenerator.generate(profile: s.profile, exercises: cat.exercises, block: nb, hearts: heartedExerciseIds)
         var out: [Routine] = []
         for old in s.routines {
             if old.customized { var k = old; k.block = nb; out.append(k); continue }

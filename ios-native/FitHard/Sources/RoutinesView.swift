@@ -5,6 +5,8 @@ let partNames: [String: String] = ["chest": "Chest", "lats": "Back", "middle bac
 
 struct RoutinesList: View {
     @EnvironmentObject var store: Store
+    /// Hearted routines sit at the top (item 2). The sort is stable, so the rest keep their order.
+    var shown: [Routine] { store.s.routines.sorted { (store.s.favRoutines.contains($0.id.uuidString) ? 0 : 1) < (store.s.favRoutines.contains($1.id.uuidString) ? 0 : 1) } }
     var body: some View {
         ScrollView { VStack(spacing: 14) {
             WallyBubble()
@@ -14,7 +16,7 @@ struct RoutinesList: View {
                     BigButton(title: "Build my routines", icon: "sparkles") { store.generateRoutine(); Notifier.rebuild(store) } }
             } else {
                 Text(String(format: NSLocalizedString("Block %lld, week %lld of 4", comment: ""), store.s.routines.first?.block ?? 1, min(4, store.blockWeek))).font(.fh_caption).foregroundStyle(Color.muted).frame(maxWidth: .infinity, alignment: .leading)
-                ForEach(Array(store.s.routines.enumerated()), id: \.element.id) { i, r in RoutineCard(r: r, index: i) }
+                ForEach(Array(shown.enumerated()), id: \.element.id) { i, r in RoutineCard(r: r, index: i) }
                 if store.blockWeek > 4 { BigButton(title: "Start the next 4 week block", icon: "arrow.right.circle") { store.nextBlock(); store.say("New block. Only some exercises change.") } }
             }
             BigButton(title: "Quick workout, no equipment", icon: "bolt", filled: false) {
@@ -33,7 +35,11 @@ struct RoutineCard: View {
     var body: some View {
         let kcal = WorkoutGenerator.kcalEstimate(minutes: store.s.profile.minutes, weightKg: store.s.profile.weightKg)
         Card {
-            HStack { Text(r.name).font(.fh_title3_b); TypeBadge(type: r.trainType); if r.customized { Text("Customized").font(.fh_caption2_b).padding(.horizontal, 8).padding(.vertical, 3).background(Color.tint, in: Capsule()) }; Spacer() }
+            HStack { Text(r.name).font(.fh_title3_b); TypeBadge(type: r.trainType); if r.customized { Text("Customized").font(.fh_caption2_b).padding(.horizontal, 8).padding(.vertical, 3).background(Color.tint, in: Capsule()) }; Spacer()
+                Button { store.toggleFavRoutine(r.id); haptic() } label: { BrandIcon(store.s.favRoutines.contains(r.id.uuidString) ? "heart.fill" : "heart") }
+                    .buttonStyle(.plain).foregroundStyle(store.s.favRoutines.contains(r.id.uuidString) ? Color.sage : Color.muted)
+                    .accessibilityLabel(store.s.favRoutines.contains(r.id.uuidString) ? "Remove from favourites" : "Keep as favourite")
+                    .accessibilityIdentifier("fav-routine-\(index)") }
             Text(r.focus.map { focusName($0) }.joined(separator: ", ")).font(.fh_subheadline).foregroundStyle(Color.muted)
             Text(String(format: NSLocalizedString("%lld exercises · %lld min", comment: ""), r.exIds.count, store.s.profile.minutes) + (kcal.map { String(format: NSLocalizedString(" · about %lld kcal (estimate)", comment: ""), $0) } ?? "")).font(.fh_caption)
             Text(String(format: NSLocalizedString("Last: %@ · Next: %@", comment: ""), store.lastCompleted(r)?.formatted(.dateTime.weekday(.abbreviated).day().month()) ?? NSLocalizedString("not yet", comment: ""), store.nextSession(r)?.formatted(.dateTime.weekday(.abbreviated).day().month()) ?? NSLocalizedString("none", comment: ""))).font(.fh_caption).foregroundStyle(Color.muted)
@@ -54,12 +60,16 @@ struct RoutineDetail: View {
     var body: some View {
         if let i = idx {
             List {
-                Section { Text(store.s.routines[i].focus.map { focusName($0) }.joined(separator: ", ")).foregroundStyle(Color.muted) }
+                Section { HStack { Text(store.s.routines[i].focus.map { focusName($0) }.joined(separator: ", ")).foregroundStyle(Color.muted); Spacer()
+                    Button { store.toggleFavRoutine(id); haptic() } label: { BrandIcon(store.s.favRoutines.contains(id.uuidString) ? "heart.fill" : "heart") }
+                        .buttonStyle(.plain).foregroundStyle(store.s.favRoutines.contains(id.uuidString) ? Color.sage : Color.muted)
+                        .accessibilityLabel(store.s.favRoutines.contains(id.uuidString) ? "Remove from favourites" : "Keep as favourite")
+                        .accessibilityIdentifier("fav-routine-detail") } }
                 Section("Exercises") {
                     ForEach(store.s.routines[i].exIds, id: \.self) { eid in
                         if let e = store.cat.exercise(eid) {
                             HStack { ExerciseIcon(exercise: e, size: 40); VStack(alignment: .leading) { Text(e.name).font(.fh_subheadline_b); Text("\(focusName(e.part)) · \(equipName(e.equipment))").font(.fh_caption).foregroundStyle(Color.muted) }
-                                Spacer(); HelpButton(exercise: e)
+                                Spacer(); ExerciseHeart(e: e); HelpButton(exercise: e)
                                 Button { remove(eid, i) } label: { BrandIcon( "minus.circle").frame(width: 36, height: 36) }.foregroundStyle(Color.muted).buttonStyle(.plain) }
                         }
                     }.listRowBackground(Color.surface)

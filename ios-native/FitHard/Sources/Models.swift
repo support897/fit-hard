@@ -176,6 +176,10 @@ struct AppState: Codable {
     var wally: [WallyNote] = []
     var blockStart = ""
     var favs: [String] = []
+    /// Hearts (build 35, item 2): favourite exercises and routines, saved per person with the rest
+    /// of their state. The plan maker tilts toward them; unhearting is one tap and the tilt eases off.
+    var favExercises: [String] = []
+    var favRoutines: [String] = []
     var shopQty: [String: Double] = [:]
     var skipped: [String] = []
     var draftStart: Date? = nil
@@ -208,7 +212,8 @@ struct AppState: Codable {
         draft = c.v(.draft, []); hideBody = c.v(.hideBody, false); reflections = c.v(.reflections, [:]); challenge = try? c.decodeIfPresent(Challenge.self, forKey: .challenge)
         inventory = c.v(.inventory, []); shopExtra = c.v(.shopExtra, []); shopRemoved = c.v(.shopRemoved, []); events = c.v(.events, [])
         routines = c.v(.routines, []); wally = c.v(.wally, []); blockStart = c.v(.blockStart, "")
-        favs = c.v(.favs, []); shopQty = c.v(.shopQty, [:]); skipped = c.v(.skipped, []); draftStart = try? c.decodeIfPresent(Date.self, forKey: .draftStart)
+        favs = c.v(.favs, []); favExercises = c.v(.favExercises, []); favRoutines = c.v(.favRoutines, [])
+        shopQty = c.v(.shopQty, [:]); skipped = c.v(.skipped, []); draftStart = try? c.decodeIfPresent(Date.self, forKey: .draftStart)
         draftRoutine = try? c.decodeIfPresent(String.self, forKey: .draftRoutine); previewAnims = c.v(.previewAnims, false)
         personalizationVersion = c.v(.personalizationVersion, 0); lightDays = c.v(.lightDays, []); planBackup = c.v(.planBackup, [:])
         portions = c.v(.portions, [:]); machinePhotos = c.v(.machinePhotos, [:]); language = c.v(.language, "en")
