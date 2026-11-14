@@ -7,10 +7,18 @@ struct CalendarScreen: View {
     @State private var sel = dayKey()
     @State private var adding = false
     @State private var editing: CalEvent? = nil
+    @State private var filtersOpen = true
     var body: some View {
         VStack(spacing: 0) {
-            Picker("", selection: $mode) { Text("Day").tag(0); Text("Week").tag(1); Text("Month").tag(2); Text("Next").tag(3); Text("Habits").tag(4); Text("To do").tag(5) }.pickerStyle(.segmented).padding(.horizontal, 12).padding(.top, 8)
-            Legend().padding(.horizontal, 16).padding(.vertical, 6)
+            Picker("", selection: $mode) { Text("Day").tag(0); Text("Week").tag(1); Text("Month").tag(2); Text("List").tag(3); Text("Habits").tag(4); Text("To do").tag(5) }.pickerStyle(.segmented).padding(.horizontal, 12).padding(.top, 8)
+            Button { withAnimation(.easeInOut(duration: 0.2)) { filtersOpen.toggle() }; haptic(.soft) } label: {
+                HStack(spacing: 6) {
+                    Text("Filters").font(.fh_caption_b).foregroundStyle(Color.sage)
+                    BrandIcon(filtersOpen ? "chevron.up" : "chevron.down").font(.fh_caption_b).foregroundStyle(Color.sage)
+                    Spacer()
+                }.padding(.horizontal, 16).padding(.vertical, 6).contentShape(Rectangle())
+            }.buttonStyle(.plain).accessibilityIdentifier("cal-filters-fold").accessibilityLabel(filtersOpen ? "Hide filters" : "Show filters")
+            if filtersOpen { Legend().padding(.horizontal, 16).padding(.bottom, 6) }
             switch mode {
             case 0: DayDetail(day: $sel, edit: { editing = $0 })
             case 1: WeekView(sel: $sel, open: { sel = $0; mode = 0 })

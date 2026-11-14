@@ -9,6 +9,10 @@
 "Week" = "Semana";
 "Month" = "Mes";
 "Next" = "Siguiente";
+"List" = "Lista";
+"Filters" = "Filtros";
+"Hide filters" = "Ocultar filtros";
+"Show filters" = "Mostrar filtros";
 "Habits" = "Hábitos";
 "Calendar" = "Calendario";
 "Training by type" = "Entrenamiento por tipo";
