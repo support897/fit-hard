@@ -324,11 +324,12 @@ enum CharacterAnim {
     }
 }
 extension Store {
-    /// Character sets are quality checked and show by default. The generic set stays behind the preview switch.
+    /// The character's own set first. Until a figure's set exists for an exercise, the plain set
+    /// shows: it is the girl look, her approved default (her fallback rule, 17 Oct). Never a redraw.
     func animBase(_ ex: Exercise) -> String? {
         if let b = CharacterAnim.base(for: ex, character: s.profile.character) { return b }
-        if s.previewAnims, let a = ex.anim { return a }
-        return nil
+        let k = CharacterAnim.key(ex)
+        return CharacterAnim.exists("anim-\(k)-1") ? k : nil
     }
     func hasCharacterAnim(_ ex: Exercise) -> Bool { CharacterAnim.base(for: ex, character: s.profile.character) != nil }
 }

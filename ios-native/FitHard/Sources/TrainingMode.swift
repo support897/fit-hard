@@ -1,7 +1,9 @@
 import SwiftUI
 
-/// Training mode (build 32). Total time is pinned on top and counts up. The next exercise opens on a whole screen with its icon and a countdown,
-/// a "?" how-to, and an optional weight and reps tracker. Peptides are asked once on start: free text, logged only, never advice.
+/// Training mode (build 32, reshaped in 35). Total time is pinned on top and counts up. The exercise opens on a whole screen
+/// with its real picture and a countdown, a "?" how-to, and an optional weight and reps tracker. The workout opens at once:
+/// doses are never asked here (her ruling, 13 Nov) — they live in My doses, and after the workout one small line shows only
+/// when a dose is still unconfirmed (that line rides Item 6, after her word on the My doses design).
 struct TrainingMode: View {
     @EnvironmentObject var store: Store
     @Environment(\.dismiss) var dismiss
@@ -16,18 +18,21 @@ struct TrainingMode: View {
     @State private var workLen = 40
     @State private var summary = false
     @State private var loaded = false
-    @State private var started = false
-    @State private var peptide = ""
     @State private var tracking = false
     @State private var confirmQuit = false
+    @State private var focus: FocusKind = .none
+    enum FocusKind { case none, picture, timer }
 
     var ids: [String] { routine.exIds }
     var exercise: Exercise? { idx < ids.count ? store.cat.exercise(ids[idx]) : nil }
     var resting: Bool { restEnd != nil || pausedLeft != nil }
 
     var body: some View {
-        VStack(spacing: 0) {
-            if summary { summaryView } else if !started { startView } else { workout }
+        ZStack {
+            VStack(spacing: 0) {
+                if summary { summaryView } else { workout }
+            }
+            if focus != .none, !summary { focusOverlay }
         }.background(Color.cream.ignoresSafeArea())
         .onAppear(perform: load)
         .onChange(of: entries) { v in if loaded && !summary { store.s.draft = v } }
@@ -41,8 +46,8 @@ struct TrainingMode: View {
     }
 
     func swipeBack() {
-        if summary { summary = false }
-        else if !started { discardAndClose() }
+        if focus != .none { focus = .none }
+        else if summary { summary = false }
         else if idx > 0 { idx -= 1; workEnd = nil }
         else { confirmQuit = true }
     }
@@ -53,7 +58,6 @@ struct TrainingMode: View {
         if !store.s.draft.isEmpty, store.s.draftRoutine == routine.id.uuidString, store.s.draft.count == ids.count {
             entries = store.s.draft; start = store.s.draftStart ?? Date()
             idx = entries.firstIndex(where: { $0.sets.contains { $0.done != true } }) ?? 0
-            started = true
         } else {
             entries = ids.map { id in
                 let ex = store.cat.exercise(id)
@@ -67,27 +71,32 @@ struct TrainingMode: View {
         loaded = true
     }
 
-    // MARK: Before the first exercise: one optional question, free text
-    var startView: some View {
-        VStack(spacing: 18) {
-            HStack {
-                Button { discardAndClose() } label: { BrandIcon("xmark").font(.fh_title3_b).frame(width: 44, height: 44) }.accessibilityLabel("Leave workout").accessibilityIdentifier("train-close")
-                Spacer()
-            }.padding(.horizontal, 12).padding(.top, 8)
-            Spacer()
-            BrandIcon("pills").resizable().foregroundStyle(Color.sage).frame(width: 64, height: 64)
-            Text("Peptides today?").font(.fh_title_b).foregroundStyle(Color.ink).accessibilityIdentifier("peptide-title")
-            TextField("Type it yourself (optional)", text: $peptide).padding(14).background(Color.surface, in: RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.line)).accessibilityIdentifier("peptide-field")
-            BigButton(title: "Start workout", icon: "play.fill") { startWorkout(log: true) }.accessibilityIdentifier("peptide-start")
-            Button("Skip") { startWorkout(log: false) }.font(.fh_subheadline_b).foregroundStyle(Color.sage).accessibilityIdentifier("peptide-skip")
-            Spacer()
-        }.padding(.horizontal, 24)
-    }
-    func startWorkout(log: Bool) {
-        if log { store.logPeptide(peptide) }
-        start = Date(); store.s.draftStart = start
-        started = true
+    // MARK: Focus views (Item 8): the timer alone, big and clean, or the exercise picture alone,
+    // full screen. One tap anywhere returns to the full player. The timer here is display only;
+    // the ring in the workout keeps the one ticking path, so nothing can finish twice.
+    @ViewBuilder var focusOverlay: some View {
+        ZStack {
+            Color.cream.ignoresSafeArea()
+            if focus == .timer {
+                TimelineView(.periodic(from: .now, by: 1)) { ctx in
+                    let isRest = restEnd != nil || pausedLeft != nil
+                    let left: Int = isRest ? (pausedLeft ?? max(0, Int((restEnd ?? ctx.date).timeIntervalSince(ctx.date).rounded(.up))))
+                                           : (workEnd != nil ? max(0, Int((workEnd ?? ctx.date).timeIntervalSince(ctx.date).rounded(.up))) : workLen)
+                    VStack(spacing: 16) {
+                        Text(String(format: "%d:%02d", left / 60, left % 60)).font(.fh_largeTitle_b).monospacedDigit().foregroundStyle(Color.ink).scaleEffect(2.1)
+                        Text(LocalizedStringKey(isRest ? "Rest" : "Work")).font(.fh_headline).foregroundStyle(Color.muted)
+                        Text("Tap anywhere to go back").font(.fh_caption).foregroundStyle(Color.muted)
+                    }
+                }
+            } else if focus == .picture, let ex = exercise, let a = store.animBase(ex) {
+                VStack(spacing: 14) {
+                    AnimatedFrames(base: a).frame(maxWidth: .infinity, maxHeight: .infinity)
+                    Text(ex.name).font(.fh_title3_b).foregroundStyle(Color.ink)
+                    Text("Tap anywhere to go back").font(.fh_caption).foregroundStyle(Color.muted)
+                }.padding(20)
+            }
+        }.contentShape(Rectangle()).onTapGesture { focus = .none }
+        .accessibilityLabel("Back to the workout").accessibilityIdentifier(focus == .timer ? "focus-timer" : "focus-picture")
     }
 
     // MARK: The workout
@@ -111,9 +120,14 @@ struct TrainingMode: View {
     @ViewBuilder func exerciseScreen(_ ex: Exercise) -> some View {
         VStack(spacing: 14) {
             Spacer(minLength: 0)
-            ExerciseIcon(exercise: ex, size: 124)
+            if let a = store.animBase(ex) {
+                AnimatedFrames(base: a).frame(height: 240).frame(maxWidth: .infinity)
+                    .background(Color.surface, in: RoundedRectangle(cornerRadius: 20))
+                    .onTapGesture { focus = .picture }
+                    .accessibilityLabel("See the picture full screen").accessibilityIdentifier("train-picture")
+            } else { ExerciseIcon(exercise: ex, size: 124) }
             Text(ex.name).font(.fh_title_b).multilineTextAlignment(.center).foregroundStyle(Color.ink).accessibilityIdentifier("train-exercise")
-            ring
+            ring.onTapGesture { focus = .timer }.accessibilityLabel("See the timer full screen").accessibilityIdentifier("train-timer")
             HStack(spacing: 8) {
                 ForEach(entries[idx].sets.indices, id: \.self) { i in
                     Circle().fill(entries[idx].sets[i].done == true ? Color.sage : Color.tint).frame(width: 12, height: 12).overlay(Circle().stroke(Color.sage, lineWidth: 1))

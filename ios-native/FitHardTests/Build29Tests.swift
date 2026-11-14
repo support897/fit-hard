@@ -256,11 +256,13 @@ final class Build29Tests: XCTestCase {
         for t in Store.Tracker.allCases { XCTAssertNotEqual(st.trackerText(t, offset: 0), "-", "\(t)") }
         XCTAssertEqual(st.trackerText(.sleep, offset: -1), "-"); XCTAssertEqual(st.s.body.last?.weight, 70.5)
     }
-    func testPeptideAnswerIsFreeTextLoggedOnlyWithNoReminderAndNoDuplicate() {
+    func testDosesAreMarkedOnlyByThePersonNeverAutomatically() {
+        // Her ruling (13 Nov): a dose is marked only by the person's own tap in My doses.
+        // Nothing in the store marks one on its own; the build 32 workout start ask that did is gone.
         let st = Store(url: tmp())
-        st.logPeptide("  my own entry  "); st.logPeptide("MY OWN ENTRY"); st.logPeptide("   ")
-        XCTAssertEqual(st.s.meds.count, 1); XCTAssertEqual(st.s.meds[0].name, "my own entry")
-        XCTAssertTrue(st.s.meds[0].isPaused, "no reminder is set"); XCTAssertEqual(st.s.meds[0].amount, "", "no dose is ever filled in")
+        st.s.meds.append(Med(name: "my own entry", frequency: "As directed", paused: true))
+        XCTAssertNil(st.medStatus(st.s.meds[0]), "unmarked until the person marks it")
+        st.logMed(st.s.meds[0], "taken")
         XCTAssertEqual(st.medStatus(st.s.meds[0]), "taken")
     }
     func testEveryExerciseHasADesignedIconMark() {

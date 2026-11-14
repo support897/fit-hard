@@ -197,14 +197,7 @@ extension Store {
     }
 }
 
-// MARK: Build 32: peptides asked on workout start. The user types it; the app only records it, never advises.
-extension Store {
-    func logPeptide(_ text: String) {
-        let n = text.trimmingCharacters(in: .whitespaces)
-        guard !n.isEmpty else { return }
-        let existing = s.meds.first { $0.name.caseInsensitiveCompare(n) == .orderedSame }
-        let m = existing ?? Med(name: n, frequency: "As directed", paused: true)
-        if existing == nil { s.meds.append(m) }
-        logMed(m, "taken")
-    }
-}
+// MARK: Build 35: the workout start peptide ask is REMOVED (her ruling, 13 Nov: doses are never
+// asked when a workout is about to start, and a dose is never marked taken by anything but the
+// person's own tap in My doses). The build 32 logPeptide path, which marked a dose taken from the
+// start screen answer, is deleted with it. Doses are marked only through logMed from My doses.

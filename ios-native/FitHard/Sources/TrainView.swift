@@ -53,10 +53,7 @@ struct ExerciseDetail: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 ExerciseIcon(exercise: e, size: 84).frame(maxWidth: .infinity)
-                if e.anim != nil || store.hasCharacterAnim(e) {
-                    if !store.hasCharacterAnim(e) { Toggle("Show preview animation (not yet quality approved)", isOn: $store.s.previewAnims).font(.fh_caption).tint(Color.sage) }
-                    if let a = store.animBase(e) { AnimatedFrames(base: a).frame(height: 260).frame(maxWidth: .infinity).background(Color.surface, in: RoundedRectangle(cornerRadius: 20)) }
-                }
+                if let a = store.animBase(e) { AnimatedFrames(base: a).frame(height: 260).frame(maxWidth: .infinity).background(Color.surface, in: RoundedRectangle(cornerRadius: 20)) }
                 Flow { Chip(label: e.partLabel ?? e.part, on: false) {}; Chip(label: equipName(e.equipment), on: false) {}; Chip(label: levelName(e.level), on: false) {} }
                 HStack { Spacer(); HelpButton(exercise: e) }
                 Card { SectionTitle(text: "How"); Text(e.cue) }
