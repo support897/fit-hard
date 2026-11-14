@@ -201,6 +201,9 @@ struct AppState: Codable {
     /// Day -> hours slept, and day -> steps. Typed in by the user.
     var sleep: [String: Double] = [:]
     var steps: [String: Int] = [:]
+    /// The person's own giving total in cents, private, shown only to them (item 10).
+    /// Filled only by a verified giving record, never typed in and never guessed.
+    var kindnessGivenCents = 0
 
     init() {}
     init(from d: Decoder) throws {
@@ -218,7 +221,7 @@ struct AppState: Codable {
         draftRoutine = try? c.decodeIfPresent(String.self, forKey: .draftRoutine); previewAnims = c.v(.previewAnims, false)
         personalizationVersion = c.v(.personalizationVersion, 0); lightDays = c.v(.lightDays, []); planBackup = c.v(.planBackup, [:])
         portions = c.v(.portions, [:]); machinePhotos = c.v(.machinePhotos, [:]); language = c.v(.language, "en")
-        ownerUid = c.v(.ownerUid, ""); sleep = c.v(.sleep, [:]); steps = c.v(.steps, [:])
+        ownerUid = c.v(.ownerUid, ""); sleep = c.v(.sleep, [:]); steps = c.v(.steps, [:]); kindnessGivenCents = c.v(.kindnessGivenCents, 0)
     }
 }
 extension KeyedDecodingContainer {

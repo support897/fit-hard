@@ -11,6 +11,10 @@ struct MoreView: View {
         NavigationStack {
             Form {
                 Section {
+                    // Her word, 14 Nov: the kindness item stands first, at the very top of the menu, above everything else.
+                    NavigationLink { KindnessView() } label: { BrandLabel("Join the AI kindness revolution", icon: "heart.fill") }.accessibilityIdentifier("kindness-item")
+                }.themedRows()
+                Section {
                     NavigationLink { ProfileScreen() } label: { HStack(spacing: 12) { AvatarView(size: 48); VStack(alignment: .leading) { Text(store.s.profile.name.isEmpty ? "My profile" : store.s.profile.name).font(.fh_headline); Text("Name and account").font(.fh_caption).foregroundStyle(Color.muted) } } }.accessibilityIdentifier("my-profile")
                 }.themedRows()
                 Section("Explore") {
