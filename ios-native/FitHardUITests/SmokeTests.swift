@@ -82,6 +82,7 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(any(app, "avatar").exists, "chosen character is shown as the icon")
         shot(app, "after-setup-today")
         app.tabBars.buttons["More"].tap()
+        any(app, "open-settings").tap()
         let out = any(app, "sign-out"); scrollTo(app, out); XCTAssertTrue(out.exists); out.tap()
         XCTAssertTrue(any(app, "door-title").waitForExistence(timeout: 10), "signing out brings the door back")
         XCTAssertFalse(app.tabBars.firstMatch.exists)
@@ -98,6 +99,7 @@ final class SmokeTests: XCTestCase {
     }
     func setTheme(_ app: XCUIApplication, _ id: String) {
         app.tabBars.buttons["More"].tap()
+        any(app, "open-settings").tap()
         let b = any(app, "theme-\(id)")
         for _ in 0..<10 where !b.exists { app.swipeUp() }
         XCTAssertTrue(b.waitForExistence(timeout: 5)); b.tap()
@@ -194,16 +196,22 @@ final class SmokeTests: XCTestCase {
         app.buttons["Day"].tap()
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Stretch time'")).firstMatch.waitForExistence(timeout: 5)); shot(app, "cal-day-added")
         app.buttons["Week"].tap(); shot(app, "cal-week")
-        app.buttons["Next"].tap(); app.buttons["To do"].tap(); XCTAssertTrue(app.staticTexts["To do"].waitForExistence(timeout: 5))
+        app.buttons["List"].tap(); app.buttons["To do"].tap(); XCTAssertTrue(app.staticTexts["To do"].waitForExistence(timeout: 5))
         app.buttons["Habits"].tap(); XCTAssertTrue(app.staticTexts["Habits"].waitForExistence(timeout: 5))
     }
 
-    // MARK: Profile
+    // MARK: Profile and Settings (item 9: Me is identity only, every setting lives in Settings)
     func testProfileScreenChangesTheCharacter() {
         let app = seeded(); app.tabBars.buttons["More"].tap()
         let p = any(app, "my-profile"); XCTAssertTrue(p.waitForExistence(timeout: 10)); p.tap()
-        any(app, "pchar-boy").tap(); shot(app, "profile")
-        any(app, "profile-save").tap()
+        XCTAssertTrue(any(app, "profile-name").waitForExistence(timeout: 5), "Me holds the name")
+        XCTAssertFalse(any(app, "pchar-boy").exists, "no settings stand in Me")
+        XCTAssertFalse(any(app, "theme-white").exists, "the theme does not stand in Me")
+        shot(app, "profile")
+        app.navigationBars.buttons.element(boundBy: 0).tap()
+        any(app, "open-settings").tap()
+        let boy = any(app, "pchar-boy"); scrollTo(app, boy); boy.tap()
+        let save = any(app, "profile-save"); scrollTo(app, save); save.tap()
         XCTAssertTrue(any(app, "pchar-boy").exists)
     }
 }
