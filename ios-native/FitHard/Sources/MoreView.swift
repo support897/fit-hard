@@ -19,9 +19,10 @@ struct MoreView: View {
                 }.themedRows()
                 Section("Explore") {
                     NavigationLink { ProgressScreen() } label: { BrandLabel("Progress", icon: "chart.line.uptrend.xyaxis") }
-                    if store.s.profile.needs.contains("peptides") || store.s.profile.primaryGoal == "doses" || store.s.profile.goals.contains("Keep track of my doses") || !store.s.meds.isEmpty {
-                        NavigationLink { HealthView(embedded: true) } label: { BrandLabel("My doses", icon: "cross.case") }.accessibilityIdentifier("my-doses")
-                    }
+                    // My doses is its own menu for everyone (Item 6 as drawn): a person given a dose at any
+                    // time can always reach it, not only those who named doses in setup. Build 35 fix round:
+                    // CI run 64 proved the old build-29 condition hid the link from a plain profile.
+                    NavigationLink { HealthView(embedded: true) } label: { BrandLabel("My doses", icon: "cross.case") }.accessibilityIdentifier("my-doses")
                     NavigationLink { TreatsScreen() } label: { BrandLabel("Treats", icon: "heart") }
 
                 }.themedRows()

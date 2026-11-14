@@ -99,7 +99,11 @@ final class SmokeTests: XCTestCase {
     }
     func setTheme(_ app: XCUIApplication, _ id: String) {
         app.tabBars.buttons["More"].tap()
-        any(app, "open-settings").tap()
+        // After a theme pass the app stands inside Settings; tapping the More tab pops back to the
+        // More root first, so wait for the link, and tap More once more if the pop has not landed.
+        let settingsLink = any(app, "open-settings")
+        if !settingsLink.waitForExistence(timeout: 3) { app.tabBars.buttons["More"].tap(); XCTAssertTrue(settingsLink.waitForExistence(timeout: 5)) }
+        settingsLink.tap()
         let b = any(app, "theme-\(id)")
         for _ in 0..<10 where !b.exists { app.swipeUp() }
         XCTAssertTrue(b.waitForExistence(timeout: 5)); b.tap()
@@ -170,7 +174,11 @@ final class SmokeTests: XCTestCase {
         shot(app, "training-help")
         for t in app.staticTexts.allElementsBoundByIndex where t.exists { XCTAssertFalse(t.label.contains("-") || t.label.contains("\u{2014}") || t.label.contains("\u{2013}") || t.label.contains("\u{2022}"), "dash in help text: \(t.label)") }
         any(app, "help-close").tap(); XCTAssertTrue(any(app, "train-exercise").waitForExistence(timeout: 5), "back in the workout")
-        any(app, "start-set").tap(); any(app, "start-set").tap()
+        // Human-shaped: tap START SET, wait until the button reads FINISH SET, then tap it. Two
+        // back-to-back taps can lose the second one while the button re-renders (CI run 64, line 174).
+        let startSet = any(app, "start-set"); startSet.tap()
+        let finishSet = expectation(for: NSPredicate(format: "label == 'FINISH SET'"), evaluatedWith: startSet); wait(for: [finishSet], timeout: 5)
+        startSet.tap()
         XCTAssertTrue(any(app, "rest-left").waitForExistence(timeout: 5)); shot(app, "training-rest")
         any(app, "rest-pause").tap(); any(app, "rest-pause").tap(); any(app, "skip-rest").tap()
         XCTAssertFalse(any(app, "rest-left").exists)
@@ -215,7 +223,7 @@ final class SmokeTests: XCTestCase {
     // MARK: My doses (item 6: the home as drawn, the add form, the three kind buttons)
     func testMyDosesHomeAddAndMarkTaken() {
         let app = seeded(); app.tabBars.buttons["More"].tap()
-        any(app, "my-doses").tap()
+        let doses = any(app, "my-doses"); XCTAssertTrue(doses.waitForExistence(timeout: 10), "My doses stands in the menu for every profile"); doses.tap()
         XCTAssertTrue(any(app, "doses-add").waitForExistence(timeout: 10))
         any(app, "doses-add").tap()
         let name = any(app, "med-name"); XCTAssertTrue(name.waitForExistence(timeout: 5)); name.tap(); name.typeText("Vitamin D drops")
@@ -238,9 +246,11 @@ final class SmokeTests: XCTestCase {
         XCTAssertFalse(any(app, "theme-white").exists, "the theme does not stand in Me")
         shot(app, "profile")
         app.navigationBars.buttons.element(boundBy: 0).tap()
-        any(app, "open-settings").tap()
+        let settingsLink = any(app, "open-settings"); XCTAssertTrue(settingsLink.waitForExistence(timeout: 5)); settingsLink.tap()
         let boy = any(app, "pchar-boy"); scrollTo(app, boy); boy.tap()
         let save = any(app, "profile-save"); scrollTo(app, save); save.tap()
+        // Settings is a Form: scrolled-off rows leave the tree, so come back to the top before looking.
+        for _ in 0..<10 where !any(app, "pchar-boy").exists { app.swipeDown() }
         XCTAssertTrue(any(app, "pchar-boy").exists)
     }
 }
