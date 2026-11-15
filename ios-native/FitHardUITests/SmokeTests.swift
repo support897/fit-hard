@@ -177,17 +177,17 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(any(app, "train-total-time").exists, "total workout time is pinned on top")
         shot(app, "training-1")
         let help = any(app, "help-button"); XCTAssertTrue(help.waitForExistence(timeout: 5), "how to question mark")
+        let labelsBeforeHelp = Set(app.staticTexts.allElementsBoundByIndex.map { $0.label })
         help.tap(); XCTAssertTrue(any(app, "help-title").waitForExistence(timeout: 5), "help opens")
         XCTAssertTrue(any(app, "help-title").label.hasPrefix("MASCOT HELP: "))
         shot(app, "training-help")
-        // The scan covers the help sheet's own lines only: the layered tab tree keeps the
-        // covered screens' texts in the robot's tree too (the Today trackers show a "-"
-        // placeholder), and those are not help text.
-        let sheet = app.sheets.firstMatch
-        XCTAssertTrue(sheet.waitForExistence(timeout: 5), "the help sheet stands")
-        let helpTexts = sheet.staticTexts.allElementsBoundByIndex
+        // The scan covers the lines that arrived with the help sheet only: the layered
+        // tab tree keeps the covered screens' texts in the robot's tree too (the Today
+        // trackers show a "-" placeholder), and those are not help text. The help copy
+        // itself is also checked line by line in the unit suite (HelpText.violations).
+        let helpTexts = app.staticTexts.allElementsBoundByIndex.filter { $0.exists && !labelsBeforeHelp.contains($0.label) }
         XCTAssertGreaterThanOrEqual(helpTexts.count, 3, "the help sheet carries its lines")
-        for t in helpTexts where t.exists { XCTAssertFalse(t.label.contains("-") || t.label.contains("\u{2014}") || t.label.contains("\u{2013}") || t.label.contains("\u{2022}"), "dash in help text: \(t.label)") }
+        for t in helpTexts { XCTAssertFalse(t.label.contains("-") || t.label.contains("\u{2014}") || t.label.contains("\u{2013}") || t.label.contains("\u{2022}"), "dash in help text: \(t.label)") }
         any(app, "help-close").tap(); XCTAssertTrue(any(app, "train-exercise").waitForExistence(timeout: 5), "back in the workout")
         // Human-shaped: tap START SET, wait until the button reads FINISH SET, then tap it. Two
         // back-to-back taps can lose the second one while the button re-renders (CI run 64, line 174).
