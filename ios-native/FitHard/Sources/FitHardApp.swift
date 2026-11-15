@@ -32,6 +32,9 @@ struct RootView: View {
     /// Tabs mount on first visit and stay alive after, like a tab view —
     /// scroll and stacks are kept when switching (build 37, the designed bar).
     @State private var visited: Set<Int> = [0]
+    /// Re tapping the open tab pops it back to its root, like a tab view does.
+    /// A re tap bumps the tab's reset count and its content is rebuilt fresh.
+    @State private var resets: [Int: Int] = [:]
     var body: some View {
         ZStack(alignment: .bottom) {
             Color.cream.ignoresSafeArea()
@@ -42,14 +45,14 @@ struct RootView: View {
             } else {
                 VStack(spacing: 0) {
                     ZStack {
-                        if visited.contains(0) { TodayView(go: { tab = $0 }).opacity(tab == 0 ? 1 : 0).allowsHitTesting(tab == 0).accessibilityHidden(tab != 0) }
-                        if visited.contains(1) { MealsView().opacity(tab == 1 ? 1 : 0).allowsHitTesting(tab == 1).accessibilityHidden(tab != 1) }
-                        if visited.contains(2) { TrainView().opacity(tab == 2 ? 1 : 0).allowsHitTesting(tab == 2).accessibilityHidden(tab != 2) }
-                        if visited.contains(3) { NavigationStack { CalendarScreen() }.opacity(tab == 3 ? 1 : 0).allowsHitTesting(tab == 3).accessibilityHidden(tab != 3) }
-                        if visited.contains(4) { HealthView().opacity(tab == 4 ? 1 : 0).allowsHitTesting(tab == 4).accessibilityHidden(tab != 4) }
-                        if visited.contains(5) { MoreView().opacity(tab == 5 ? 1 : 0).allowsHitTesting(tab == 5).accessibilityHidden(tab != 5) }
+                        if visited.contains(0) { TodayView(go: { tab = $0 }).id("tab0-\(resets[0] ?? 0)").opacity(tab == 0 ? 1 : 0).allowsHitTesting(tab == 0).accessibilityHidden(tab != 0) }
+                        if visited.contains(1) { MealsView().id("tab1-\(resets[1] ?? 0)").opacity(tab == 1 ? 1 : 0).allowsHitTesting(tab == 1).accessibilityHidden(tab != 1) }
+                        if visited.contains(2) { TrainView().id("tab2-\(resets[2] ?? 0)").opacity(tab == 2 ? 1 : 0).allowsHitTesting(tab == 2).accessibilityHidden(tab != 2) }
+                        if visited.contains(3) { NavigationStack { CalendarScreen() }.id("tab3-\(resets[3] ?? 0)").opacity(tab == 3 ? 1 : 0).allowsHitTesting(tab == 3).accessibilityHidden(tab != 3) }
+                        if visited.contains(4) { HealthView().id("tab4-\(resets[4] ?? 0)").opacity(tab == 4 ? 1 : 0).allowsHitTesting(tab == 4).accessibilityHidden(tab != 4) }
+                        if visited.contains(5) { MoreView().id("tab5-\(resets[5] ?? 0)").opacity(tab == 5 ? 1 : 0).allowsHitTesting(tab == 5).accessibilityHidden(tab != 5) }
                     }.frame(maxWidth: .infinity, maxHeight: .infinity)
-                    BottomTabBar(tab: $tab)
+                    BottomTabBar(tab: $tab, onRetap: { resets[$0, default: 0] += 1 })
                 }.onChange(of: tab) { visited.insert($0) }
             }
             if let t = store.toast {
@@ -69,6 +72,7 @@ struct RootView: View {
 /// Icons are the designed glyphs of record, labels always stand under them.
 struct BottomTabBar: View {
     @Binding var tab: Int
+    var onRetap: (Int) -> Void = { _ in }
     private let items: [(title: String, icon: String, id: String)] = [
         ("Today", "sun.max", "tab-today"),
         ("Meals", "fork.knife", "tab-meals"),
@@ -80,7 +84,7 @@ struct BottomTabBar: View {
     var body: some View {
         HStack(spacing: 0) {
             ForEach(items.indices, id: \.self) { i in
-                Button { tab = i } label: {
+                Button { if tab == i { onRetap(i) } else { tab = i } } label: {
                     VStack(spacing: 2) {
                         BrandIcon.tabImage(items[i].icon).resizable().scaledToFit().frame(width: 24, height: 24)
                         Text(LocalizedStringKey(items[i].title)).font(.fh_caption).lineLimit(1).minimumScaleFactor(0.8)

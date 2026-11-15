@@ -138,7 +138,10 @@ final class SmokeTests: XCTestCase {
         any(app, "meals-menu-button").tap(); any(app, "menu-plan").tap()
         let watch = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'watch-reel-'")).firstMatch
         XCTAssertTrue(watch.waitForExistence(timeout: 10), "every meal with steps has a Watch entry"); shot(app, "reel-realapp-meal-screen-watch-entry")
-        watch.tap()
+        // Same hittability disagreement as the dose card: tap the centre by position;
+        // the reel caption assert below proves the tap landed on this button.
+        scrollTo(app, watch)
+        watch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(any(app, "reel-caption").waitForExistence(timeout: 5)); XCTAssertTrue(any(app, "reel-progress").exists)
         shot(app, "reel-realapp-step-a")
         any(app, "reel-tap-next").tap(); sleep(1)
@@ -177,7 +180,14 @@ final class SmokeTests: XCTestCase {
         help.tap(); XCTAssertTrue(any(app, "help-title").waitForExistence(timeout: 5), "help opens")
         XCTAssertTrue(any(app, "help-title").label.hasPrefix("MASCOT HELP: "))
         shot(app, "training-help")
-        for t in app.staticTexts.allElementsBoundByIndex where t.exists { XCTAssertFalse(t.label.contains("-") || t.label.contains("\u{2014}") || t.label.contains("\u{2013}") || t.label.contains("\u{2022}"), "dash in help text: \(t.label)") }
+        // The scan covers the help sheet's own lines only: the layered tab tree keeps the
+        // covered screens' texts in the robot's tree too (the Today trackers show a "-"
+        // placeholder), and those are not help text.
+        let sheet = app.sheets.firstMatch
+        XCTAssertTrue(sheet.waitForExistence(timeout: 5), "the help sheet stands")
+        let helpTexts = sheet.staticTexts.allElementsBoundByIndex
+        XCTAssertGreaterThanOrEqual(helpTexts.count, 3, "the help sheet carries its lines")
+        for t in helpTexts where t.exists { XCTAssertFalse(t.label.contains("-") || t.label.contains("\u{2014}") || t.label.contains("\u{2013}") || t.label.contains("\u{2022}"), "dash in help text: \(t.label)") }
         any(app, "help-close").tap(); XCTAssertTrue(any(app, "train-exercise").waitForExistence(timeout: 5), "back in the workout")
         // Human-shaped: tap START SET, wait until the button reads FINISH SET, then tap it. Two
         // back-to-back taps can lose the second one while the button re-renders (CI run 64, line 174).
@@ -239,7 +249,11 @@ final class SmokeTests: XCTestCase {
         let taken = app.buttons["Taken"].firstMatch
         XCTAssertTrue(taken.waitForExistence(timeout: 5), "the three kind buttons stand on the dose card")
         XCTAssertTrue(app.buttons["Skipped"].exists); XCTAssertTrue(app.buttons["Remind me later"].exists)
-        taken.tap()
+        // The robot's hittability check disagrees with the plainly visible card in the
+        // layered tab tree, so scroll it into view and tap its centre; the "Taken today
+        // at" line below proves the tap landed on this button.
+        scrollTo(app, taken)
+        taken.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH 'Taken today at'")).firstMatch.waitForExistence(timeout: 5))
     }
 
