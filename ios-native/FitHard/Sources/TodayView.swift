@@ -234,7 +234,7 @@ struct TodayView: View {
         return Group {
             if !due.isEmpty {
                 Card {
-                    SectionTitle(text: "Supplements and peptides")
+                    SectionTitle(text: "My Doses")
                     ForEach(due) { m in MedRow(med: m) }
                     NavigationLink { HealthView(embedded: true) } label: {
                         HStack { Text("See all").font(.fh_subheadline_b).foregroundStyle(Color.sage); Spacer(); BrandIcon("chevron.right").foregroundStyle(Color.muted) }

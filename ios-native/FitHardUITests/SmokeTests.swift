@@ -15,6 +15,8 @@ final class SmokeTests: XCTestCase {
     }
     func scrollTo(_ app: XCUIApplication, _ el: XCUIElement) { for _ in 0..<10 where !el.exists || !el.isHittable { app.swipeUp() } }
     func any(_ app: XCUIApplication, _ id: String) -> XCUIElement { app.descendants(matching: .any).matching(identifier: id).firstMatch }
+    /// The designed bottom bar (build 37): six buttons, stable identifiers.
+    func tab(_ app: XCUIApplication, _ id: String) -> XCUIElement { app.buttons[id] }
 
     // MARK: 1 The door
     func testDoorFirstPageShowsOnlyGoogleAppleAndASmallEmailButton() {
@@ -23,7 +25,7 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(app.buttons["door-google"].exists); XCTAssertTrue(any(app, "door-apple").exists); XCTAssertTrue(any(app, "door-email").exists)
         XCTAssertFalse(app.textFields["Email"].exists, "email lives on its own page")
         XCTAssertFalse(app.secureTextFields.firstMatch.exists)
-        XCTAssertFalse(app.tabBars.firstMatch.exists, "no app content before the door")
+        XCTAssertFalse(tab(app, "tab-today").exists, "no app content before the door")
         XCTAssertFalse(app.buttons["setup-next"].exists, "no setup before the door")
         shot(app, "door-first")
         any(app, "door-email").tap()
@@ -42,7 +44,7 @@ final class SmokeTests: XCTestCase {
         any(app, "door-go").tap()
         XCTAssertTrue(app.staticTexts["That email or password is not right."].waitForExistence(timeout: 8))
         XCTAssertFalse(app.textFields["Your name"].exists, "still a sign in, not a sign up")
-        XCTAssertFalse(app.tabBars.firstMatch.exists); XCTAssertFalse(any(app, "setup-step").exists, "no account was created")
+        XCTAssertFalse(tab(app, "tab-today").exists); XCTAssertFalse(any(app, "setup-step").exists, "no account was created")
         shot(app, "door-failed-signin")
     }
     func testAppleAndGoogleAreRealDoorsAndNoStubTextRemains() {
@@ -53,7 +55,7 @@ final class SmokeTests: XCTestCase {
         // Offline test launch: the Google door answers truthfully that it needs a connection. The old stub text is gone.
         XCTAssertTrue(app.staticTexts["Google sign in needs a connection. Use email, or try again online."].waitForExistence(timeout: 5))
         XCTAssertFalse(app.staticTexts["Google sign in is not switched on yet. Please use email for now."].exists)
-        XCTAssertFalse(app.tabBars.firstMatch.exists)
+        XCTAssertFalse(tab(app, "tab-today").exists)
     }
 
     // MARK: 1 + 2 Sign up, then the 11 setup screens, character, then the app, then sign out brings the door back
@@ -77,32 +79,32 @@ final class SmokeTests: XCTestCase {
         for n in 4...10 { XCTAssertEqual(any(app, "setup-step").label, "Step \(n) of 11"); shot(app, "setup-\(n)"); next.tap() }
         XCTAssertEqual(any(app, "setup-step").label, "Step 11 of 11"); shot(app, "setup-11-generate")
         XCTAssertTrue(app.buttons["Generate my plan"].exists); app.buttons["Generate my plan"].tap(); app.tap()
-        XCTAssertTrue(app.tabBars.buttons["Today"].waitForExistence(timeout: 40))
-        for t in ["Meals", "Train", "Calendar", "More"] { XCTAssertTrue(app.tabBars.buttons[t].exists, t) }
+        XCTAssertTrue(tab(app, "tab-today").waitForExistence(timeout: 40))
+        for t in ["tab-meals", "tab-train", "tab-calendar", "tab-doses", "tab-more"] { XCTAssertTrue(tab(app, t).exists, t) }
         XCTAssertTrue(any(app, "avatar").exists, "chosen character is shown as the icon")
         shot(app, "after-setup-today")
-        app.tabBars.buttons["More"].tap()
+        tab(app, "tab-more").tap()
         any(app, "open-settings").tap()
         let out = any(app, "sign-out"); scrollTo(app, out); XCTAssertTrue(out.exists); out.tap()
         XCTAssertTrue(any(app, "door-title").waitForExistence(timeout: 10), "signing out brings the door back")
-        XCTAssertFalse(app.tabBars.firstMatch.exists)
+        XCTAssertFalse(tab(app, "tab-today").exists)
     }
 
     // MARK: Look and navigation
     func testFiveTabsAndFeelingChoices() {
         let app = seeded()
-        for t in ["Today", "Meals", "Train", "Calendar", "More"] { XCTAssertTrue(app.tabBars.buttons[t].waitForExistence(timeout: 15), t) }
+        for t in ["tab-today", "tab-meals", "tab-train", "tab-calendar", "tab-doses", "tab-more"] { XCTAssertTrue(tab(app, t).waitForExistence(timeout: 15), t) }
         for id in ["feel-bad", "feel-ok", "feel-great"] { XCTAssertTrue(any(app, id).waitForExistence(timeout: 5), id) }
         XCTAssertTrue(app.staticTexts["Bad"].exists && app.staticTexts["Ok"].exists && app.staticTexts["Great"].exists)
         XCTAssertLessThan(any(app, "feel-bad").frame.minX, any(app, "feel-ok").frame.minX); XCTAssertLessThan(any(app, "feel-ok").frame.minX, any(app, "feel-great").frame.minX)
         shot(app, "today-feeling")
     }
     func setTheme(_ app: XCUIApplication, _ id: String) {
-        app.tabBars.buttons["More"].tap()
+        tab(app, "tab-more").tap()
         // After a theme pass the app stands inside Settings; tapping the More tab pops back to the
         // More root first, so wait for the link, and tap More once more if the pop has not landed.
         let settingsLink = any(app, "open-settings")
-        if !settingsLink.waitForExistence(timeout: 3) { app.tabBars.buttons["More"].tap(); XCTAssertTrue(settingsLink.waitForExistence(timeout: 5)) }
+        if !settingsLink.waitForExistence(timeout: 3) { tab(app, "tab-more").tap(); XCTAssertTrue(settingsLink.waitForExistence(timeout: 5)) }
         settingsLink.tap()
         let b = any(app, "theme-\(id)")
         for _ in 0..<10 where !b.exists { app.swipeUp() }
@@ -110,17 +112,17 @@ final class SmokeTests: XCTestCase {
     }
     func testTourAllScreensInAllThemes() {
         let app = seeded()
-        XCTAssertTrue(app.tabBars.buttons["Today"].waitForExistence(timeout: 20))
+        XCTAssertTrue(tab(app, "tab-today").waitForExistence(timeout: 20))
         for theme in ["white", "dark", "beige", "brand"] {
             setTheme(app, theme); shot(app, "\(theme)-more")
-            for t in ["Today", "Meals", "Train", "Calendar"] { app.tabBars.buttons[t].tap(); sleep(1); shot(app, "\(theme)-\(t.lowercased())") }
+            for (n, t) in [("today", "tab-today"), ("meals", "tab-meals"), ("train", "tab-train"), ("calendar", "tab-calendar")] { tab(app, t).tap(); sleep(1); shot(app, "\(theme)-\(n)") }
         }
     }
 
     // MARK: 3 Meals
     func testMealsMenuHasEverySectionAndSwapWorks() {
         let app = seeded()
-        app.tabBars.buttons["Meals"].tap()
+        tab(app, "tab-meals").tap()
         let menu = any(app, "meals-menu-button"); XCTAssertTrue(menu.waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["lunch-line"].exists || true)
         for (id, title) in [("breakfast", "Breakfast"), ("lunch", "Lunch"), ("dinner", "Dinner"), ("snacks", "Snacks"), ("mine", "My Recipes"), ("have", "Ingredients I Have"), ("shop", "Shopping List"), ("nutrition", "Nutrition Overview"), ("plan", "My Meal Plan")] {
@@ -132,7 +134,7 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(swap.waitForExistence(timeout: 5)); shot(app, "meals-plan"); swap.tap()
     }
     func testWatchEntryOpensAFullScreenReelThatKeepsMovingAndCanBePausedSteppedAndClosed() {
-        let app = seeded(); app.tabBars.buttons["Meals"].tap()
+        let app = seeded(); tab(app, "tab-meals").tap()
         any(app, "meals-menu-button").tap(); any(app, "menu-plan").tap()
         let watch = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'watch-reel-'")).firstMatch
         XCTAssertTrue(watch.waitForExistence(timeout: 10), "every meal with steps has a Watch entry"); shot(app, "reel-realapp-meal-screen-watch-entry")
@@ -148,7 +150,7 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(app.navigationBars["My Meal Plan"].waitForExistence(timeout: 5), "close returns to the meal")
     }
     func testIngredientsIHaveCanBeAdded() {
-        let app = seeded(); app.tabBars.buttons["Meals"].tap()
+        let app = seeded(); tab(app, "tab-meals").tap()
         any(app, "meals-menu-button").tap(); any(app, "menu-have").tap()
         let q = any(app, "inv-qty"); XCTAssertTrue(q.waitForExistence(timeout: 5)); q.tap(); sleep(1); q.typeText("500")
         app.buttons["Cucumber"].firstMatch.tap()
@@ -159,7 +161,7 @@ final class SmokeTests: XCTestCase {
     // MARK: 4 + 5 Routines, training mode, question mark help in every mode
     func testStartRoutineThenRunATrainingSessionWithHelpInEveryMode() {
         let app = seeded()
-        app.tabBars.buttons["Train"].tap()
+        tab(app, "tab-train").tap()
         // Build 36: Train main shows today only; the full list lives behind the + button.
         XCTAssertTrue(any(app, "train-plus").waitForExistence(timeout: 10))
         any(app, "train-plus").tap()
@@ -191,13 +193,13 @@ final class SmokeTests: XCTestCase {
         any(app, "train-next").tap()
         XCTAssertTrue(any(app, "train-summary").waitForExistence(timeout: 5)); shot(app, "training-summary")
         any(app, "train-save").tap()
-        XCTAssertTrue(app.tabBars.buttons["Train"].waitForExistence(timeout: 10))
+        XCTAssertTrue(tab(app, "tab-train").waitForExistence(timeout: 10))
     }
 
     // MARK: 6 Calendar
     func testCalendarPlusAddsAnEventAndLegendIsShown() {
         let app = seeded()
-        app.tabBars.buttons["Calendar"].tap()
+        tab(app, "tab-calendar").tap()
         XCTAssertTrue(any(app, "cal-legend").waitForExistence(timeout: 10))
         for l in ["Training", "Meals", "Recovery", "Supplements", "Personal"] { XCTAssertTrue(app.staticTexts[l].exists, l) }
         shot(app, "cal-month")
@@ -213,7 +215,7 @@ final class SmokeTests: XCTestCase {
 
     // MARK: Kindness (item 10: the item stands first in the menu, the page carries the story, the rainbow and the one Safari button)
     func testKindnessItemStandsFirstAndOpensThePage() {
-        let app = seeded(); app.tabBars.buttons["More"].tap()
+        let app = seeded(); tab(app, "tab-more").tap()
         let item = any(app, "kindness-item"); XCTAssertTrue(item.waitForExistence(timeout: 10))
         let profile = any(app, "my-profile"); XCTAssertTrue(profile.waitForExistence(timeout: 5), "both rows stand before their frames are compared (a frame read before layout settles reads zero and fails the order check on a healthy app)")
         XCTAssertLessThan(item.frame.minY, profile.frame.minY, "the kindness item stands above everything else")
@@ -226,7 +228,7 @@ final class SmokeTests: XCTestCase {
 
     // MARK: My doses (item 6: the home as drawn, the add form, the three kind buttons)
     func testMyDosesHomeAddAndMarkTaken() {
-        let app = seeded(); app.tabBars.buttons["More"].tap()
+        let app = seeded(); tab(app, "tab-more").tap()
         let doses = any(app, "my-doses"); XCTAssertTrue(doses.waitForExistence(timeout: 10), "My doses stands in the menu for every profile"); doses.tap()
         XCTAssertTrue(any(app, "doses-add").waitForExistence(timeout: 10))
         any(app, "doses-add").tap()
@@ -243,7 +245,7 @@ final class SmokeTests: XCTestCase {
 
     // MARK: Profile and Settings (item 9: Me is identity only, every setting lives in Settings)
     func testProfileScreenChangesTheCharacter() {
-        let app = seeded(); app.tabBars.buttons["More"].tap()
+        let app = seeded(); tab(app, "tab-more").tap()
         let p = any(app, "my-profile"); XCTAssertTrue(p.waitForExistence(timeout: 10)); p.tap()
         XCTAssertTrue(any(app, "profile-name").waitForExistence(timeout: 5), "Me holds the name")
         XCTAssertFalse(any(app, "pchar-boy").exists, "no settings stand in Me")
@@ -256,5 +258,21 @@ final class SmokeTests: XCTestCase {
         // Settings is a Form: scrolled-off rows leave the tree, so come back to the top before looking.
         for _ in 0..<10 where !any(app, "pchar-boy").exists { app.swipeDown() }
         XCTAssertTrue(any(app, "pchar-boy").exists)
+    }
+
+    // MARK: My Doses tab and pick list (build 37: its own bottom tab, one step to add)
+    func testMyDosesTabAddsFromThePickListInOneStep() {
+        let app = seeded()
+        let dosesTab = tab(app, "tab-doses"); XCTAssertTrue(dosesTab.waitForExistence(timeout: 15), "My Doses stands in the bottom bar"); dosesTab.tap()
+        XCTAssertTrue(any(app, "doses-add").waitForExistence(timeout: 10), "the doses home stands on its own tab")
+        any(app, "doses-add").tap()
+        let search = any(app, "med-search"); XCTAssertTrue(search.waitForExistence(timeout: 10), "the pick list stands in the add sheet")
+        search.tap(); search.typeText("Magnesium")
+        let pick = app.buttons["pick-Magnesium"]; XCTAssertTrue(pick.waitForExistence(timeout: 5)); pick.tap()
+        let name = any(app, "med-name"); XCTAssertEqual(name.value as? String, "Magnesium", "the pick fills the name in")
+        let dose = any(app, "med-dose"); scrollTo(app, dose); dose.tap(); dose.typeText("200")
+        app.switches["This was provided by my clinician"].tap()
+        let add = any(app, "med-add"); scrollTo(app, add); add.tap()
+        XCTAssertTrue(app.staticTexts["Magnesium"].waitForExistence(timeout: 5), "the picked dose stands on the home")
     }
 }

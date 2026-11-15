@@ -29,6 +29,9 @@ struct Themed: View {
 struct RootView: View {
     @EnvironmentObject var store: Store
     @Binding var tab: Int
+    /// Tabs mount on first visit and stay alive after, like a tab view —
+    /// scroll and stacks are kept when switching (build 37, the designed bar).
+    @State private var visited: Set<Int> = [0]
     var body: some View {
         ZStack(alignment: .bottom) {
             Color.cream.ignoresSafeArea()
@@ -37,13 +40,17 @@ struct RootView: View {
             } else if !store.s.onboarded || store.needsPersonalization {
                 SetupView()
             } else {
-                TabView(selection: $tab) {
-                    TodayView(go: { tab = $0 }).tabItem { TabLabel("Today", "sun.max") }.tag(0)
-                    MealsView().tabItem { TabLabel("Meals", "fork.knife") }.tag(1)
-                    TrainView().tabItem { TabLabel("Train", "dumbbell") }.tag(2)
-                    NavigationStack { CalendarScreen() }.tabItem { TabLabel("Calendar", "calendar") }.tag(3)
-                    MoreView().tabItem { TabLabel("More", "ellipsis.circle") }.tag(4)
-                }
+                VStack(spacing: 0) {
+                    ZStack {
+                        if visited.contains(0) { TodayView(go: { tab = $0 }).opacity(tab == 0 ? 1 : 0).allowsHitTesting(tab == 0).accessibilityHidden(tab != 0) }
+                        if visited.contains(1) { MealsView().opacity(tab == 1 ? 1 : 0).allowsHitTesting(tab == 1).accessibilityHidden(tab != 1) }
+                        if visited.contains(2) { TrainView().opacity(tab == 2 ? 1 : 0).allowsHitTesting(tab == 2).accessibilityHidden(tab != 2) }
+                        if visited.contains(3) { NavigationStack { CalendarScreen() }.opacity(tab == 3 ? 1 : 0).allowsHitTesting(tab == 3).accessibilityHidden(tab != 3) }
+                        if visited.contains(4) { HealthView().opacity(tab == 4 ? 1 : 0).allowsHitTesting(tab == 4).accessibilityHidden(tab != 4) }
+                        if visited.contains(5) { MoreView().opacity(tab == 5 ? 1 : 0).allowsHitTesting(tab == 5).accessibilityHidden(tab != 5) }
+                    }.frame(maxWidth: .infinity, maxHeight: .infinity)
+                    BottomTabBar(tab: $tab)
+                }.onChange(of: tab) { visited.insert($0) }
             }
             if let t = store.toast {
                 Text(LocalizedStringKey(t)).font(.fh_subheadline_b).padding(.horizontal, 16).padding(.vertical, 10)
@@ -52,6 +59,41 @@ struct RootView: View {
             }
         }.animation(.spring(response: 0.35), value: store.toast)
         .fullScreenCover(item: $store.training) { r in TrainingMode(routine: r).environmentObject(store).tint(Color.sage).foregroundStyle(Color.ink) }
+    }
+}
+
+/// The designed bottom bar (build 37): six tabs standing side by side — Today,
+/// Meals, Train, Calendar, My Doses, More. SwiftUI's own tab view hides every
+/// tab past the fifth behind a system list, and her word is that My Doses
+/// stands in the bottom as its own menu, so the bar is drawn here in brand.
+/// Icons are the designed glyphs of record, labels always stand under them.
+struct BottomTabBar: View {
+    @Binding var tab: Int
+    private let items: [(title: String, icon: String, id: String)] = [
+        ("Today", "sun.max", "tab-today"),
+        ("Meals", "fork.knife", "tab-meals"),
+        ("Train", "dumbbell", "tab-train"),
+        ("Calendar", "calendar", "tab-calendar"),
+        ("My Doses", "cross.case", "tab-doses"),
+        ("More", "ellipsis.circle", "tab-more"),
+    ]
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(items.indices, id: \.self) { i in
+                Button { tab = i } label: {
+                    VStack(spacing: 2) {
+                        BrandIcon.tabImage(items[i].icon).resizable().scaledToFit().frame(width: 24, height: 24)
+                        Text(LocalizedStringKey(items[i].title)).font(.fh_caption).lineLimit(1).minimumScaleFactor(0.8)
+                    }.frame(maxWidth: .infinity).padding(.vertical, 6)
+                    .foregroundStyle(tab == i ? Color.sage : Color.muted)
+                    .contentShape(Rectangle())
+                }.buttonStyle(.plain).accessibilityIdentifier(items[i].id)
+                .accessibilityLabel(LocalizedStringKey(items[i].title))
+            }
+        }.padding(.horizontal, 4)
+        .background(Color.cream)
+        .overlay(alignment: .top) { Rectangle().fill(Color.tint).frame(height: 1) }
+        .accessibilityIdentifier("tab-bar")
     }
 }
 

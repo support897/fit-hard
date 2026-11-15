@@ -17,7 +17,7 @@ struct MoreView: View {
                 Section {
                     // Build 36, item D (her words, 14 Nov): supplements and peptides stand high in the
                     // menu as their own item, easy to find — never buried. Kindness stays first above.
-                    NavigationLink { HealthView(embedded: true) } label: { BrandLabel("My supplements and peptides", icon: "cross.case") }.accessibilityIdentifier("my-doses")
+                    NavigationLink { HealthView(embedded: true) } label: { BrandLabel("My Doses", icon: "cross.case") }.accessibilityIdentifier("my-doses")
                 }.themedRows()
                 Section {
                     // Build 36, item B (her words, 14 Nov): Photo a machine is its own menu item, big
@@ -118,7 +118,7 @@ struct SettingsView: View {
                 DatePicker("Quiet from", selection: timeBinding(\.quietFrom), displayedComponents: .hourAndMinute)
                 DatePicker("Quiet until", selection: timeBinding(\.quietTo), displayedComponents: .hourAndMinute)
                 Picker("Remind me before", selection: Binding(get: { store.s.settings.lead }, set: { store.s.settings.lead = $0; Notifier.rebuild(store) })) { ForEach([0, 10, 30, 60], id: \.self) { Text($0 == 0 ? "On time" : "\($0) min before").tag($0) } }
-                Toggle("Supplements and appointments", isOn: on("health"))
+                Toggle("Doses and appointments", isOn: on("health"))
                 Toggle("Show health details on lock screen", isOn: Binding(get: { store.s.settings.detailsOnLock }, set: { store.s.settings.detailsOnLock = $0; Notifier.rebuild(store) }))
             }.themedRows()
             Section("My plan") {

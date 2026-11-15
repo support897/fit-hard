@@ -77,6 +77,8 @@ extension Store {
         }
         if s.restDays.contains(day) { out.append(CalItem(id: "rest-\(day)", time: "08:00", title: NSLocalizedString("Rest day", comment: ""), detail: NSLocalizedString("Recovery counts", comment: ""), cat: "recovery", icon: "moon", done: true, eventID: nil, routineID: nil)) }
         for m in s.meds where !m.isPaused {
+            // Weekly doses stand on Mondays only (build 37); every other kind stands every day, forever.
+            if m.frequency == "Weekly", (Calendar.current.component(.weekday, from: dateFromKey(day) ?? Date()) + 5) % 7 != 0 { continue }
             for t in m.allTimes {
                 let st = s.medLogs.last(where: { $0.medId == m.id && $0.day == day })?.status
                 // Due time and taken time always stand apart (Item 6 design, frame 3).

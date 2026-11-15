@@ -35,12 +35,12 @@ struct HealthView: View {
                         SectionTitle(text: "Today")
                         if store.s.meds.isEmpty { Text("Nothing added yet.").foregroundStyle(Color.muted) }
                         ForEach(store.s.meds) { m in DoseCard(med: m) }
-                        BigButton(title: "Add a supplement or peptide", icon: "plus", filled: false) { showAdd = true }
+                        BigButton(title: "Add a dose or supplement", icon: "plus", filled: false) { showAdd = true }
                             .accessibilityIdentifier("doses-add")
                     }
                     if !store.s.meds.isEmpty {
                         Card {
-                            SectionTitle(text: "All my supplements and peptides")
+                            SectionTitle(text: "All my doses")
                             ForEach(store.s.meds) { m in
                                 HStack {
                                     VStack(alignment: .leading, spacing: 2) {
@@ -74,9 +74,9 @@ struct HealthView: View {
                         .font(.fh_footnote).foregroundStyle(Color.muted).padding(.horizontal, 6)
                     Button("Erase all health data", role: .destructive) { erase = true }
                 }.padding(16)
-            }.background(Color.cream).navigationTitle("My supplements and peptides")
+            }.background(Color.cream).navigationTitle("My Doses")
             .sheet(isPresented: $showAdd) { NavigationStack { AddDoseSheet() }.environmentObject(store) }
-            .confirmationDialog("Erase all supplements, history and appointments?", isPresented: $erase, titleVisibility: .visible) {
+            .confirmationDialog("Erase all doses, history and appointments?", isPresented: $erase, titleVisibility: .visible) {
                 Button("Erase", role: .destructive) { store.eraseHealth() }
             }
         }
@@ -153,8 +153,10 @@ struct DoseCard: View {
     }
 }
 
-/// Add a dose, as drawn: a simple form. You type everything.
-/// Fit Hard never suggests a name, a dose or a change.
+/// Add a dose in one simple step (build 37): pick a name from the ready list or
+/// add your own, type your dose exactly as given, tap Add. The how-often comes
+/// filled in from the common label pattern and can be changed right here.
+/// Fit Hard never tells anyone what to take, how much, or to change anything.
 struct AddDoseSheet: View {
     @EnvironmentObject var store: Store
     @Environment(\.dismiss) var dismiss
@@ -165,10 +167,40 @@ struct AddDoseSheet: View {
     @State private var instr = ""
     @State private var times: [Date] = [timeDate("08:00")]
     @State private var confirm = false
+    @State private var query = ""
+
+    /// Tapping a name on the pick list fills the name, the how-often and the
+    /// times in one go. The dose amount is never filled in — it is typed.
+    func pick(_ item: DoseCatalogItem) {
+        name = item.name
+        freq = item.frequency
+        times = item.times.map { timeDate($0) }
+    }
     var body: some View {
         ScrollView {
             VStack(spacing: 14) {
-                Text("You type everything. Fit Hard never suggests a name, a dose or a change. What you enter is only ever what your clinician told you.").font(.fh_caption).foregroundStyle(Color.muted)
+                Text("Pick a name or add your own. You type your dose, exactly as given. Fit Hard never tells you what to take, how much, or to change anything.").font(.fh_caption).foregroundStyle(Color.muted)
+                Card {
+                    SectionTitle(text: "Pick a name")
+                    TextField("Search the list", text: $query).accessibilityIdentifier("med-search")
+                    let q = query.trimmingCharacters(in: .whitespaces).lowercased()
+                    ForEach(DoseCatalog.groups) { g in
+                        let items = g.items.filter { q.isEmpty || $0.name.lowercased().contains(q) }
+                        if !items.isEmpty {
+                            Text(LocalizedStringKey(g.title)).font(.fh_caption_b).foregroundStyle(Color.muted).frame(maxWidth: .infinity, alignment: .leading)
+                            ForEach(items) { item in
+                                Button { pick(item) } label: {
+                                    HStack {
+                                        Text(item.name).font(.fh_subheadline_b).foregroundStyle(Color.ink)
+                                        Spacer()
+                                        Text(LocalizedStringKey(item.frequency)).font(.fh_caption).foregroundStyle(Color.muted)
+                                        if name == item.name { BrandIcon("checkmark").foregroundStyle(Color.sage) }
+                                    }.contentShape(Rectangle())
+                                }.buttonStyle(.plain).accessibilityIdentifier("pick-\(item.name)")
+                            }
+                        }
+                    }
+                }
                 TextField("Name (as your clinician gave it)", text: $name).accessibilityIdentifier("med-name")
                 TextField("Amount (exactly as given)", text: $amount).accessibilityIdentifier("med-dose")
                 TextField("Unit (ml, drops, scoops…)", text: $unit)
@@ -186,6 +218,6 @@ struct AddDoseSheet: View {
                     Notifier.rebuild(store); store.say("Added"); dismiss()
                 }.accessibilityIdentifier("med-add")
             }.padding(16)
-        }.background(Color.cream).navigationTitle("Add a supplement or peptide")
+        }.background(Color.cream).navigationTitle("Add to My Doses")
     }
 }
