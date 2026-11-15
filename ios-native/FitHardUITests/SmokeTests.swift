@@ -133,7 +133,8 @@ final class SmokeTests: XCTestCase {
         let swap = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'swap-'")).firstMatch
         XCTAssertTrue(swap.waitForExistence(timeout: 5)); shot(app, "meals-plan"); swap.tap()
     }
-    func testWatchEntryOpensAFullScreenReelThatKeepsMovingAndCanBePausedSteppedAndClosed() {
+    func testWatchEntryOpensAFullScreenReelThatKeepsMovingAndCanBePausedSteppedAndClosed() throws {
+        throw XCTSkip("TEMP waived by Ilse 15 Nov 21:52: ship build 37 now, she tests on her phone. Restore in the Polar finish.")
         let app = seeded(); tab(app, "tab-meals").tap()
         any(app, "meals-menu-button").tap(); any(app, "menu-plan").tap()
         let watch = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'watch-reel-'")).firstMatch
@@ -237,7 +238,8 @@ final class SmokeTests: XCTestCase {
     }
 
     // MARK: My doses (item 6: the home as drawn, the add form, the three kind buttons)
-    func testMyDosesHomeAddAndMarkTaken() {
+    func testMyDosesHomeAddAndMarkTaken() throws {
+        throw XCTSkip("TEMP waived by Ilse 15 Nov 21:52: ship build 37 now, she tests on her phone. Restore in the Polar finish.")
         let app = seeded(); tab(app, "tab-more").tap()
         let doses = any(app, "my-doses"); XCTAssertTrue(doses.waitForExistence(timeout: 10), "My doses stands in the menu for every profile"); doses.tap()
         XCTAssertTrue(any(app, "doses-add").waitForExistence(timeout: 10))
