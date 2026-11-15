@@ -14,10 +14,9 @@ final class ProbeTests: XCTestCase {
         tab(app, "tab-meals").tap()
         any(app, "meals-menu-button").tap(); any(app, "menu-plan").tap(); sleep(3)
         var out = "WATCH ELEMENTS\n"
-        let watches = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'watch-reel-'"))
+        let watches = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'watch-reel-'")).allElementsBoundByIndex
         out += "count=\(watches.count)\n"
-        for i in 0..<min(watches.count, 8) {
-            let e = watches.element(boundBy: i)
+        for (i, e) in watches.prefix(8).enumerated() {
             out += "[\(i)] id=\(e.identifier) frame=\(e.frame) hittable=\(e.isHittable) exists=\(e.exists)\n"
         }
         out += "\nFULL TREE\n" + app.debugDescription
@@ -37,10 +36,9 @@ final class ProbeTests: XCTestCase {
         _ = app.staticTexts["Vitamin D drops"].waitForExistence(timeout: 5); sleep(2)
         var out = "DOSE BUTTONS\n"
         for label in ["Taken", "Skipped", "Remind me later"] {
-            let bs = app.buttons[label]
+            let bs = app.buttons.matching(NSPredicate(format: "label == %@", label)).allElementsBoundByIndex
             out += "\(label): count=\(bs.count)\n"
-            for i in 0..<min(bs.count, 4) {
-                let e = bs.element(boundBy: i)
+            for (i, e) in bs.prefix(4).enumerated() {
                 out += "[\(i)] frame=\(e.frame) hittable=\(e.isHittable) exists=\(e.exists)\n"
             }
         }
