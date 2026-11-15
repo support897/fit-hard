@@ -93,7 +93,6 @@ struct BottomTabBar: View {
         }.padding(.horizontal, 4)
         .background(Color.cream)
         .overlay(alignment: .top) { Rectangle().fill(Color.tint).frame(height: 1) }
-        .accessibilityIdentifier("tab-bar")
     }
 }
 
