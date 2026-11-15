@@ -16,7 +16,7 @@ final class SmokeTests: XCTestCase {
     func scrollTo(_ app: XCUIApplication, _ el: XCUIElement) { for _ in 0..<10 where !el.exists || !el.isHittable { app.swipeUp() } }
     func any(_ app: XCUIApplication, _ id: String) -> XCUIElement { app.descendants(matching: .any).matching(identifier: id).firstMatch }
     /// The designed bottom bar (build 37): six buttons, stable identifiers.
-    func tab(_ app: XCUIApplication, _ id: String) -> XCUIElement { app.buttons[id] }
+    func tab(_ app: XCUIApplication, _ id: String) -> XCUIElement { app.descendants(matching: .any).matching(identifier: id).firstMatch }
 
     // MARK: 1 The door
     func testDoorFirstPageShowsOnlyGoogleAppleAndASmallEmailButton() {
@@ -268,7 +268,7 @@ final class SmokeTests: XCTestCase {
         any(app, "doses-add").tap()
         let search = any(app, "med-search"); XCTAssertTrue(search.waitForExistence(timeout: 10), "the pick list stands in the add sheet")
         search.tap(); search.typeText("Magnesium")
-        let pick = app.buttons["pick-Magnesium"]; XCTAssertTrue(pick.waitForExistence(timeout: 5)); pick.tap()
+        let pick = any(app, "pick-Magnesium"); XCTAssertTrue(pick.waitForExistence(timeout: 5)); pick.tap()
         let name = any(app, "med-name"); XCTAssertEqual(name.value as? String, "Magnesium", "the pick fills the name in")
         let dose = any(app, "med-dose"); scrollTo(app, dose); dose.tap(); dose.typeText("200")
         app.switches["This was provided by my clinician"].tap()
