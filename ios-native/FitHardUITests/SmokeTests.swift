@@ -136,12 +136,15 @@ final class SmokeTests: XCTestCase {
     func testWatchEntryOpensAFullScreenReelThatKeepsMovingAndCanBePausedSteppedAndClosed() {
         let app = seeded(); tab(app, "tab-meals").tap()
         any(app, "meals-menu-button").tap(); any(app, "menu-plan").tap()
-        let watch = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'watch-reel-'")).firstMatch
-        XCTAssertTrue(watch.waitForExistence(timeout: 10), "every meal with steps has a Watch entry"); shot(app, "reel-realapp-meal-screen-watch-entry")
+        // Probe (run 16 Nov): the first three matches belong to the covered Today tab's tree (not hittable);
+        // the visible meal plan's Watch buttons follow. Scope to the visible screen: the hittable one.
+        let watchQuery = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'watch-reel-'"))
+        XCTAssertTrue(watchQuery.firstMatch.waitForExistence(timeout: 10), "every meal with steps has a Watch entry"); shot(app, "reel-realapp-meal-screen-watch-entry")
         // Same hittability disagreement as the dose card: tap the centre by position;
         // the reel caption assert below proves the tap landed on this button.
-        scrollTo(app, watch)
-        watch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        let visible = watchQuery.allElementsBoundByIndex.first(where: { $0.isHittable }) ?? watchQuery.allElementsBoundByIndex.last!
+        scrollTo(app, visible)
+        visible.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertTrue(any(app, "reel-caption").waitForExistence(timeout: 5)); XCTAssertTrue(any(app, "reel-progress").exists)
         shot(app, "reel-realapp-step-a")
         any(app, "reel-tap-next").tap(); sleep(1)
@@ -210,6 +213,10 @@ final class SmokeTests: XCTestCase {
     func testCalendarPlusAddsAnEventAndLegendIsShown() {
         let app = seeded()
         tab(app, "tab-calendar").tap()
+        let fold = any(app, "cal-filters-fold"); XCTAssertTrue(fold.waitForExistence(timeout: 10))
+        XCTAssertFalse(any(app, "cal-legend").exists, "the filters start closed")
+        shot(app, "cal-filters-closed")
+        fold.tap()
         XCTAssertTrue(any(app, "cal-legend").waitForExistence(timeout: 10))
         for l in ["Training", "Meals", "Recovery", "Supplements", "Personal"] { XCTAssertTrue(app.staticTexts[l].exists, l) }
         shot(app, "cal-month")
@@ -232,7 +239,9 @@ final class SmokeTests: XCTestCase {
         item.tap()
         XCTAssertTrue(any(app, "kindness-give").waitForExistence(timeout: 5))
         XCTAssertTrue(any(app, "kindness-counter").exists)
-        let r = any(app, "kindness-rainbow"); XCTAssertTrue(r.exists); r.tap()
+        let r = any(app, "kindness-rainbow"); XCTAssertTrue(r.exists)
+        // Probe (16 Nov, FH Suite sim): a tap at the element centre misses the drawn arcs; a tap on the arcs (upper part) opens the wall.
+        r.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
         XCTAssertTrue(app.staticTexts["The wall is just starting."].waitForExistence(timeout: 5))
     }
 
@@ -246,7 +255,10 @@ final class SmokeTests: XCTestCase {
         app.switches["This was provided by my clinician"].tap()
         any(app, "med-add").tap()
         XCTAssertTrue(app.staticTexts["Vitamin D drops"].waitForExistence(timeout: 5), "the new dose stands on the home")
-        let taken = app.buttons["Taken"].firstMatch
+        // Probe: the first "Taken" belongs to the covered Today card (off screen); scope to the doses home card.
+        let card = app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH 'dose-'")).firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 5), "the new dose card stands on the home")
+        let taken = card.buttons["Taken"].firstMatch
         XCTAssertTrue(taken.waitForExistence(timeout: 5), "the three kind buttons stand on the dose card")
         XCTAssertTrue(app.buttons["Skipped"].exists); XCTAssertTrue(app.buttons["Remind me later"].exists)
         // The robot's hittability check disagrees with the plainly visible card in the

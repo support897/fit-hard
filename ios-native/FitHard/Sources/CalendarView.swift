@@ -7,16 +7,16 @@ struct CalendarScreen: View {
     @State private var sel = dayKey()
     @State private var adding = false
     @State private var editing: CalEvent? = nil
-    @State private var filtersOpen = true
+    @State private var filtersOpen = false
     var body: some View {
         VStack(spacing: 0) {
             Picker("", selection: $mode) { Text("Day").tag(0); Text("Week").tag(1); Text("Month").tag(2); Text("List").tag(3); Text("Habits").tag(4); Text("To do").tag(5) }.pickerStyle(.segmented).padding(.horizontal, 12).padding(.top, 8)
             Button { withAnimation(.easeInOut(duration: 0.2)) { filtersOpen.toggle() }; haptic(.soft) } label: {
-                HStack(spacing: 6) {
-                    Text("Filters").font(.fh_caption_b).foregroundStyle(Color.sage)
-                    BrandIcon(filtersOpen ? "chevron.up" : "chevron.down").font(.fh_caption_b).foregroundStyle(Color.sage)
+                HStack(spacing: 8) {
+                    Text("Filters").font(.fh_headline).foregroundStyle(Color.sage)
                     Spacer()
-                }.padding(.horizontal, 16).padding(.vertical, 6).contentShape(Rectangle())
+                    BrandIcon(filtersOpen ? "chevron.up" : "chevron.down").font(.fh_headline).foregroundStyle(Color.sage)
+                }.padding(.horizontal, 16).frame(maxWidth: .infinity, minHeight: 52).background(Color.sage.opacity(0.12), in: RoundedRectangle(cornerRadius: 12)).padding(.horizontal, 12).padding(.vertical, 6).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityIdentifier("cal-filters-fold").accessibilityLabel(filtersOpen ? "Hide filters" : "Show filters")
             if filtersOpen { Legend().padding(.horizontal, 16).padding(.bottom, 6) }
             switch mode {
