@@ -160,6 +160,8 @@ struct DoseCard: View {
 struct AddDoseSheet: View {
     @EnvironmentObject var store: Store
     @Environment(\.dismiss) var dismiss
+    @State private var step = 1
+    @State private var openGroup: String? = nil
     @State private var name = ""
     @State private var amount = ""
     @State private var unit = ""
@@ -170,53 +172,115 @@ struct AddDoseSheet: View {
     @State private var query = ""
 
     /// Tapping a name on the pick list fills the name, the how-often and the
-    /// times in one go. The dose amount is never filled in — it is typed.
+    /// times in one go, then walks to step 2. The dose amount is never filled in: it is typed.
     func pick(_ item: DoseCatalogItem) {
         name = item.name
         freq = item.frequency
         times = item.times.map { timeDate($0) }
+        withAnimation(.easeInOut(duration: 0.2)) { step = 2 }
+    }
+    func header(_ n: Int, _ title: String) -> some View {
+        VStack(spacing: 2) {
+            Text(LocalizedStringKey("Step \(n) of 3")).font(.fh_caption_b).foregroundStyle(Color.sage).accessibilityIdentifier("med-step")
+            Text(LocalizedStringKey(title)).font(.fh_title2).foregroundStyle(Color.ink)
+        }.frame(maxWidth: .infinity)
+    }
+    func nav(next: (() -> Void)?) -> some View {
+        HStack(spacing: 12) {
+            Button { withAnimation(.easeInOut(duration: 0.2)) { step -= 1 } } label: {
+                Text("Back").font(.fh_subheadline_b).foregroundStyle(Color.sage).frame(maxWidth: .infinity, minHeight: 48)
+                    .background(Color.sage.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+            }.buttonStyle(.plain).accessibilityIdentifier("med-back")
+            if let next {
+                Button { next() } label: {
+                    Text("Next").font(.fh_subheadline_b).foregroundStyle(.white).frame(maxWidth: .infinity, minHeight: 48)
+                        .background(Color.sage.opacity(name.trimmingCharacters(in: .whitespaces).isEmpty ? 0.4 : 1), in: RoundedRectangle(cornerRadius: 12))
+                }.buttonStyle(.plain).disabled(name.trimmingCharacters(in: .whitespaces).isEmpty).accessibilityIdentifier("med-next")
+            }
+        }
+    }
+    func groupCard(_ g: DoseCatalogGroup) -> some View {
+        let open = openGroup == g.title
+        return VStack(spacing: 8) {
+            Button { withAnimation(.easeInOut(duration: 0.2)) { openGroup = open ? nil : g.title }; haptic(.soft) } label: {
+                HStack {
+                    Text(LocalizedStringKey(g.title)).font(.fh_headline).foregroundStyle(Color.ink)
+                    Spacer()
+                    BrandIcon(open ? "chevron.up" : "chevron.down").foregroundStyle(Color.sage)
+                }.padding(.horizontal, 16).frame(maxWidth: .infinity, minHeight: 56).contentShape(Rectangle())
+            }.buttonStyle(.plain).accessibilityIdentifier("group-\(g.title)")
+            if open {
+                VStack(spacing: 0) {
+                    ForEach(g.items) { item in
+                        Button { pick(item) } label: { pickRow(item) }.buttonStyle(.plain).accessibilityIdentifier("pick-\(item.name)")
+                    }
+                }.padding(.horizontal, 16).padding(.bottom, 8)
+            }
+        }.background(Color.sage.opacity(0.10), in: RoundedRectangle(cornerRadius: 14))
+    }
+    func pickRow(_ item: DoseCatalogItem) -> some View {
+        HStack {
+            Text(item.name).font(.fh_subheadline_b).foregroundStyle(Color.ink)
+            Spacer()
+            Text(LocalizedStringKey(item.frequency)).font(.fh_caption).foregroundStyle(Color.muted)
+        }.padding(.vertical, 10).contentShape(Rectangle())
+    }
+    var step1: some View {
+        let q = query.trimmingCharacters(in: .whitespaces).lowercased()
+        return VStack(spacing: 12) {
+            header(1, "Pick a name")
+            TextField("Search the list", text: $query).padding(12).background(Color.sage.opacity(0.10), in: RoundedRectangle(cornerRadius: 12)).accessibilityIdentifier("med-search")
+            if q.isEmpty {
+                ForEach(DoseCatalog.groups) { g in groupCard(g) }
+                Button { name = ""; withAnimation(.easeInOut(duration: 0.2)) { step = 2 } } label: {
+                    HStack {
+                        BrandIcon("plus").foregroundStyle(Color.sage)
+                        Text("Add your own").font(.fh_headline).foregroundStyle(Color.sage)
+                        Spacer()
+                    }.padding(.horizontal, 16).frame(maxWidth: .infinity, minHeight: 56).background(Color.sage.opacity(0.10), in: RoundedRectangle(cornerRadius: 14)).contentShape(Rectangle())
+                }.buttonStyle(.plain).accessibilityIdentifier("pick-own")
+            } else {
+                let hits = DoseCatalog.groups.flatMap { $0.items }.filter { $0.name.lowercased().contains(q) }
+                VStack(spacing: 0) {
+                    ForEach(hits) { item in Button { pick(item) } label: { pickRow(item) }.buttonStyle(.plain).accessibilityIdentifier("pick-\(item.name)") }
+                }.padding(.horizontal, 16).background(Color.sage.opacity(0.10), in: RoundedRectangle(cornerRadius: 14))
+            }
+        }
+    }
+    var step2: some View {
+        VStack(spacing: 12) {
+            header(2, "Your dose")
+            TextField("Name (as your clinician gave it)", text: $name).padding(14).background(Color.sage.opacity(0.10), in: RoundedRectangle(cornerRadius: 12)).accessibilityIdentifier("med-name")
+            TextField("Amount (exactly as given)", text: $amount).font(.fh_title2).padding(14).background(Color.sage.opacity(0.10), in: RoundedRectangle(cornerRadius: 12)).accessibilityIdentifier("med-dose")
+            TextField("Unit (ml, drops, scoops…)", text: $unit).padding(14).background(Color.sage.opacity(0.10), in: RoundedRectangle(cornerRadius: 12)).accessibilityIdentifier("med-unit")
+            nav(next: { withAnimation(.easeInOut(duration: 0.2)) { step = 3 } })
+        }
+    }
+    var step3: some View {
+        VStack(spacing: 12) {
+            header(3, "How often")
+            Picker("How often", selection: $freq) { ForEach(["Once a day", "Twice a day", "Weekly", "As directed"], id: \.self) { Text(LocalizedStringKey($0)).tag($0) } }
+            ForEach(times.indices, id: \.self) { i in DatePicker("Time \(i + 1)", selection: $times[i], displayedComponents: .hourAndMinute) }
+            Button("Add another time") { times.append(timeDate("20:00")) }.font(.fh_subheadline_b)
+            Text("Your reminder rings at these times.").font(.fh_caption).foregroundStyle(Color.muted)
+            TextField("Notes from your clinician (optional)", text: $instr).padding(14).background(Color.sage.opacity(0.10), in: RoundedRectangle(cornerRadius: 12))
+            Toggle("This was provided by my clinician", isOn: $confirm).tint(Color.sage)
+            BigButton(title: "Add this one", icon: "plus") {
+                let n = name.trimmingCharacters(in: .whitespaces)
+                guard confirm, !n.isEmpty else { store.say("Add a name and tick the box"); return }
+                let ts = times.map { timeString($0) }
+                store.s.meds.append(Med(name: n, amount: amount, time: ts.first ?? "08:00", unit: unit.isEmpty ? nil : unit, frequency: freq,
+                                        instructions: instr.isEmpty ? nil : instr, paused: false, times: ts))
+                Notifier.rebuild(store); store.say("Added"); dismiss()
+            }.accessibilityIdentifier("med-add")
+            nav(next: nil)
+        }
     }
     var body: some View {
         ScrollView {
             VStack(spacing: 14) {
                 Text("Pick a name or add your own. You type your dose, exactly as given. Fit Hard never tells you what to take, how much, or to change anything.").font(.fh_caption).foregroundStyle(Color.muted)
-                Card {
-                    SectionTitle(text: "Pick a name")
-                    TextField("Search the list", text: $query).accessibilityIdentifier("med-search")
-                    let q = query.trimmingCharacters(in: .whitespaces).lowercased()
-                    ForEach(DoseCatalog.groups) { g in
-                        let items = g.items.filter { q.isEmpty || $0.name.lowercased().contains(q) }
-                        if !items.isEmpty {
-                            Text(LocalizedStringKey(g.title)).font(.fh_caption_b).foregroundStyle(Color.muted).frame(maxWidth: .infinity, alignment: .leading)
-                            ForEach(items) { item in
-                                Button { pick(item) } label: {
-                                    HStack {
-                                        Text(item.name).font(.fh_subheadline_b).foregroundStyle(Color.ink)
-                                        Spacer()
-                                        Text(LocalizedStringKey(item.frequency)).font(.fh_caption).foregroundStyle(Color.muted)
-                                        if name == item.name { BrandIcon("checkmark").foregroundStyle(Color.sage) }
-                                    }.contentShape(Rectangle())
-                                }.buttonStyle(.plain).accessibilityIdentifier("pick-\(item.name)")
-                            }
-                        }
-                    }
-                }
-                TextField("Name (as your clinician gave it)", text: $name).accessibilityIdentifier("med-name")
-                TextField("Amount (exactly as given)", text: $amount).accessibilityIdentifier("med-dose")
-                TextField("Unit (ml, drops, scoops…)", text: $unit)
-                Picker("How often", selection: $freq) { ForEach(["Once a day", "Twice a day", "Weekly", "As directed"], id: \.self) { Text($0).tag($0) } }
-                ForEach(times.indices, id: \.self) { i in DatePicker("Time \(i + 1)", selection: $times[i], displayedComponents: .hourAndMinute) }
-                Button("Add another time") { times.append(timeDate("20:00")) }.font(.fh_subheadline_b)
-                TextField("Notes from your clinician (optional)", text: $instr)
-                Toggle("This was provided by my clinician", isOn: $confirm).tint(Color.sage)
-                BigButton(title: "Add this one", icon: "plus") {
-                    let n = name.trimmingCharacters(in: .whitespaces)
-                    guard confirm, !n.isEmpty else { store.say("Add a name and tick the box"); return }
-                    let ts = times.map { timeString($0) }
-                    store.s.meds.append(Med(name: n, amount: amount, time: ts.first ?? "08:00", unit: unit.isEmpty ? nil : unit, frequency: freq,
-                                            instructions: instr.isEmpty ? nil : instr, paused: false, times: ts))
-                    Notifier.rebuild(store); store.say("Added"); dismiss()
-                }.accessibilityIdentifier("med-add")
+                switch step { case 1: step1; case 2: step2; default: step3 }
             }.padding(16)
         }.background(Color.cream).navigationTitle("Add to My Doses")
     }
