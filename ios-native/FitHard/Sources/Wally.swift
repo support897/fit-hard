@@ -144,7 +144,7 @@ struct HelpSheet: View {
                 Spacer()
                 Button { dismiss() } label: { BrandIcon( "xmark.circle.fill").font(.fh_title).foregroundStyle(Color.muted) }.accessibilityLabel("Close help").accessibilityIdentifier("help-close")
             }
-            if let a = store.animBase(exercise) { AnimatedFrames(base: a).frame(height: 150).frame(maxWidth: .infinity) }
+            if let a = store.animBase(exercise) { ExerciseMotion(ex: exercise, base: a, coach: false).frame(height: 190).frame(maxWidth: .infinity) }
             if let h = HelpText.help(for: exercise.id) {
                 let lines = HelpText.display(h)
                 ScrollView { VStack(alignment: .leading, spacing: 10) {

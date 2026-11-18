@@ -109,7 +109,7 @@ struct TrainingMode: View {
                 }
             } else if focus == .picture, let ex = exercise, let a = store.animBase(ex) {
                 VStack(spacing: 14) {
-                    AnimatedFrames(base: a).frame(maxWidth: .infinity, maxHeight: .infinity)
+                    ExerciseMotion(ex: ex, base: a).frame(maxWidth: .infinity, maxHeight: .infinity)
                     Text(ex.name).font(.fh_title3_b).foregroundStyle(Color.ink)
                     Text("Tap anywhere to go back").font(.fh_caption).foregroundStyle(Color.muted)
                 }.padding(20)
@@ -140,7 +140,7 @@ struct TrainingMode: View {
         VStack(spacing: 14) {
             Spacer(minLength: 0)
             if let a = store.animBase(ex) {
-                AnimatedFrames(base: a).frame(height: 240).frame(maxWidth: .infinity)
+                ExerciseMotion(ex: ex, base: a).frame(height: 260).frame(maxWidth: .infinity)
                     .background(Color.surface, in: RoundedRectangle(cornerRadius: 20))
                     .onTapGesture { focus = .picture }
                     .accessibilityLabel("See the picture full screen").accessibilityIdentifier("train-picture")
