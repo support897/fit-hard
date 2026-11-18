@@ -34,7 +34,7 @@ enum ProAnimJS {
     }
 }
 
-private final class PhaseSink: NSObject, WKScriptMessageHandler {
+final class PhaseSink: NSObject, WKScriptMessageHandler {
     var onPhase: (String, Int) -> Void
     init(_ f: @escaping (String, Int) -> Void) { onPhase = f }
     func userContentController(_ c: WKUserContentController, didReceive m: WKScriptMessage) {
