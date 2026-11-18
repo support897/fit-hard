@@ -158,10 +158,31 @@ struct TrainingMode: View {
                 }
             }.accessibilityElement(children: .ignore)
             .accessibilityLabel(String(format: NSLocalizedString("%lld of %lld sets done", comment: ""), entries[idx].sets.filter { $0.done == true }.count, entries[idx].sets.count))
-            if resting { WallyStrip() }
+            if resting { WallyStrip() } else { coach }
             Spacer(minLength: 0)
             controls(ex)
         }.padding(.horizontal, 16)
+    }
+
+    /// Wally cheers beside the work: ready, working, set done, all sets done.
+    var coach: some View {
+        let sets = idx < entries.count ? entries[idx].sets : []
+        let done = sets.filter { $0.done == true }.count
+        let pick = (idx + done) % 3
+        var text = ""; var img = "wally-hello"
+        if workEnd != nil {
+            let l = ["Push through. Steady and strong, you have got this.", "Breathe out on the effort. I am right here.", "Nice and smooth. You are doing it."]
+            text = NSLocalizedString(l[pick], comment: ""); img = "wally-rough"
+        } else if done == 0 {
+            let l = ["Ready when you are. Slow and steady wins.", "Take your time. Press start when you feel ready.", "Good to see you here. One set at a time."]
+            text = NSLocalizedString(l[pick], comment: ""); img = "wally-hello"
+        } else if done >= sets.count {
+            text = NSLocalizedString("All sets done here. Lovely work. Next exercise when you are ready.", comment: ""); img = "wally-celebrate"
+        } else {
+            let l = ["Set done. Keep it going, you are doing it.", "That one counted. Proud of you.", "Real progress. Another one when you are ready."]
+            text = NSLocalizedString(l[pick], comment: ""); img = "wally-celebrate"
+        }
+        return CoachLine(text: text, image: img)
     }
 
     var ring: some View {
@@ -281,6 +302,8 @@ struct TrainingMode: View {
             BundleImage(name: "wally-celebrate").frame(height: 120)
             Text("Workout done").font(.fh_largeTitle_b).accessibilityIdentifier("train-summary")
             WallyBubble()
+            Text(String(format: NSLocalizedString("Your streak is %lld days. Come back tomorrow for the next small win.", comment: ""), store.isActiveDay(store.today) ? store.streak : store.streak + 1))
+                .font(.fh_subheadline_b).foregroundStyle(Color.sage).multilineTextAlignment(.center).accessibilityIdentifier("train-streak-line")
             Card {
                 row("Time", String(format: "%d:%02d", secs / 60, secs % 60)); row("Sets done", "\(done.count)"); row("Volume", "\(RecipeService.fmt(vol)) kg")
                 row("Exercises", "\(entries.filter { $0.sets.contains { $0.done == true } }.count) of \(entries.count)")

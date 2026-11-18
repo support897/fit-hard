@@ -33,8 +33,9 @@ struct Card<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10, content: content)
             .padding(16).frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.surface, in: RoundedRectangle(cornerRadius: 20))
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.line, lineWidth: 1))
+            .background(Color.surface, in: RoundedRectangle(cornerRadius: 24))
+            .overlay(RoundedRectangle(cornerRadius: 24).stroke(Color.line.opacity(0.6), lineWidth: 1))
+            .shadow(color: Color.sage.opacity(0.12), radius: 10, y: 4)
     }
 }
 
@@ -46,6 +47,7 @@ struct BigButton: View {
                 .frame(maxWidth: .infinity).padding(.vertical, 16)
                 .background(filled ? Color.sage : Color.tint, in: Capsule())
                 .foregroundStyle(filled ? Color.surface : Color.ink)
+                .shadow(color: Color.sage.opacity(filled ? 0.3 : 0), radius: 8, y: 4)
         }.buttonStyle(.plain)
     }
 }

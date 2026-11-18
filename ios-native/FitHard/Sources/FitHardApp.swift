@@ -71,6 +71,7 @@ struct RootView: View {
 /// stands in the bottom as its own menu, so the bar is drawn here in brand.
 /// Icons are the designed glyphs of record, labels always stand under them.
 struct BottomTabBar: View {
+    @EnvironmentObject var store: Store
     @Binding var tab: Int
     var onRetap: (Int) -> Void = { _ in }
     private let items: [(title: String, icon: String, id: String)] = [
@@ -81,22 +82,49 @@ struct BottomTabBar: View {
         ("My Doses", "cross.case", "tab-doses"),
         ("More", "ellipsis.circle", "tab-more"),
     ]
+    /// The round middle button starts today's workout when one is waiting, and opens My Doses to add a dose otherwise.
+    var canStart: Bool { !store.todaysExercises.isEmpty && !store.workedOutToday && !store.isRestToday && store.routine(on: store.today) != nil }
+    func startTapped() {
+        haptic(.medium)
+        if canStart, let r = store.routine(on: store.today) { store.training = r } else { tab = 4 }
+    }
+    func item(_ i: Int) -> some View {
+        Button { if tab == i { onRetap(i) } else { tab = i } } label: {
+            VStack(spacing: 2) {
+                BrandIcon.tabImage(items[i].icon).resizable().scaledToFit().frame(width: 24, height: 24)
+                Text(LocalizedStringKey(items[i].title)).font(.fh_caption).lineLimit(1).minimumScaleFactor(0.8)
+            }.frame(maxWidth: .infinity).padding(.vertical, 6)
+            .foregroundStyle(tab == i ? Color.sage : Color.muted)
+            .contentShape(Rectangle())
+        }.buttonStyle(.plain).accessibilityIdentifier(items[i].id)
+        .accessibilityLabel(LocalizedStringKey(items[i].title))
+    }
     var body: some View {
-        HStack(spacing: 0) {
-            ForEach(items.indices, id: \.self) { i in
-                Button { if tab == i { onRetap(i) } else { tab = i } } label: {
-                    VStack(spacing: 2) {
-                        BrandIcon.tabImage(items[i].icon).resizable().scaledToFit().frame(width: 24, height: 24)
-                        Text(LocalizedStringKey(items[i].title)).font(.fh_caption).lineLimit(1).minimumScaleFactor(0.8)
-                    }.frame(maxWidth: .infinity).padding(.vertical, 6)
-                    .foregroundStyle(tab == i ? Color.sage : Color.muted)
-                    .contentShape(Rectangle())
-                }.buttonStyle(.plain).accessibilityIdentifier(items[i].id)
-                .accessibilityLabel(LocalizedStringKey(items[i].title))
-            }
-        }.padding(.horizontal, 4)
-        .background(Color.cream)
-        .overlay(alignment: .top) { Rectangle().fill(Color.tint).frame(height: 1) }
+        ZStack(alignment: .top) {
+            HStack(spacing: 0) {
+                ForEach(0..<3, id: \.self) { i in item(i) }
+                Color.clear.frame(width: 76, height: 1)
+                ForEach(3..<6, id: \.self) { i in item(i) }
+            }.padding(.horizontal, 4).padding(.top, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 28).fill(Color.cream)
+                    .shadow(color: Color.sage.opacity(0.18), radius: 12, y: -4)
+                    .ignoresSafeArea(edges: .bottom)
+            )
+            Button { startTapped() } label: {
+                ZStack {
+                    Circle().fill(Color.sage)
+                    VStack(spacing: 1) {
+                        BrandIcon(canStart ? "play.fill" : "plus")
+                        Text(LocalizedStringKey(canStart ? "Start" : "Dose")).font(.fh_caption2_b)
+                    }.foregroundStyle(heroCream)
+                }.frame(width: 66, height: 66)
+                .overlay(Circle().stroke(Color.cream, lineWidth: 6))
+                .overlay(Circle().stroke(Color.mist, lineWidth: 2).padding(-4))
+                .shadow(color: Color.sage.opacity(0.45), radius: 10, y: 6)
+            }.buttonStyle(.plain).offset(y: -28)
+            .accessibilityLabel(LocalizedStringKey(canStart ? "Start today's workout" : "Add a dose")).accessibilityIdentifier("tab-start")
+        }.zIndex(1)
     }
 }
 

@@ -21,23 +21,27 @@ struct TodayView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
+                    streakRow
+                    winCard
+                    chipsRow
                     heroCard
                     if !store.s.profile.setupDone { finishProfileLink }
-                    trackerCard
-                    WallyBubble()
-                    if denied { inAppReminders }
-                    nextCard
-                    waterCard
                     if store.s.checkins[store.today] == nil { checkinCard } else { checkedInRow }
                     if let missed = store.missedSession { missedCard(missed) }
-                    mealsCard
                     workoutCard
+                    tilesCard
+                    nextCard
+                    WallyBubble()
+                    if denied { inAppReminders }
+                    trackerCard
+                    waterCard
+                    mealsCard
                     photoCard
                     medsCard
                     habitsCard
                     tasksCard
                     ChallengeCard()
-                }.padding(16)
+                }.padding(16).padding(.bottom, 28)
             }
             .background(Color.cream)
             .navigationTitle(greeting)
@@ -49,33 +53,86 @@ struct TodayView: View {
         }
     }
 
-    /// Streak, the week goal and consistency. The goal count, bar and message follow the saved days pick on every theme.
+    /// The streak, with its count. A light day or a rest day protects it, it never breaks it.
+    var streakRow: some View {
+        HStack {
+            Text(store.isRestToday ? "Rest day. Your streak is safe." : store.isLightToday ? "Light day is on. Your streak is safe." : "Your day, in one calm place.").font(.fh_subheadline).foregroundStyle(Color.muted)
+            Spacer()
+            HStack(spacing: 6) {
+                BrandIcon("flame").foregroundStyle(Color.sage)
+                Text("\(store.streak)").font(.fh_headline).foregroundStyle(Color.ink)
+                Text(LocalizedStringKey(store.streak == 1 ? "day streak" : "days streak")).font(.fh_caption).foregroundStyle(Color.muted)
+            }.padding(.horizontal, 12).padding(.vertical, 8).background(Color.surface, in: Capsule())
+            .shadow(color: Color.sage.opacity(0.15), radius: 6, y: 3).accessibilityIdentifier("streak")
+        }
+    }
+
+    /// The big soft progress card: today's small wins from what was really done.
+    var winCard: some View {
+        let w = store.todayWin
+        let frac = w.total > 0 ? Double(w.done) / Double(w.total) : 0
+        let left = w.total - w.done
+        let sub = left <= 0 ? "Everything done. Beautiful day." : left == 1 ? "One small step left." : String(format: NSLocalizedString("%lld small steps left.", comment: ""), left)
+        return RedoHero(title: "Today's win", big: "\(w.done) of \(w.total)", sub: sub, frac: frac, wally: w.done > 0 ? "wally-celebrate" : "wally-hello")
+    }
+
+    var chipsRow: some View {
+        Flow(spacing: 8) {
+            SoftPill(text: store.streak > 0 ? "Streak safe" : "A fresh start")
+            SoftPill(text: String(format: NSLocalizedString("Consistency %lld%%", comment: ""), store.consistency))
+            if store.isLightToday { SoftPill(text: "Light day on") }
+        }
+    }
+
+    /// The week goal ring and this week's bars. The ring keeps its old identifiers.
     var heroCard: some View {
         let goal = store.weekGoalCount, done = store.workoutsThisWeek
         let frac = min(1, Double(done) / Double(max(1, goal)))
-        let c = store.consistency
-        return Card {
-            HStack(spacing: 18) {
-                ZStack {
-                    Circle().stroke(Color.tint, lineWidth: 12)
-                    Circle().trim(from: 0, to: frac).stroke(Color.sage, style: StrokeStyle(lineWidth: 12, lineCap: .round)).rotationEffect(.degrees(-90))
-                    VStack(spacing: 2) { Text("\(done)/\(goal)").font(.fh_title2_b).foregroundStyle(Color.ink); BrandIcon("dumbbell").foregroundStyle(Color.sage) }
-                }.frame(width: 108, height: 108).animation(.easeOut, value: done).accessibilityElement(children: .ignore)
-                .accessibilityLabel(String(format: NSLocalizedString("%lld of %lld workouts this week", comment: ""), done, goal)).accessibilityIdentifier("week-goal")
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack(spacing: 8) {
-                        BrandIcon("flame").foregroundStyle(Color.sage)
-                        Text("\(store.streak)").font(.fh_title_b).foregroundStyle(Color.ink)
-                        Text(LocalizedStringKey(store.streak == 1 ? "day streak" : "days streak")).font(.fh_caption).foregroundStyle(Color.muted)
-                    }.accessibilityIdentifier("streak")
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack { Text("Consistency").font(.fh_caption).foregroundStyle(Color.muted); Spacer(); Text("\(c)%").font(.fh_caption_b).foregroundStyle(Color.ink) }
-                        ProgressView(value: Double(c), total: 100).tint(Color.sage)
-                    }
-                }
+        return VStack(spacing: 10) {
+            HStack(alignment: .top, spacing: 12) {
+                VStack(spacing: 8) {
+                    ZStack {
+                        Circle().stroke(Color.tint, lineWidth: 10)
+                        Circle().trim(from: 0, to: frac).stroke(Color.sage, style: StrokeStyle(lineWidth: 10, lineCap: .round)).rotationEffect(.degrees(-90))
+                        Text("\(done)/\(goal)").font(.fh_title3_b).foregroundStyle(Color.ink)
+                    }.frame(width: 88, height: 88).animation(.easeOut, value: done).accessibilityElement(children: .ignore)
+                    .accessibilityLabel(String(format: NSLocalizedString("%lld of %lld workouts this week", comment: ""), done, goal)).accessibilityIdentifier("week-goal")
+                    Text("Week goal").font(.fh_caption_b).foregroundStyle(Color.muted)
+                }.padding(14).frame(maxWidth: .infinity).background(Color.surface, in: RoundedRectangle(cornerRadius: 24)).shadow(color: Color.sage.opacity(0.10), radius: 8, y: 3)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("This week").font(.fh_caption_b).foregroundStyle(Color.muted)
+                    WeekBars()
+                }.padding(14).frame(maxWidth: .infinity).background(Color.surface, in: RoundedRectangle(cornerRadius: 24)).shadow(color: Color.sage.opacity(0.10), radius: 8, y: 3)
             }
             Text(done >= goal ? NSLocalizedString("Week goal reached. Rest is part of the plan.", comment: "") : String(format: NSLocalizedString("%lld more to reach your goal of %lld this week.", comment: ""), goal - done, goal))
                 .font(.fh_subheadline_b).foregroundStyle(Color.ink).accessibilityIdentifier("week-message")
+        }
+    }
+
+    /// Colour tiles: one per small win, a thin bar and a count pill. Tap to go there.
+    var tilesCard: some View {
+        let ex = store.todaysExercises
+        let planned = Lists.meals.filter { store.s.plan[store.today]?[$0] != nil }
+        let eaten = planned.filter { (store.s.eaten[store.today] ?? []).contains($0) }.count
+        let meds = store.s.meds.filter { !$0.isPaused }
+        let taken = meds.filter { store.medStatus($0) == "taken" }.count
+        let trained = store.workedOutToday || store.isRestToday
+        return VStack(spacing: 10) {
+            if !ex.isEmpty || store.isRestToday {
+                Button { haptic(.soft); go(2) } label: {
+                    TileRow(icon: "dumbbell", name: store.isRestToday ? "Rest day" : "Workout", frac: trained ? 1 : 0, count: trained ? "1 of 1" : "0 of 1", tone: Color.sage, done: trained)
+                }.buttonStyle(.plain).accessibilityIdentifier("tile-workout")
+            }
+            if !planned.isEmpty {
+                Button { haptic(.soft); go(1) } label: {
+                    TileRow(icon: "fork.knife", name: "Meals", frac: Double(eaten) / Double(planned.count), count: "\(eaten) of \(planned.count)", tone: Color.mist, done: eaten == planned.count)
+                }.buttonStyle(.plain).accessibilityIdentifier("tile-meals")
+            }
+            if !meds.isEmpty {
+                Button { haptic(.soft); go(4) } label: {
+                    TileRow(icon: "cross.case", name: "My Doses logged", frac: Double(taken) / Double(meds.count), count: "\(taken) of \(meds.count)", tone: Color.taupe, done: taken == meds.count)
+                }.buttonStyle(.plain).accessibilityIdentifier("tile-doses")
+            }
         }
     }
 
@@ -201,13 +258,18 @@ struct TodayView: View {
 
     var workoutCard: some View {
         let ex = store.todaysExercises
+        let r = store.routine(on: store.today)
         return Card {
-            HStack { SectionTitle(text: "Workout"); Spacer(); TypeBadge(type: (ex.isEmpty || store.isRestToday) ? .rest : (store.routine(on: store.today)?.trainType ?? .full)) }
+            HStack { SectionTitle(text: "Workout"); Spacer(); TypeBadge(type: (ex.isEmpty || store.isRestToday) ? .rest : (r?.trainType ?? .full)) }
             if ex.isEmpty || store.isRestToday { Text("Planned rest day. Recovery is part of the plan.").foregroundStyle(Color.muted) }
             else if store.workedOutToday { BrandLabel("Done today", icon: "checkmark.seal.fill").foregroundStyle(Color.sage) }
             else {
+                if let r = r { Text(String(format: NSLocalizedString("Today we train %@", comment: ""), r.name)).font(.fh_title3_b).foregroundStyle(Color.ink).accessibilityIdentifier("today-we-train") }
                 HStack(spacing: -8) { ForEach(Array(ex.prefix(4).enumerated()), id: \.offset) { _, e in ExerciseIcon(exercise: e, size: 44) } }
                 Text(ex.prefix(3).map { $0.name }.joined(separator: " · ") + (ex.count > 3 ? " +\(ex.count - 3)" : "")).font(.fh_subheadline).foregroundStyle(Color.muted)
+                Text(store.isLightToday ? "Light day: fewer sets and a lighter load. Your streak stays safe." : "Picked from your days, your goal and how you feel. Swap a move or go lighter any time in Train.")
+                    .font(.fh_caption).foregroundStyle(Color.ink).padding(10).frame(maxWidth: .infinity, alignment: .leading)
+                    .background(LinearGradient.washGrad, in: RoundedRectangle(cornerRadius: 14)).accessibilityIdentifier("today-why")
                 BigButton(title: "Start", icon: "play.fill") { if let r = store.routine(on: store.today) { store.training = r } else { go(2) } }.accessibilityIdentifier("today-start")
             }
         }
