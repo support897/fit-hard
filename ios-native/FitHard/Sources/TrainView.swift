@@ -197,7 +197,7 @@ struct ExerciseDetail: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                if let a = store.animBase(e) { ExerciseMotion(ex: e, base: a).frame(height: 280).frame(maxWidth: .infinity).background(Color.surface, in: RoundedRectangle(cornerRadius: 20)) }
+                if let a = store.animBase(e) { ExerciseMotion(ex: e, base: a).aspectRatio(4.0 / 3.0, contentMode: .fit).frame(maxWidth: .infinity, maxHeight: 340).background(Color.surface, in: RoundedRectangle(cornerRadius: 20)) }
                 else { ExerciseIcon(exercise: e, size: 84).frame(maxWidth: .infinity) }
                 Flow { Chip(label: e.partLabel ?? e.part, on: false) {}; Chip(label: equipName(e.equipment), on: false) {}; Chip(label: levelName(e.level), on: false) {} }
                 HStack { Spacer(); ExerciseHeart(e: e); HelpButton(exercise: e) }

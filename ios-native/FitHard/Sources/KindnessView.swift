@@ -23,7 +23,7 @@ struct RainbowArcs: View {
                     .frame(width: CGFloat(264 - i * 28), height: CGFloat(264 - i * 28))
                     .position(x: 140, y: 140)
             }
-        }.frame(width: 280, height: 140).clipped()
+        }.frame(maxWidth: 280).aspectRatio(2, contentMode: .fit).clipped()
     }
 }
 

@@ -91,8 +91,8 @@ struct BottomTabBar: View {
     func item(_ i: Int) -> some View {
         Button { if tab == i { onRetap(i) } else { tab = i } } label: {
             VStack(spacing: 2) {
-                BrandIcon.tabImage(items[i].icon).resizable().scaledToFit().frame(width: 24, height: 24)
-                Text(LocalizedStringKey(items[i].title)).font(.fh_caption).lineLimit(1).minimumScaleFactor(0.8)
+                BrandIcon.tabImage(items[i].icon).resizable().scaledToFit().frame(width: 24, height: 24).accessibilityHidden(true)
+                Text(LocalizedStringKey(items[i].title)).font(.fh_caption).lineLimit(1).minimumScaleFactor(0.6).allowsTightening(true)
             }.frame(maxWidth: .infinity).padding(.vertical, 6)
             .foregroundStyle(tab == i ? Color.sage : Color.muted)
             .contentShape(Rectangle())
@@ -103,7 +103,7 @@ struct BottomTabBar: View {
         ZStack(alignment: .top) {
             HStack(spacing: 0) {
                 ForEach(0..<3, id: \.self) { i in item(i) }
-                Color.clear.frame(width: 76, height: 1)
+                Color.clear.frame(width: min(76, max(60, fhScreenWidth * 0.17)), height: 1)
                 ForEach(3..<6, id: \.self) { i in item(i) }
             }.padding(.horizontal, 4).padding(.top, 8)
             .background(

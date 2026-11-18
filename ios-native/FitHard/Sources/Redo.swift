@@ -163,3 +163,6 @@ extension Store {
         return (d, t)
     }
 }
+
+/// Width of the screen this app is on, so fixed looking sizes follow the phone (iOS 16 safe).
+var fhScreenWidth: CGFloat { UIScreen.main.bounds.width }

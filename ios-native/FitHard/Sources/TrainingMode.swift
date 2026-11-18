@@ -140,7 +140,7 @@ struct TrainingMode: View {
         VStack(spacing: 14) {
             Spacer(minLength: 0)
             if let a = store.animBase(ex) {
-                ExerciseMotion(ex: ex, base: a).frame(height: 260).frame(maxWidth: .infinity)
+                ExerciseMotion(ex: ex, base: a).aspectRatio(4.0 / 3.0, contentMode: .fit).frame(maxWidth: .infinity, maxHeight: 300)
                     .background(Color.surface, in: RoundedRectangle(cornerRadius: 20))
                     .onTapGesture { focus = .picture }
                     .accessibilityLabel("See the picture full screen").accessibilityIdentifier("train-picture")
@@ -200,7 +200,7 @@ struct TrainingMode: View {
                         .accessibilityIdentifier(isRest ? "rest-left" : "work-left")
                     BrandIcon(isRest ? "moon" : "flame").foregroundStyle(Color.sage)
                 }
-            }.frame(width: 190, height: 190)
+            }.frame(maxWidth: 190).aspectRatio(1, contentMode: .fit)
             .onChange(of: left) { v in tick(v, isRest) }
         }
     }

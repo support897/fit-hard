@@ -32,7 +32,7 @@ struct MealsView: View {
                             }.buttonStyle(.plain).accessibilityIdentifier("menu-\(s.0)")
                         }
                         Spacer()
-                    }.padding(20).frame(width: 290).frame(maxHeight: .infinity).background(Color.surface.ignoresSafeArea()).foregroundStyle(Color.ink)
+                    }.padding(20).frame(width: min(290, fhScreenWidth * 0.78)).frame(maxHeight: .infinity).background(Color.surface.ignoresSafeArea()).foregroundStyle(Color.ink)
                     .transition(.move(edge: .leading))
                 }
             }
