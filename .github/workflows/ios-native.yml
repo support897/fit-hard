@@ -22,6 +22,7 @@ jobs:
         run: |
           mkdir -p ios-native/FitHard/Resources/media
           cp app/assets/anim-*.webp app/assets/wally-*.webp ios-native/FitHard/Resources/media/
+          cp app/anim-data.js app/anim-data-expansion.js app/anim-pro.js ios-native/FitHard/Resources/media/
           ls ios-native/FitHard/Resources/media | wc -l
 
       - name: Install XcodeGen and generate the project
