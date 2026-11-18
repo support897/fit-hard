@@ -1,28 +1,23 @@
-# REPORT-REDO
 
-## Drew (Mockup, approved by her)
-20 screens in 5 sheets: Today, Door, Check in, Calendar, Train, Exercise, To do, Habits, Goals, Talk, More, Plus, Today plan, Exercise live, Full screen, How to do it, Rest break, Celebration, Calendar day, My Doses and plan.
+---
 
-## Built in build 39 (branch build-29)
-- Today: big Sage to Mist win card (3 of 5, bar, percent) with Wally on a cream disc; streak pill with mercy words; chips; week goal ring; two tone week bars; colour tile rows with count pills (Workout, Meals, My Doses); "Today we train X" with a why line.
-- Bottom bar: all six tabs kept. Big round middle button: Start (today's workout) or Dose (opens My Doses).
-- Training: Wally coaches beside the work (ready, working, set done, all done); rest strip; celebration line with streak.
-- Softer rounded cards with soft shadows everywhere (Card, BigButton).
-- CI: all three workflows now run on the xcode-27 runner. Log shows Xcode 27.1 (build 27A9275).
+## Round 2: studio exercise animations (build 40)
 
-## Same
-All old features and screens, the six tab ids, the feeling check (Bad, Ok, Great), doses wording (records only), Firebase, signing.
+What I built
+- New drawing engine `app/anim-pro.js`: a studio look in the brand colours (Sage top, Ink shorts, cream shoes, soft cream to mint room). Boy, girl and non binary builds.
+- It follows the person's pick in the profile (boy, girl, nonbinary). Change it and the figure changes.
+- Plays the real motion tracks (277 exercises). One rep is 4.5 s: hold 1.0, push 1.0, top hold 0.5, lower 2.0. Hip fixed, feet planted.
+- Machines, benches, seats, weight stacks, cables and pulleys are drawn around the body, so the gear matches the move.
+- In the app: a small web view (`ProAnim.swift`) shows it. Wally coaches with a line, "Rep 1 of 2", the step name, and an equipment label. Tap the picture for full screen. The "?" help sheet shows it too.
+- Falls back to the old still pictures if an exercise has no track. Reduce Motion shows one still pose.
+- Built with Xcode 27 / iOS 27 SDK on the pinned `xcode-27` runner.
 
-## Not built (honest)
-- Check in, Calendar day, Door, Goals, Talk, Habits, To do, More, full screen and how to still use the existing build 38 screens with the new soft cards. Not redrawn one by one.
-- New animation videos: the Leg Press sample video never arrived. Exercises still play the real 3 pose stills from the repo (girl, boy, non binary for 25 exercises only). No new videos made.
-- Ref pictures and research files never arrived. The look came from the written description.
+Honest limits
+- I never received the Leg Press sample video or the reference pictures, so I matched the written brief and public research (Fitbod and Gymaholic 3D, Freeletics silent loops, Peloton and Apple Fitness+ filmed).
+- It is vector motion, not filmed or 3D video.
+- 277 of 871 exercises have motion tracks. The other 594 still show stills or icons.
+- Each track has only 2 key poses. Accuracy was checked on sample sheets, not all 277 x 3. Some machines are auto-built shapes, not exact brand machines.
+- Other screens (Door, Check in, Goals, Talk, Habits, To do, More) still use the build 39 layout.
 
-## Test verdict
-Run 98 (commit 83ed383, Xcode 27.1): 109 unit tests, 0 failures. UI tests passed. Run 99 (ship) also passed, 44m.
-
-## TestFlight stamp
-Build 39 (version 2.0), uploaded Nov 18 2026 3:22 PM, status Ready to Submit (NOT submitted to Apple), groups Device Route QA and Review Recordings, expires in 90 days. Read back from App Store Connect. Ship run: Actions run 99, commit 83ed383, Xcode 27.1.
-
-## Needs her pick
-Send leg-press-sample.mp4 and ref-redo.jpg. Say if the other screens should be redrawn in the new style next.
+What I need you to pick
+- Whether to commission real filmed or 3D clips for the top 30 lifts.
