@@ -93,11 +93,18 @@ enum Notifier {
         }
         if on.contains("health") {
             for med in s.meds where !med.isPaused {
+                if med.frequency == "Every few days", let due = MedSchedule.nextDue(med, logs: s.medLogs, now: now) {
+                    // One reminder at the next due moment, set again every time a dose is marked taken.
+                    let b = qs.detailsOnLock ? String(format: NSLocalizedString("Time to check in on %@.", comment: ""), med.name) : NSLocalizedString("Open Fit Hard to check in.", comment: "")
+                    add("med-\(med.id.uuidString)-next", "medication", NSLocalizedString("Your check-in", comment: ""), b, Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: due), repeats: false)
+                    continue
+                }
+                if med.frequency == "As directed" { continue }
                 for (i, t) in med.allTimes.enumerated() {
                     let body = qs.detailsOnLock ? String(format: NSLocalizedString("Time to check in on %@.", comment: ""), med.name) : NSLocalizedString("Open Fit Hard to check in.", comment: "")
                     // Weekly doses ring on Mondays only (build 37); every other kind rings every day.
                     // Repeating triggers are one pending request each, so forever fits the system cap.
-                    let c = med.frequency == "Weekly" ? comps(mins(t), weekday: 2) : comps(mins(t))
+                    let c = med.frequency == "Weekly" ? comps(mins(t), weekday: med.lastTaken.map { Calendar.current.component(.weekday, from: $0) } ?? 2) : comps(mins(t))
                     add("med-\(med.id.uuidString)-\(i)", "medication", NSLocalizedString("Your check-in", comment: ""), body, c, repeats: true)   // times the user chose are never moved
                 }
             }

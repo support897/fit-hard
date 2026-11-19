@@ -4,7 +4,7 @@ import SwiftUI
 struct CalItem: Identifiable, Hashable {
     let id: String; let time: String; let title: String; let detail: String
     let cat: String        // training | meals | recovery | medication | personal
-    let icon: String; let done: Bool; let eventID: UUID?; let routineID: UUID?
+    let icon: String; var done: Bool; let eventID: UUID?; let routineID: UUID?
     var tone: String? = nil
     var colorKey: String { tone ?? cat }
 }
@@ -26,6 +26,7 @@ extension Color {
 extension Store {
     func mealTime(_ meal: String) -> String { meal == "breakfast" ? s.settings.breakfast : meal == "lunch" ? s.settings.lunch : s.settings.dinner }
     func line(_ r: Recipe) -> String {
+        if !showNumbers { return "\(r.minutes) min" }
         let p = RecipeService.macros(r).map { String(format: NSLocalizedString("%lld g protein", comment: ""), $0.p) } ?? NSLocalizedString("protein not available", comment: "")
         return "\(r.kcal) kcal · \(p) · \(r.minutes) min"
     }
@@ -78,7 +79,7 @@ extension Store {
         if s.restDays.contains(day) { out.append(CalItem(id: "rest-\(day)", time: "08:00", title: NSLocalizedString("Rest day", comment: ""), detail: NSLocalizedString("Recovery counts", comment: ""), cat: "recovery", icon: "moon", done: true, eventID: nil, routineID: nil)) }
         for m in s.meds where !m.isPaused {
             // Weekly doses stand on Mondays only (build 37); every other kind stands every day, forever.
-            if m.frequency == "Weekly", (Calendar.current.component(.weekday, from: dateFromKey(day) ?? Date()) + 5) % 7 != 0 { continue }
+            if !medDue(m, on: day) { continue }
             for t in m.allTimes {
                 let st = s.medLogs.last(where: { $0.medId == m.id && $0.day == day })?.status
                 // Due time and taken time always stand apart (Item 6 design, frame 3).
@@ -90,7 +91,7 @@ extension Store {
                 } else {
                     detail = String(format: NSLocalizedString("Due %@ · not marked yet", comment: ""), t)
                 }
-                out.append(CalItem(id: "med-\(m.id)-\(t)-\(day)", time: t, title: String(format: NSLocalizedString("Supplement · %@", comment: ""), m.name), detail: detail, cat: "medication", icon: "cross.case", done: st == "taken", eventID: nil, routineID: nil))
+                out.append(CalItem(id: "med-\(m.id)-\(t)-\(day)", time: t, title: String(format: NSLocalizedString("Supplement · %@", comment: ""), m.name), detail: detail, cat: "medication", icon: "cross.case", done: st == "taken", eventID: nil, routineID: nil, tone: m.toneKey))
             }
         }
         for t in s.tasks where t.day == day {
@@ -99,6 +100,7 @@ extension Store {
         for a in s.appts where dayKey(a.date) == day {
             out.append(CalItem(id: "appt-\(a.id)", time: timeString(a.date), title: a.title, detail: NSLocalizedString("Appointment", comment: ""), cat: "personal", icon: "calendar", done: false, eventID: nil, routineID: nil))
         }
+        for i in out.indices where s.markedDone.contains(out[i].id) { out[i].done = true }
         return out.sorted { ($0.time, $0.id) < ($1.time, $1.id) }
     }
     /// Adds an event unless the same title, day and time already exist.

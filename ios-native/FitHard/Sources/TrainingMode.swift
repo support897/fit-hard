@@ -13,6 +13,7 @@ struct TrainingMode: View {
     @State private var start = Date()
     @State private var restEnd: Date? = nil
     @State private var restLen = 90
+    @State private var restTouched = false
     @State private var pausedLeft: Int? = nil
     @State private var workEnd: Date? = nil
     @State private var workLen = 40
@@ -213,10 +214,13 @@ struct TrainingMode: View {
         if let i = entries[idx].sets.firstIndex(where: { $0.done != true }) { entries[idx].sets[i].done = true }
         workEnd = nil; startRest(); haptic(.heavy)
     }
-    func startRest() { restEnd = Date().addingTimeInterval(Double(restLen)); pausedLeft = nil }
+    func startRest() {
+        if !restTouched { restLen = ProgressionEngine.rest(for: exercise, goal: store.s.profile.primaryGoal) }
+        restEnd = Date().addingTimeInterval(Double(restLen)); pausedLeft = nil
+    }
     func adjust(_ d: Int) {
         let left = pausedLeft ?? max(0, Int((restEnd ?? Date()).timeIntervalSinceNow.rounded(.up)))
-        let n = max(5, left + d); restLen = max(15, restLen + d)
+        let n = max(5, left + d); restLen = max(15, restLen + d); restTouched = true
         if pausedLeft != nil { pausedLeft = n } else { restEnd = Date().addingTimeInterval(Double(n)) }
     }
 

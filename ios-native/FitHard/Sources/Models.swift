@@ -83,6 +83,8 @@ struct Med: Codable, Identifiable, Hashable {
     // Everything below is typed in by the user from what their own clinician told them. Nothing is ever suggested.
     var unit: String? = nil; var route: String? = nil; var frequency: String? = nil; var instructions: String? = nil
     var prescriber: String? = nil; var paused: Bool? = nil; var times: [String]? = nil
+    /// Build 42: a colour the person picked, when they last took it (their word), and the gap for "Every few days".
+    var color: String? = nil; var lastTaken: Date? = nil; var everyDays: Int? = nil
     var isPaused: Bool { paused ?? false }
     var allTimes: [String] { (times?.isEmpty == false ? times! : [time]) }
 }
@@ -144,6 +146,8 @@ struct Settings: Codable {
     var appearance = "system"   // legacy, unused
     var theme = "white"         // white (default) | dark | beige | brand
     var quietFrom = "22:00"; var quietTo = "07:00"; var lead = 10; var wallyQuiet = false
+    /// Build 42: white is the look until the person picks another in Settings. Calories and protein show only when wanted.
+    var themeChosen = false; var showNumbers: Bool? = nil
     init() {}
     /// Older saves used burrow, black and brown. They map onto the four themes of build 32.
     static func normalTheme(_ t: String) -> String {
@@ -152,7 +156,7 @@ struct Settings: Codable {
     init(from d: Decoder) throws {
         let c = try d.container(keyedBy: CodingKeys.self)
         on = c.v(.on, ["workout", "tasks", "health"]); waterTime = c.v(.waterTime, "12:00"); breakfast = c.v(.breakfast, "08:00")
-        lunch = c.v(.lunch, "12:30"); dinner = c.v(.dinner, "18:30"); detailsOnLock = c.v(.detailsOnLock, false); appearance = c.v(.appearance, "system"); theme = Settings.normalTheme(c.v(.theme, "white"))
+        lunch = c.v(.lunch, "12:30"); dinner = c.v(.dinner, "18:30"); detailsOnLock = c.v(.detailsOnLock, false); appearance = c.v(.appearance, "system"); themeChosen = c.v(.themeChosen, false); showNumbers = try? c.decodeIfPresent(Bool.self, forKey: .showNumbers); theme = themeChosen ? Settings.normalTheme(c.v(.theme, "white")) : "white"
         quietFrom = c.v(.quietFrom, "22:00"); quietTo = c.v(.quietTo, "07:00"); lead = c.v(.lead, 10); wallyQuiet = c.v(.wallyQuiet, false)
     }
 }
@@ -192,6 +196,9 @@ struct AppState: Codable {
     /// of their state. The plan maker tilts toward them; unhearting is one tap and the tilt eases off.
     var favExercises: [String] = []
     var favRoutines: [String] = []
+    /// Build 42: calendar items the person marked done by hand, and the ISO week the meals were last rebuilt.
+    var markedDone: [String] = []
+    var lastPlanWeek = ""
     var shopQty: [String: Double] = [:]
     var skipped: [String] = []
     var draftStart: Date? = nil
@@ -240,7 +247,7 @@ struct AppState: Codable {
         personalizationVersion = c.v(.personalizationVersion, 0); lightDays = c.v(.lightDays, []); planBackup = c.v(.planBackup, [:])
         portions = c.v(.portions, [:]); machinePhotos = c.v(.machinePhotos, [:]); language = c.v(.language, "en")
         ownerUid = c.v(.ownerUid, ""); sleep = c.v(.sleep, [:]); steps = c.v(.steps, [:]); kindnessGivenCents = c.v(.kindnessGivenCents, 0)
-        blockHistory = c.v(.blockHistory, []); fullPlanDays = c.v(.fullPlanDays, []); dayRoutine = c.v(.dayRoutine, [:])
+        markedDone = c.v(.markedDone, []); lastPlanWeek = c.v(.lastPlanWeek, ""); blockHistory = c.v(.blockHistory, []); fullPlanDays = c.v(.fullPlanDays, []); dayRoutine = c.v(.dayRoutine, [:])
     }
 }
 extension KeyedDecodingContainer {

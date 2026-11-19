@@ -57,7 +57,7 @@ struct PlanSection: View {
         ScrollView {
             VStack(spacing: 14) {
                 WallyBubble()
-                if let t = store.targets {
+                if store.showNumbers, let t = store.targets {
                     Card { HStack { VStack(alignment: .leading) { Text("Your daily target").font(.fh_caption).foregroundStyle(Color.muted)
                         Text(String(format: NSLocalizedString("%lld kcal · %lld g protein", comment: ""), t.kcal, t.protein)).font(.fh_headline).accessibilityIdentifier("target-line") }; Spacer() } }
                 }
@@ -146,10 +146,10 @@ struct RecipeDetail: View {
         let fav = store.s.favs.contains(recipe.id)
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
-                HStack(spacing: 8) { BrandLabel("\(recipe.minutes) min", icon: "clock"); BrandLabel("\(recipe.kcal) kcal", icon: "flame")
-                    if let m = RecipeService.macros(recipe) { BrandLabel(String(format: NSLocalizedString("%lld g protein", comment: ""), m.p), icon: "bolt.heart") } }.font(.fh_subheadline).foregroundStyle(Color.muted)
-                if let m = RecipeService.macros(recipe) { Text(String(format: NSLocalizedString("Per serving. Carbs %lld g, fat %lld g. Estimated from ingredient reference values.", comment: ""), m.c, m.f)).font(.fh_caption).foregroundStyle(Color.muted) }
-                else { Text("Protein is not available for this recipe.").font(.fh_caption).foregroundStyle(Color.muted) }
+                HStack(spacing: 8) { BrandLabel("\(recipe.minutes) min", icon: "clock"); if store.showNumbers { BrandLabel("\(recipe.kcal) kcal", icon: "flame") }
+                    if store.showNumbers, let m = RecipeService.macros(recipe) { BrandLabel(String(format: NSLocalizedString("%lld g protein", comment: ""), m.p), icon: "bolt.heart") } }.font(.fh_subheadline).foregroundStyle(Color.muted)
+                if store.showNumbers, let m = RecipeService.macros(recipe) { Text(String(format: NSLocalizedString("Per serving. Carbs %lld g, fat %lld g. Estimated from ingredient reference values.", comment: ""), m.c, m.f)).font(.fh_caption).foregroundStyle(Color.muted) }
+                else if store.showNumbers { Text("Protein is not available for this recipe.").font(.fh_caption).foregroundStyle(Color.muted) }
                 if !recipe.allergens.isEmpty { Text(NSLocalizedString("Contains: ", comment: "") + recipe.allergens.map { allergenName($0) }.joined(separator: ", ")).font(.fh_caption).foregroundStyle(Color.amber) }
                 Card {
                     SectionTitle(text: "Why this meal")
@@ -286,7 +286,9 @@ struct NutritionOverview: View {
             WallyBubble()
             Card {
                 SectionTitle(text: "Today")
-                if let t = t {
+                if !store.showNumbers {
+                    Text("Calories and protein are hidden. Turn them on in Settings, under Look.").foregroundStyle(Color.muted)
+                } else if let t = t {
                     bar("Calories", e.kcal, t.kcal, "kcal"); bar("Protein", e.p, t.protein, "g")
                     Text(String(format: NSLocalizedString("Carbs about %lld g and fat about %lld g make up the rest.", comment: ""), t.carbs, t.fat)).font(.fh_caption).foregroundStyle(Color.muted)
                 } else if !NutritionService.targetsAllowed(store.s.profile) {

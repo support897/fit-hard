@@ -144,7 +144,7 @@ struct ThemePicker: View {
         HStack(spacing: 12) {
             ForEach(opts, id: \.0) { th in
                 let on = store.s.settings.theme == th.0
-                Button { store.s.settings.theme = th.0; haptic() } label: {
+                Button { store.s.settings.theme = th.0; store.s.settings.themeChosen = true; haptic() } label: {
                     VStack(spacing: 6) {
                         ZStack {
                             Circle().fill(Color(hex: th.2)).frame(width: 48, height: 48)

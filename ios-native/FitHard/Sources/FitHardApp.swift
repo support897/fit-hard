@@ -8,7 +8,7 @@ struct FitHardApp: App {
     init() { FHFonts.register(); Notifier.registerCategories(); UNUserNotificationCenter.current().delegate = NotifDelegate.shared }
     var body: some Scene {
         WindowGroup {
-            Themed().environmentObject(store).onOpenURL { _ = GIDSignIn.sharedInstance.handle($0) }.onAppear { NotifDelegate.shared.store = store }
+            Themed().environmentObject(store).onOpenURL { _ = GIDSignIn.sharedInstance.handle($0) }.onAppear { NotifDelegate.shared.store = store; store.weeklyRefresh() }
                 .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in Notifier.rebuild(store) }
         }
     }

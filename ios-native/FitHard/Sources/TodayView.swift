@@ -239,7 +239,7 @@ struct TodayView: View {
 
     var mealsCard: some View {
         Card {
-            HStack { SectionTitle(text: "Food today"); Spacer(); if store.kcalToday > 0 { Text("\(store.kcalToday) kcal").font(.fh_caption).foregroundStyle(Color.muted) } }
+            HStack { SectionTitle(text: "Food today"); Spacer(); if store.showNumbers, store.kcalToday > 0 { Text("\(store.kcalToday) kcal").font(.fh_caption).foregroundStyle(Color.muted) } }
             ForEach(Lists.meals, id: \.self) { m in
                 if let r = store.s.plan[store.today]?[m].flatMap({ store.cat.recipe($0) }) {
                     let done = (store.s.eaten[store.today] ?? []).contains(m)

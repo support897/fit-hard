@@ -57,15 +57,26 @@ struct Legend: View {
 
 struct ItemRow: View {
     let it: CalItem
+    /// A tap on the round circle marks the item done, and a second tap undoes it.
+    var onDone: (() -> Void)? = nil
     var body: some View {
         HStack(spacing: 10) {
             RoundedRectangle(cornerRadius: 3).fill(Color.tone(it.colorKey)).frame(width: 5)
-            BrandIcon( it.done ? "checkmark.circle.fill" : it.icon).foregroundStyle(Color.tone(it.colorKey)).frame(width: 24)
+            BrandIcon(it.icon).foregroundStyle(Color.tone(it.colorKey)).frame(width: 24)
             VStack(alignment: .leading, spacing: 2) {
                 Text("\(it.time) · \(it.title)").font(.fh_subheadline_b).strikethrough(it.done && it.cat != "medication").multilineTextAlignment(.leading)
                 if !it.detail.isEmpty { Text(it.detail).font(.fh_caption).foregroundStyle(Color.muted) }
             }
             Spacer(minLength: 0)
+            if let onDone {
+                Button { onDone() } label: {
+                    ZStack {
+                        if it.done { BrandIcon("checkmark.circle.fill").font(.fh_title).foregroundStyle(Color.tone(it.colorKey)) }
+                        else { Circle().stroke(Color.tone(it.colorKey), lineWidth: 2.5).frame(width: 26, height: 26) }
+                    }.frame(width: 44, height: 44).contentShape(Rectangle())
+                }.buttonStyle(.plain)
+                .accessibilityLabel(it.done ? "Done. Tap to undo" : "Mark as done").accessibilityIdentifier("done-\(it.id)")
+            }
         }.padding(10).background(Color.tone(it.colorKey).opacity(0.10), in: RoundedRectangle(cornerRadius: 12)).frame(minHeight: 44)
     }
 }
@@ -92,7 +103,7 @@ struct DayDetail: View {
             if items.isEmpty { Card { Text("Nothing planned. Tap the plus to add something.").foregroundStyle(Color.muted) } }
             ForEach(items) { it in
                 VStack(alignment: .leading, spacing: 6) {
-                    ItemRow(it: it).onTapGesture { if let id = it.eventID, let e = store.s.events.first(where: { $0.id == id }) { edit(e) } }
+                    ItemRow(it: it, onDone: { store.toggleItemDone(it, day: day) }).onTapGesture { if let id = it.eventID, let e = store.s.events.first(where: { $0.id == id }) { edit(e) } }
                     if it.cat == "training", let r = store.routine(on: day), it.routineID == r.id, !it.done {
                         HStack {
                             Button("Start") { store.training = r }.accessibilityIdentifier("cal-start")
@@ -130,7 +141,7 @@ struct WeekView: View {
                         Text(d.formatted(.dateTime.weekday(.wide).day().month())).font(.fh_subheadline_b)
                         let items = store.calItems(on: k)
                         if items.isEmpty { Text("Free").font(.fh_caption).foregroundStyle(Color.muted) }
-                        ForEach(items.prefix(4)) { ItemRow(it: $0) }
+                        ForEach(items.prefix(4)) { it in ItemRow(it: it, onDone: { store.toggleItemDone(it, day: k) }) }
                         if items.count > 4 { Text(String(format: NSLocalizedString("+%lld more", comment: ""), items.count - 4)).font(.fh_caption).foregroundStyle(Color.muted) }
                     }.padding(12).frame(maxWidth: .infinity, alignment: .leading).background(Color.surface, in: RoundedRectangle(cornerRadius: 16))
                 }.buttonStyle(.plain).foregroundStyle(Color.ink)
@@ -150,7 +161,7 @@ struct UpcomingView: View {
                     if !items.isEmpty {
                         VStack(alignment: .leading, spacing: 6) {
                             Text(i == 0 ? "Today" : d.formatted(.dateTime.weekday(.wide).day().month())).font(.fh_subheadline_b)
-                            ForEach(items.prefix(5)) { ItemRow(it: $0).onTapGesture { open(k) } }
+                            ForEach(items.prefix(5)) { it in ItemRow(it: it, onDone: { store.toggleItemDone(it, day: k) }).onTapGesture { open(k) } }
                         }
                     }
                 }
@@ -197,7 +208,7 @@ struct MonthGrid: View {
             Card {
                 HStack { Text(dateFromKey(sel)?.formatted(.dateTime.weekday(.wide).day().month()) ?? sel).font(.fh_headline); Spacer(); Button("Open day") { open() }.font(.fh_subheadline_b) }
                 if items.isEmpty { Text("Nothing planned. That is fine.").foregroundStyle(Color.muted) }
-                ForEach(items) { ItemRow(it: $0) }
+                ForEach(items) { it in ItemRow(it: it, onDone: { store.toggleItemDone(it, day: sel) }) }
                 ForEach(store.s.habits) { h in BrandLabel(h.name, icon: h.done.contains(sel) ? "checkmark.circle.fill" : "circle").font(.fh_subheadline).foregroundStyle(h.done.contains(sel) ? Color.sage : Color.ink) }
             }
         }.padding(16) }

@@ -77,7 +77,9 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section("Look") {
+                Text("Background colour").font(.fh_subheadline_b).foregroundStyle(Color.ink)
                 ThemePicker()
+                Toggle("Show calories and protein", isOn: Binding(get: { store.showNumbers }, set: { store.s.settings.showNumbers = $0 })).tint(Color.sage).accessibilityIdentifier("show-numbers")
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Your character").font(.fh_subheadline_b).foregroundStyle(Color.ink)
                     HStack(spacing: 10) {

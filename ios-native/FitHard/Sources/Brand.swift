@@ -80,6 +80,7 @@ extension Color {
     ]
     static func tone(_ key: String) -> Color {
         let dark = Color.isDark
+        if key.hasPrefix("dose.") { return DosePalette.color(String(key.dropFirst(5))) }
         if let t = toneTable[key] { return Color(hex: dark ? t.1 : t.0) }
         return Color.cat(key)
     }

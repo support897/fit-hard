@@ -107,6 +107,7 @@ final class Store: ObservableObject {
     }
     var targets: Targets? { NutritionService.targets(s.profile) }
     var mealTypes: [String] { s.profile.mealsPerDay <= 2 ? ["lunch", "dinner"] : Lists.meals }
+    var pantryNames: Set<String> { Set(s.inventory.map { RecipeService.norm($0.name) }) }
     func generatePlan(days: Int = 7, force: Bool = false) {
         var used = Set<String>()
         let seed = UInt64(abs(s.profile.name.hashValue % 100000) + 17)
@@ -118,7 +119,7 @@ final class Store: ObservableObject {
             for (mi, meal) in mealTypes.enumerated() {
                 if i == 0, (s.eaten[key] ?? []).contains(meal), let kept = s.plan[key]?[meal] { row[meal] = kept; used.insert(kept); continue }
                 if let pick = RecipeService.pick(meal: meal, profile: s.profile, targets: targets, count: mealTypes.count,
-                                                 seed: seed &+ UInt64(i * 31 + mi * 7 + 1), exclude: used) {
+                                                 seed: seed &+ UInt64(i * 31 + mi * 7 + 1), exclude: used, have: pantryNames) {
                     row[meal] = pick.id; used.insert(pick.id)
                 }
             }
@@ -130,7 +131,7 @@ final class Store: ObservableObject {
         let cur = s.plan[day]?[meal]
         let seed = UInt64(Date().timeIntervalSince1970.rounded()) & 0xFFFFFF
         if let r = RecipeService.pick(meal: meal, profile: s.profile, targets: targets, count: mealTypes.count, seed: seed,
-                                      exclude: Set(s.plan.values.flatMap { $0.values }), avoid: cur) {
+                                      exclude: Set(s.plan.values.flatMap { $0.values }), avoid: cur, have: pantryNames) {
             s.plan[day, default: [:]][meal] = r.id; haptic()
         }
     }
@@ -278,6 +279,8 @@ final class Store: ObservableObject {
     func logMed(_ m: Med, _ status: String) {
         s.medLogs.removeAll { $0.medId == m.id && $0.day == today }
         s.medLogs.append(MedLog(medId: m.id, day: today, status: status))
+        if status == "taken", let i = s.meds.firstIndex(where: { $0.id == m.id }) { s.meds[i].lastTaken = Date() }
+        Notifier.rebuild(self)
         haptic()
     }
     /// The time a dose was marked taken today, if the person marked it.

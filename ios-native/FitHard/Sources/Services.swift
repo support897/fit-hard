@@ -64,7 +64,7 @@ enum RecipeService {
         switch meal { case "breakfast": return 0.30; case "lunch": return 0.35; default: return 0.35 }   // near even, so protein is spread across meals (Schoenfeld and Aragon 2018)
     }
     /// Picks the recipe whose calories (and protein, when known) sit closest to the share of the day's target.
-    static func pick(meal: String, profile p: Profile, targets t: Targets?, count: Int, seed: UInt64, exclude: Set<String>, avoid: String? = nil, light: Bool = false, maxKcal: Int? = nil) -> Recipe? {
+    static func pick(meal: String, profile p: Profile, targets t: Targets?, count: Int, seed: UInt64, exclude: Set<String>, avoid: String? = nil, light: Bool = false, maxKcal: Int? = nil, have: Set<String> = []) -> Recipe? {
         var pool = cat.recipes.filter { $0.meal == meal && allowed($0, p) && $0.id != avoid }
         let quick = pool.filter { $0.minutes <= max(p.cookMinutes, 20) + 15 }
         if quick.count >= 12 { pool = quick }
@@ -81,6 +81,8 @@ enum RecipeService {
             let pw = p.primaryGoal == "lose" ? 1.0 : 0.6   // Lose goal leans on protein dense meals (Jager et al. 2017)
             if let m = macros(r) { s += abs(Double(m.p) - tp) / max(1, tp) * pw } else { s += pw }
             if exclude.contains(r.id) { s += 0.5 }
+            // Meals the kitchen can already make come first: the more of the ingredients are in the pantry, the better the score.
+            if !have.isEmpty { let names = r.ingredients.map { norm($0.name) }; s -= 0.45 * Double(names.filter { have.contains($0) }.count) / Double(max(1, names.count)) }
             return s
         }
         return pool.prefix(60).min(by: { score($0) < score($1) })
@@ -153,9 +155,20 @@ enum ProgressionEngine {
     static let lower: Set<String> = ["quadriceps", "hamstrings", "glutes", "calves", "adductors", "abductors"]
     static func range(for ex: Exercise, goal: String) -> (Int, Int) {
         let compound = ["barbell", "machine"].contains(ex.equipment)
-        if goal == "strength" { return compound ? (5, 8) : (6, 10) }
-        if goal == "muscle" { return compound ? (6, 10) : (8, 12) }
+        if goal == "strength" { return compound ? (4, 6) : (6, 10) }          // heavier loads for strength (ACSM 2009 and 2026)
+        if goal == "muscle" { return compound ? (6, 10) : (8, 12) }           // the 6 to 12 zone for size
+        if goal == "lose" || goal == "fitter" { return compound ? (10, 15) : (12, 15) }   // lighter loads, more reps, shorter rests
         return compound ? (8, 12) : (10, 15)
+    }
+    /// Seconds of rest that suit the goal: long for heavy compound work, short for lighter fitness work.
+    static func rest(for ex: Exercise?, goal: String) -> Int {
+        let compound = ["barbell", "machine"].contains(ex?.equipment ?? "")
+        switch goal {
+        case "strength": return compound ? 150 : 90
+        case "muscle": return compound ? 90 : 75
+        case "lose", "fitter": return 45
+        default: return 60
+        }
     }
     static func step(_ ex: Exercise, _ kg: Double) -> Double {
         if kg <= 0 { return 0 }
