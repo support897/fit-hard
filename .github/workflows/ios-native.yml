@@ -23,6 +23,8 @@ jobs:
           mkdir -p ios-native/FitHard/Resources/media
           cp app/assets/anim-*.webp app/assets/wally-*.webp ios-native/FitHard/Resources/media/
           cp app/anim-data.js app/anim-data-expansion.js app/anim-pro.js ios-native/FitHard/Resources/media/
+          # Exercise videos (vid-<name>-<girl|boy|nb>.mp4) are bundled when they exist in the repo.
+          cp app/assets/vid-*.mp4 ios-native/FitHard/Resources/media/ 2>/dev/null || true
           ls ios-native/FitHard/Resources/media | wc -l
 
       - name: Install XcodeGen and generate the project
