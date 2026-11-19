@@ -77,7 +77,7 @@ struct ExerciseMotion: View {
     @Environment(\.accessibilityReduceMotion) var reduceMotion
     let ex: Exercise
     let base: String
-    var coach = true
+    var coach = false
     @State private var phase = ""
     @State private var rep = 0
 

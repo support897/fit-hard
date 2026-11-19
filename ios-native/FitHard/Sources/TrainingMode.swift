@@ -110,10 +110,17 @@ struct TrainingMode: View {
                 }
             } else if focus == .picture, let ex = exercise, let a = store.animBase(ex) {
                 VStack(spacing: 14) {
-                    ExerciseMotion(ex: ex, base: a).frame(maxWidth: .infinity, maxHeight: .infinity)
-                    Text(ex.name).font(.fh_title3_b).foregroundStyle(Color.ink)
-                    Text("Tap anywhere to go back").font(.fh_caption).foregroundStyle(Color.muted)
-                }.padding(20)
+                    HStack {
+                        Spacer()
+                        Button { focus = .none } label: { BrandIcon("xmark").font(.fh_title3_b).foregroundStyle(Color.ink).frame(width: 44, height: 44).background(Color.tint, in: Circle()) }
+                            .accessibilityLabel("Close full screen").accessibilityIdentifier("focus-close")
+                    }
+                    Spacer(minLength: 0)
+                    ExerciseMotion(ex: ex, base: a).aspectRatio(4.0 / 3.0, contentMode: .fit).frame(maxWidth: .infinity)
+                        .background(Color.surface, in: RoundedRectangle(cornerRadius: 20)).clipShape(RoundedRectangle(cornerRadius: 20))
+                    Text(ex.name).font(.fh_title3_b).foregroundStyle(Color.ink).multilineTextAlignment(.center)
+                    Spacer(minLength: 0)
+                }.padding(16)
             }
         }.contentShape(Rectangle()).onTapGesture { focus = .none }
         .accessibilityLabel("Back to the workout").accessibilityIdentifier(focus == .timer ? "focus-timer" : "focus-picture")
@@ -143,6 +150,10 @@ struct TrainingMode: View {
             if let a = store.animBase(ex) {
                 ExerciseMotion(ex: ex, base: a).aspectRatio(4.0 / 3.0, contentMode: .fit).frame(maxWidth: .infinity, maxHeight: 300)
                     .background(Color.surface, in: RoundedRectangle(cornerRadius: 20))
+                    .overlay(alignment: .bottomTrailing) {
+                        Button { focus = .picture } label: { BrandIcon("arrow.expand").font(.fh_subheadline_b).foregroundStyle(Color.sage).frame(width: 44, height: 44).background(Color.tint, in: Circle()) }
+                            .padding(6).accessibilityLabel("Open full screen").accessibilityIdentifier("train-fullscreen")
+                    }
                     .onTapGesture { focus = .picture }
                     .accessibilityLabel("See the picture full screen").accessibilityIdentifier("train-picture")
             } else { ExerciseIcon(exercise: ex, size: 124) }
