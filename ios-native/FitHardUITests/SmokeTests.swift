@@ -254,8 +254,8 @@ final class SmokeTests: XCTestCase {
         any(app, "pick-own").tap()
         let name = any(app, "med-name"); XCTAssertTrue(name.waitForExistence(timeout: 5)); name.tap(); name.typeText("Vitamin D drops")
         any(app, "med-next").tap()
-        app.switches["This was provided by my clinician"].tap()
-        any(app, "med-add").tap()
+        any(app, "med-next").tap()
+        let add0 = any(app, "med-add"); scrollTo(app, add0); add0.tap()
         XCTAssertTrue(app.staticTexts["Vitamin D drops"].waitForExistence(timeout: 5), "the new dose stands on the home")
         // Probe: the first "Taken" belongs to the covered Today card (off screen); scope to the doses home card.
         let card = app.descendants(matching: .any).matching(NSPredicate(format: "identifier BEGINSWITH 'dose-'")).firstMatch
@@ -306,7 +306,8 @@ final class SmokeTests: XCTestCase {
         shot(app, "doses-step2")
         any(app, "med-next").tap()
         shot(app, "doses-step3")
-        app.switches["This was provided by my clinician"].tap()
+        any(app, "med-next").tap()
+        shot(app, "doses-step4")
         let add = any(app, "med-add"); scrollTo(app, add); add.tap()
         XCTAssertTrue(app.staticTexts["Magnesium"].waitForExistence(timeout: 5), "the picked dose stands on the home")
     }
