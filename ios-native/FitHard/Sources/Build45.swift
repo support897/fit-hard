@@ -75,7 +75,7 @@ enum MatchBrain {
     typealias Ref = (m: Catalog.Machine, key: String, load: () -> UIImage?)
 
     /// The person's own photos first, then the three poses of the machine's first exercise, then one pose of the second.
-    static func references(store: Store) -> [Ref] {
+    @MainActor static func references(store: Store) -> [Ref] {
         var out: [Ref] = []
         for m in store.cat.machines {
             if let f = store.s.machinePhotos[m.id] { out.append((m, "own-\(m.id)-\(f)", { MachinePhotoStore.image(f) })) }
