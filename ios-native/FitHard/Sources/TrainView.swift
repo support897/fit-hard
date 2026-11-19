@@ -7,23 +7,53 @@ import SwiftUI
 struct TrainView: View {
     @EnvironmentObject var store: Store
     @State private var showAll = false
+    @State private var sel = ""
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
+                    header
                     WallyBubble()
                     if store.s.routines.isEmpty { buildCard }
+                    else if !sel.isEmpty, sel != store.today { previewCard(sel) }
                     else if let r = store.routine(on: store.today) { dayCard(r) }
                     else { restCard }
                     quickCard
                 }.padding(16)
             }
             .background(Color.cream).navigationTitle("Train")
+            .onAppear { if sel.isEmpty { sel = store.today } }
             .toolbar { ToolbarItem(placement: .navigationBarTrailing) {
                 Button { showAll = true } label: { HStack(spacing: 4) { BrandIcon("plus").font(.fh_subheadline_b); Text("All workouts").font(.fh_subheadline_b) } }
                     .accessibilityLabel("All workouts and more").accessibilityIdentifier("train-plus")
             } }
             .sheet(isPresented: $showAll) { TrainAllSheet().environmentObject(store) }
+        }
+    }
+
+    var header: some View {
+        let n = store.s.profile.trainDays.count
+        return VStack(alignment: .leading, spacing: 10) {
+            Text(Date().formatted(.dateTime.weekday(.wide).day().month(.wide))).font(.fh_title_b).foregroundStyle(Color.ink)
+            if !store.s.routines.isEmpty {
+                Text(String(format: NSLocalizedString("Your week: %lld training days, the rest is recovery.", comment: ""), n)).font(.fh_caption).foregroundStyle(Color.muted)
+                TrainWeekStrip(sel: $sel)
+            }
+        }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    func previewCard(_ k: String) -> some View {
+        let r = store.routine(on: k)
+        return Card {
+            Text((dateFromKey(k) ?? Date()).formatted(.dateTime.weekday(.wide).day().month(.wide))).font(.fh_caption_b).foregroundStyle(Color.muted)
+            if let r {
+                HStack { Text(r.name).font(.fh_title_b); Spacer(); TypeBadge(type: r.trainType) }
+                Text(String(format: NSLocalizedString("%lld exercises · about %lld min", comment: ""), r.exIds.count, store.s.profile.minutes)).font(.fh_caption).foregroundStyle(Color.muted)
+                TrainDayList(r: r)
+                Text("You can start this one on its day. Tap today to go back.").font(.fh_caption).foregroundStyle(Color.muted)
+            } else {
+                Text("Rest day. Recovery is part of the plan.").font(.fh_headline)
+            }
         }
     }
 
@@ -68,10 +98,7 @@ struct TrainView: View {
             } else if adapt.kind != .asPlanned {
                 Button("See the full plan") { store.s.fullPlanDays.append(store.today) }.font(.fh_caption_b).foregroundStyle(Color.sage).accessibilityIdentifier("full-plan")
             }
-            if !ex.isEmpty {
-                HStack(spacing: -8) { ForEach(Array(ex.prefix(4).enumerated()), id: \.offset) { _, e in ExerciseIcon(exercise: e, size: 44) } }
-                Text(ex.prefix(3).map { $0.name }.joined(separator: " · ") + (ex.count > 3 ? " +\(ex.count - 3)" : "")).font(.fh_subheadline).foregroundStyle(Color.muted)
-            }
+            if !ex.isEmpty { TrainDayList(r: r) }
             if done {
                 BrandLabel("Done today", icon: "checkmark.seal.fill").foregroundStyle(Color.sage)
                 BigButton(title: "Train again", icon: "play.fill", filled: false) { store.training = r }.accessibilityIdentifier("start-today")
