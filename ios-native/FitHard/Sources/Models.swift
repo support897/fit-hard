@@ -60,10 +60,12 @@ struct Profile: Codable {
     /// Training block length in weeks (build 36, item C). 0 = auto: 6 for beginners, 4 otherwise.
     /// The research shape of record: core moves stay stable for the whole block, the last week deloads.
     var blockWeeks = 0
+    /// Build 44: weekdays (Calendar weekday, 1 = Sunday) the person chose as free eating days. No plan on those days.
+    var freeMealDays: [Int] = []
     init() {}
     init(from d: Decoder) throws {
         let c = try d.container(keyedBy: CodingKeys.self)
-        name = c.v(.name, ""); goals = c.v(.goals, []); primaryGoal = c.v(.primaryGoal, ""); needs = c.v(.needs, []); cuisines = c.v(.cuisines, [])
+        freeMealDays = c.v(.freeMealDays, []); name = c.v(.name, ""); goals = c.v(.goals, []); primaryGoal = c.v(.primaryGoal, ""); needs = c.v(.needs, []); cuisines = c.v(.cuisines, [])
         allergens = c.v(.allergens, []); vegetarian = c.v(.vegetarian, false); trainDays = c.v(.trainDays, [2, 4, 6])
         equipment = c.v(.equipment, "gym"); minutes = c.v(.minutes, 30); workoutTime = c.v(.workoutTime, "18:00"); waterGoal = c.v(.waterGoal, 2000)
         age = c.v(.age, 0); heightCm = c.v(.heightCm, 0); weightKg = c.v(.weightKg, 0); targetKg = c.v(.targetKg, 0); imperial = c.v(.imperial, false)

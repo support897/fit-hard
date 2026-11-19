@@ -77,7 +77,7 @@ struct ItemRow: View {
                 }.buttonStyle(.plain)
                 .accessibilityLabel(it.done ? "Done. Tap to undo" : "Mark as done").accessibilityIdentifier("done-\(it.id)")
             }
-        }.padding(10).background(Color.tone(it.colorKey).opacity(0.10), in: RoundedRectangle(cornerRadius: 12)).frame(minHeight: 44)
+        }.padding(10).background(Color.tone(it.colorKey).opacity(it.done ? 0.24 : 0.10), in: RoundedRectangle(cornerRadius: 12)).frame(minHeight: 44)
     }
 }
 

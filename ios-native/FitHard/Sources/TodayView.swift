@@ -25,6 +25,7 @@ struct TodayView: View {
                     winCard
                     chipsRow
                     heroCard
+                    if Calendar.current.component(.weekday, from: Date()) == 1 { WeekWrapCard() }
                     if !store.s.profile.setupDone { finishProfileLink }
                     if store.s.checkins[store.today] == nil { checkinCard } else { checkedInRow }
                     if let missed = store.missedSession { missedCard(missed) }
@@ -240,6 +241,7 @@ struct TodayView: View {
     var mealsCard: some View {
         Card {
             HStack { SectionTitle(text: "Food today"); Spacer(); if store.showNumbers, store.kcalToday > 0 { Text("\(store.kcalToday) kcal").font(.fh_caption).foregroundStyle(Color.muted) } }
+            if store.isFreeMealDay(store.today) { Text("Free eating day. Enjoy it, there is nothing to log.").font(.fh_subheadline).foregroundStyle(Color.muted) }
             ForEach(Lists.meals, id: \.self) { m in
                 if let r = store.s.plan[store.today]?[m].flatMap({ store.cat.recipe($0) }) {
                     let done = (store.s.eaten[store.today] ?? []).contains(m)

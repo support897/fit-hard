@@ -65,6 +65,7 @@ struct PlanSection: View {
                     let k = dayKey(d)
                     Card {
                         Text(d.formatted(.dateTime.weekday(.wide).day().month())).font(.fh_headline)
+                        if store.isFreeMealDay(k) { Text("Free eating day. Enjoy it, there is nothing to log.").font(.fh_subheadline).foregroundStyle(Color.muted) }
                         ForEach(Lists.meals, id: \.self) { m in
                             if let r = store.s.plan[k]?[m].flatMap({ store.cat.recipe($0) }) {
                                 HStack {

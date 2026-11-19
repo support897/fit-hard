@@ -140,6 +140,7 @@ struct SettingsView: View {
                 Stepper("Water goal: \(store.s.profile.waterGoal) ml", value: $store.s.profile.waterGoal, in: 1000...4000, step: 250)
                 NavigationLink("Food and allergies") { FoodPrefs() }
                 NavigationLink("Training days") { DaysPicker() }
+                NavigationLink("Eating days") { FreeDaysPicker() }.accessibilityIdentifier("eating-days")
                 Button("Rebuild meals and workouts") { store.s.plan = [:]; store.profileChanged(); store.say("Plan rebuilt") }
                 BigButton(title: "Save and update my plan", icon: "sparkles") { store.profileChanged(); store.say("Your plan is updated") }.accessibilityIdentifier("profile-save")
                 Text("Your workout history stays exactly as it is.").font(.fh_caption).foregroundStyle(Color.muted)

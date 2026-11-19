@@ -233,6 +233,17 @@ struct MachineMatchCard: View {
                     if let e = m.exerciseIds.compactMap({ store.cat.exercise($0) }).first { Text(e.cue).font(.fh_caption).foregroundStyle(Color.muted) }
                 }
             }
+            if let e = m.exerciseIds.compactMap({ store.cat.exercise($0) }).first {
+                HStack(spacing: 8) {
+                    ExerciseHeart(e: e)
+                    Text(store.s.favExercises.contains(e.id) ? "Kept as a favourite. Fit Hard picks it more often." : "Tap the heart to keep it as a favourite").font(.fh_caption).foregroundStyle(Color.muted)
+                    Spacer(minLength: 0)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("How to use it").font(.fh_caption_b).foregroundStyle(Color.ink)
+                    Text(e.cue).font(.fh_subheadline).foregroundStyle(Color.ink)
+                }.frame(maxWidth: .infinity, alignment: .leading)
+            }
             if let a = addedTo {
                 Text("Added to \(a).").font(.fh_subheadline_b).foregroundStyle(Color.sage)
             } else {

@@ -115,6 +115,7 @@ final class Store: ObservableObject {
             guard let d = Calendar.current.date(byAdding: .day, value: i, to: Date()) else { continue }
             let key = dayKey(d)
             if !force && s.plan[key] != nil && i == 0 && !(s.plan[key]?.isEmpty ?? true) && s.profile.setupDone { continue }
+            if isFreeMealDay(key) { s.plan[key] = [:]; continue }
             var row: [String: String] = [:]
             for (mi, meal) in mealTypes.enumerated() {
                 if i == 0, (s.eaten[key] ?? []).contains(meal), let kept = s.plan[key]?[meal] { row[meal] = kept; used.insert(kept); continue }
