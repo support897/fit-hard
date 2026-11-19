@@ -219,7 +219,7 @@ final class Build29Tests: XCTestCase {
     func testThemesAreFourAndWhiteIsTheDefaultAndThePickTravelsWithTheAccount() throws {
         XCTAssertEqual(Settings().theme, "white")
         XCTAssertEqual(Settings.normalTheme("black"), "dark"); XCTAssertEqual(Settings.normalTheme("brown"), "dark"); XCTAssertEqual(Settings.normalTheme("burrow"), "beige")
-        var st = AppState(); st.settings.theme = "brand"
+        var st = AppState(); st.settings.theme = "brand"; st.settings.themeChosen = true
         let back = try JSONDecoder().decode(AppState.self, from: JSONEncoder().encode(st))
         XCTAssertEqual(back.settings.theme, "brand", "the theme is part of the saved record, so a fresh install restore brings it back")
     }

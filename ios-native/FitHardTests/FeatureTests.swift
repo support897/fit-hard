@@ -150,7 +150,7 @@ final class FeatureTests: XCTestCase {
             XCTAssertFalse(r.allergens.contains("milk") || r.allergens.contains("gluten")); XCTAssertFalse(r.meat); XCTAssertFalse(r.ingredients.contains { $0.name.contains("mushroom") }) } }
     }
     func testLunchCardShowsCaloriesProteinAndCookTime() {
-        let st = ready(); let r = st.cat.recipe(st.s.plan[st.today]!["lunch"]!)!
+        let st = ready(); st.s.settings.showNumbers = true; let r = st.cat.recipe(st.s.plan[st.today]!["lunch"]!)!
         let line = st.line(r)
         XCTAssertTrue(line.contains("\(r.kcal) kcal")); XCTAssertTrue(line.contains("protein")); XCTAssertTrue(line.contains("\(r.minutes) min"))
     }
@@ -279,6 +279,7 @@ final class FeatureTests: XCTestCase {
     }
     func testTrainingDayShowsTheRealLunchAndWorkoutCompletionUpdatesTheCalendar() {
         let st = ready { $0.trainDays = daysFromToday(5) }
+        st.s.settings.showNumbers = true
         let items = st.calItems(on: st.today)
         XCTAssertTrue(items.contains { $0.cat == "training" && !$0.done })
         let lunch = items.first { $0.id.hasPrefix("meal-") && $0.id.hasSuffix("lunch") }!
