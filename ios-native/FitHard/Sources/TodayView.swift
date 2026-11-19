@@ -267,7 +267,6 @@ struct TodayView: View {
             else if store.workedOutToday { BrandLabel("Done today", icon: "checkmark.seal.fill").foregroundStyle(Color.sage) }
             else {
                 if let r = r { Text(String(format: NSLocalizedString("Today we train %@", comment: ""), r.name)).font(.fh_title3_b).foregroundStyle(Color.ink).accessibilityIdentifier("today-we-train") }
-                HStack(spacing: -8) { ForEach(Array(ex.prefix(4).enumerated()), id: \.offset) { _, e in ExerciseIcon(exercise: e, size: 44) } }
                 Text(ex.prefix(3).map { $0.name }.joined(separator: " · ") + (ex.count > 3 ? " +\(ex.count - 3)" : "")).font(.fh_subheadline).foregroundStyle(Color.muted)
                 Text(store.isLightToday ? "Light day: fewer sets and a lighter load. Your streak stays safe." : "Picked from your days, your goal and how you feel. Swap a move or go lighter any time in Train.")
                     .font(.fh_caption).foregroundStyle(Color.ink).padding(10).frame(maxWidth: .infinity, alignment: .leading)
