@@ -33,13 +33,16 @@ struct TrainView: View {
 
     var header: some View {
         let n = store.s.profile.trainDays.count
-        return VStack(alignment: .leading, spacing: 10) {
-            Text(Date().formatted(.dateTime.weekday(.wide).day().month(.wide))).font(.fh_title_b).foregroundStyle(Color.ink)
-            if !store.s.routines.isEmpty {
-                Text(String(format: NSLocalizedString("Your week: %lld training days, the rest is recovery.", comment: ""), n)).font(.fh_caption).foregroundStyle(Color.muted)
-                TrainWeekStrip(sel: $sel)
+        return VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(Date().formatted(.dateTime.weekday(.wide)).uppercased()).font(.fh_caption_b).tracking(2).foregroundStyle(Color.sage)
+                Text(Date().formatted(.dateTime.day().month(.wide))).font(.fh_largeTitle).foregroundStyle(Color.ink)
             }
-        }.frame(maxWidth: .infinity, alignment: .leading)
+            if !store.s.routines.isEmpty {
+                TrainWeekStrip(sel: $sel)
+                Text(String(format: NSLocalizedString("%lld training days this week. The rest is recovery.", comment: ""), n)).font(.fh_caption).foregroundStyle(Color.muted)
+            }
+        }.frame(maxWidth: .infinity, alignment: .leading).padding(.top, 4)
     }
 
     func previewCard(_ k: String) -> some View {
@@ -211,7 +214,7 @@ struct LibraryView: View {
                     // Build 36, item G: no leftover icon circle beside the real picture. The row
                     // carries the real picture when there is one; the designed brand icon stands
                     // only where no real picture exists, never beside one, never a blank row.
-                    HStack { if let a = store.animBase(e) { AnimatedFrames(base: a).frame(width: 44, height: 44) } else { ExerciseIcon(exercise: e, size: 44) }; VStack(alignment: .leading) { Text(e.name).font(.fh_subheadline_b); Text("\(e.partLabel ?? e.part) · \(equipName(e.equipment))").font(.fh_caption).foregroundStyle(Color.muted) }; Spacer(); ExerciseHeart(e: e); BrandIcon("chevron.right").foregroundStyle(Color.muted) }
+                    ExerciseLine(e: e, detail: equipName(e.equipment)).padding(.vertical, 4)
                 }.listRowBackground(Color.surface)
             }.listStyle(.plain).scrollContentBackground(.hidden)
         }.searchable(text: $q, prompt: String(format: NSLocalizedString("Search %lld exercises", comment: ""), store.cat.exercises.count))
