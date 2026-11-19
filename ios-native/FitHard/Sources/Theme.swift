@@ -124,9 +124,20 @@ struct AnimatedFrames: View {
     @Environment(\.accessibilityReduceMotion) var reduceMotion
     var body: some View {
         if reduceMotion { BundleImage(name: "anim-\(base)-1") } else
-        { TimelineView(.periodic(from: .now, by: 0.7)) { ctx in
-            let i = Int(ctx.date.timeIntervalSinceReferenceDate / 0.7) % 3 + 1
-            BundleImage(name: "anim-\(base)-\(i)")
+        { TimelineView(.animation) { ctx in
+            // Stand, go down, bottom, come back up: a smooth loop that eases between the drawn poses.
+            let seq = [1, 2, 3, 2]
+            let step = 0.9, fade = 0.45
+            let t = ctx.date.timeIntervalSinceReferenceDate
+            let pos = t / step
+            let k = Int(pos) % seq.count
+            let local = (pos - Double(Int(pos))) * step
+            let raw = max(0, (local - (step - fade)) / fade)
+            let f = raw * raw * (3 - 2 * raw)
+            ZStack {
+                BundleImage(name: "anim-\(base)-\(seq[k])")
+                BundleImage(name: "anim-\(base)-\(seq[(k + 1) % seq.count])").opacity(f)
+            }
         } }
     }
 }

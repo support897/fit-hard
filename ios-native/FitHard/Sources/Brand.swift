@@ -304,7 +304,7 @@ struct TabLabel: View {
 struct TypeBadge: View {
     let type: TrainType
     var body: some View {
-        HStack(spacing: 5) { BrandIcon(type.icon).foregroundStyle(Color.tone(type.tone)); Text(LocalizedStringKey(type.label)).font(.fh_caption_b).foregroundStyle(Color.ink) }
+        HStack(spacing: 5) { Text(LocalizedStringKey(type.label)).font(.fh_caption_b).foregroundStyle(Color.ink) }
             .padding(.horizontal, 10).padding(.vertical, 5)
             .background(Color.tone(type.tone).opacity(0.18), in: Capsule()).overlay(Capsule().stroke(Color.tone(type.tone), lineWidth: 1))
             .accessibilityElement(children: .combine).accessibilityLabel(type.label)

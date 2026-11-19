@@ -382,7 +382,7 @@ struct WatchReelButton: View {
     @State private var open = false
     @EnvironmentObject var store: Store
     var body: some View {
-        if !recipe.steps.isEmpty {
+        if false && !recipe.steps.isEmpty {
             Group {
                 if big {
                     BigButton(title: "Watch", icon: "play.fill", filled: true) { open = true }
