@@ -28,6 +28,9 @@ struct MachineDetail: View {
     @State private var item: PhotosPickerItem? = nil
     var body: some View {
         List {
+            if let e = m.exerciseIds.compactMap({ store.cat.exercise($0) }).first {
+                Section("How to use it") { ExerciseGuide(ex: e).listRowBackground(Color.clear) }
+            }
             Section("Machine photos") {
                 if let f = store.s.machinePhotos[m.id], let ui = MachinePhotoStore.image(f) {
                     Image(uiImage: ui).resizable().scaledToFit().frame(maxHeight: 220).frame(maxWidth: .infinity).accessibilityLabel("Your photo")
@@ -143,20 +146,23 @@ struct MachinePhotoMatchView: View {
 
     func match(_ ui: UIImage) {
         thumb = ui; working = true; ranked = []; candidate = nil; addedTo = nil
-        let refs = referenceImages()
+        let refs = MatchBrain.references(store: store)
+        let machines = store.cat.machines
+        var names: [String: [String]] = [:]
+        for m in machines { names[m.id] = m.exerciseIds.compactMap { store.cat.exercise($0)?.name } }
         Task.detached {
-            let r = MachineMatcher.rank(photo: ui, references: refs)
+            let res = MatchBrain.run(photo: ui, refs: refs, machines: machines, exNames: names)
             await MainActor.run {
-                ranked = r; working = false
-                confident = MachineMatcher.isConfident(r)
-                if confident { candidate = r.first?.0 }
+                ranked = res.ranked; working = false
+                confident = res.confident
+                if res.confident { candidate = res.ranked.first?.0 }
             }
         }
     }
 
     var body: some View {
         ScrollView { VStack(alignment: .leading, spacing: 14) {
-            Text("Take a photo of the machine in front of you. Fit Hard compares it with the pictures it knows and shows you the closest match.").foregroundStyle(Color.muted)
+            Text("Take a photo of the machine in front of you. Stand back so the whole machine fits, in good light. Fit Hard reads any name on it, compares its shape, then shows a video and the steps to use it.").foregroundStyle(Color.muted)
             HStack(spacing: 10) {
                 BigButton(title: "Take a photo", icon: "camera") { showCamera = true }.accessibilityIdentifier("machine-photo-take")
                 PhotosPicker(selection: $pickerItem, matching: .images) { BrandLabel("Pick a photo", icon: "plus") }.accessibilityIdentifier("machine-photo-pick")
@@ -178,9 +184,13 @@ struct MachinePhotoMatchView: View {
                 }
                 Text("Or find it by name in the Machines list.").foregroundStyle(Color.muted)
             }
-            Text("Fit Hard compares pictures. It can be wrong, so check the name before you add anything. Nothing is added until you tap.").font(.fh_footnote).foregroundStyle(Color.muted)
+            Text("Fit Hard makes its best guess and can still be wrong, so check the name before you add anything. Your photo stays on this phone, and nothing is added until you tap.").font(.fh_footnote).foregroundStyle(Color.muted)
         }.padding(16) }
         .background(Color.cream).navigationTitle("Photo a machine").navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            let refs = MatchBrain.references(store: store)
+            Task.detached(priority: .utility) { MatchBrain.prewarm(refs) }
+        }
         .sheet(isPresented: $showCamera) { CameraPicker { ui in match(ui) } }
         .sheet(isPresented: $chooseRoutine) {
             NavigationStack {
@@ -210,6 +220,10 @@ struct MachinePhotoMatchView: View {
         store.s.routines[j].customized = true
         store.syncRoutineDays()
         addedTo = r.name; chooseRoutine = false
+        // A confirmed match teaches the app this machine's look, on this phone only.
+        if let t = thumb, store.s.machinePhotos[m.id] == nil, let d = MatchBrain.normalized(t).jpegData(compressionQuality: 0.8), let name = MachinePhotoStore.save(d, machineId: m.id) {
+            store.s.machinePhotos[m.id] = name; MatchBrain.forget(m.id)
+        }
         store.say("Added to \(r.name)")
     }
 }
@@ -233,17 +247,7 @@ struct MachineMatchCard: View {
                     if let e = m.exerciseIds.compactMap({ store.cat.exercise($0) }).first { Text(e.cue).font(.fh_caption).foregroundStyle(Color.muted) }
                 }
             }
-            if let e = m.exerciseIds.compactMap({ store.cat.exercise($0) }).first {
-                HStack(spacing: 8) {
-                    ExerciseHeart(e: e)
-                    Text(store.s.favExercises.contains(e.id) ? "Kept as a favourite. Fit Hard picks it more often." : "Tap the heart to keep it as a favourite").font(.fh_caption).foregroundStyle(Color.muted)
-                    Spacer(minLength: 0)
-                }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("How to use it").font(.fh_caption_b).foregroundStyle(Color.ink)
-                    Text(e.cue).font(.fh_subheadline).foregroundStyle(Color.ink)
-                }.frame(maxWidth: .infinity, alignment: .leading)
-            }
+            if let e = m.exerciseIds.compactMap({ store.cat.exercise($0) }).first { ExerciseGuide(ex: e) }
             if let a = addedTo {
                 Text("Added to \(a).").font(.fh_subheadline_b).foregroundStyle(Color.sage)
             } else {
@@ -252,7 +256,7 @@ struct MachineMatchCard: View {
                     BigButton(title: "Not this one", filled: false) { onNo() }.accessibilityIdentifier("match-no")
                 }
             }
-            NavigationLink { MachineDetail(m: m) } label: { BrandLabel("See how to use it", icon: "chevron.right") }.accessibilityIdentifier("match-see")
+            NavigationLink { MachineDetail(m: m) } label: { BrandLabel("More exercises on this machine", icon: "chevron.right") }.accessibilityIdentifier("match-see")
         }
     }
 }
