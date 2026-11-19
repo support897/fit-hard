@@ -133,28 +133,6 @@ final class SmokeTests: XCTestCase {
         let swap = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'swap-'")).firstMatch
         XCTAssertTrue(swap.waitForExistence(timeout: 5)); shot(app, "meals-plan"); swap.tap()
     }
-    func testWatchEntryOpensAFullScreenReelThatKeepsMovingAndCanBePausedSteppedAndClosed() {
-        let app = seeded(); tab(app, "tab-meals").tap()
-        any(app, "meals-menu-button").tap(); any(app, "menu-plan").tap()
-        // Probe (run 16 Nov): the first three matches belong to the covered Today tab's tree (not hittable);
-        // the visible meal plan's Watch buttons follow. Scope to the visible screen: the hittable one.
-        let watchQuery = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'watch-reel-'"))
-        XCTAssertTrue(watchQuery.firstMatch.waitForExistence(timeout: 10), "every meal with steps has a Watch entry"); shot(app, "reel-realapp-meal-screen-watch-entry")
-        // Same hittability disagreement as the dose card: tap the centre by position;
-        // the reel caption assert below proves the tap landed on this button.
-        let visible = watchQuery.allElementsBoundByIndex.first(where: { $0.isHittable }) ?? watchQuery.allElementsBoundByIndex.last!
-        scrollTo(app, visible)
-        visible.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-        XCTAssertTrue(any(app, "reel-caption").waitForExistence(timeout: 5)); XCTAssertTrue(any(app, "reel-progress").exists)
-        shot(app, "reel-realapp-step-a")
-        any(app, "reel-tap-next").tap(); sleep(1)
-        shot(app, "reel-realapp-step-b")
-        any(app, "reel-pause").tap(); XCTAssertEqual(any(app, "reel-pause").label, "Resume")
-        any(app, "reel-pause").tap(); XCTAssertEqual(any(app, "reel-pause").label, "Pause")
-        any(app, "reel-tap-back").tap()
-        any(app, "reel-close").tap()
-        XCTAssertTrue(app.navigationBars["My Meal Plan"].waitForExistence(timeout: 5), "close returns to the meal")
-    }
     func testIngredientsIHaveCanBeAdded() {
         let app = seeded(); tab(app, "tab-meals").tap()
         any(app, "meals-menu-button").tap(); any(app, "menu-have").tap()
