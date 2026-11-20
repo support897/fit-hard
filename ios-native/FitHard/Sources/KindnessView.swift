@@ -56,7 +56,7 @@ struct KindnessView: View {
             // The hero: brand gradient, the rainbow, the number of humans.
             VStack(spacing: 10) {
                 Text("JOIN THE AI KINDNESS REVOLUTION").font(.fh_caption_b).tracking(1.6).foregroundStyle(Color(hex: 0xDCE7D8)).multilineTextAlignment(.center)
-                NavigationLink { KindnessWallView() } label: { GlowRainbow(progress: Double(KindnessStats.joined) / Double(KindnessStats.nextMilestone)).padding(.horizontal, 6) }
+                NavigationLink { KindnessWallView() } label: { GlowRainbow(progress: Double(KindnessStats.joined) / Double(KindnessStats.nextMilestone)).padding(.horizontal, 6).contentShape(Rectangle()) }
                     .buttonStyle(.plain).accessibilityLabel("Touch the rainbow to see every name").accessibilityIdentifier("kindness-rainbow")
                 CountUpText(target: KindnessStats.joined).font(.fh_largeTitle_b).foregroundStyle(Color(hex: 0xFFFDF7)).accessibilityIdentifier("kindness-counter")
                 Text("humans have joined the AI kindness revolution").font(.fh_subheadline_b).foregroundStyle(Color(hex: 0xFFFDF7)).multilineTextAlignment(.center)
@@ -153,7 +153,7 @@ struct KindnessWallView: View {
             }
             if entries.isEmpty {
                 Card { VStack(spacing: 6) {
-                    Text("Your name could be next.").font(.fh_headline).foregroundStyle(Color.ink)
+                    Text("Your name could be next.").font(.fh_headline).foregroundStyle(Color.ink).accessibilityIdentifier("kindness-wall-empty")
                     Text("People who choose to share their name and a kind word appear here, in the order they joined.").multilineTextAlignment(.center).foregroundStyle(Color.muted)
                 }.frame(maxWidth: .infinity) }
             } else {
