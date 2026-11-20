@@ -13,7 +13,8 @@ enum KindnessStats {
         Ideal(icon: "sparkles", title: "Free for the next person", text: "Every gift keeps Fit Hard free for someone just starting out."),
         Ideal(icon: "person", title: "People, not points", text: "Each spot in the rainbow is a real human. No scores, no pressure.")
     ]
-    static let wallJSON = URL(string: "https://ilseplacencia.shop/kindness/wall.json")!
+    static let wallURL = URL(string: "https://fipingffwixtwrlcgffi.supabase.co/functions/v1/kind-wall")!
+    static let wallKey = "sb_publishable_VT3CZgUUnHePy-ms2-K9KQ_gUsdVm92"
 }
 
 struct WallEntry: Codable, Identifiable, Hashable {
@@ -34,9 +35,16 @@ enum KindnessWall {
     }
     static func remote() async -> [WallEntry] {
         if Cloud.offline { return [] }
-        guard let (d, _) = try? await URLSession.shared.data(from: KindnessStats.wallJSON),
-              let a = try? JSONDecoder().decode([WallEntry].self, from: d) else { return [] }
-        return a
+        var r = URLRequest(url: KindnessStats.wallURL); r.httpMethod = "POST"; r.timeoutInterval = 15
+        r.setValue(KindnessStats.wallKey, forHTTPHeaderField: "apikey")
+        guard let (d, _) = try? await URLSession.shared.data(for: r),
+              let j = try? JSONSerialization.jsonObject(with: d) as? [String: Any],
+              let people = j["people"] as? [[String: Any]] else { return [] }
+        return people.compactMap { p in
+            let n = (p["name"] as? String) ?? ""
+            let m = (p["message"] as? String) ?? ""
+            return n.isEmpty ? nil : WallEntry(name: n, message: m)
+        }
     }
 }
 
