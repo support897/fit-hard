@@ -176,6 +176,8 @@ struct KindnessWallView: View {
                     }.padding(14).frame(maxWidth: .infinity, alignment: .leading).background(Color.surface, in: RoundedRectangle(cornerRadius: 18))
                 }
             }
+            Link("Report a name or message", destination: URL(string: "mailto:hello@fithard.online?subject=Report%20kindness%20wall")!)
+                .font(.fh_footnote).foregroundStyle(Color.muted).accessibilityIdentifier("kindness-report")
         }.padding(16) }
         .background(Color.cream).navigationTitle("The wall").navigationBarTitleDisplayMode(.inline)
         .task { entries = KindnessWall.mine() + (await KindnessWall.remote()) }
