@@ -7,7 +7,7 @@ import SwiftUI
 enum KindnessLinks {
     /// The giving page address lives in exactly one place. It points at the kindness home
     /// on Ilse's own domain; the live Stripe giving page swaps in on this one line.
-    static let givingPage = URL(string: "https://ilseplacencia.shop/kindness")!
+    static let givingPage = URL(string: "https://joinaikindness.com/give/")!
 }
 
 /// Kept for older callers: the rainbow is now GlowRainbow.
@@ -37,12 +37,20 @@ struct KindnessView: View {
     }
     var giveURL: URL {
         var c = URLComponents(url: KindnessLinks.givingPage, resolvingAgainstBaseURL: false)
-        var q: [URLQueryItem] = []
-        if let a = amountCents { q.append(URLQueryItem(name: "amount", value: String(a))) }
-        if anonymous { q.append(URLQueryItem(name: "anon", value: "1")) }
-        else if !donorName.trimmingCharacters(in: .whitespaces).isEmpty { q.append(URLQueryItem(name: "name", value: donorName.trimmingCharacters(in: .whitespaces))) }
-        if !donorMessage.trimmingCharacters(in: .whitespaces).isEmpty { q.append(URLQueryItem(name: "message", value: donorMessage.trimmingCharacters(in: .whitespaces))) }
-        if !q.isEmpty { c?.queryItems = q }
+        var q: [URLQueryItem] = [URLQueryItem(name: "from", value: "fithard")]
+        if let a = amountCents {
+            let dollars = a % 100 == 0 ? String(a / 100) : String(format: "%.2f", Double(a) / 100)
+            q.append(URLQueryItem(name: "amount", value: dollars))
+        }
+        let nm = donorName.trimmingCharacters(in: .whitespaces)
+        let msg = donorMessage.trimmingCharacters(in: .whitespaces)
+        if anonymous { q.append(URLQueryItem(name: "name", value: "heart")) }
+        else {
+            q.append(URLQueryItem(name: "name", value: "rainbow"))
+            if !nm.isEmpty { q.append(URLQueryItem(name: "display", value: nm)) }
+        }
+        if !msg.isEmpty { q.append(URLQueryItem(name: "msg", value: msg)) }
+        c?.queryItems = q
         return c?.url ?? KindnessLinks.givingPage
     }
     @Environment(\.scenePhase) var scenePhase
