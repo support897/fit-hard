@@ -42,12 +42,16 @@ struct MoreView: View {
                     NavigationLink { TreatsScreen() } label: { BrandLabel("Treats", icon: "heart") }
 
                 }.themedRows()
+                Section("Help us") {
+                    NavigationLink { ReachOutView(kind: .bug) } label: { BrandLabel("Report a bug", icon: "bug") }.accessibilityIdentifier("report-bug")
+                    NavigationLink { ReachOutView(kind: .feedback) } label: { BrandLabel("Send feedback", icon: "bubble.feedback") }.accessibilityIdentifier("send-feedback")
+                }.themedRows()
                 Section {
                     NavigationLink { SettingsView() } label: { BrandLabel("Settings", icon: "gearshape") }.accessibilityIdentifier("open-settings")
                 }.themedRows()
                 Section { Text("Fit Hard 2.0").font(.fh_footnote).foregroundStyle(Color.muted) }
             }
-            .scrollContentBackground(.hidden).background(Color.cream).navigationTitle("More")
+            .scrollContentBackground(.hidden).background(Color.cream).navigationTitle("More").task { await FeedbackService.flush() }
             .environment(\.defaultMinListRowHeight, 44)
         }
     }
