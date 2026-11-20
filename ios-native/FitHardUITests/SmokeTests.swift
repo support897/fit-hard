@@ -218,9 +218,9 @@ final class SmokeTests: XCTestCase {
         XCTAssertTrue(any(app, "kindness-give").waitForExistence(timeout: 5))
         XCTAssertTrue(any(app, "kindness-counter").exists)
         let r = any(app, "kindness-rainbow"); XCTAssertTrue(r.exists)
-        // Probe (16 Nov, FH Suite sim): a tap at the element centre misses the drawn arcs; a tap on the arcs (upper part) opens the wall.
-        r.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
-        XCTAssertTrue(app.staticTexts["Your name could be next."].waitForExistence(timeout: 5))
+        // Build 50: the whole rainbow area is the button.
+        r.tap()
+        XCTAssertTrue(any(app, "kindness-wall-empty").waitForExistence(timeout: 8))
     }
 
     // MARK: My doses (item 6: the home as drawn, the add form, the three kind buttons)
