@@ -37,6 +37,9 @@ struct MoreView: View {
                 Section {
                     NavigationLink { ProfileScreen() } label: { HStack(spacing: 12) { AvatarView(size: 48); VStack(alignment: .leading) { Text(store.s.profile.name.isEmpty ? "My profile" : store.s.profile.name).font(.fh_headline); Text("Name and account").font(.fh_caption).foregroundStyle(Color.muted) } } }.accessibilityIdentifier("my-profile")
                 }.themedRows()
+                Section {
+                    NavigationLink { SettingsView() } label: { BrandLabel("Settings", icon: "gearshape") }.accessibilityIdentifier("open-settings")
+                }.themedRows()
                 Section("Explore") {
                     NavigationLink { ProgressScreen() } label: { BrandLabel("Progress", icon: "chart.line.uptrend.xyaxis") }
                     NavigationLink { TreatsScreen() } label: { BrandLabel("Treats", icon: "heart") }
@@ -45,9 +48,6 @@ struct MoreView: View {
                 Section("Help us") {
                     NavigationLink { ReachOutView(kind: .bug) } label: { BrandLabel("Report a bug", icon: "bug") }.accessibilityIdentifier("report-bug")
                     NavigationLink { ReachOutView(kind: .feedback) } label: { BrandLabel("Send feedback", icon: "bubble.feedback") }.accessibilityIdentifier("send-feedback")
-                }.themedRows()
-                Section {
-                    NavigationLink { SettingsView() } label: { BrandLabel("Settings", icon: "gearshape") }.accessibilityIdentifier("open-settings")
                 }.themedRows()
                 Section { Text("Fit Hard 2.0").font(.fh_footnote).foregroundStyle(Color.muted) }
             }
