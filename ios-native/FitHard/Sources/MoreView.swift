@@ -11,12 +11,8 @@ struct MoreView: View {
         NavigationStack {
             Form {
                 Section {
-                    // Her word, 14 Nov: the kindness item stands first, at the very top of the menu, above everything else.
-                    NavigationLink { KindnessView() } label: { BrandLabel("Join the AI kindness revolution", icon: "heart.fill") }.accessibilityIdentifier("kindness-item")
-                }.themedRows()
-                Section {
                     // Build 36, item D (her words, 14 Nov): supplements and peptides stand high in the
-                    // menu as their own item, easy to find — never buried. Kindness stays first above.
+                    // menu as their own item, easy to find — never buried.
                     NavigationLink { HealthView(embedded: true) } label: { BrandLabel("My Doses", icon: "cross.case") }.accessibilityIdentifier("my-doses")
                 }.themedRows()
                 Section {
