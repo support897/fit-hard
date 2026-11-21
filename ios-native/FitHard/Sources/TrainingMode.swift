@@ -20,7 +20,6 @@ struct TrainingMode: View {
     @State private var summary = false
     @State private var loaded = false
     @State private var tracking = false
-    @State private var showKindness = false
     @State private var showDoses = false
     @State private var confirmQuit = false
     @State private var focus: FocusKind = .none
@@ -44,7 +43,6 @@ struct TrainingMode: View {
             Button("Discard this workout", role: .destructive) { discardAndClose() }
         }
         .sheet(isPresented: $tracking) { trackSheet }
-        .sheet(isPresented: $showKindness) { NavigationStack { KindnessView() } }
         .sheet(isPresented: $showDoses) { NavigationStack { HealthView(embedded: true) } }
         // Swipe law: sliding from the left edge goes back one page.
         .gesture(DragGesture(minimumDistance: 24).onEnded { v in if v.startLocation.x < 40 && v.translation.width > 70 { swipeBack() } })
@@ -340,11 +338,6 @@ struct TrainingMode: View {
                         .padding(12).background(Color.surface, in: RoundedRectangle(cornerRadius: 14))
                 }.buttonStyle(.plain).accessibilityIdentifier("workout-doses-row")
             }
-            // One quiet kindness row at the happy end (donations pack of record). It never blocks, never badges, never asks twice.
-            Button { showKindness = true } label: {
-                HStack(spacing: 8) { BrandIcon("heart").foregroundStyle(Color.sage); Text("Fit Hard is free for all. Kind humans keep it that way.").font(.fh_caption).foregroundStyle(Color.muted); Spacer() }
-                    .padding(12).background(Color.surface, in: RoundedRectangle(cornerRadius: 14))
-            }.buttonStyle(.plain).accessibilityIdentifier("kindness-row")
             BigButton(title: "Save and close", icon: "checkmark") {
                 store.finishWorkout(entries: entries, routine: routine, seconds: secs); haptic(.heavy); store.say("Workout saved. Nice work."); dismiss()
             }.accessibilityIdentifier("train-save")
