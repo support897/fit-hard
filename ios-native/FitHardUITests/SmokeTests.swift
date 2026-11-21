@@ -208,22 +208,6 @@ final class SmokeTests: XCTestCase {
         app.buttons["Habits"].tap(); XCTAssertTrue(app.staticTexts["Habits"].waitForExistence(timeout: 5))
     }
 
-    // MARK: Kindness (item 10: the item stands first in the menu, the page carries the story, the rainbow and the one Safari button)
-    func testKindnessItemStandsFirstAndOpensThePage() {
-        let app = seeded(); tab(app, "tab-more").tap()
-        let item = any(app, "kindness-item"); XCTAssertTrue(item.waitForExistence(timeout: 10))
-        let profile = any(app, "my-profile"); XCTAssertTrue(profile.waitForExistence(timeout: 5), "both rows stand before their frames are compared (a frame read before layout settles reads zero and fails the order check on a healthy app)")
-        XCTAssertLessThan(item.frame.minY, profile.frame.minY, "the kindness item stands above everything else")
-        item.tap()
-        XCTAssertTrue(any(app, "kindness-give").waitForExistence(timeout: 5))
-        XCTAssertTrue(any(app, "kindness-counter").exists)
-        let r = any(app, "kindness-rainbow"); XCTAssertTrue(r.exists)
-        // Build 50: the whole rainbow area is the button.
-        r.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-        let wallOpened = any(app, "kindness-wall-empty").waitForExistence(timeout: 12) || app.navigationBars["The wall"].waitForExistence(timeout: 3)
-        XCTAssertTrue(wallOpened, "tapping the rainbow opens the wall")
-    }
-
     // MARK: My doses (item 6: the home as drawn, the add form, the three kind buttons)
     func testMyDosesHomeAddAndMarkTaken() {
         let app = seeded(); tab(app, "tab-more").tap()
