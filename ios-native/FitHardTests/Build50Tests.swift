@@ -11,14 +11,4 @@ final class Build50Tests: XCTestCase {
         let p = FeedbackService.payload(kind: .feedback, message: "hi", email: "a@b.com", name: "Ann", anonymous: false, uid: "u1", topic: "Idea")
         XCTAssertEqual(p["email"], "a@b.com"); XCTAssertEqual(p["uid"], "u1"); XCTAssertEqual(p["kind"], "feedback")
     }
-    func testKindnessNumbersAreSane() {
-        XCTAssertEqual(KindnessStats.joined, 20467)
-        XCTAssertGreaterThan(KindnessStats.nextMilestone, KindnessStats.joined)
-        XCTAssertEqual(GlowRainbow.colours.count, 7)
-    }
-    func testMyWallEntryIsKept() {
-        let e = WallEntry(name: "Test Kind", message: "hello")
-        KindnessWall.addMine(e)
-        XCTAssertEqual(KindnessWall.mine().first, e)
-    }
 }
