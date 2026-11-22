@@ -83,28 +83,7 @@ enum DietMeals {
     static var now: String { let h = Calendar.current.component(.hour, from: Date()); return h < 11 ? "breakfast" : (h < 15 ? "lunch" : (h < 21 ? "dinner" : "snack")) }
 }
 
-// MARK: Camera
-struct CameraPicker: UIViewControllerRepresentable {
-    @Binding var isPresented: Bool
-    let onImage: (UIImage) -> Void
-    func makeUIViewController(context: Context) -> UIImagePickerController {
-        let p = UIImagePickerController()
-        p.sourceType = UIImagePickerController.isSourceTypeAvailable(.camera) ? .camera : .photoLibrary
-        p.delegate = context.coordinator
-        return p
-    }
-    func updateUIViewController(_ vc: UIImagePickerController, context: Context) {}
-    func makeCoordinator() -> Coord { Coord(self) }
-    final class Coord: NSObject, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
-        let parent: CameraPicker
-        init(_ p: CameraPicker) { parent = p }
-        func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
-            if let i = info[.originalImage] as? UIImage { parent.onImage(i) }
-            parent.isPresented = false
-        }
-        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) { parent.isPresented = false }
-    }
-}
+// The camera picker is the existing CameraPicker in MachinePhotos.swift.
 
 // MARK: Photo to calories
 struct FoodSnapView: View {
@@ -144,7 +123,7 @@ struct FoodSnapView: View {
             .background(Color.cream)
             .navigationTitle("Food photo").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .navigationBarLeading) { Button("Close") { dismiss() } } }
-            .fullScreenCover(isPresented: $showCamera) { CameraPicker(isPresented: $showCamera) { img in analyse(img) }.ignoresSafeArea() }
+            .fullScreenCover(isPresented: $showCamera) { CameraPicker { img in analyse(img) }.ignoresSafeArea() }
             .onAppear { if !asked { asked = true; showCamera = true } }
         }
     }
