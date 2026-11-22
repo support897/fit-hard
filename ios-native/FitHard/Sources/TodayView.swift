@@ -274,7 +274,7 @@ struct TodayView: View {
                     .background(LinearGradient.washGrad, in: RoundedRectangle(cornerRadius: 14)).accessibilityIdentifier("today-why")
                 BigButton(title: "Start", icon: "play.fill") { if let r = store.routine(on: store.today) { store.training = r } else { go(2) } }.accessibilityIdentifier("today-start")
             }
-        }
+        }.task(id: store.s.routines.map { $0.exIds.joined() }.joined() + ex.map { $0.id }.joined()) { await Clips.prefetch(ex.map { $0.id } + store.s.routines.flatMap { $0.exIds }) }
     }
 
     /// Build 36, item D: the supplements card stands on Today only when something is due

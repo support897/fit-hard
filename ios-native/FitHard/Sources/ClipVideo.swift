@@ -3,12 +3,12 @@ import AVFoundation
 
 // MARK: Exercise clips (build 53). Real video demos, matched by name, no mapping table.
 // The clip for an exercise is <slug>.mp4, where slug = exercise id lowercased with underscores turned into hyphens
-// (Leg_Press -> leg-press). 805 clips are about 820 MB, too big to bundle, so each one downloads the first time it is
+// (Leg_Press -> leg-press). 840 clips are about 220 MB (HEVC), too big to bundle, so each one downloads the first time it is
 // opened, is kept in the Caches folder, and plays from there after that. No clip (404), no network, or still loading:
 // the existing animation or still shows, never a blank. Clips are 1152x768 (3:2), silent, 10 s seamless loops.
 // Playing: only while a set runs (training) or while the screen is visible (detail, help). It stops on the first frame.
 
-enum Clips {
+@MainActor enum Clips {
     static let base = URL(string: "https://pub-daa5a9147205405a9e7570408c0f95fa.r2.dev")!
     static func slug(_ id: String) -> String { id.lowercased().replacingOccurrences(of: "_", with: "-") }
     static let dir: URL = {
@@ -16,21 +16,49 @@ enum Clips {
         try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
         return d
     }()
+    /// slug -> byte size, from clips.json (bundled copy first, refreshed from the clip host each launch).
+    /// A slug missing from it has no clip, so it is never asked for. A cached file of the wrong size is a replaced clip: fetched again.
+    private(set) static var manifest: [String: Int] = {
+        if let u = Bundle.main.url(forResource: "clips", withExtension: "json"), let d = try? Data(contentsOf: u),
+           let m = try? JSONDecoder().decode([String: Int].self, from: d) { return m }
+        return [:]
+    }()
+    static func has(_ slug: String) -> Bool { manifest.isEmpty || manifest[slug] != nil }
+    private static var refreshed = false
+    static func refreshManifest() async {
+        guard !refreshed else { return }; refreshed = true
+        guard let (d, r) = try? await URLSession.shared.data(from: base.appendingPathComponent("clips.json")),
+              (r as? HTTPURLResponse)?.statusCode == 200, let m = try? JSONDecoder().decode([String: Int].self, from: d), m.count > 100 else { return }
+        manifest = m
+    }
     static func cached(_ slug: String) -> URL? {
         let u = dir.appendingPathComponent(slug + ".mp4")
-        return FileManager.default.fileExists(atPath: u.path) ? u : nil
+        guard let n = (try? FileManager.default.attributesOfItem(atPath: u.path))?[.size] as? Int else { return nil }
+        if let want = manifest[slug], want != n { return nil }
+        return u
     }
     static func thumb(_ id: String) -> URL { base.appendingPathComponent(slug(id) + ".jpg") }
-    // A 404 is remembered for 3 days so an exercise without a clip is not asked for again and again.
-    private static let missKey = "fh.clip.miss"
-    static func isMiss(_ slug: String) -> Bool {
-        let m = UserDefaults.standard.dictionary(forKey: missKey) as? [String: Double] ?? [:]
-        return (m[slug]).map { Date().timeIntervalSince1970 - $0 < 3 * 86400 } ?? false
+    /// Download one clip into the cache. Returns the file, or nil (no clip, offline).
+    @discardableResult static func fetch(_ slug: String) async -> URL? {
+        if let u = cached(slug) { return u }
+        guard has(slug) else { return nil }
+        var req = URLRequest(url: base.appendingPathComponent(slug + ".mp4")); req.timeoutInterval = 30
+        guard let (tmp, resp) = try? await URLSession.shared.download(for: req), (resp as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+        let dest = dir.appendingPathComponent(slug + ".mp4")
+        try? FileManager.default.removeItem(at: dest)
+        do { try FileManager.default.moveItem(at: tmp, to: dest) } catch { return nil }
+        return dest
     }
-    static func markMiss(_ slug: String) {
-        var m = UserDefaults.standard.dictionary(forKey: missKey) as? [String: Double] ?? [:]
-        m[slug] = Date().timeIntervalSince1970
-        UserDefaults.standard.set(m, forKey: missKey)
+    /// Warm the cache for a routine so every clip is on the phone before the first set. Three at a time, in order.
+    static func prefetch(_ ids: [String]) async {
+        await refreshManifest()
+        let slugs = ids.map(slug).filter { cached($0) == nil && has($0) }
+        guard !slugs.isEmpty else { return }
+        await withTaskGroup(of: Void.self) { g in
+            var it = slugs.makeIterator()
+            for _ in 0..<3 { if let s = it.next() { g.addTask { _ = await fetch(s) } } }
+            while await g.next() != nil { if let s = it.next() { g.addTask { _ = await fetch(s) } } }
+        }
     }
 }
 
@@ -42,19 +70,8 @@ enum Clips {
         url = Clips.cached(slug)
     }
     func load() async {
-        guard url == nil, !Clips.isMiss(slug) else { return }
-        var req = URLRequest(url: Clips.base.appendingPathComponent(slug + ".mp4"))
-        req.timeoutInterval = 30
-        do {
-            let (tmp, resp) = try await URLSession.shared.download(for: req)
-            guard let h = resp as? HTTPURLResponse else { return }
-            if h.statusCode == 200 {
-                let dest = Clips.dir.appendingPathComponent(slug + ".mp4")
-                try? FileManager.default.removeItem(at: dest)
-                try FileManager.default.moveItem(at: tmp, to: dest)
-                url = dest
-            } else if h.statusCode == 404 { Clips.markMiss(slug) }
-        } catch {}
+        guard url == nil else { return }
+        if let u = await Clips.fetch(slug) { url = u }
     }
 }
 
@@ -161,7 +178,7 @@ struct ExerciseThumb: View {
     let ex: Exercise
     let base: String?
     var body: some View {
-        AsyncImage(url: Clips.thumb(ex.id)) { p in
+        AsyncImage(url: Clips.has(Clips.slug(ex.id)) ? Clips.thumb(ex.id) : nil) { p in
             if let i = p.image { i.resizable().scaledToFit() }
             else { BrandIcon("figure.strengthtraining.traditional") }
         }.frame(width: 64, height: 64).background(Color.tint, in: RoundedRectangle(cornerRadius: 12)).clipShape(RoundedRectangle(cornerRadius: 12))

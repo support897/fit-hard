@@ -37,6 +37,7 @@ struct TrainingMode: View {
             if focus != .none, !summary { focusOverlay }
         }.background(Color.cream.ignoresSafeArea())
         .onAppear(perform: load)
+        .task { await Clips.prefetch(ids) }
         .onChange(of: entries) { v in if loaded && !summary { store.s.draft = v } }
         .confirmationDialog("Leave this workout?", isPresented: $confirmQuit, titleVisibility: .visible) {
             Button("Keep it and come back later") { dismiss() }
