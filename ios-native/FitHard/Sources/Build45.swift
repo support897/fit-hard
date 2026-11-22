@@ -120,53 +120,6 @@ enum MatchBrain {
     }
 }
 
-// MARK: Video
-
-/// A short silent loop. It plays a real video when one is bundled for the exercise and the person's avatar, and falls back to the drawn motion.
-struct LoopingVideo: UIViewRepresentable {
-    let url: URL
-    func makeUIView(context: Context) -> PlayerUIView { PlayerUIView(url: url) }
-    func updateUIView(_ v: PlayerUIView, context: Context) {}
-}
-final class PlayerUIView: UIView {
-    private let queue = AVQueuePlayer()
-    private var looper: AVPlayerLooper?
-    override class var layerClass: AnyClass { AVPlayerLayer.self }
-    init(url: URL) {
-        super.init(frame: .zero)
-        looper = AVPlayerLooper(player: queue, templateItem: AVPlayerItem(url: url))
-        if let layer = self.layer as? AVPlayerLayer { layer.player = queue; layer.videoGravity = .resizeAspect }
-        queue.isMuted = true
-        queue.play()
-    }
-    required init?(coder: NSCoder) { fatalError("not used") }
-}
-
-struct ExerciseVideo: View {
-    @EnvironmentObject var store: Store
-    let ex: Exercise
-    /// Videos are named vid-<picture name>-<girl|boy|nb>.mp4, or vid-<picture name>.mp4 for every avatar, and live in the media folder.
-    static func url(for ex: Exercise, base: String?, character: String) -> URL? {
-        let who = character == "nonbinary" ? "nb" : (character.isEmpty ? "girl" : character)
-        for n in [base, ex.id].compactMap({ $0 }) {
-            for name in ["vid-\(n)-\(who)", "vid-\(n)"] {
-                if let u = Bundle.main.url(forResource: name, withExtension: "mp4", subdirectory: "media") ?? Bundle.main.url(forResource: name, withExtension: "mp4") { return u }
-            }
-        }
-        return nil
-    }
-    var body: some View {
-        if let u = ExerciseVideo.url(for: ex, base: store.animBase(ex), character: store.s.profile.character) {
-            LoopingVideo(url: u).aspectRatio(16.0 / 9.0, contentMode: .fit).frame(maxWidth: .infinity).clipShape(RoundedRectangle(cornerRadius: 16))
-                .accessibilityLabel(Text("Video of \(ex.name)"))
-        } else if let a = store.animBase(ex) {
-            ExerciseMotion(ex: ex, base: a, coach: false).aspectRatio(4.0 / 3.0, contentMode: .fit).frame(maxWidth: .infinity, maxHeight: 260)
-        } else {
-            ExerciseIcon(exercise: ex, size: 96).frame(maxWidth: .infinity)
-        }
-    }
-}
-
 /// Video, then the steps one by one, then a favourite heart.
 struct ExerciseGuide: View {
     @EnvironmentObject var store: Store

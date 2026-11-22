@@ -106,7 +106,7 @@ struct TrainingMode: View {
                         Text("Tap anywhere to go back").font(.fh_caption).foregroundStyle(Color.muted)
                     }
                 }
-            } else if focus == .picture, let ex = exercise, let a = store.animBase(ex) {
+            } else if focus == .picture, let ex = exercise {
                 VStack(spacing: 14) {
                     HStack {
                         Spacer()
@@ -114,7 +114,7 @@ struct TrainingMode: View {
                             .accessibilityLabel("Close full screen").accessibilityIdentifier("focus-close")
                     }
                     Spacer(minLength: 0)
-                    ExerciseMotion(ex: ex, base: a).aspectRatio(4.0 / 3.0, contentMode: .fit).frame(maxWidth: .infinity)
+                    ExerciseVideo(ex: ex, playing: workEnd != nil).frame(maxWidth: .infinity)
                         .background(Color.surface, in: RoundedRectangle(cornerRadius: 20)).clipShape(RoundedRectangle(cornerRadius: 20))
                     Text(ex.name).font(.fh_title3_b).foregroundStyle(Color.ink).multilineTextAlignment(.center)
                     Spacer(minLength: 0)
@@ -145,8 +145,7 @@ struct TrainingMode: View {
     @ViewBuilder func exerciseScreen(_ ex: Exercise) -> some View {
         VStack(spacing: 14) {
             Spacer(minLength: 0)
-            if let a = store.animBase(ex) {
-                ExerciseMotion(ex: ex, base: a).aspectRatio(4.0 / 3.0, contentMode: .fit).frame(maxWidth: .infinity, maxHeight: 300)
+            ExerciseVideo(ex: ex, playing: workEnd != nil).frame(maxWidth: .infinity, maxHeight: 300)
                     .background(Color.surface, in: RoundedRectangle(cornerRadius: 20))
                     .overlay(alignment: .bottomTrailing) {
                         Button { focus = .picture } label: { BrandIcon("arrow.expand").font(.fh_subheadline_b).foregroundStyle(Color.sage).frame(width: 44, height: 44).background(Color.tint, in: Circle()) }
@@ -154,7 +153,6 @@ struct TrainingMode: View {
                     }
                     .onTapGesture { focus = .picture }
                     .accessibilityLabel("See the picture full screen").accessibilityIdentifier("train-picture")
-            } else { ExerciseIcon(exercise: ex, size: 124) }
             Text(ex.name).font(.fh_title_b).multilineTextAlignment(.center).foregroundStyle(Color.ink).accessibilityIdentifier("train-exercise")
             // The ring stays a container (.contain): a plain label + identifier on the ring itself
             // overwrote its own children's identifiers — the probe tree dump (CI run 67) showed the
