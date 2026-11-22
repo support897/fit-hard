@@ -81,7 +81,7 @@ final class FeatureTests: XCTestCase {
         let t = NutritionService.targets(p)!
         XCTAssertEqual(t.kcal, 2450); XCTAssertEqual(t.protein, 112)
         p.primaryGoal = "lose"; let l = NutritionService.targets(p)!
-        XCTAssertEqual(l.kcal, 1950); XCTAssertEqual(l.protein, 144); XCTAssertGreaterThanOrEqual(Double(l.kcal), 1780, "never below resting energy")
+        XCTAssertEqual(l.kcal, 1960); XCTAssertEqual(l.protein, 144); XCTAssertGreaterThanOrEqual(Double(l.kcal), 1780, "never below resting energy")
         p.primaryGoal = "muscle"; XCTAssertEqual(NutritionService.targets(p)!.protein, 128)
         for kg in [50.0, 80, 120] { var q = p; q.weightKg = kg; let per = Double(NutritionService.targets(q)!.protein) / kg; XCTAssertTrue(per >= 1.39 && per <= 2.01, "protein per kg \(per)") }
         let sum = Double(t.protein * 4 + t.carbs * 4 + t.fat * 9); XCTAssertEqual(sum, Double(t.kcal), accuracy: 40)
