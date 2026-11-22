@@ -2,6 +2,7 @@ import Foundation
 
 // MARK: Nutrition (one place, so no screen calculates calories differently)
 struct Targets: Equatable { var kcal: Int; var protein: Int; var carbs: Int; var fat: Int }
+struct CaloriePlan { var tdee: Double; var kcal: Double; var raised: Bool; var weeklyKg: Double }
 
 enum NutritionService {
     static func bmr(_ p: Profile) -> Double? {
@@ -14,15 +15,29 @@ enum NutritionService {
     }
     /// No calorie target for under 18s, pregnancy or eating disorder concerns. Those people are pointed to a clinician instead.
     static func targetsAllowed(_ p: Profile) -> Bool { !(p.minor || p.pregnant || p.edConcern || (p.age > 0 && p.age < 18)) }
-    static func targets(_ p: Profile) -> Targets? {
+    /// lose | gain | maintain, from the person's own primary goal.
+    static func goal(_ p: Profile) -> String { p.primaryGoal == "lose" ? "lose" : (p.primaryGoal == "muscle" ? "gain" : "maintain") }
+    /// Lowest daily calories advised without a clinician: 1,200 women, 1,500 men (NHLBI 1998, AHA/ACC/TOS 2013). Unsure uses 1,500.
+    static func safeMin(_ p: Profile) -> Double { p.calcBasis == "female" ? 1200 : 1500 }
+    /// The daily number. Lose: 500 under (never over 20 percent under), gain: 300 over, maintain: the daily need.
+    /// raised = the number was held at the safe floor. weeklyKg = expected change, 7,700 kcal per kg.
+    static func plan(_ p: Profile) -> CaloriePlan? {
         guard targetsAllowed(p), let b = bmr(p) else { return nil }
         let tdee = b * multiplier(p.activity)
-        var kcal = tdee
-        switch p.primaryGoal {
-        case "lose": kcal = max(b, tdee * 0.88)        // gentle: about 12 percent under, never below resting energy
-        case "muscle": kcal = tdee * 1.07
+        var kcal = tdee; var raised = false
+        switch goal(p) {
+        case "lose":
+            kcal = tdee - min(500, tdee * 0.20)
+            let lo = max(b, safeMin(p)); if kcal < lo { kcal = lo; raised = true }   // never below resting energy either
+        case "gain": kcal = tdee + 300
         default: break
         }
+        if kcal < safeMin(p) { kcal = safeMin(p); raised = true }
+        return CaloriePlan(tdee: tdee, kcal: kcal, raised: raised, weeklyKg: (kcal - tdee) * 7 / 7700)
+    }
+    static func targets(_ p: Profile) -> Targets? {
+        guard let pl = plan(p) else { return nil }
+        let kcal = pl.kcal
         let perKg = p.primaryGoal == "lose" ? 1.8 : (p.primaryGoal == "muscle" || p.primaryGoal == "strength" ? 1.6 : 1.4)
         let protein = min(2.0, max(1.4, perKg)) * p.weightKg
         let fat = kcal * 0.27 / 9

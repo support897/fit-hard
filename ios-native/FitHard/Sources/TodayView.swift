@@ -36,6 +36,7 @@ struct TodayView: View {
                     if denied { inAppReminders }
                     trackerCard
                     waterCard
+                    DietEntryCard()
                     mealsCard
                     photoCard
                     medsCard

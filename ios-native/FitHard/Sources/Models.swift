@@ -112,6 +112,8 @@ struct BlockSummary: Codable, Hashable {
     var best: [String: [Double]] = [:]   // exerciseId -> [kg, reps]
 }
 
+/// One food logged in the Diet section. photo = the calories were estimated from a photo.
+struct FoodEntry: Codable, Identifiable, Hashable { var id = UUID(); var day: String; var meal: String; var name: String; var kcal: Int; var grams: Int? = nil; var photo: Bool = false }
 struct Treat: Codable, Identifiable, Hashable { var id = UUID(); var day: String; var name: String; var kcal: Int? = nil }
 struct Habit: Codable, Identifiable, Hashable { var id = UUID(); var name: String; var time: String? = nil; var done: [String] = [] }
 struct BodyEntry: Codable, Identifiable, Hashable {
@@ -228,6 +230,8 @@ struct AppState: Codable {
     var fullPlanDays: [String] = []
     /// Day -> routine id, set by Swap today on the Train screen (build 36, item C).
     var dayRoutine: [String: String] = [:]
+    /// Foods logged in the Diet section (build 53).
+    var foodLog: [FoodEntry] = []
 
     init() {}
     init(from d: Decoder) throws {
@@ -246,7 +250,7 @@ struct AppState: Codable {
         personalizationVersion = c.v(.personalizationVersion, 0); lightDays = c.v(.lightDays, []); planBackup = c.v(.planBackup, [:])
         portions = c.v(.portions, [:]); machinePhotos = c.v(.machinePhotos, [:]); language = c.v(.language, "en")
         ownerUid = c.v(.ownerUid, ""); sleep = c.v(.sleep, [:]); steps = c.v(.steps, [:])
-        markedDone = c.v(.markedDone, []); lastPlanWeek = c.v(.lastPlanWeek, ""); blockHistory = c.v(.blockHistory, []); fullPlanDays = c.v(.fullPlanDays, []); dayRoutine = c.v(.dayRoutine, [:])
+        markedDone = c.v(.markedDone, []); lastPlanWeek = c.v(.lastPlanWeek, ""); blockHistory = c.v(.blockHistory, []); fullPlanDays = c.v(.fullPlanDays, []); dayRoutine = c.v(.dayRoutine, [:]); foodLog = c.v(.foodLog, [])
     }
 }
 extension KeyedDecodingContainer {
