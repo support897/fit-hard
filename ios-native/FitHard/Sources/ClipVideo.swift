@@ -163,7 +163,6 @@ struct ExerciseThumb: View {
     var body: some View {
         AsyncImage(url: Clips.thumb(ex.id)) { p in
             if let i = p.image { i.resizable().scaledToFit() }
-            else if let b = base { AnimatedFrames(base: b) }
             else { BrandIcon("figure.strengthtraining.traditional") }
         }.frame(width: 64, height: 64).background(Color.tint, in: RoundedRectangle(cornerRadius: 12)).clipShape(RoundedRectangle(cornerRadius: 12))
     }
