@@ -115,6 +115,7 @@ struct ExerciseVideo: View {
     @StateObject private var loader: ClipLoader
     @State private var visible = false
     @State private var full = false
+    @State private var aspect: CGFloat = 1.5
 
     init(ex: Exercise, playing: Bool = true, fullScreen: Bool = false, iconFallback: Bool = true) {
         self.ex = ex; self.playing = playing; self.fullScreen = fullScreen; self.iconFallback = iconFallback
@@ -142,7 +143,8 @@ struct ExerciseVideo: View {
 
     func clip(_ u: URL) -> some View {
         ClipPlayer(url: u, playing: playing && visible && !full && !reduceMotion)
-            .aspectRatio(3.0 / 2.0, contentMode: .fit).frame(maxWidth: .infinity)
+            .aspectRatio(aspect, contentMode: .fit).frame(maxWidth: .infinity)
+            .task(id: u) { aspect = await ClipAspect.of(u) }
             .background(Color.cream)
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .onAppear { visible = true }.onDisappear { visible = false }
@@ -150,7 +152,7 @@ struct ExerciseVideo: View {
                 if fullScreen { BrandIcon("arrow.expand").font(.fh_subheadline_b).foregroundStyle(Color.sage).frame(width: 44, height: 44).background(Color.tint, in: Circle()).padding(6) }
             }
             .onTapGesture { if fullScreen { full = true } }
-            .fullScreenCover(isPresented: $full) { FullClip(url: u, name: ex.name) }
+            .fullScreenCover(isPresented: $full) { FullClip(url: u, name: ex.name, aspect: aspect) }
             .accessibilityLabel(Text("Video of \(ex.name)"))
     }
 }
@@ -159,13 +161,14 @@ struct FullClip: View {
     @Environment(\.dismiss) var dismiss
     let url: URL
     let name: String
+    var aspect: CGFloat = 1.5
     var body: some View {
         ZStack {
             Color.cream.ignoresSafeArea()
             VStack(spacing: 14) {
                 HStack { Spacer(); Button { dismiss() } label: { BrandIcon("xmark").font(.fh_title3_b).foregroundStyle(Color.ink).frame(width: 44, height: 44).background(Color.tint, in: Circle()) }.accessibilityLabel("Close full screen") }
                 Spacer(minLength: 0)
-                ClipPlayer(url: url, playing: true).aspectRatio(3.0 / 2.0, contentMode: .fit).frame(maxWidth: .infinity)
+                ClipPlayer(url: url, playing: true).aspectRatio(aspect, contentMode: .fit).frame(maxWidth: .infinity)
                 Text(name).font(.fh_title3_b).foregroundStyle(Color.ink).multilineTextAlignment(.center)
                 Spacer(minLength: 0)
             }.padding(16)
@@ -182,5 +185,14 @@ struct ExerciseThumb: View {
             if let i = p.image { i.resizable().scaledToFit() }
             else { BrandIcon("figure.strengthtraining.traditional") }
         }.frame(width: 64, height: 64).background(Color.tint, in: RoundedRectangle(cornerRadius: 12)).clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+/// A clip's real shape (width / height). Almost all are 3:2; a few are portrait. Aspect fit on the real shape, never a crop.
+enum ClipAspect {
+    static func of(_ u: URL) async -> CGFloat {
+        let a = AVURLAsset(url: u)
+        if let t = try? await a.loadTracks(withMediaType: .video).first, let s = try? await t.load(.naturalSize), s.width > 0, s.height > 0 { return s.width / s.height }
+        return 1.5
     }
 }
