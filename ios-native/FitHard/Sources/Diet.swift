@@ -77,6 +77,22 @@ extension Store {
     }
 }
 
+extension CGImagePropertyOrientation {
+    init(_ o: UIImage.Orientation) {
+        switch o {
+        case .up: self = .up
+        case .upMirrored: self = .upMirrored
+        case .down: self = .down
+        case .downMirrored: self = .downMirrored
+        case .left: self = .left
+        case .leftMirrored: self = .leftMirrored
+        case .right: self = .right
+        case .rightMirrored: self = .rightMirrored
+        @unknown default: self = .up
+        }
+    }
+}
+
 enum DietMeals {
     static let all = ["breakfast", "lunch", "dinner", "snack"]
     static func label(_ m: String) -> String { m.capitalized }
