@@ -16,7 +16,7 @@ final class FitHardTests: XCTestCase {
     func testCatalogCounts() {
         let c = Catalog.shared
         XCTAssertEqual(c.recipes.count, 1089)
-        XCTAssertEqual(c.exercises.count, 871)
+        XCTAssertEqual(c.exercises.count, 854)
         XCTAssertEqual(c.machines.count, 36)
         XCTAssertFalse(c.ingredients.all.isEmpty)
         XCTAssertTrue(c.recipes.allSatisfy { $0.kcal > 0 && !$0.steps.isEmpty && !$0.ingredients.isEmpty })

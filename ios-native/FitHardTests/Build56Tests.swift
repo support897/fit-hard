@@ -9,6 +9,8 @@ final class Build56Tests: XCTestCase {
     func testSeventeenHaveNoClip() {
         XCTAssertEqual(Clips.blocked.count, 17)
         for s in Clips.blocked { XCTAssertFalse(Clips.has(s), s); XCTAssertNil(Clips.cached(s), s) }
+        for e in Catalog.shared.exercises { XCTAssertFalse(Clips.blocked.contains(Clips.slug(e.id)), e.id) }
+        XCTAssertEqual(Catalog.shared.exercises.count, 854)
     }
     func testGainGoalIsSurplusAndMaintainIsDailyNeed() {
         let g = prof { $0.age = 28; $0.heightCm = 180; $0.weightKg = 70; $0.calcBasis = "male"; $0.activity = "moderate"; $0.primaryGoal = "gain" }
