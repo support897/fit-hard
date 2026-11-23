@@ -31,6 +31,12 @@ extension Store {
         return "\(r.kcal) kcal · \(p) · \(r.minutes) min"
     }
     func routine(on day: String) -> Routine? {
+        guard var r = routineRaw(on: day) else { return nil }
+        // Plans saved before the 17 were removed may still list them: drop them quietly.
+        r.exIds.removeAll { Clips.blocked.contains(Clips.slug($0)) }
+        return r.exIds.isEmpty ? nil : r
+    }
+    private func routineRaw(on day: String) -> Routine? {
         guard let d = dateFromKey(day) else { return nil }
         let wd = Calendar.current.component(.weekday, from: d)
         // Swap today (build 36, item C): a routine the person picked for this exact day wins

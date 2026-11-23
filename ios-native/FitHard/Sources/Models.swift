@@ -283,7 +283,7 @@ enum Lists {
 final class Catalog {
     static let shared = Catalog()
     let recipes: [Recipe]
-    let exercises: [Exercise]
+    let exercises: [Exercise]   // the 17 removed exercises (Clips.blocked) are dropped here, so no screen can show or match them
     struct Machine: Codable, Identifiable, Hashable { let id: String; let name: String; let exerciseIds: [String] }
     struct Ingredients: Codable { let common: [String]; let all: [String] }
     let machines: [Machine]
@@ -309,13 +309,13 @@ final class Catalog {
             return loadFile(name, type)
         }
         recipes = load("recipes", [Recipe].self) ?? []
-        exercises = load("exercises", [Exercise].self) ?? []
-        machines = load("machines", [Machine].self) ?? []
+        exercises = (load("exercises", [Exercise].self) ?? []).filter { !Clips.blocked.contains(Clips.slug($0.id)) }
+        machines = (load("machines", [Machine].self) ?? []).map { Machine(id: $0.id, name: $0.name, exerciseIds: $0.exerciseIds.filter { !Clips.blocked.contains(Clips.slug($0)) }) }
         ingredients = load("ingredients", Ingredients.self) ?? Ingredients(common: [], all: [])
         macros = load("macros", [String: [Int]].self) ?? [:]
         nutrition = load("nutrition", [String: Nut].self) ?? [:]
         humanSteps = spanish ? [:] : (loadFile("recipes-human", [String: [String]].self) ?? [:])
-        help = load("help", [String: HelpRec].self) ?? [:]
+        help = (load("help", [String: HelpRec].self) ?? [:]).filter { !Clips.blocked.contains(Clips.slug($0.key)) }
         byId = Dictionary(recipes.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         exById = Dictionary(exercises.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
     }
