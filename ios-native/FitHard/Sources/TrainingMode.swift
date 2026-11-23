@@ -155,7 +155,7 @@ struct TrainingMode: View {
                 }
             }
             Text(ex.name).font(.fh_title_b).multilineTextAlignment(.center).foregroundStyle(Color.ink).accessibilityIdentifier("train-exercise")
-            ExerciseVideo(ex: ex, playing: workEnd != nil).frame(maxWidth: .infinity, maxHeight: 300).layoutPriority(1)
+            ExerciseVideo(ex: ex, playing: workEnd != nil).frame(maxWidth: .infinity, maxHeight: 220).layoutPriority(1)
                     .background(Color.surface, in: RoundedRectangle(cornerRadius: 20))
                     .overlay(alignment: .bottomTrailing) {
                         Button { focus = .picture } label: { BrandIcon("arrow.expand").font(.fh_subheadline_b).foregroundStyle(Color.sage).frame(width: 44, height: 44).background(Color.tint, in: Circle()) }

@@ -48,7 +48,7 @@ struct DayBreakdown: View {
                 HStack {
                     Text(String(format: NSLocalizedString("The day: %lld exercises", comment: ""), list.count)).font(.fh_headline).foregroundStyle(Color.ink)
                     Spacer(); BrandIcon(open ? "chevron.up" : "chevron.down").foregroundStyle(Color.sage)
-                }.frame(minHeight: 44).contentShape(Rectangle())
+                }.frame(minHeight: 40).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityIdentifier("day-breakdown-toggle")
             if open {
                 ScrollView {
