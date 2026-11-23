@@ -116,15 +116,7 @@ struct TrainingMode: View {
                             .accessibilityLabel("Close full screen").accessibilityIdentifier("focus-close")
                     }
                     Spacer(minLength: 0)
-                    if idx == 0, workEnd == nil, !resting, entries.first?.sets.contains(where: { $0.done == true }) != true {
-                DayBreakdown(routine: routine, ids: ids) { old, new in
-                    store.swapExercise(routine: routine.id, old: old, new: new)
-                    if let k = sub.first(where: { $0.value == old })?.key { sub[k] = new } else { sub[old] = new }
-                    store.s.draft = []; store.s.draftStart = nil; loaded = false; entries = []; load()
-                }
-            }
-            Text(ex.name).font(.fh_title_b).multilineTextAlignment(.center).foregroundStyle(Color.ink).accessibilityIdentifier("train-exercise")
-            ExerciseVideo(ex: ex, playing: workEnd != nil).frame(maxWidth: .infinity)
+                    ExerciseVideo(ex: ex, playing: workEnd != nil).frame(maxWidth: .infinity)
                         .background(Color.surface, in: RoundedRectangle(cornerRadius: 20)).clipShape(RoundedRectangle(cornerRadius: 20))
                     Text(ex.name).font(.fh_title3_b).foregroundStyle(Color.ink).multilineTextAlignment(.center)
                     Spacer(minLength: 0)
@@ -155,6 +147,14 @@ struct TrainingMode: View {
     @ViewBuilder func exerciseScreen(_ ex: Exercise) -> some View {
         VStack(spacing: 14) {
             Spacer(minLength: 0)
+            if idx == 0, workEnd == nil, !resting, entries.first?.sets.contains(where: { $0.done == true }) != true {
+                DayBreakdown(routine: routine, ids: ids) { old, new in
+                    store.swapExercise(routine: routine.id, old: old, new: new)
+                    if let k = sub.first(where: { $0.value == old })?.key { sub[k] = new } else { sub[old] = new }
+                    store.s.draft = []; store.s.draftStart = nil; loaded = false; entries = []; load()
+                }
+            }
+            Text(ex.name).font(.fh_title_b).multilineTextAlignment(.center).foregroundStyle(Color.ink).accessibilityIdentifier("train-exercise")
             ExerciseVideo(ex: ex, playing: workEnd != nil).frame(maxWidth: .infinity, maxHeight: 300).layoutPriority(1)
                     .background(Color.surface, in: RoundedRectangle(cornerRadius: 20))
                     .overlay(alignment: .bottomTrailing) {
