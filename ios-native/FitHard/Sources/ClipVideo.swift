@@ -10,7 +10,7 @@ import AVFoundation
 
 @MainActor enum Clips {
     static let base = URL(string: "https://pub-daa5a9147205405a9e7570408c0f95fa.r2.dev")!
-    static func slug(_ id: String) -> String { id.lowercased().replacingOccurrences(of: "_", with: "-") }
+    nonisolated static func slug(_ id: String) -> String { id.lowercased().replacingOccurrences(of: "_", with: "-") }
     static let dir: URL = {
         let d = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appendingPathComponent("fh-clips", isDirectory: true)
         try? FileManager.default.createDirectory(at: d, withIntermediateDirectories: true)
@@ -24,7 +24,7 @@ import AVFoundation
         return [:]
     }()
     /// Part 3: these 17 have no usable video. They never match a clip, even a cached or hosted one, and fall back to the animation or icon.
-    static let blocked: Set<String> = ["barbell-incline-shoulder-raise", "barbell-shrug", "barbell-shrug-behind-the-back", "cable-internal-rotation", "calf-press-on-the-leg-press-machine", "close-grip-front-lat-pulldown", "dumbbell-lying-pronation", "dumbbell-seated-one-leg-calf-raise", "dumbbell-shrug", "external-rotation-with-band", "external-rotation-with-cable", "good-morning-off-pins", "kipping-muscle-up", "leverage-shrug", "muscle-up", "on-your-back-quad-stretch", "rocking-standing-calf-raise"]
+    nonisolated static let blocked: Set<String> = ["barbell-incline-shoulder-raise", "barbell-shrug", "barbell-shrug-behind-the-back", "cable-internal-rotation", "calf-press-on-the-leg-press-machine", "close-grip-front-lat-pulldown", "dumbbell-lying-pronation", "dumbbell-seated-one-leg-calf-raise", "dumbbell-shrug", "external-rotation-with-band", "external-rotation-with-cable", "good-morning-off-pins", "kipping-muscle-up", "leverage-shrug", "muscle-up", "on-your-back-quad-stretch", "rocking-standing-calf-raise"]
     static func has(_ slug: String) -> Bool { !blocked.contains(slug) && (manifest.isEmpty || manifest[slug] != nil) }
     private static var refreshed = false
     static func refreshManifest() async {
