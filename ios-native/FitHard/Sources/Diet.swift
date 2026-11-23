@@ -231,11 +231,15 @@ struct DietSetup: View {
         if p.age > 0 { age = String(p.age) }
         sex = p.calcBasis == "male" ? "male" : "female"
         activity = p.activity
-        goal = p.primaryGoal == "lose" ? "lose" : (p.primaryGoal == "muscle" ? "muscle" : "fitter")
+        goal = p.primaryGoal == "lose" ? "lose" : ((p.primaryGoal == "muscle" || p.primaryGoal == "gain") ? "muscle" : "fitter")
     }
     func save() {
         store.s.profile.weightKg = num(weight); store.s.profile.heightCm = num(height); store.s.profile.age = Int(age) ?? 0
-        store.s.profile.calcBasis = sex; store.s.profile.activity = activity; store.s.profile.primaryGoal = goal
+        store.s.profile.calcBasis = sex; store.s.profile.activity = activity
+        // Keep the person's own goal when this picker maps to the same thing (gain stays gain, strength stays strength).
+        let cur = store.s.profile.primaryGoal
+        let same = (goal == "lose" && cur == "lose") || (goal == "muscle" && (cur == "muscle" || cur == "gain")) || (goal == "fitter" && !["lose", "muscle", "gain"].contains(cur) && !cur.isEmpty)
+        if !same { store.s.profile.primaryGoal = goal }
         dismiss()
     }
 }

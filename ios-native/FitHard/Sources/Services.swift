@@ -16,7 +16,7 @@ enum NutritionService {
     /// No calorie target for under 18s, pregnancy or eating disorder concerns. Those people are pointed to a clinician instead.
     static func targetsAllowed(_ p: Profile) -> Bool { !(p.minor || p.pregnant || p.edConcern || (p.age > 0 && p.age < 18)) }
     /// lose | gain | maintain, from the person's own primary goal.
-    static func goal(_ p: Profile) -> String { p.primaryGoal == "lose" ? "lose" : (p.primaryGoal == "muscle" ? "gain" : "maintain") }
+    static func goal(_ p: Profile) -> String { p.primaryGoal == "lose" ? "lose" : ((p.primaryGoal == "muscle" || p.primaryGoal == "gain") ? "gain" : "maintain") }
     /// Lowest daily calories advised without a clinician: 1,200 women, 1,500 men (NHLBI 1998, AHA/ACC/TOS 2013). Unsure uses 1,500.
     static func safeMin(_ p: Profile) -> Double { p.calcBasis == "female" ? 1200 : 1500 }
     /// The daily number. Lose: 500 under (never over 20 percent under), gain: 300 over, maintain: the daily need.
@@ -38,7 +38,7 @@ enum NutritionService {
     static func targets(_ p: Profile) -> Targets? {
         guard let pl = plan(p) else { return nil }
         let kcal = pl.kcal
-        let perKg = p.primaryGoal == "lose" ? 1.8 : (p.primaryGoal == "muscle" || p.primaryGoal == "strength" ? 1.6 : 1.4)
+        let perKg = p.primaryGoal == "lose" ? 1.8 : (p.primaryGoal == "muscle" || p.primaryGoal == "gain" || p.primaryGoal == "strength" ? 1.6 : 1.4)
         let protein = min(2.0, max(1.4, perKg)) * p.weightKg
         let fat = kcal * 0.27 / 9
         let carbs = max(0, (kcal - protein * 4 - fat * 9) / 4)
@@ -171,7 +171,7 @@ enum ProgressionEngine {
     static func range(for ex: Exercise, goal: String) -> (Int, Int) {
         let compound = ["barbell", "machine"].contains(ex.equipment)
         if goal == "strength" { return compound ? (4, 6) : (6, 10) }          // heavier loads for strength (ACSM 2009 and 2026)
-        if goal == "muscle" { return compound ? (6, 10) : (8, 12) }           // the 6 to 12 zone for size
+        if goal == "muscle" || goal == "gain" { return compound ? (6, 10) : (8, 12) }           // the 6 to 12 zone for size
         if goal == "lose" || goal == "fitter" { return compound ? (10, 15) : (12, 15) }   // lighter loads, more reps, shorter rests
         return compound ? (8, 12) : (10, 15)
     }
@@ -180,7 +180,7 @@ enum ProgressionEngine {
         let compound = ["barbell", "machine"].contains(ex?.equipment ?? "")
         switch goal {
         case "strength": return compound ? 150 : 90
-        case "muscle": return compound ? 90 : 75
+        case "muscle", "gain": return compound ? 90 : 75
         case "lose", "fitter": return 45
         default: return 60
         }
@@ -255,6 +255,7 @@ enum WorkoutGenerator {
         if exp == "intermediate" { return lvl != "expert" }
         return true
     }
+    static let orderLight = ["machine": 0, "dumbbell": 1, "cable": 2, "barbell": 3, "kettlebells": 4, "body only": 5]
     static let order = ["barbell": 0, "machine": 1, "dumbbell": 2, "cable": 3, "kettlebells": 4, "body only": 5]
     static func kindOf(_ k: String) -> String { k == "lower" ? "legs" : k }
     static func cardioWanted(_ p: Profile) -> Bool { p.trainType == "mixed" || p.trainType == "general" || p.primaryGoal == "lose" || p.primaryGoal == "fitter" }
@@ -281,6 +282,7 @@ enum WorkoutGenerator {
         // Her own algorithm (build 35, item 2): hearted exercises sort first in their part pool, and
         // their kin (same equipment, so same machine and style) sort next. The tilt only reorders
         // pools: slots, rest days and the no repeat guards below are untouched, so balance stands.
+        let order = ["lose", "fitter", "maintain", "eat"].contains(p.primaryGoal) ? orderLight : Self.order   // heavy compounds first for size and strength, machines and dumbbells first for fat loss and fitness
         let heartKit = Set(exercises.filter { hearts.contains($0.id) }.map { $0.equipment })
         let days = p.trainDays.sorted { ($0 + 5) % 7 < ($1 + 5) % 7 }
         // Rest is planned, not earned: at most 5 lifting days; a 6th chosen day becomes mobility and a 7th stays a planned rest day.

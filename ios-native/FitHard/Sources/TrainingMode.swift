@@ -25,7 +25,8 @@ struct TrainingMode: View {
     @State private var focus: FocusKind = .none
     enum FocusKind { case none, picture, timer }
 
-    var ids: [String] { routine.exIds }
+    @State private var sub: [String: String] = [:]
+    var ids: [String] { routine.exIds.map { sub[$0] ?? $0 } }
     var exercise: Exercise? { idx < ids.count ? store.cat.exercise(ids[idx]) : nil }
     var resting: Bool { restEnd != nil || pausedLeft != nil }
 
@@ -115,7 +116,15 @@ struct TrainingMode: View {
                             .accessibilityLabel("Close full screen").accessibilityIdentifier("focus-close")
                     }
                     Spacer(minLength: 0)
-                    ExerciseVideo(ex: ex, playing: workEnd != nil).frame(maxWidth: .infinity)
+                    if idx == 0, workEnd == nil, !resting, entries.first?.sets.contains(where: { $0.done == true }) != true {
+                DayBreakdown(routine: routine, ids: ids) { old, new in
+                    store.swapExercise(routine: routine.id, old: old, new: new)
+                    if let k = sub.first(where: { $0.value == old })?.key { sub[k] = new } else { sub[old] = new }
+                    store.s.draft = []; store.s.draftStart = nil; loaded = false; entries = []; load()
+                }
+            }
+            Text(ex.name).font(.fh_title_b).multilineTextAlignment(.center).foregroundStyle(Color.ink).accessibilityIdentifier("train-exercise")
+            ExerciseVideo(ex: ex, playing: workEnd != nil).frame(maxWidth: .infinity)
                         .background(Color.surface, in: RoundedRectangle(cornerRadius: 20)).clipShape(RoundedRectangle(cornerRadius: 20))
                     Text(ex.name).font(.fh_title3_b).foregroundStyle(Color.ink).multilineTextAlignment(.center)
                     Spacer(minLength: 0)
@@ -154,7 +163,6 @@ struct TrainingMode: View {
                     }
                     .onTapGesture { focus = .picture }
                     .accessibilityLabel("See the picture full screen").accessibilityIdentifier("train-picture")
-            Text(ex.name).font(.fh_title_b).multilineTextAlignment(.center).foregroundStyle(Color.ink).accessibilityIdentifier("train-exercise")
             // The ring stays a container (.contain): a plain label + identifier on the ring itself
             // overwrote its own children's identifiers — the probe tree dump (CI run 67) showed the
             // timer text carrying 'train-timer' and no work-left / rest-left element anywhere, which

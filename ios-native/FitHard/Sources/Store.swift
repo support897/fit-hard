@@ -252,7 +252,7 @@ final class Store: ObservableObject {
         s.profile.equipment = s.profile.location == "home" ? "home" : "gym"
         if s.profile.kit.isEmpty { s.profile.kit = s.profile.location == "home" ? ["dumbbell", "bands", "kettlebells", "bench or box"] : ["barbell", "dumbbell", "machine", "cable", "kettlebells", "bench or box", "e-z curl bar"] }
         if s.profile.needs.isEmpty { s.profile.needs = ["meals", "gym", "calendar"] }
-        if s.profile.goals.isEmpty { s.profile.goals = ["Feel fitter"] }
+        if s.profile.goals.isEmpty { s.profile.goals = ["Get fitter"] }
         if s.profile.primaryGoal.isEmpty { s.profile.primaryGoal = "fitter" }
         let rerun = s.onboarded
         generatePlan(force: rerun); generateRoutine()

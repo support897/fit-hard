@@ -48,7 +48,7 @@ struct TodayView: View {
             .background(Color.cream)
             .navigationTitle(greeting)
             .onAppear { Notifier.status { denied = ($0 == .denied) } }
-            .toolbar { ToolbarItem(placement: .navigationBarTrailing) { AvatarView(size: 34) } }
+            .toolbar { ToolbarItem(placement: .navigationBarTrailing) { HStack(spacing: 4) { QuickReach(); AvatarView(size: 34) } } }
             .sheet(item: $tracking) { t in TrackerEntry(tracker: t).environmentObject(store) }
             .fullScreenCover(isPresented: $finishing) { SetupView(onClose: { finishing = false }).environmentObject(store).tint(Color.sage).foregroundStyle(Color.ink) }
             .onChange(of: store.s.profile.setupDone) { done in if done { finishing = false } }
@@ -272,6 +272,7 @@ struct TodayView: View {
                 Text(store.isLightToday ? "Light day: fewer sets and a lighter load. Your streak stays safe." : "Picked from your days, your goal and how you feel. Swap a move or go lighter any time in Train.")
                     .font(.fh_caption).foregroundStyle(Color.ink).padding(10).frame(maxWidth: .infinity, alignment: .leading)
                     .background(LinearGradient.washGrad, in: RoundedRectangle(cornerRadius: 14)).accessibilityIdentifier("today-why")
+                if let r = r { DayBreakdown(routine: r) }
                 BigButton(title: "Start", icon: "play.fill") { if let r = store.routine(on: store.today) { store.training = r } else { go(2) } }.accessibilityIdentifier("today-start")
             }
         }.task(id: store.s.routines.map { $0.exIds.joined() }.joined() + ex.map { $0.id }.joined()) { await Clips.prefetch(ex.map { $0.id } + store.s.routines.flatMap { $0.exIds }) }

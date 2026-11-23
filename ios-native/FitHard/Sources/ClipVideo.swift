@@ -23,7 +23,9 @@ import AVFoundation
            let m = try? JSONDecoder().decode([String: Int].self, from: d) { return m }
         return [:]
     }()
-    static func has(_ slug: String) -> Bool { manifest.isEmpty || manifest[slug] != nil }
+    /// Part 3: these 17 have no usable video. They never match a clip, even a cached or hosted one, and fall back to the animation or icon.
+    static let blocked: Set<String> = ["barbell-incline-shoulder-raise", "barbell-shrug", "barbell-shrug-behind-the-back", "cable-internal-rotation", "calf-press-on-the-leg-press-machine", "close-grip-front-lat-pulldown", "dumbbell-lying-pronation", "dumbbell-seated-one-leg-calf-raise", "dumbbell-shrug", "external-rotation-with-band", "external-rotation-with-cable", "good-morning-off-pins", "kipping-muscle-up", "leverage-shrug", "muscle-up", "on-your-back-quad-stretch", "rocking-standing-calf-raise"]
+    static func has(_ slug: String) -> Bool { !blocked.contains(slug) && (manifest.isEmpty || manifest[slug] != nil) }
     private static var refreshed = false
     static func refreshManifest() async {
         guard !refreshed else { return }; refreshed = true
@@ -32,6 +34,7 @@ import AVFoundation
         manifest = m
     }
     static func cached(_ slug: String) -> URL? {
+        if blocked.contains(slug) { return nil }
         let u = dir.appendingPathComponent(slug + ".mp4")
         guard let n = (try? FileManager.default.attributesOfItem(atPath: u.path))?[.size] as? Int else { return nil }
         if let want = manifest[slug], want != n { return nil }

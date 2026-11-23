@@ -142,8 +142,12 @@ struct RecipeDetail: View {
     let recipe: Recipe
     @State private var picked = false
     @State private var cooking = false
+    @State private var servings = 1
+    @State private var us = false
+    @State private var plain = false
     var body: some View {
-        let lines = RecipeService.lines(for: RecipeService.perServing(recipe), inventory: store.s.inventory)
+        let scaled = RecipeService.perServing(recipe).map { Ingredient(name: $0.name, qty: $0.qty * Double(servings), unit: $0.unit, category: $0.category) }
+        let lines = RecipeService.lines(for: scaled, inventory: store.s.inventory)
         let fav = store.s.favs.contains(recipe.id)
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
@@ -164,15 +168,28 @@ struct RecipeDetail: View {
                     Card { SectionTitle(text: "Log it lightly"); PortionBar(meal: recipe.meal) }
                 }
                 Card {
-                    SectionTitle(text: "Ingredients for one serving")
+                    SectionTitle(text: servings == 1 ? "Ingredients for one serving" : String(format: NSLocalizedString("Ingredients for %lld servings", comment: ""), servings))
+                    HStack {
+                        Stepper(String(format: NSLocalizedString("Servings: %lld", comment: ""), servings), value: $servings, in: 1...12).accessibilityIdentifier("recipe-servings")
+                        Picker("Units", selection: $us) { Text("g, ml").tag(false); Text("oz, cups").tag(true) }.pickerStyle(.segmented).frame(width: 130).accessibilityIdentifier("recipe-units")
+                    }
                     ForEach(lines) { l in
                         HStack { BrandIcon( l.buy <= 0.001 ? "checkmark.circle.fill" : "cart").foregroundStyle(l.buy <= 0.001 ? Color.sage : Color.amber)
-                            Text("\(l.name.capitalized), \(RecipeService.fmt(l.need)) \(unitName(l.unit))").font(.fh_subheadline); Spacer()
+                            Text("\(l.name.capitalized), \(RecipeUnits.show(l.need, l.unit, us: us))").font(.fh_subheadline); Spacer()
                             Text(l.buy <= 0.001 ? NSLocalizedString("Have", comment: "") : String(format: NSLocalizedString("Buy %@ %@", comment: ""), RecipeService.fmt(l.buy), unitName(l.unit))).font(.fh_caption_b).foregroundStyle(l.buy <= 0.001 ? Color.sage : Color.amber) }
                     }
                 }
                 Card { SectionTitle(text: "Steps"); ForEach(Array(recipe.steps.enumerated()), id: \.offset) { n, s in
                     HStack(alignment: .top) { Text("\(n + 1)").bold().frame(width: 26, height: 26).background(Color.tint, in: Circle()); Text(s) } } }
+                if let h = store.cat.humanSteps[recipe.id], !h.isEmpty {
+                    Card {
+                        Button { withAnimation(.easeInOut(duration: 0.2)) { plain.toggle() } } label: {
+                            HStack { SectionTitle(text: "In plain words"); Spacer(); BrandIcon(plain ? "chevron.up" : "chevron.down").foregroundStyle(Color.sage) }.frame(minHeight: 44).contentShape(Rectangle())
+                        }.buttonStyle(.plain).accessibilityIdentifier("recipe-plain-toggle")
+                        if plain { ForEach(Array(h.enumerated()), id: \.offset) { n, s in
+                            HStack(alignment: .top) { Text("\(n + 1)").bold().frame(width: 26, height: 26).background(Color.tint, in: Circle()); Text(s) } } }
+                    }
+                }
                 BigButton(title: picked ? NSLocalizedString("Added to today", comment: "") : String(format: NSLocalizedString("Use for today's %@", comment: ""), (MealKind(rawValue: recipe.meal)?.label ?? recipe.meal).lowercased()), icon: picked ? "checkmark" : "plus") {
                     store.setMeal(day: store.today, meal: recipe.meal, recipe: recipe); picked = true; store.say("Added to today")
                 }

@@ -101,7 +101,7 @@ struct TrainView: View {
             } else if adapt.kind != .asPlanned {
                 Button("See the full plan") { store.s.fullPlanDays.append(store.today) }.font(.fh_caption_b).foregroundStyle(Color.sage).accessibilityIdentifier("full-plan")
             }
-            if !ex.isEmpty { TrainDayList(r: r) }
+            if !ex.isEmpty { DayBreakdown(routine: r) }
             if done {
                 BrandLabel("Done today", icon: "checkmark.seal.fill").foregroundStyle(Color.sage)
                 BigButton(title: "Train again", icon: "play.fill", filled: false) { store.training = r }.accessibilityIdentifier("start-today")
@@ -226,6 +226,7 @@ struct ExerciseDetail: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
+                Text(e.name).font(.fh_title_b).foregroundStyle(Color.ink).accessibilityIdentifier("detail-name")
                 ExerciseVideo(ex: e, fullScreen: true).frame(maxHeight: UIScreen.main.bounds.height * 0.5).background(Color.surface, in: RoundedRectangle(cornerRadius: 20))
                 Flow { Chip(label: e.partLabel ?? e.part, on: false) {}; Chip(label: equipName(e.equipment), on: false) {}; Chip(label: levelName(e.level), on: false) {} }
                 HStack { Spacer(); ExerciseHeart(e: e); HelpButton(exercise: e) }

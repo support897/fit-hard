@@ -258,9 +258,9 @@ extension KeyedDecodingContainer {
 }
 
 enum Lists {
-    static let goals = ["Lose weight gently", "Build muscle", "Get stronger", "Feel fitter", "Eat more regularly", "Keep track of my doses"]
-    static let goalIcons = ["scalemass", "figure.strengthtraining.traditional", "dumbbell", "figure.run", "fork.knife", "pills"]
-    static let goalIds = ["lose", "muscle", "strength", "fitter", "eat", "doses"]
+    static let goals = ["Lose weight gently", "Gain weight", "Gain muscle", "Maintain my weight", "Get stronger", "Get fitter", "Eat healthier", "Keep track of my doses"]
+    static let goalIcons = ["scalemass", "chart.line.uptrend.xyaxis", "figure.strengthtraining.traditional", "heart", "dumbbell", "figure.run", "fork.knife", "pills"]
+    static let goalIds = ["lose", "gain", "muscle", "maintain", "strength", "fitter", "eat", "doses"]
     struct Need: Identifiable { let id: String; let label: String; let icon: String }
     static let needs = [
         Need(id: "meals", label: "Meal plans", icon: "fork.knife"),
@@ -294,6 +294,8 @@ final class Catalog {
     let nutrition: [String: Nut]
     let help: [String: HelpRec]
     private let byId: [String: Recipe]
+    /// Plain English rewrite of each recipe's steps (same steps, amounts and order). English only.
+    let humanSteps: [String: [String]]
     private let exById: [String: Exercise]
     init() {
         let spanish = Locale.preferredLanguages.first?.hasPrefix("es") ?? false
@@ -312,6 +314,7 @@ final class Catalog {
         ingredients = load("ingredients", Ingredients.self) ?? Ingredients(common: [], all: [])
         macros = load("macros", [String: [Int]].self) ?? [:]
         nutrition = load("nutrition", [String: Nut].self) ?? [:]
+        humanSteps = spanish ? [:] : (loadFile("recipes-human", [String: [String]].self) ?? [:])
         help = load("help", [String: HelpRec].self) ?? [:]
         byId = Dictionary(recipes.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         exById = Dictionary(exercises.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
